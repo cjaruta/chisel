@@ -1,0 +1,1 @@
+Chisel is a desktop daily planner and productivity dashboard built with C# and Avalonia.
