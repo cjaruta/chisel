@@ -13,4 +13,11 @@ public class DaySchedule
     {
         return Blocks.FirstOrDefault(block => block.Contains(now));
     }
+    public ScheduleBlock? NextBlock(TimeOnly now)
+    {
+        return Blocks
+            .Where(block => block.Start > now)
+            .OrderBy(block => block.Start)
+            .FirstOrDefault();
+    }
 }
