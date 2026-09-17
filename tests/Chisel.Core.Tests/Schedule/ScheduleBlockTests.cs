@@ -17,4 +17,20 @@ public class ScheduleBlockTests
         // Assert
         Assert.Equal(TimeSpan.FromHours(3), duration);
     }
+
+    [Fact]
+    public void Duration_BlockCrossingMidnight_WrapsAroundToNextDay()
+    {
+        // Arrange
+        var block = new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30));
+
+        // Act
+        var duration = block.Duration;
+
+        // Assert
+        Assert.Equal(new TimeSpan(7, 30, 0), duration);
+    }
+
 }
+
+
