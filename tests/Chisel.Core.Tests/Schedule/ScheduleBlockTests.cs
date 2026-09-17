@@ -93,6 +93,39 @@ public class ScheduleBlockTests
         Assert.Equal(expected, result);
     }
 
+    [Fact]
+    public void Constructor_StartEqualsEnd_ThrowsArgumentException()
+    {
+        // Arrange
+        void Act() => new ScheduleBlock("Broken", new TimeOnly(9, 0), new TimeOnly(9, 0));
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(Act);
+    }
+
+    [Fact]
+    public void Constructor_EmptyTitle_ThrowsArgumentException()
+    {
+        // Arrange
+        void Act() => new ScheduleBlock("   ", new TimeOnly(8, 0), new TimeOnly(9, 0));
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(Act);
+    }
+
+    [Fact]
+    public void Constructor_TitleWithSurroundingSpaces_IsTrimmed()
+    {
+        // Arrange
+        var block = new ScheduleBlock("  Workout  ", new TimeOnly(14, 0), new TimeOnly(15, 0));
+
+        // Act
+        var title = block.Title;
+
+        // Assert
+        Assert.Equal("Workout", title);
+    }
+
 }
 
 

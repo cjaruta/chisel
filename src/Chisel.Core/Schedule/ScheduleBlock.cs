@@ -4,7 +4,15 @@ public class ScheduleBlock
 {
     public ScheduleBlock(string title, TimeOnly start, TimeOnly end)
     {
-        Title = title;
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new ArgumentException("Title cannot be empty.", nameof(title));
+        }
+        if (start == end)
+        {
+            throw new ArgumentException("Start time cannot be equal to end time.", nameof(end));
+        }
+        Title = title.Trim();
         Start = start;
         End = end;
     }
