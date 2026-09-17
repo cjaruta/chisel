@@ -16,4 +16,14 @@ public class ScheduleBlock
     public TimeSpan Duration => End - Start;
 
     public bool CrossesMidnight => End < Start;
+
+    public bool Contains(TimeOnly time)
+    {
+        if (!CrossesMidnight)
+        {
+            return time >= Start && time < End;
+        }
+
+        return time >= Start || time < End;
+    }
 }
