@@ -20,4 +20,20 @@ public class DaySchedule
             .OrderBy(block => block.Start)
             .FirstOrDefault();
     }
+        public IEnumerable<(TimeOnly Start, TimeOnly End)> Gaps(TimeOnly dayStart, TimeOnly dayEnd)
+    {
+        var cursor = dayStart;
+        foreach (var block in Blocks)
+        {
+            if (block.Start > cursor)
+            {
+                yield return (cursor, block.Start);
+            }
+            cursor = block.End;
+        }
+        if (cursor < dayEnd)
+        {
+            yield return (cursor, dayEnd);
+        }
+    }
 }
