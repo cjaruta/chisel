@@ -9,4 +9,8 @@ public class ChiselDbContext : DbContext
     }
 
     public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
+
+    public DbSet<ScheduleBlockEntity> ScheduleBlocks => Set<ScheduleBlockEntity>();
+
 }
+
