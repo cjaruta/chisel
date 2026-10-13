@@ -12,5 +12,6 @@ public class ChiselDbContext : DbContext
 
     public DbSet<ScheduleBlockEntity> ScheduleBlocks => Set<ScheduleBlockEntity>();
 
+    public DbSet<NoteEntity> Notes => Set<NoteEntity>();
 }
 
