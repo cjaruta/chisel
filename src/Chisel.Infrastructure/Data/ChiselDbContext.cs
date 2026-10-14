@@ -15,5 +15,7 @@ public class ChiselDbContext : DbContext
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();
 
     public DbSet<MarkerEntity> Markers => Set<MarkerEntity>();
+
+    public DbSet<QuickLinkEntity> QuickLinks => Set<QuickLinkEntity>();
 }
 
