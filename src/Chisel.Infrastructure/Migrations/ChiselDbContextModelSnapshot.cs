@@ -117,6 +117,27 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.ToTable("Tasks");
                 });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.UserSettingsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("BedTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("WakeTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserSettings");
+                });
 #pragma warning restore 612, 618
         }
     }

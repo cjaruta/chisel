@@ -17,5 +17,7 @@ public class ChiselDbContext : DbContext
     public DbSet<MarkerEntity> Markers => Set<MarkerEntity>();
 
     public DbSet<QuickLinkEntity> QuickLinks => Set<QuickLinkEntity>();
+
+    public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
 }
 
