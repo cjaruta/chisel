@@ -138,6 +138,27 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.ToTable("UserSettings");
                 });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.WidgetPlacementEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Column")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("WidgetId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WidgetPlacements");
+                });
 #pragma warning restore 612, 618
         }
     }
