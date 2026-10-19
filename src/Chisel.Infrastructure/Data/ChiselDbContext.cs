@@ -19,5 +19,7 @@ public class ChiselDbContext : DbContext
     public DbSet<QuickLinkEntity> QuickLinks => Set<QuickLinkEntity>();
 
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
+
+    public DbSet<WidgetPlacementEntity> WidgetPlacements => Set<WidgetPlacementEntity>();
 }
 
