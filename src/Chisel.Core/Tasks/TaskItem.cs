@@ -16,4 +16,11 @@ public class TaskItem
     public void Complete() => IsDone = true;
     public void Reopen() => IsDone = false;
     public void Edit(string newText) => Text = newText;
+
+    public TaskItem(Guid id, string text, bool isDone)
+    {
+        Id = id;
+        Text = text;
+        IsDone = isDone;
+    }
 }
