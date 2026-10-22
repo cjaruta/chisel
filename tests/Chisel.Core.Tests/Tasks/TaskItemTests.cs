@@ -57,4 +57,16 @@ public class TaskItemTests
         // Assert
         Assert.Equal("Buy groceries and milk", task.Text);
     }
+
+    [Fact]
+    public void Constructor_WithSavedState_RestoresIdTextAndDoneFlag()
+    {
+        var id = Guid.NewGuid();
+
+        var task = new TaskItem(id, "Buy milk", true);
+
+        Assert.Equal(id, task.Id);
+        Assert.Equal("Buy milk", task.Text);
+        Assert.True(task.IsDone);
+    }
 }
