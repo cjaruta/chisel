@@ -26,4 +26,34 @@ public class TaskRepositoryTests : IDisposable
     }
 
     public void Dispose() => _fixture.Dispose();
+
+    [Fact]
+    public void Update_ChangedTask_IsSavedToTheDatabase()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+        var task = new TaskItem("Buy milk");
+        repository.Add(task);
+
+        task.Complete();
+        task.Edit("Buy oat milk");
+        repository.Update(task);
+
+        using var readContext = _fixture.CreateContext();
+        var saved = Assert.Single(new TaskRepository(readContext).GetAll());
+        Assert.Equal(task.Id, saved.Id);
+        Assert.Equal("Buy oat milk", saved.Text);
+        Assert.True(saved.IsDone);
+    }
+
+    [Fact]
+    public void Update_UnknownTask_ThrowsInvalidOperationException()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+
+        void Act() => repository.Update(new TaskItem("Ghost"));
+
+        Assert.Throws<InvalidOperationException>(Act);
+    }
 }

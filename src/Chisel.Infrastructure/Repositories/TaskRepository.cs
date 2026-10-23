@@ -29,7 +29,15 @@ public class TaskRepository : ITaskRepository
         _context.SaveChanges();
     }
 
-    public void Update(TaskItem task) => throw new NotImplementedException();
+    public void Update(TaskItem task)
+    {
+        var entity = _context.Tasks.Find(task.Id)
+            ?? throw new InvalidOperationException($"Task {task.Id} does not exist.");
+
+        entity.Text = task.Text;
+        entity.IsDone = task.IsDone;
+        _context.SaveChanges();
+    }
 
     public void Remove(Guid id) => throw new NotImplementedException();
 }
