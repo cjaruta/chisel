@@ -49,4 +49,32 @@ public class NoteTests
         // Assert
         Assert.Equal(new DateTimeOffset(2026, 9, 17, 9, 5, 0, TimeSpan.Zero), note.UpdatedAt);
     }
+
+    [Fact]
+    public void Constructor_NewNote_AssignsUniqueId()
+    {
+        var time = new FakeTimeProvider();
+
+        var first = new Note(time, "Groceries", "Buy milk");
+        var second = new Note(time, "Chores", "Laundry");
+
+        Assert.NotEqual(Guid.Empty, first.Id);
+        Assert.NotEqual(first.Id, second.Id);
+    }
+
+    [Fact]
+    public void Constructor_WithSavedState_RestoresIdTitleBodyAndUpdatedAt()
+    {
+        var time = new FakeTimeProvider();
+        time.SetUtcNow(new DateTimeOffset(2026, 10, 23, 9, 0, 0, TimeSpan.Zero));
+        var id = Guid.NewGuid();
+        var savedAt = new DateTimeOffset(2026, 9, 17, 8, 0, 0, TimeSpan.Zero);
+
+        var note = new Note(time, id, "Groceries", "Buy milk", savedAt);
+
+        Assert.Equal(id, note.Id);
+        Assert.Equal("Groceries", note.Title);
+        Assert.Equal("Buy milk", note.Body);
+        Assert.Equal(savedAt, note.UpdatedAt);
+    }
 }
