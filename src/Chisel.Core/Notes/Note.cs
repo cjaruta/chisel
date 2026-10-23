@@ -7,9 +7,11 @@ public class Note
     public Note(TimeProvider time, string title, string body)
     {
         _time = time;
+        Id = Guid.NewGuid();
         Title = title;
         Body = body;
         UpdatedAt = _time.GetUtcNow();
+        
     }
 
     public string Title { get; private set; }
@@ -30,4 +32,16 @@ public class Note
         Title = newTitle;
         UpdatedAt = _time.GetUtcNow();
     }
+
+    public Guid Id { get; }
+
+    public Note(TimeProvider time, Guid id, string title, string body, DateTimeOffset updatedAt)
+    {
+        _time = time;
+        Id = id;
+        Title = title;
+        Body = body;
+        UpdatedAt = updatedAt;
+    }
+
 }
