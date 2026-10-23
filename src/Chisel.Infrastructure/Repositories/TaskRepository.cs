@@ -39,5 +39,15 @@ public class TaskRepository : ITaskRepository
         _context.SaveChanges();
     }
 
-    public void Remove(Guid id) => throw new NotImplementedException();
+    public void Remove(Guid id)
+    {
+        var entity = _context.Tasks.Find(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        _context.Tasks.Remove(entity);
+        _context.SaveChanges();
+    }
 }

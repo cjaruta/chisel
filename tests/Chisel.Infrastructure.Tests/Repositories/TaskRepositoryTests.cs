@@ -25,8 +25,6 @@ public class TaskRepositoryTests : IDisposable
         Assert.Equal(new[] { "First", "Second", "Third" }, texts);
     }
 
-    public void Dispose() => _fixture.Dispose();
-
     [Fact]
     public void Update_ChangedTask_IsSavedToTheDatabase()
     {
@@ -56,4 +54,35 @@ public class TaskRepositoryTests : IDisposable
 
         Assert.Throws<InvalidOperationException>(Act);
     }
+
+    [Fact]
+    public void Remove_ExistingTask_DeletesItFromTheDatabase()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+        var keep = new TaskItem("Keep");
+        var drop = new TaskItem("Drop");
+        repository.Add(keep);
+        repository.Add(drop);
+
+        repository.Remove(drop.Id);
+
+        using var readContext = _fixture.CreateContext();
+        var remaining = Assert.Single(new TaskRepository(readContext).GetAll());
+        Assert.Equal(keep.Id, remaining.Id);
+    }
+
+    [Fact]
+    public void Remove_UnknownId_DoesNothing()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+        repository.Add(new TaskItem("Keep"));
+
+        repository.Remove(Guid.NewGuid());
+
+        Assert.Single(repository.GetAll());
+    }
+
+    public void Dispose() => _fixture.Dispose();
 }
