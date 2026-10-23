@@ -28,4 +28,20 @@ public class ChiselDbContextTests : IDisposable
     }
 
     public void Dispose() => _fixture.Dispose();
+
+    [Fact]
+    public void Tasks_Position_IsSavedAndReadBack()
+    {
+        using var context = _fixture.CreateContext();
+        var task = new TaskEntity { Id = Guid.NewGuid(), Text = "Second item", IsDone = false, Position = 3 };
+
+        context.Tasks.Add(task);
+        context.SaveChanges();
+
+        using var readContext = _fixture.CreateContext();
+        var saved = readContext.Tasks.First(t => t.Id == task.Id);
+
+        Assert.Equal(3, saved.Position);
+    }
+
 }
