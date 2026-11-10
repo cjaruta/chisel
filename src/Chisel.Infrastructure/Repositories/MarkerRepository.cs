@@ -15,6 +15,7 @@ public class MarkerRepository : IMarkerRepository
 
     public IReadOnlyList<Marker> GetAll() =>
         _context.Markers
+            .OrderBy(m => m.Position)
             .ToList()
             .Select(m => m.ToDomain())
             .ToList();
@@ -22,7 +23,12 @@ public class MarkerRepository : IMarkerRepository
     public void ReplaceAll(IEnumerable<Marker> markers)
     {
         _context.Markers.RemoveRange(_context.Markers);
-        _context.Markers.AddRange(markers.Select(m => m.ToEntity()));
+        _context.Markers.AddRange(markers.Select((m, position) =>
+        {
+            var entity = m.ToEntity();
+            entity.Position = position;
+            return entity;
+        }));
         _context.SaveChanges();
     }
 }

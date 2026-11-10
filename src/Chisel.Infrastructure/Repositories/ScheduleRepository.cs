@@ -14,12 +14,20 @@ public class ScheduleRepository : IScheduleRepository
     }
 
     public DaySchedule Get() =>
-        new(_context.ScheduleBlocks.ToList().Select(b => b.ToDomain()));
+        new(_context.ScheduleBlocks
+            .OrderBy(b => b.Position)
+            .ToList()
+            .Select(b => b.ToDomain()));
 
     public void Save(DaySchedule schedule)
     {
         _context.ScheduleBlocks.RemoveRange(_context.ScheduleBlocks);
-        _context.ScheduleBlocks.AddRange(schedule.Blocks.Select(b => b.ToEntity()));
+        _context.ScheduleBlocks.AddRange(schedule.Blocks.Select((b, position) =>
+        {
+            var entity = b.ToEntity();
+            entity.Position = position;
+            return entity;
+        }));
         _context.SaveChanges();
     }
 }

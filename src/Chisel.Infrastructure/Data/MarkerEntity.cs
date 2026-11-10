@@ -8,4 +8,5 @@ public class MarkerEntity
     public string Label { get; set; } = string.Empty;
     public TimeOnly Time { get; set; }
     public MarkerKind Kind { get; set; }
-}
+    public int Position { get; set; }
+}
