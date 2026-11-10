@@ -30,6 +30,9 @@ namespace Chisel.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
                     b.Property<TimeOnly>("Time")
                         .HasColumnType("TEXT");
 
@@ -87,6 +90,9 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.Property<TimeOnly>("End")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
 
                     b.Property<TimeOnly>("Start")
                         .HasColumnType("TEXT");
