@@ -17,6 +17,12 @@ public class MainViewModelTests
         public void Save(DaySchedule schedule) => _schedule = schedule;
     }
 
+    private sealed class FakeMarkerRepository : IMarkerRepository
+    {
+        public IReadOnlyList<Marker> GetAll() => Array.Empty<Marker>();
+        public void ReplaceAll(IEnumerable<Marker> markers) { }
+    }
+
     private sealed class FakeTaskRepository : ITaskRepository
     {
         public IReadOnlyList<TaskItem> GetAll() => Array.Empty<TaskItem>();
@@ -44,7 +50,7 @@ public class MainViewModelTests
     {
         return new MainViewModel(
             new ClockViewModel(time),
-            new ScheduleViewModel(scheduleRepository, time),
+            new ScheduleViewModel(scheduleRepository, new FakeMarkerRepository(), time),
             new TaskListViewModel(new FakeTaskRepository()),
             new NotesViewModel(new FakeNoteRepository(), time),
             new QuickLinksViewModel(new FakeQuickLinkRepository()));
