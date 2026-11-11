@@ -29,7 +29,7 @@ public class QuickLinksViewModelTests
     }
 
     [Fact]
-    public void AddQuickLink_WithLabelAndUrl_AddsToRepositoryAndClearsInputs()
+    public void SaveQuickLink_WithLabelAndUrlAndNoEditingLink_AddsToRepositoryAndClearsInputs()
     {
         var repository = new FakeQuickLinkRepository();
         var viewModel = new QuickLinksViewModel(repository)
@@ -38,15 +38,16 @@ public class QuickLinksViewModelTests
             NewLinkUrl = "https://docs.example.com"
         };
 
-        viewModel.AddQuickLinkCommand.Execute(null);
+        viewModel.SaveQuickLinkCommand.Execute(null);
 
         Assert.Equal(new[] { "Docs" }, repository.GetAll().Select(l => l.Label).ToArray());
         Assert.Equal(string.Empty, viewModel.NewLinkLabel);
         Assert.Equal(string.Empty, viewModel.NewLinkUrl);
+        Assert.Null(viewModel.ErrorMessage);
     }
 
     [Fact]
-    public void AddQuickLink_WithInvalidUrl_DoesNothing()
+    public void SaveQuickLink_WithInvalidUrl_SetsErrorMessageAndDoesNotAdd()
     {
         var repository = new FakeQuickLinkRepository();
         var viewModel = new QuickLinksViewModel(repository)
@@ -55,9 +56,62 @@ public class QuickLinksViewModelTests
             NewLinkUrl = "not a url"
         };
 
-        viewModel.AddQuickLinkCommand.Execute(null);
+        viewModel.SaveQuickLinkCommand.Execute(null);
 
         Assert.Empty(repository.GetAll());
+        Assert.False(string.IsNullOrEmpty(viewModel.ErrorMessage));
+    }
+
+    [Fact]
+    public void SelectQuickLink_LoadsItIntoTheEditFields()
+    {
+        var repository = new FakeQuickLinkRepository();
+        var link = new QuickLink("Docs", "https://docs.example.com");
+        repository.Add(link);
+        var viewModel = new QuickLinksViewModel(repository);
+
+        viewModel.SelectQuickLinkCommand.Execute(link);
+
+        Assert.Equal("Docs", viewModel.NewLinkLabel);
+        Assert.Equal("https://docs.example.com", viewModel.NewLinkUrl);
+        Assert.Equal(link.Id, viewModel.EditingLinkId);
+    }
+
+    [Fact]
+    public void SaveQuickLink_WhileEditingAnExistingLink_ReplacesItKeepingTheSameId()
+    {
+        var repository = new FakeQuickLinkRepository();
+        var link = new QuickLink("Docs", "https://docs.example.com");
+        repository.Add(link);
+        var viewModel = new QuickLinksViewModel(repository);
+        viewModel.SelectQuickLinkCommand.Execute(link);
+
+        viewModel.NewLinkLabel = "Documentation";
+        viewModel.NewLinkUrl = "https://docs.example.com/new";
+        viewModel.SaveQuickLinkCommand.Execute(null);
+
+        var saved = Assert.Single(repository.GetAll());
+        Assert.Equal(link.Id, saved.Id);
+        Assert.Equal("Documentation", saved.Label);
+        Assert.Equal("https://docs.example.com/new", saved.Url);
+        Assert.Null(viewModel.EditingLinkId);
+    }
+
+    [Fact]
+    public void CancelEdit_ClearsEditingStateInputsAndError()
+    {
+        var repository = new FakeQuickLinkRepository();
+        var link = new QuickLink("Docs", "https://docs.example.com");
+        repository.Add(link);
+        var viewModel = new QuickLinksViewModel(repository);
+        viewModel.SelectQuickLinkCommand.Execute(link);
+
+        viewModel.CancelEditCommand.Execute(null);
+
+        Assert.Null(viewModel.EditingLinkId);
+        Assert.Equal(string.Empty, viewModel.NewLinkLabel);
+        Assert.Equal(string.Empty, viewModel.NewLinkUrl);
+        Assert.Null(viewModel.ErrorMessage);
     }
 
     [Fact]

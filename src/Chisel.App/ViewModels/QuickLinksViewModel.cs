@@ -20,6 +20,12 @@ public partial class QuickLinksViewModel : ViewModelBase
     [ObservableProperty]
     public partial string NewLinkUrl { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial Guid? EditingLinkId { get; set; }
+
+    [ObservableProperty]
+    public partial string? ErrorMessage { get; set; }
+
     public QuickLinksViewModel(IQuickLinkRepository repository, Action<string>? openUrl = null)
     {
         _repository = repository;
@@ -40,27 +46,63 @@ public partial class QuickLinksViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddQuickLink()
+    private void SelectQuickLink(QuickLink link)
+    {
+        EditingLinkId = link.Id;
+        NewLinkLabel = link.Label;
+        NewLinkUrl = link.Url;
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private void CancelEdit()
+    {
+        EditingLinkId = null;
+        NewLinkLabel = string.Empty;
+        NewLinkUrl = string.Empty;
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private void SaveQuickLink()
     {
         QuickLink link;
         try
         {
-            link = new QuickLink(NewLinkLabel, NewLinkUrl);
+            link = EditingLinkId is { } id
+                ? new QuickLink(id, NewLinkLabel, NewLinkUrl)
+                : new QuickLink(NewLinkLabel, NewLinkUrl);
         }
-        catch (ArgumentException)
+        catch (ArgumentException ex)
         {
+            ErrorMessage = ex.Message;
             return;
         }
 
+        if (EditingLinkId is not null)
+        {
+            _repository.Remove(link.Id);
+        }
+
         _repository.Add(link);
+        EditingLinkId = null;
         NewLinkLabel = string.Empty;
         NewLinkUrl = string.Empty;
+        ErrorMessage = null;
         Refresh();
     }
 
     [RelayCommand]
     private void RemoveQuickLink(QuickLink link)
     {
+        if (EditingLinkId == link.Id)
+        {
+            EditingLinkId = null;
+            NewLinkLabel = string.Empty;
+            NewLinkUrl = string.Empty;
+            ErrorMessage = null;
+        }
+
         _repository.Remove(link.Id);
         Refresh();
     }

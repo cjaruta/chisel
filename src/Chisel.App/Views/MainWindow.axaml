@@ -108,7 +108,7 @@
                         <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
                             <TextBox Text="{Binding QuickLinks.NewLinkLabel}" PlaceholderText="Label" />
                             <TextBox Text="{Binding QuickLinks.NewLinkUrl}" PlaceholderText="https://..." />
-                            <Button Content="Add" Command="{Binding QuickLinks.AddQuickLinkCommand}" />
+                            <Button Content="Add" Command="{Binding QuickLinks.SaveQuickLinkCommand}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock Classes="empty" Text="No quick links yet"
