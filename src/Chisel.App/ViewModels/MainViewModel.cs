@@ -14,6 +14,7 @@ public partial class MainViewModel : ViewModelBase
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
     public QuickLinksViewModel QuickLinks { get; }
+    public SettingsViewModel Settings { get; }
 
     public event Action<ScheduleEditorViewModel>? ScheduleEditorRequested;
 
@@ -24,13 +25,15 @@ public partial class MainViewModel : ViewModelBase
         NotesViewModel notes,
         QuickLinksViewModel quickLinks,
         IScheduleRepository scheduleRepository,
-        IMarkerRepository markerRepository)
+        IMarkerRepository markerRepository,
+        SettingsViewModel settings)
     {
         Clock = clock;
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;
         QuickLinks = quickLinks;
+        Settings = settings;
         _scheduleRepository = scheduleRepository;
         _markerRepository = markerRepository;
     }

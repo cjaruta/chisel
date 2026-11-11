@@ -6,6 +6,7 @@ using Chisel.App.Views;
 using Chisel.Core.Links;
 using Chisel.Core.Notes;
 using Chisel.Core.Schedule;
+using Chisel.Core.Settings;
 using Chisel.Core.Tasks;
 using Chisel.Infrastructure.Data;
 using Chisel.Infrastructure.Repositories;
@@ -38,15 +39,19 @@ public static class UiSnapshot
         var notes = new NoteRepository(context, time);
         var links = new QuickLinkRepository(context);
         Seed(schedule, markers, tasks, notes, links, time);
+        var userSettings = new UserSettingsRepository(context);
+        userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)));
+        var timeDisplay = new TimeDisplay();
 
         var viewModel = new MainViewModel(
-            new ClockViewModel(time),
-            new ScheduleViewModel(schedule, markers, time),
+            new ClockViewModel(time, timeDisplay),
+            new ScheduleViewModel(schedule, markers, time, timeDisplay),
             new TaskListViewModel(tasks),
-            new NotesViewModel(notes, time),
+            new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
             schedule,
-            markers);
+            markers,
+            new SettingsViewModel(userSettings, timeDisplay));
 
         var window = new MainWindow(windowPlacementPath: null)
         {
