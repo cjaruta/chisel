@@ -136,6 +136,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<TimeOnly>("BedTime")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ClockFormat")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");

@@ -51,5 +51,26 @@ public class UserSettingsRepositoryTests : IDisposable
         Assert.Single(readContext.UserSettings);
     }
 
+    [Fact]
+    public void Save_ThenGet_PersistsTheClockFormat()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new UserSettingsRepository(context);
+
+        repository.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), ClockFormat.TwelveHour));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(ClockFormat.TwelveHour, new UserSettingsRepository(readContext).Get()!.ClockFormat);
+    }
+
+    [Fact]
+    public void ClockFormat_DefaultsToTwentyFourHour()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0));
+
+        Assert.Equal(ClockFormat.TwentyFourHour, settings.ClockFormat);
+        Assert.Equal(ClockFormat.TwelveHour, settings.WithClockFormat(ClockFormat.TwelveHour).ClockFormat);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }
