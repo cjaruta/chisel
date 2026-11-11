@@ -16,5 +16,17 @@ public partial class MainWindow : Window
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Refresh();
         Loaded += (_, _) => _timer.Start();
         Unloaded += (_, _) => _timer.Stop();
+
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.ScheduleEditorRequested += editor =>
+                {
+                    var dialog = new EditScheduleWindow(editor);
+                    dialog.ShowDialog(this);
+                };
+            }
+        };
     }
 }
