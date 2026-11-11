@@ -35,7 +35,15 @@ public sealed class AppServices : IDisposable
             .Options;
 
         DbContext = new ChiselDbContext(options);
-        DatabaseInitializer.Initialize(DbContext);
+        try
+        {
+            DatabaseInitializer.Initialize(DbContext);
+        }
+        catch
+        {
+            DbContext.Dispose();
+            throw;
+        }
 
         Tasks = new TaskRepository(DbContext);
         Notes = new NoteRepository(DbContext, Time);

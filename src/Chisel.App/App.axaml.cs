@@ -1,11 +1,9 @@
-using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
 using Chisel.App.Views;
-using Chisel.Infrastructure.Startup;
 
 namespace Chisel.App;
 
@@ -22,10 +20,15 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            try
-            {
-                _services = new AppServices(AppPaths.GetDatabasePath());
+            var startup = AppStartup.Run(() => new AppServices(AppPaths.GetDatabasePath()), AppPaths.GetErrorLogPath());
+            _services = startup.Value;
 
+            if (_services is null)
+            {
+                desktop.MainWindow = new ErrorWindow(startup.ErrorMessage!);
+            }
+            else
+            {
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
@@ -41,14 +44,6 @@ public partial class App : Application
                 };
 
                 desktop.Exit += (_, _) => _services?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                var logPath = AppPaths.GetErrorLogPath();
-                ErrorLogger.Log(logPath, ex);
-
-                desktop.MainWindow = new ErrorWindow(
-                    $"Something went wrong starting the database. Details were written to:\n{logPath}");
             }
         }
 
