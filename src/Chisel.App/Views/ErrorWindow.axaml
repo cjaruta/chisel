@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="220"
+        x:Class="Chisel.App.Views.ErrorWindow"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Title="Chisel"
+        Width="480" Height="220"
+        CanResize="False">
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="Chisel couldn't start" FontSize="18" FontWeight="Bold" />
+            <TextBlock Name="MessageText" TextWrapping="Wrap" />
+        </StackPanel>
+        <Button Grid.Row="1" Content="Close" HorizontalAlignment="Right" Click="OnCloseClick" />
+    </Grid>
+</Window>

@@ -20,23 +20,33 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            _services = new AppServices(AppPaths.GetDatabasePath());
+            var startup = AppStartup.Run(() => new AppServices(AppPaths.GetDatabasePath()), AppPaths.GetErrorLogPath());
+            _services = startup.Value;
 
-            var mainViewModel = new MainViewModel(
-                new ClockViewModel(_services.Time),
-                new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
-                new TaskListViewModel(_services.Tasks),
-                new NotesViewModel(_services.Notes, _services.Time),
-                new QuickLinksViewModel(_services.QuickLinks));
-
-            desktop.MainWindow = new MainWindow
+            if (_services is null)
             {
-                DataContext = mainViewModel,
-            };
+                desktop.MainWindow = new ErrorWindow(startup.ErrorMessage!);
+            }
+            else
+            {
+                var mainViewModel = new MainViewModel(
+                    new ClockViewModel(_services.Time),
+                    new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
+                    new TaskListViewModel(_services.Tasks),
+                    new NotesViewModel(_services.Notes, _services.Time),
+                    new QuickLinksViewModel(_services.QuickLinks),
+                    _services.Schedule,
+                    _services.Markers);
 
-            desktop.Exit += (_, _) => _services?.Dispose();
+                desktop.MainWindow = new MainWindow
+                {
+                    DataContext = mainViewModel,
+                };
+
+                desktop.Exit += (_, _) => _services?.Dispose();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
     }
-}
+}

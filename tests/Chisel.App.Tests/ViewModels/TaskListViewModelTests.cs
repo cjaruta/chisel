@@ -87,4 +87,33 @@ public class TaskListViewModelTests
         Assert.Empty(repository.GetAll());
         Assert.Empty(viewModel.Tasks);
     }
+
+    [Fact]
+    public void ClearCompleted_RemovesOnlyDoneTasksFromRepository()
+    {
+        var repository = new FakeTaskRepository();
+        var done = new TaskItem("Buy milk");
+        done.Complete();
+        var open = new TaskItem("Walk dog");
+        repository.Add(done);
+        repository.Add(open);
+        var viewModel = new TaskListViewModel(repository);
+
+        viewModel.ClearCompletedCommand.Execute(null);
+
+        Assert.Equal(new[] { "Walk dog" }, repository.GetAll().Select(t => t.Text).ToArray());
+        Assert.Equal(new[] { "Walk dog" }, viewModel.Tasks.Select(t => t.Text).ToArray());
+    }
+
+    [Fact]
+    public void ClearCompleted_NoDoneTasks_DoesNothing()
+    {
+        var repository = new FakeTaskRepository();
+        repository.Add(new TaskItem("Walk dog"));
+        var viewModel = new TaskListViewModel(repository);
+
+        viewModel.ClearCompletedCommand.Execute(null);
+
+        Assert.Equal(new[] { "Walk dog" }, repository.GetAll().Select(t => t.Text).ToArray());
+    }
 }

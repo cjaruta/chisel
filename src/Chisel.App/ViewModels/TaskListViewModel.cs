@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using Chisel.Core.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -62,6 +63,17 @@ public partial class TaskListViewModel : ViewModelBase
     private void RemoveTask(TaskItem task)
     {
         _repository.Remove(task.Id);
+        Refresh();
+    }
+
+    [RelayCommand]
+    private void ClearCompleted()
+    {
+        foreach (var task in Tasks.Where(t => t.IsDone).ToList())
+        {
+            _repository.Remove(task.Id);
+        }
+
         Refresh();
     }
 }
