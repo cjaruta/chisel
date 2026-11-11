@@ -14,7 +14,7 @@ public class ClockViewModelTests
 
         var viewModel = new ClockViewModel(time);
 
-        Assert.Equal(time.GetUtcNow(), viewModel.Now);
+        Assert.Equal(time.GetLocalNow(), viewModel.Now);
     }
 
     [Fact]
@@ -27,6 +27,6 @@ public class ClockViewModelTests
         time.SetUtcNow(new DateTimeOffset(2026, 11, 10, 8, 31, 0, TimeSpan.Zero));
         viewModel.Refresh();
 
-        Assert.Equal(time.GetUtcNow(), viewModel.Now);
+        Assert.Equal(time.GetLocalNow(), viewModel.Now);
     }
 }
