@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -49,12 +50,28 @@ public partial class MainWindow : Window
         Width = placement.Width;
         Height = placement.Height;
 
-        if (placement.X is { } x && placement.Y is { } y)
+        var workingAreas = Screens.All.Select(s => s.WorkingArea);
+        if (placement.X is { } x && placement.Y is { } y && WindowPlacementPolicy.IsOnScreen(placement, workingAreas))
         {
             Position = new PixelPoint((int)x, (int)y);
         }
     }
 
-    private void SavePlacement() =>
-        WindowPlacementStore.Save(_windowPlacementPath, new WindowPlacement(Width, Height, Position.X, Position.Y));
+    private void SavePlacement()
+    {
+        var placement = WindowPlacementPolicy.ForSave(WindowState, Width, Height, Position);
+        if (placement is null)
+        {
+            return;
+        }
+
+        try
+        {
+            WindowPlacementStore.Save(_windowPlacementPath, placement);
+        }
+        catch (Exception)
+        {
+            // Remembering the window position is a convenience; never block closing over it.
+        }
+    }
 }
