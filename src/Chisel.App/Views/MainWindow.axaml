@@ -12,10 +12,21 @@
         Background="{StaticResource WindowBackgroundBrush}"
         Title="Chisel">
 
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding Settings.CloseCommand}" />
+    </Window.KeyBindings>
+
     <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
+        <Button Grid.Row="0" Name="SettingsButton" Classes="gearButton"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                ToolTip.Tip="Settings" Command="{Binding Settings.ToggleCommand}">
+            <Path Width="20" Height="20" Stretch="Uniform" Fill="{StaticResource DimTextBrush}"
+                  Data="M10.13,4.22 L10.52,1.60 L13.48,1.60 L13.87,4.22 L16.18,5.18 L18.30,3.60 L20.40,5.70 L18.82,7.82 L19.78,10.13 L22.40,10.52 L22.40,13.48 L19.78,13.87 L18.82,16.18 L20.40,18.30 L18.30,20.40 L16.18,18.82 L13.87,19.78 L13.48,22.40 L10.52,22.40 L10.13,19.78 L7.82,18.82 L5.70,20.40 L3.60,18.30 L5.18,16.18 L4.22,13.87 L1.60,13.48 L1.60,10.52 L4.22,10.13 L5.18,7.82 L3.60,5.70 L5.70,3.60 L7.82,5.18 Z M15.20,12 A3.2,3.2 0 1 0 8.80,12 A3.2,3.2 0 1 0 15.20,12 Z" />
+        </Button>
+
         <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:HH:mm:ss}'}" FontSize="36" FontWeight="Bold" />
+                <TextBlock Text="{Binding Clock.TimeText}" FontSize="36" FontWeight="Bold" />
                 <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:dddd, MMMM d}'}" FontSize="20" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Classes="dim" Text="{Binding Schedule.CurrentBlockTitle, StringFormat='Now: {0}'}" />
@@ -32,14 +43,18 @@
                     <TextBlock Classes="empty" Text="Nothing scheduled"
                                IsVisible="{Binding Schedule.Timeline.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
                     <ScrollViewer>
-                        <ItemsControl Name="ScheduleList" ItemsSource="{Binding Schedule.Timeline}">
+                        <ItemsControl Name="ScheduleList" ItemsSource="{Binding Schedule.Timeline}" Grid.IsSharedSizeScope="True">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:ScheduleTimelineEntry">
                                     <Border Classes="timelineRow" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}">
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <TextBlock Classes="timeLabel" Text="{Binding TimeLabel}" />
-                                            <TextBlock Text="{Binding Title}" />
-                                        </StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TimeColumn" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Classes="timeLabel" Text="{Binding TimeLabel}" Margin="0,0,12,0" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Title}" />
+                                        </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -104,19 +119,20 @@
                                        IsVisible="{Binding Notes.Notes.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
                             <ItemsControl Name="NoteItemsControl" ItemsSource="{Binding Notes.Notes}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="vm:NoteRow">
                                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
                                             <Button Classes="link" HorizontalAlignment="Left"
                                                     Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.SelectNoteCommand}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding Note}">
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" />
                                                     <TextBlock Classes="dim" Text="{Binding Body}" />
+                                                    <TextBlock Classes="dim" FontSize="11" Text="{Binding UpdatedLabel}" />
                                                 </StackPanel>
                                             </Button>
                                             <Button Classes="iconButton" Content="x"
                                                     Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.RemoveNoteCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding Note}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -165,5 +181,18 @@
             </StackPanel>
             </ScrollViewer>
         </Grid>
+
+        <!-- Settings panel: floats over the content, below the gear button -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="card settingsPanel"
+                IsVisible="{Binding Settings.IsOpen}" ZIndex="10"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,44,0,0" Width="280">
+            <StackPanel Spacing="10">
+                <TextBlock Classes="cardHeading" Text="Settings" />
+                <TextBlock Classes="dim" Text="Clock format" />
+                <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
+                <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+                <Button Content="Close" HorizontalAlignment="Right" Command="{Binding Settings.CloseCommand}" />
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

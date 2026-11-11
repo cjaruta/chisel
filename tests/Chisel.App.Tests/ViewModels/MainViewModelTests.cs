@@ -2,6 +2,7 @@ using Chisel.App.ViewModels;
 using Chisel.Core.Links;
 using Chisel.Core.Notes;
 using Chisel.Core.Schedule;
+using Chisel.Core.Settings;
 using Chisel.Core.Tasks;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -10,6 +11,12 @@ namespace Chisel.App.Tests.ViewModels;
 
 public class MainViewModelTests
 {
+    private sealed class FakeSettingsRepository : IUserSettingsRepository
+    {
+        public UserSettings? Get() => null;
+        public void Save(UserSettings settings) { }
+    }
+
     private sealed class FakeScheduleRepository : IScheduleRepository
     {
         private DaySchedule _schedule = new(Array.Empty<ScheduleBlock>());
@@ -59,7 +66,8 @@ public class MainViewModelTests
             new NotesViewModel(new FakeNoteRepository(), time),
             new QuickLinksViewModel(new FakeQuickLinkRepository()),
             scheduleRepository,
-            markerRepository);
+            markerRepository,
+            new SettingsViewModel(new FakeSettingsRepository(), new TimeDisplay()));
     }
 
     [Fact]

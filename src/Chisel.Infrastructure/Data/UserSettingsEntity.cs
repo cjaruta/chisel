@@ -6,4 +6,5 @@ public class UserSettingsEntity
     public string Name { get; set; } = string.Empty;
     public TimeOnly WakeTime { get; set; }
     public TimeOnly BedTime { get; set; }
+    public int ClockFormat { get; set; }
 }

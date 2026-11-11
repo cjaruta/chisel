@@ -12,17 +12,20 @@ public partial class ScheduleViewModel : ViewModelBase
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IMarkerRepository _markerRepository;
     private readonly TimeProvider _time;
+    private readonly TimeDisplay _display;
 
     [ObservableProperty]
     public partial string CurrentBlockTitle { get; set; } = "No block";
 
     public ObservableCollection<ScheduleTimelineEntry> Timeline { get; } = new();
 
-    public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time)
+    public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time, TimeDisplay? display = null)
     {
         _scheduleRepository = scheduleRepository;
         _markerRepository = markerRepository;
         _time = time;
+        _display = display ?? new TimeDisplay();
+        _display.PropertyChanged += (_, _) => Refresh();
         Refresh();
     }
 
@@ -39,14 +42,14 @@ public partial class ScheduleViewModel : ViewModelBase
             .Select(block => (Sort: block.CrossesMidnight && now < block.End ? TimeOnly.MinValue : block.Start, Entry: new ScheduleTimelineEntry
             {
                 Title = block.Title,
-                TimeLabel = $"{block.Start:HH:mm}-{block.End:HH:mm}",
+                TimeLabel = _display.Range(block.Start, block.End),
                 IsCurrent = block.Contains(now),
                 IsPast = !block.Contains(now) && !block.CrossesMidnight && now >= block.End
             }))
             .Concat(markers.Select(marker => (Sort: marker.Time, Entry: new ScheduleTimelineEntry
             {
                 Title = marker.Label,
-                TimeLabel = $"{marker.Time:HH:mm}",
+                TimeLabel = _display.Time(marker.Time),
                 IsCurrent = false,
                 IsPast = marker.HasPassed(now)
             })))

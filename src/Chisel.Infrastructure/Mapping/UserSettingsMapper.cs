@@ -10,9 +10,10 @@ public static class UserSettingsMapper
         Id = Guid.NewGuid(),
         Name = settings.Name,
         WakeTime = settings.WakeTime,
-        BedTime = settings.BedTime
+        BedTime = settings.BedTime,
+        ClockFormat = (int)settings.ClockFormat
     };
 
     public static UserSettings ToDomain(this UserSettingsEntity entity) =>
-        new(entity.Name, entity.WakeTime, entity.BedTime);
+        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat);
 }

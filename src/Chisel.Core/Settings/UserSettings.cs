@@ -2,7 +2,7 @@ namespace Chisel.Core.Settings;
 
 public class UserSettings
 {
-    public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime)
+    public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -17,9 +17,13 @@ public class UserSettings
         Name = name.Trim();
         WakeTime = wakeTime;
         BedTime = bedTime;
+        ClockFormat = clockFormat;
     }
 
     public string Name { get; }
     public TimeOnly WakeTime { get; }
     public TimeOnly BedTime { get; }
+    public ClockFormat ClockFormat { get; }
+
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat);
 }

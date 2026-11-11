@@ -29,14 +29,17 @@ public partial class App : Application
             }
             else
             {
+                var timeDisplay = new TimeDisplay();
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay);
                 var mainViewModel = new MainViewModel(
-                    new ClockViewModel(_services.Time),
-                    new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
+                    new ClockViewModel(_services.Time, timeDisplay),
+                    new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay),
                     new TaskListViewModel(_services.Tasks),
-                    new NotesViewModel(_services.Notes, _services.Time),
+                    new NotesViewModel(_services.Notes, _services.Time, timeDisplay),
                     new QuickLinksViewModel(_services.QuickLinks),
                     _services.Schedule,
-                    _services.Markers);
+                    _services.Markers,
+                    settings);
 
                 desktop.MainWindow = new MainWindow
                 {
