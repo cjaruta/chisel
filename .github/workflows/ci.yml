@@ -15,17 +15,23 @@ jobs:
         run: |
           $pattern = '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(com|net|org|edu|io)'
           $matches = git grep -nIE $pattern -- . ':!.github/workflows/ci.yml' 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          $grepExitCode = $LASTEXITCODE
+
+          $disallowed = @()
+          if ($grepExitCode -eq 0) {
             $disallowed = $matches | Where-Object {
               $_ -notmatch '@example\.com' -and $_ -notmatch '@users\.noreply\.github\.com'
             }
-            if ($disallowed) {
-              Write-Host "Found email-like addresses that are not allowed (only example.com and users.noreply.github.com are permitted):"
-              $disallowed | ForEach-Object { Write-Host $_ }
-              exit 1
-            }
           }
+
+          if ($disallowed) {
+            Write-Host "Found email-like addresses that are not allowed (only example.com and users.noreply.github.com are permitted):"
+            $disallowed | ForEach-Object { Write-Host $_ }
+            exit 1
+          }
+
           Write-Host "No disallowed email-like addresses found."
+          exit 0
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
