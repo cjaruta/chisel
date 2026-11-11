@@ -7,4 +7,4 @@
       Markers: last coffee 1 PM, all work done 6 PM.
 - [x] Chunk 3 feature/view-models: clock, schedule (current block), tasks, notes, quick links
 - [x] Chunk 4 feature/main-window: Avalonia main window bound to the view models
-- [ ] Chunk 5 feature/release: README roadmap/scope update, publishable launchable build
+- [x] Chunk 5 feature/release: README roadmap/scope update, publishable launchable build

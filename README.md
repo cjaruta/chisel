@@ -6,7 +6,7 @@ It started as a single HTML page I used as a browser homepage. This repo is a re
  
 ## Current state
  
-The core domain logic (schedule blocks, markers, tasks, notes, user settings, and widget layout) is implemented and covered by unit tests. The persistence layer using Entity Framework Core and SQLite is being built out now. The desktop UI has not been started yet, so there is nothing to launch at the moment.
+v0.1 is feature-complete: a window with a live clock, today's schedule with the current block highlighted, a task list, notes, and quick links, all stored in a local SQLite database. The domain logic, persistence layer, view models, and Avalonia main window are all implemented and covered by unit tests.
  
 ## Built with
  
@@ -20,11 +20,12 @@ The core domain logic (schedule blocks, markers, tasks, notes, user settings, an
 ```
 src/
   Chisel.Core/              Domain models and business rules
-  Chisel.Infrastructure/    EF Core DbContext and SQLite persistence
-  Chisel.App/               Avalonia desktop app
+  Chisel.Infrastructure/    EF Core DbContext, SQLite persistence, seeding
+  Chisel.App/               Avalonia desktop app: view models, main window, startup wiring
 tests/
   Chisel.Core.Tests/
   Chisel.Infrastructure.Tests/
+  Chisel.App.Tests/
 ```
  
 `Chisel.Core` has no dependencies on the other projects. Infrastructure and App both reference Core, so the business logic can be tested without a UI or a database.
@@ -41,13 +42,31 @@ cd chisel
 dotnet test
 ```
  
+## Running the app
+ 
+```
+dotnet run --project src/Chisel.App
+```
+ 
+On first launch, Chisel creates its database at `%AppData%\Chisel\chisel.db`, migrates it, and seeds a default schedule, markers, and settings.
+ 
+To build a standalone executable instead:
+ 
+```
+dotnet publish src/Chisel.App -c Release -r win-x64 --self-contained
+```
+ 
+The published app is written to `src/Chisel.App/bin/Release/net10.0/win-x64/publish/`.
+ 
 ## Roadmap
  
-- Finish the remaining database entities and add the first EF Core migration
-- Build the main window and widget views in Avalonia
+v0.1 scope is done. Possible future additions, cut from v0.1:
+ 
+- A layout editor for rearranging widgets
+- A settings screen for editing the schedule, wake/bed times, and markers
 - Media controls using the Windows media session API
 - Weather widget using Open-Meteo
 - Optional sync server with ASP.NET Core and SQL Server
 
 ## License
-MIT
+MIT
