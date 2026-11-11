@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Chisel.Core.Links;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,6 +10,7 @@ namespace Chisel.App.ViewModels;
 public partial class QuickLinksViewModel : ViewModelBase
 {
     private readonly IQuickLinkRepository _repository;
+    private readonly Action<string> _openUrl;
 
     public ObservableCollection<QuickLink> QuickLinks { get; } = new();
 
@@ -18,11 +20,15 @@ public partial class QuickLinksViewModel : ViewModelBase
     [ObservableProperty]
     public partial string NewLinkUrl { get; set; } = string.Empty;
 
-    public QuickLinksViewModel(IQuickLinkRepository repository)
+    public QuickLinksViewModel(IQuickLinkRepository repository, Action<string>? openUrl = null)
     {
         _repository = repository;
+        _openUrl = openUrl ?? DefaultOpenUrl;
         Refresh();
     }
+
+    private static void DefaultOpenUrl(string url) =>
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
     public void Refresh()
     {
@@ -58,4 +64,7 @@ public partial class QuickLinksViewModel : ViewModelBase
         _repository.Remove(link.Id);
         Refresh();
     }
+
+    [RelayCommand]
+    private void OpenQuickLink(QuickLink link) => _openUrl(link.Url);
 }
