@@ -164,13 +164,36 @@ public class ScheduleViewModelTests
             new ScheduleBlock("Read", new TimeOnly(22, 0), new TimeOnly(23, 0)),
             new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30))
         }));
-        var time = new FakeTimeProvider();
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 10, 12, 0, 0, TimeSpan.Zero));
 
         var viewModel = new ScheduleViewModel(scheduleRepository, new FakeMarkerRepository(), time);
 
         Assert.Equal(
             new[] { "Focus", "Read", "Sleep" },
             viewModel.Timeline.Select(e => e.Title).ToArray());
+    }
+
+    [Theory]
+    [InlineData(23, 0, new[] { "Wake up", "Focus", "Read", "Sleep" })]  // current, but started today: stays last
+    [InlineData(23, 59, new[] { "Wake up", "Focus", "Read", "Sleep" })]
+    [InlineData(0, 0, new[] { "Sleep", "Wake up", "Focus", "Read" })]   // after midnight it started yesterday: first
+    [InlineData(2, 0, new[] { "Sleep", "Wake up", "Focus", "Read" })]
+    [InlineData(6, 30, new[] { "Wake up", "Focus", "Read", "Sleep" })]  // ended: back to start-time order
+    public void Timeline_OvernightBlock_MovesToTopOnlyWhileCurrentAfterMidnight(int hour, int minute, string[] expected)
+    {
+        var scheduleRepository = new FakeScheduleRepository();
+        scheduleRepository.Save(new DaySchedule(new[]
+        {
+            new ScheduleBlock("Wake up", new TimeOnly(6, 30), new TimeOnly(7, 0)),
+            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0)),
+            new ScheduleBlock("Read", new TimeOnly(22, 0), new TimeOnly(23, 0)),
+            new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30))
+        }));
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 10, hour, minute, 0, TimeSpan.Zero));
+
+        var viewModel = new ScheduleViewModel(scheduleRepository, new FakeMarkerRepository(), time);
+
+        Assert.Equal(expected, viewModel.Timeline.Select(e => e.Title).ToArray());
     }
 
     [Fact]

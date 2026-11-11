@@ -35,7 +35,8 @@ public partial class ScheduleViewModel : ViewModelBase
         CurrentBlockTitle = schedule.CurrentBlock(now)?.Title ?? "No block";
 
         var entries = schedule.Blocks
-            .Select(block => (Sort: block.Start, Entry: new ScheduleTimelineEntry
+            // An overnight block that's still running after midnight started yesterday, so it leads the list.
+            .Select(block => (Sort: block.CrossesMidnight && now < block.End ? TimeOnly.MinValue : block.Start, Entry: new ScheduleTimelineEntry
             {
                 Title = block.Title,
                 TimeLabel = $"{block.Start:HH:mm}-{block.End:HH:mm}",

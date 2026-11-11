@@ -75,4 +75,16 @@ public class MainWindowHeadlessTests
         Assert.Contains("Docs", texts);
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void Schedule_AtTwoAm_ShowsTheOvernightBlockFirstAndCurrent()
+    {
+        var window = UiSnapshot.ShowMainWindow(now: new DateTimeOffset(2000, 1, 1, 2, 0, 0, TimeSpan.Zero));
+        UiSnapshot.Render(window, "main-0200");
+
+        var rows = TimelineRows(window);
+        Assert.Equal("Sleep", RowTitle(rows[0]));
+        Assert.Contains("current", rows[0].Classes);
+        window.Close();
+    }
 }
