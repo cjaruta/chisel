@@ -37,4 +37,4 @@ public class UserSettingsMapperTests
         Assert.Equal(new TimeOnly(6, 30), settings.WakeTime);
         Assert.Equal(new TimeOnly(23, 0), settings.BedTime);
     }
-}
+}

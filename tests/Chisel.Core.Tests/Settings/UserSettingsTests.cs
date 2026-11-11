@@ -37,4 +37,4 @@ public class UserSettingsTests
         // Act & Assert
         Assert.Throws<ArgumentException>(Act);
     }
-}
+}

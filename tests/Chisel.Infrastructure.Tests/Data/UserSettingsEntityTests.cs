@@ -31,4 +31,4 @@ public class UserSettingsEntityTests : IDisposable
     }
 
     public void Dispose() => _fixture.Dispose();
-}
+}
