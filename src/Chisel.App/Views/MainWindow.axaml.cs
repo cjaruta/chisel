@@ -11,10 +11,16 @@ namespace Chisel.App.Views;
 public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
-    private readonly string _windowPlacementPath = AppPaths.GetWindowPlacementPath();
+    private readonly string? _windowPlacementPath;
 
-    public MainWindow()
+    public MainWindow() : this(AppPaths.GetWindowPlacementPath())
     {
+    }
+
+    // windowPlacementPath: where size/position are remembered; null turns that off (used by tests).
+    public MainWindow(string? windowPlacementPath)
+    {
+        _windowPlacementPath = windowPlacementPath;
         InitializeComponent();
 
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Refresh();
@@ -41,6 +47,11 @@ public partial class MainWindow : Window
 
     private void ApplySavedPlacement()
     {
+        if (_windowPlacementPath is null)
+        {
+            return;
+        }
+
         var placement = WindowPlacementStore.Load(_windowPlacementPath);
         if (placement is null)
         {
@@ -59,8 +70,8 @@ public partial class MainWindow : Window
 
     private void SavePlacement()
     {
-        var placement = WindowPlacementPolicy.ForSave(WindowState, Width, Height, Position);
-        if (placement is null)
+        var placement = WindowPlacementPolicy.ForSave(WindowState, ClientSize.Width, ClientSize.Height, Position);
+        if (placement is null || _windowPlacementPath is null)
         {
             return;
         }
