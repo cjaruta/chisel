@@ -58,6 +58,26 @@ dotnet publish src/Chisel.App -c Release -r win-x64 --self-contained
  
 The published app is written to `src/Chisel.App/bin/Release/net10.0/win-x64/publish/`.
  
+## Development
+
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+
+```
+dotnet build
+dotnet test
+```
+
+Entities live in `Chisel.Infrastructure/Data` and are mapped to and from the `Chisel.Core` domain
+types via static `ToEntity`/`ToDomain` extension methods in `Chisel.Infrastructure/Mapping`. Any
+change to an entity needs a corresponding EF Core migration:
+
+```
+dotnet ef migrations add <Name> --project src/Chisel.Infrastructure
+```
+
+The test suite fails if a pending model change is missing a migration. Pull requests run the full
+build and test suite via GitHub Actions.
+
 ## Roadmap
  
 v0.1 scope is done. Possible future additions, cut from v0.1:
