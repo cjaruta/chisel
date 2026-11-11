@@ -5,6 +5,7 @@
     <Project Path="src/Chisel.Infrastructure/Chisel.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Chisel.App.Tests/Chisel.App.Tests.csproj" />
     <Project Path="tests/Chisel.Core.Tests/Chisel.Core.Tests.csproj" />
     <Project Path="tests/Chisel.Infrastructure.Tests/Chisel.Infrastructure.Tests.csproj" />
   </Folder>
