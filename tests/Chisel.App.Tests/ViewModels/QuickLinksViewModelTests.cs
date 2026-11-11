@@ -73,4 +73,18 @@ public class QuickLinksViewModelTests
         Assert.Empty(repository.GetAll());
         Assert.Empty(viewModel.QuickLinks);
     }
+
+    [Fact]
+    public void OpenQuickLink_ExistingLink_InvokesOpenUrlWithTheLinksUrl()
+    {
+        var repository = new FakeQuickLinkRepository();
+        var link = new QuickLink("Docs", "https://docs.example.com");
+        repository.Add(link);
+        string? openedUrl = null;
+        var viewModel = new QuickLinksViewModel(repository, url => openedUrl = url);
+
+        viewModel.OpenQuickLinkCommand.Execute(link);
+
+        Assert.Equal("https://docs.example.com", openedUrl);
+    }
 }

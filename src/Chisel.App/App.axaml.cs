@@ -24,7 +24,7 @@ public partial class App : Application
 
             var mainViewModel = new MainViewModel(
                 new ClockViewModel(_services.Time),
-                new ScheduleViewModel(_services.Schedule, _services.Time),
+                new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
                 new TaskListViewModel(_services.Tasks),
                 new NotesViewModel(_services.Notes, _services.Time),
                 new QuickLinksViewModel(_services.QuickLinks));

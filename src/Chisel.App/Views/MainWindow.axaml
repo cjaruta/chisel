@@ -1,88 +1,136 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Chisel.App.ViewModels"
+        xmlns:conv="using:Chisel.App.Converters"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
         x:Class="Chisel.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
+        Background="{StaticResource WindowBackgroundBrush}"
         Title="Chisel">
 
-    <Grid RowDefinitions="Auto,*" Margin="16" ColumnDefinitions="*">
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="24" Margin="0,0,0,16">
-            <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:HH:mm:ss}'}" FontSize="32" FontWeight="Bold" />
-            <TextBlock Text="{Binding Schedule.CurrentBlockTitle}" FontSize="22" VerticalAlignment="Center" />
+    <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
+        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,16">
+            <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:HH:mm:ss}'}" FontSize="36" FontWeight="Bold" />
+            <TextBlock Classes="dim" Text="{Binding Schedule.CurrentBlockTitle, StringFormat='Now: {0}'}" />
         </StackPanel>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" x:Name="WidgetsGrid">
-            <!-- Tasks -->
-            <DockPanel Grid.Column="0" Margin="0,0,8,0">
-                <TextBlock DockPanel.Dock="Top" Text="Tasks" FontWeight="Bold" Margin="0,0,0,8" />
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,8,0,0">
-                    <TextBox Text="{Binding Tasks.NewTaskText}" PlaceholderText="New task" Width="140" />
-                    <Button Content="Add" Command="{Binding Tasks.AddTaskCommand}" />
-                </StackPanel>
-                <ItemsControl Name="TaskItemsControl" ItemsSource="{Binding Tasks.Tasks}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
-                                <CheckBox IsChecked="{Binding IsDone}"
-                                          Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.ToggleCompleteCommand}"
-                                          CommandParameter="{Binding}" />
-                                <TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
-                                <Button Content="x"
-                                        Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.RemoveTaskCommand}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
+        <Grid Grid.Row="1" ColumnDefinitions="1.3*,16,*">
+            <!-- Schedule timeline -->
+            <Border Grid.Column="0" Classes="card">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Classes="cardHeading" Text="Today" />
+                    <TextBlock Classes="empty" Text="Nothing scheduled"
+                               IsVisible="{Binding Schedule.Timeline.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Schedule.Timeline}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ScheduleTimelineEntry">
+                                    <Border Classes="timelineRow" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}">
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Classes="timeLabel" Text="{Binding TimeLabel}" />
+                                            <TextBlock Text="{Binding Title}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
 
-            <!-- Notes -->
-            <DockPanel Grid.Column="1" Margin="8,0">
-                <TextBlock DockPanel.Dock="Top" Text="Notes" FontWeight="Bold" Margin="0,0,0,8" />
-                <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,8,0,0">
-                    <TextBox Text="{Binding Notes.NewNoteTitle}" PlaceholderText="Title" />
-                    <TextBox Text="{Binding Notes.NewNoteBody}" PlaceholderText="Body" />
-                    <Button Content="Add" Command="{Binding Notes.AddNoteCommand}" />
-                </StackPanel>
-                <ItemsControl Name="NoteItemsControl" ItemsSource="{Binding Notes.Notes}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
-                                <TextBlock Text="{Binding Title}" FontWeight="Bold" VerticalAlignment="Center" />
-                                <Button Content="x"
-                                        Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.RemoveNoteCommand}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
+            <!-- Tasks, Notes, Quick links -->
+            <StackPanel Grid.Column="2" Spacing="16">
+                <Border Classes="card">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="cardHeading" Text="Tasks" />
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,10,0,0">
+                            <TextBox Text="{Binding Tasks.NewTaskText}" PlaceholderText="New task" Width="160" />
+                            <Button Content="Add" Command="{Binding Tasks.AddTaskCommand}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Classes="empty" Text="No tasks yet"
+                                       IsVisible="{Binding Tasks.Tasks.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+                            <ItemsControl Name="TaskItemsControl" ItemsSource="{Binding Tasks.Tasks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                            <CheckBox IsChecked="{Binding IsDone}"
+                                                      Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.ToggleCompleteCommand}"
+                                                      CommandParameter="{Binding}" />
+                                            <TextBlock Text="{Binding Text}" Classes.done="{Binding IsDone}" VerticalAlignment="Center" />
+                                            <Button Classes="iconButton" Content="x"
+                                                    Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.RemoveTaskCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
 
-            <!-- Quick links -->
-            <DockPanel Grid.Column="2" Margin="8,0,0,0">
-                <TextBlock DockPanel.Dock="Top" Text="Quick links" FontWeight="Bold" Margin="0,0,0,8" />
-                <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,8,0,0">
-                    <TextBox Text="{Binding QuickLinks.NewLinkLabel}" PlaceholderText="Label" />
-                    <TextBox Text="{Binding QuickLinks.NewLinkUrl}" PlaceholderText="https://..." />
-                    <Button Content="Add" Command="{Binding QuickLinks.AddQuickLinkCommand}" />
-                </StackPanel>
-                <ItemsControl Name="QuickLinkItemsControl" ItemsSource="{Binding QuickLinks.QuickLinks}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
-                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                                <Button Content="x"
-                                        Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.RemoveQuickLinkCommand}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
+                <Border Classes="card">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="cardHeading" Text="Notes" />
+                        <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
+                            <TextBox Text="{Binding Notes.NewNoteTitle}" PlaceholderText="Title" />
+                            <TextBox Text="{Binding Notes.NewNoteBody}" PlaceholderText="Body" />
+                            <Button Content="Add" Command="{Binding Notes.AddNoteCommand}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Classes="empty" Text="No notes yet"
+                                       IsVisible="{Binding Notes.Notes.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+                            <ItemsControl Name="NoteItemsControl" ItemsSource="{Binding Notes.Notes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" />
+                                                <TextBlock Classes="dim" Text="{Binding Body}" />
+                                            </StackPanel>
+                                            <Button Classes="iconButton" Content="x"
+                                                    Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.RemoveNoteCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="cardHeading" Text="Quick links" />
+                        <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
+                            <TextBox Text="{Binding QuickLinks.NewLinkLabel}" PlaceholderText="Label" />
+                            <TextBox Text="{Binding QuickLinks.NewLinkUrl}" PlaceholderText="https://..." />
+                            <Button Content="Add" Command="{Binding QuickLinks.AddQuickLinkCommand}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Classes="empty" Text="No quick links yet"
+                                       IsVisible="{Binding QuickLinks.QuickLinks.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+                            <ItemsControl Name="QuickLinkItemsControl" ItemsSource="{Binding QuickLinks.QuickLinks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                            <Button Classes="link" Content="{Binding Label}"
+                                                    Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.OpenQuickLinkCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Classes="iconButton" Content="x"
+                                                    Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.RemoveQuickLinkCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
