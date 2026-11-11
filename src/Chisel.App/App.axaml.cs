@@ -22,9 +22,16 @@ public partial class App : Application
         {
             _services = new AppServices(AppPaths.GetDatabasePath());
 
+            var mainViewModel = new MainViewModel(
+                new ClockViewModel(_services.Time),
+                new ScheduleViewModel(_services.Schedule, _services.Time),
+                new TaskListViewModel(_services.Tasks),
+                new NotesViewModel(_services.Notes, _services.Time),
+                new QuickLinksViewModel(_services.QuickLinks));
+
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(),
+                DataContext = mainViewModel,
             };
 
             desktop.Exit += (_, _) => _services?.Dispose();

@@ -13,8 +13,8 @@ public partial class ClockViewModel : ViewModelBase
     public ClockViewModel(TimeProvider time)
     {
         _time = time;
-        Now = _time.GetUtcNow();
+        Now = _time.GetLocalNow();
     }
 
-    public void Refresh() => Now = _time.GetUtcNow();
+    public void Refresh() => Now = _time.GetLocalNow();
 }
