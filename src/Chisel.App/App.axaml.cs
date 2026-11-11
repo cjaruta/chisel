@@ -27,7 +27,9 @@ public partial class App : Application
                 new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time),
                 new TaskListViewModel(_services.Tasks),
                 new NotesViewModel(_services.Notes, _services.Time),
-                new QuickLinksViewModel(_services.QuickLinks));
+                new QuickLinksViewModel(_services.QuickLinks),
+                _services.Schedule,
+                _services.Markers);
 
             desktop.MainWindow = new MainWindow
             {

@@ -46,14 +46,20 @@ public class MainViewModelTests
         public void Remove(Guid id) { }
     }
 
-    private static MainViewModel CreateViewModel(FakeTimeProvider time, FakeScheduleRepository scheduleRepository)
+    private static MainViewModel CreateViewModel(
+        FakeTimeProvider time,
+        FakeScheduleRepository scheduleRepository,
+        FakeMarkerRepository? markerRepository = null)
     {
+        markerRepository ??= new FakeMarkerRepository();
         return new MainViewModel(
             new ClockViewModel(time),
-            new ScheduleViewModel(scheduleRepository, new FakeMarkerRepository(), time),
+            new ScheduleViewModel(scheduleRepository, markerRepository, time),
             new TaskListViewModel(new FakeTaskRepository()),
             new NotesViewModel(new FakeNoteRepository(), time),
-            new QuickLinksViewModel(new FakeQuickLinkRepository()));
+            new QuickLinksViewModel(new FakeQuickLinkRepository()),
+            scheduleRepository,
+            markerRepository);
     }
 
     [Fact]
@@ -87,6 +93,40 @@ public class MainViewModelTests
         viewModel.Refresh();
 
         Assert.Equal(time.GetLocalNow(), viewModel.Clock.Now);
+        Assert.Equal("Focus", viewModel.Schedule.CurrentBlockTitle);
+    }
+
+    [Fact]
+    public void OpenScheduleEditor_RaisesScheduleEditorRequestedWithAnEditorViewModel()
+    {
+        var time = new FakeTimeProvider();
+        var viewModel = CreateViewModel(time, new FakeScheduleRepository());
+
+        ScheduleEditorViewModel? requested = null;
+        viewModel.ScheduleEditorRequested += editor => requested = editor;
+        viewModel.OpenScheduleEditorCommand.Execute(null);
+
+        Assert.NotNull(requested);
+    }
+
+    [Fact]
+    public void OpenScheduleEditor_WhenEditorSaves_RefreshesSchedule()
+    {
+        var time = new FakeTimeProvider();
+        time.SetUtcNow(new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero));
+        var scheduleRepository = new FakeScheduleRepository();
+        var viewModel = CreateViewModel(time, scheduleRepository);
+
+        ScheduleEditorViewModel? requested = null;
+        viewModel.ScheduleEditorRequested += editor => requested = editor;
+        viewModel.OpenScheduleEditorCommand.Execute(null);
+
+        requested!.AddBlockCommand.Execute(null);
+        requested.Blocks[0].Title = "Focus";
+        requested.Blocks[0].Start = "08:00";
+        requested.Blocks[0].End = "11:00";
+        requested.SaveCommand.Execute(null);
+
         Assert.Equal("Focus", viewModel.Schedule.CurrentBlockTitle);
     }
 }
