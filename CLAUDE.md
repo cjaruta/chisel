@@ -1,8 +1,7 @@
 # Chisel
 
 Windows desktop daily planner. C# / .NET 10, Avalonia (MVVM), EF Core + SQLite, xUnit, GitHub Actions CI.
-Repo: cjaruta/chisel. Owner: Caden. He wants this finished fast and usable, not a learning exercise.
-
+Repo: cjaruta/chisel. Owner: the owner. 
 ## Architecture
 - src/Chisel.Core: domain types and repository interfaces. No dependencies.
 - src/Chisel.Infrastructure: EF Core DbContext, entities, mappers (static extension methods ToEntity/ToDomain), repositories, migrations.
@@ -22,12 +21,19 @@ Repo: cjaruta/chisel. Owner: Caden. He wants this finished fast and usable, not 
    - B) Run `gh pr create --fill`, then `gh pr merge --auto --squash`, then wait with `gh pr checks --watch` until merged, then `git switch main && git pull` before the next chunk.
 6. Never push to main. Never force push. Never add or change a license.
 7. After each chunk, tick it in docs/ROADMAP.md and commit that.
-8. If a test is still failing after 3 honest attempts, stop and tell Caden what's wrong instead of guessing.
+8. If a test is still failing after 3 honest attempts, stop and tell the owner what's wrong instead of guessing.
 
 ## Style
 Keep code simple. No new packages unless needed. No UI tests; view models get light unit tests only.
-Caden prefers short, plain-language messages. Report briefly when a chunk is done.
+Preference toward: short, plain-language messages. Report briefly when a chunk is done.
 
 ## v0.1 scope ("done")
 A window with a live clock, today's schedule with the current block highlighted, task list, notes, quick links, all stored in local SQLite.
 Cut from v0.1: layout editor, settings screen, weather, media controls, sync server.
+
+## Privacy
+- Never put real personal information in code, tests, seed data, docs, comments, or commit messages: no real names, emails, birthdates, addresses, phone numbers, employer, or school.
+- Use fake data: "Test User", "user@example.com", 2000-01-01.
+- The app must not hard-code any person's name. Names come from user settings at runtime.
+- Never copy personal details from prompts or memory into the repo.
+- If a task seems to need real personal data, ask first.
