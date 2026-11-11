@@ -78,7 +78,7 @@
                         <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
                             <TextBox Text="{Binding Notes.NewNoteTitle}" PlaceholderText="Title" />
                             <TextBox Text="{Binding Notes.NewNoteBody}" PlaceholderText="Body" />
-                            <Button Content="Add" Command="{Binding Notes.AddNoteCommand}" />
+                            <Button Content="Add" Command="{Binding Notes.SaveNoteCommand}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock Classes="empty" Text="No notes yet"
