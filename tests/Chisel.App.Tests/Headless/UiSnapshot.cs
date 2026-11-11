@@ -23,14 +23,15 @@ public static class UiSnapshot
     // 09:30 on 2000-01-01, so "Focus" (08:00-11:00) is the current block.
     public static readonly DateTimeOffset SampleNow = new(2000, 1, 1, 9, 30, 0, TimeSpan.Zero);
 
-    public static MainWindow ShowMainWindow(double width = 1200, double height = 760)
+    // now: the clock time to show; defaults to SampleNow.
+    public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
         var context = new ChiselDbContext(new DbContextOptionsBuilder<ChiselDbContext>().UseSqlite(connection).Options);
         context.Database.Migrate();
 
-        var time = new FakeTimeProvider(SampleNow);
+        var time = new FakeTimeProvider(now ?? SampleNow);
         var schedule = new ScheduleRepository(context);
         var markers = new MarkerRepository(context);
         var tasks = new TaskRepository(context);
