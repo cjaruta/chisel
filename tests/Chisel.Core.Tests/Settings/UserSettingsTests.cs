@@ -9,13 +9,13 @@ public class UserSettingsTests
     public void Constructor_ValidValues_CreatesSuccessfully()
     {
         // Arrange
-        var settings = new UserSettings("Caden", new TimeOnly(6, 30), new TimeOnly(23, 0));
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0));
 
         // Act
         var name = settings.Name;
 
         // Assert
-        Assert.Equal("Caden", name);
+        Assert.Equal("Test User", name);
     }
 
     [Fact]
@@ -32,9 +32,9 @@ public class UserSettingsTests
     public void Constructor_WakeTimeEqualsBedTime_ThrowsArgumentException()
     {
         // Arrange
-        void Act() => new UserSettings("Caden", new TimeOnly(6, 30), new TimeOnly(6, 30));
+        void Act() => new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(6, 30));
 
         // Act & Assert
         Assert.Throws<ArgumentException>(Act);
     }
-}
+}

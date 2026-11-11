@@ -14,7 +14,7 @@ public class UserSettingsEntityTests : IDisposable
         var settings = new UserSettingsEntity
         {
             Id = Guid.NewGuid(),
-            Name = "Caden",
+            Name = "Test User",
             WakeTime = new TimeOnly(6, 30),
             BedTime = new TimeOnly(23, 0)
         };
@@ -25,10 +25,10 @@ public class UserSettingsEntityTests : IDisposable
         using var readContext = _fixture.CreateContext();
         var saved = readContext.UserSettings.First(s => s.Id == settings.Id);
 
-        Assert.Equal("Caden", saved.Name);
+        Assert.Equal("Test User", saved.Name);
         Assert.Equal(new TimeOnly(6, 30), saved.WakeTime);
         Assert.Equal(new TimeOnly(23, 0), saved.BedTime);
     }
 
     public void Dispose() => _fixture.Dispose();
-}
+}
