@@ -104,19 +104,20 @@
                                        IsVisible="{Binding Notes.Notes.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
                             <ItemsControl Name="NoteItemsControl" ItemsSource="{Binding Notes.Notes}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="vm:NoteRow">
                                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
                                             <Button Classes="link" HorizontalAlignment="Left"
                                                     Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.SelectNoteCommand}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding Note}">
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" />
                                                     <TextBlock Classes="dim" Text="{Binding Body}" />
+                                                    <TextBlock Classes="dim" FontSize="11" Text="{Binding UpdatedLabel}" />
                                                 </StackPanel>
                                             </Button>
                                             <Button Classes="iconButton" Content="x"
                                                     Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.RemoveNoteCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding Note}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

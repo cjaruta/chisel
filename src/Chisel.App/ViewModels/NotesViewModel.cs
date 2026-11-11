@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using Chisel.Core.Notes;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,7 +13,9 @@ public partial class NotesViewModel : ViewModelBase
     private readonly INoteRepository _repository;
     private readonly TimeProvider _time;
 
-    public ObservableCollection<Note> Notes { get; } = new();
+    private readonly TimeDisplay _display;
+
+    public ObservableCollection<NoteRow> Notes { get; } = new();
 
     [ObservableProperty]
     public partial string NewNoteTitle { get; set; } = string.Empty;
@@ -23,10 +26,12 @@ public partial class NotesViewModel : ViewModelBase
     [ObservableProperty]
     public partial Guid? EditingNoteId { get; set; }
 
-    public NotesViewModel(INoteRepository repository, TimeProvider time)
+    public NotesViewModel(INoteRepository repository, TimeProvider time, TimeDisplay? display = null)
     {
         _repository = repository;
         _time = time;
+        _display = display ?? new TimeDisplay();
+        _display.PropertyChanged += (_, _) => Refresh();
         Refresh();
     }
 
@@ -35,8 +40,15 @@ public partial class NotesViewModel : ViewModelBase
         Notes.Clear();
         foreach (var note in _repository.GetAll())
         {
-            Notes.Add(note);
+            Notes.Add(new NoteRow { Note = note, UpdatedLabel = FormatUpdated(note.UpdatedAt) });
         }
+    }
+
+    private string FormatUpdated(DateTimeOffset updatedAt)
+    {
+        var local = TimeZoneInfo.ConvertTime(updatedAt, _time.LocalTimeZone);
+        var date = local.ToString("MMM d", CultureInfo.InvariantCulture);
+        return $"Updated {date}, {_display.Time(TimeOnly.FromDateTime(local.DateTime))}";
     }
 
     [RelayCommand]
@@ -65,7 +77,7 @@ public partial class NotesViewModel : ViewModelBase
 
         if (EditingNoteId is { } id)
         {
-            var existing = Notes.FirstOrDefault(n => n.Id == id);
+            var existing = Notes.FirstOrDefault(n => n.Note.Id == id)?.Note;
             if (existing is not null)
             {
                 existing.EditTitle(NewNoteTitle);
