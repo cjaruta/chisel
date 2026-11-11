@@ -8,5 +8,5 @@
 - [x] Chunk 3 feature/view-models: clock, schedule (current block), tasks, notes, quick links
 - [x] Chunk 4 feature/main-window: Avalonia main window bound to the view models
 - [x] Chunk 5 feature/release: README roadmap/scope update, publishable launchable build
-- [ ] Chunk 6 feature/ui-polish: schedule timeline with current block highlighted, card layout for
+- [x] Chunk 6 feature/ui-polish: schedule timeline with current block highlighted, card layout for
       tasks/notes/quick links, dark theme styling, empty states
