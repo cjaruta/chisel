@@ -10,12 +10,12 @@ public class UserSettingsMapperTests
     [Fact]
     public void ToEntity_CopiesNameWakeTimeAndBedTime()
     {
-        var settings = new UserSettings("Caden", new TimeOnly(6, 30), new TimeOnly(23, 0));
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0));
 
         var entity = settings.ToEntity();
 
         Assert.NotEqual(Guid.Empty, entity.Id);
-        Assert.Equal("Caden", entity.Name);
+        Assert.Equal("Test User", entity.Name);
         Assert.Equal(new TimeOnly(6, 30), entity.WakeTime);
         Assert.Equal(new TimeOnly(23, 0), entity.BedTime);
     }
@@ -26,14 +26,14 @@ public class UserSettingsMapperTests
         var entity = new UserSettingsEntity
         {
             Id = Guid.NewGuid(),
-            Name = "Caden",
+            Name = "Test User",
             WakeTime = new TimeOnly(6, 30),
             BedTime = new TimeOnly(23, 0)
         };
 
         var settings = entity.ToDomain();
 
-        Assert.Equal("Caden", settings.Name);
+        Assert.Equal("Test User", settings.Name);
         Assert.Equal(new TimeOnly(6, 30), settings.WakeTime);
         Assert.Equal(new TimeOnly(23, 0), settings.BedTime);
     }

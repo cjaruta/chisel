@@ -480,3 +480,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local project notes and tooling config not intended for the public repo
+CLAUDE.md
+CLAUDE.local.md
+docs/ROADMAP.md
+.claude/
