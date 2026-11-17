@@ -46,7 +46,7 @@ public class LayoutScrollTests
     [AvaloniaFact]
     public void TooShortForTheMinimumHeights_TheRightColumnScrollsAndCardsKeepTheirMinimums()
     {
-        var window = UiSnapshot.ShowMainWindow(1000, 500);
+        var window = UiSnapshot.ShowMainWindow(1000, 420);
 
         var column = Frame(window, "links").FindAncestorOfType<ScrollViewer>()!;
         Assert.Contains("layoutColumnScroller", column.Classes);

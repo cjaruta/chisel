@@ -92,6 +92,7 @@ public partial class LayoutViewModel : ViewModelBase
     private void Exit()
     {
         CancelWidgetDrag();
+        CancelResize();
         Snapshot = null;
         IsEditing = false;
     }
@@ -134,4 +135,48 @@ public partial class LayoutViewModel : ViewModelBase
 
     // Puts the widget down where it was, leaving the layout as it is.
     public void CancelWidgetDrag() => DraggedWidgetId = null;
+
+    // The layout from when the current resize began; null when no resize is going on.
+    private WidgetLayout? _resizeStart;
+
+    [ObservableProperty]
+    public partial bool IsResizing { get; private set; }
+
+    // Starts dragging a resize handle. Only in edit mode.
+    public void BeginResize()
+    {
+        if (IsEditing)
+        {
+            _resizeStart = Layout;
+            IsResizing = true;
+        }
+    }
+
+    // Shows the resize live: the widget grows by delta (a fraction of its column's height, negative shrinks it)
+    // against the widget below, from the weights the resize started with. See WidgetLayout.Resize.
+    public void PreviewResize(string widgetId, double delta, double minimumFraction)
+    {
+        if (_resizeStart is { } start)
+        {
+            Layout = start.Resize(widgetId, delta, minimumFraction);
+        }
+    }
+
+    // Keeps the resized weights in the working copy.
+    public void CommitResize()
+    {
+        _resizeStart = null;
+        IsResizing = false;
+    }
+
+    // Puts the weights back as they were when the resize began.
+    public void CancelResize()
+    {
+        if (_resizeStart is { } start)
+        {
+            Layout = start;
+        }
+        _resizeStart = null;
+        IsResizing = false;
+    }
 }
