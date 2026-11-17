@@ -113,6 +113,7 @@ public partial class ScheduleViewModel : ViewModelBase
     private void OpenPendingMarker(TimeOnly time)
     {
         IsPending = false;
+        HideHover();
         BlockEditor.Cancel();
         MarkerEditor.OpenNew(time);
         IsMarkerPending = true;

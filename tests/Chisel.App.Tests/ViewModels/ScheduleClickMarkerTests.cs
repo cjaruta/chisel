@@ -73,6 +73,17 @@ public class ScheduleClickMarkerTests
     }
 
     [Fact]
+    public void Click_HidesTheGuideLineSoItDoesNotDoubleThePendingMarker()
+    {
+        var schedule = Create();
+        schedule.HoverAt(new TimeOnly(12, 0));
+
+        ClickAt(schedule, 720);
+
+        Assert.False(schedule.IsHoverVisible);
+    }
+
+    [Fact]
     public void Click_UsesTheSameKindAsTheAddMarkerButton()
     {
         var schedule = Create();

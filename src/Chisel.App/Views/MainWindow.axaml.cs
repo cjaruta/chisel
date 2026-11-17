@@ -106,7 +106,7 @@ public partial class MainWindow : Window
     }
 
     // Blocks and markers are buttons and handle their own presses, so this only sees empty space.
-    // A press starts tracking a drag; releasing without real movement is a plain click.
+    // A press starts tracking a drag; releasing without real movement is a plain click, which adds a marker.
     private void OnScheduleGridPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (Schedule is not { } schedule || !e.GetCurrentPoint(ScheduleGrid).Properties.IsLeftButtonPressed)
@@ -133,10 +133,14 @@ public partial class MainWindow : Window
         e.Pointer.Capture(null);
         e.Handled = true;
 
+        // The editor becomes visible on this change; focus its first box once it has been laid out.
         if (schedule.IsPending)
         {
-            // The editor becomes visible on this change; focus once it has been laid out.
             Dispatcher.UIThread.Post(() => BlockTitleBox.Focus(), DispatcherPriority.Background);
+        }
+        else if (schedule.IsMarkerPending)
+        {
+            Dispatcher.UIThread.Post(() => MarkerLabelBox.Focus(), DispatcherPriority.Background);
         }
     }
 

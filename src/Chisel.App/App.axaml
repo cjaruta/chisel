@@ -227,6 +227,11 @@
             <Setter Property="Opacity" Value="0.5" />
         </Style>
 
+        <!-- A marker not saved yet: same look, a little softer -->
+        <Style Selector="Grid.markerRow.pendingMarker">
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+
         <!-- Hover guide line: faint, a step above the hour lines, never competing with the now-line -->
         <Style Selector="Border.hoverLine">
             <Setter Property="Height" Value="1" />
