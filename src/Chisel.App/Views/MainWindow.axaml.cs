@@ -27,6 +27,11 @@ public partial class MainWindow : Window
         _windowPlacementPath = windowPlacementPath;
         InitializeComponent();
 
+        // Keep the layout toolbar centered, but clear of the clock and date on narrow windows.
+        LayoutToolbar.SizeChanged += (_, _) => PlaceLayoutToolbar();
+        ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
+        SizeChanged += (_, _) => PlaceLayoutToolbar();
+
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Refresh();
         Loaded += (_, _) =>
         {
@@ -37,6 +42,18 @@ public partial class MainWindow : Window
         };
         Unloaded += (_, _) => _timer.Stop();
         Closing += (_, _) => SavePlacement();
+    }
+
+    // Centered over the window, or just right of the clock and date when centering would cover them.
+    private void PlaceLayoutToolbar()
+    {
+        if (LayoutToolbar.Parent is not Control area || LayoutToolbar.Bounds.Width <= 0)
+        {
+            return;
+        }
+        var centered = (area.Bounds.Width - LayoutToolbar.Bounds.Width) / 2;
+        var left = Math.Max(centered, ClockPanel.Bounds.Right + 16);
+        LayoutToolbar.Margin = new Thickness(left, LayoutToolbar.Margin.Top, 0, 0);
     }
 
     private ScheduleWidgetView? ScheduleView => this.GetVisualDescendants().OfType<ScheduleWidgetView>().FirstOrDefault();

@@ -22,6 +22,9 @@ namespace Chisel.App.Views;
 // In edit mode a card's title bar can be dragged: past a small threshold the widget is picked up,
 // a ghost follows the pointer, an accent line (or a highlighted "Drop here" zone in an empty column)
 // shows where it will land, and releasing drops it there. Nothing else moves until the drop.
+//
+// Between stacked cards sits a resize handle in the gap (always there, so showing it moves nothing; usable
+// only in edit mode). Dragging it moves height between the two neighbours live; release keeps it.
 public sealed class LayoutHost : Decorator
 {
     public const double Gap = 16;
@@ -34,6 +37,7 @@ public sealed class LayoutHost : Decorator
 
     private static readonly Cursor GrabCursor = new(StandardCursorType.Hand);
     private static readonly Cursor DraggingCursor = new(StandardCursorType.DragMove);
+    private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeNorthSouth);
 
     private readonly Dictionary<string, WidgetFrame> _frames = new();
     private readonly WeightedStackPanel _columns = new() { Orientation = Orientation.Horizontal, Spacing = Gap };
@@ -42,6 +46,17 @@ public sealed class LayoutHost : Decorator
     private readonly Border _ghost;
     private readonly TextBlock _ghostTitle = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly List<Control> _dropZones = new();
+    private readonly List<Panel> _handles = new();
+
+    // The columns' widget ids as last built; a layout with the same ones only needs new weights.
+    private string _builtStructure = "";
+
+    // The handle being dragged: the widget above it, the pointer's starting height, and the column's
+    // height available to its widgets (weights share this out).
+    private Panel? _resizeHandle;
+    private string? _resizeWidget;
+    private double _resizeStartY;
+    private double _resizeSpace;
 
     // The title bar press that may turn into a drag.
     private WidgetFrame? _pressed;
@@ -105,7 +120,18 @@ public sealed class LayoutHost : Decorator
         switch (e.PropertyName)
         {
             case nameof(LayoutViewModel.Columns):
-                Rebuild();
+                if (Structure() == _builtStructure)
+                {
+                    UpdateWeights();
+                }
+                else
+                {
+                    Rebuild();
+                }
+                break;
+            case nameof(LayoutViewModel.IsResizing) when Layout?.IsResizing != true:
+                // Committed, or cancelled (Esc): stop following the pointer.
+                EndResize();
                 break;
             case nameof(LayoutViewModel.IsEditing):
                 IsEditing = Layout?.IsEditing == true;
@@ -136,6 +162,29 @@ public sealed class LayoutHost : Decorator
             {
                 zone.IsVisible = value;
             }
+            foreach (var handle in _handles)
+            {
+                SetHandleEditing(handle, value);
+            }
+        }
+    }
+
+    private string Structure() =>
+        Layout is null ? "" : string.Join("|", Layout.Columns.Select(c => string.Join(",", c.Widgets.Select(w => w.Id))));
+
+    // Same widgets in the same places: just share the space out by the new weights, so nothing is rebuilt
+    // (a live resize keeps hold of its handle).
+    private void UpdateWeights()
+    {
+        var scrollers = ColumnScrollers;
+        for (var c = 0; c < scrollers.Count && c < Layout!.Columns.Count; c++)
+        {
+            var column = Layout.Columns[c];
+            WeightedStackPanel.SetWeight(scrollers[c], column.WidthWeight);
+            foreach (var slot in column.Widgets)
+            {
+                WeightedStackPanel.SetWeight(_frames[slot.Id], slot.HeightWeight);
+            }
         }
     }
 
@@ -150,6 +199,8 @@ public sealed class LayoutHost : Decorator
         }
         _columns.Children.Clear();
         _dropZones.Clear();
+        _handles.Clear();
+        _builtStructure = Structure();
 
         if (Layout is null)
         {
@@ -159,13 +210,19 @@ public sealed class LayoutHost : Decorator
         for (var c = 0; c < Layout.Columns.Count; c++)
         {
             var column = Layout.Columns[c];
-            var panel = new WeightedStackPanel { Orientation = Orientation.Vertical, Spacing = Gap };
+            // Cards with a resize handle filling each gap between them (weight 0, so each gets exactly Gap).
+            var panel = new WeightedStackPanel { Orientation = Orientation.Vertical };
             panel.Classes.Add("layoutColumn");
-            foreach (var slot in column.Widgets)
+            for (var i = 0; i < column.Widgets.Count; i++)
             {
+                var slot = column.Widgets[i];
                 var frame = Frame(slot.Widget);
                 WeightedStackPanel.SetWeight(frame, slot.HeightWeight);
                 panel.Children.Add(frame);
+                if (i + 1 < column.Widgets.Count)
+                {
+                    panel.Children.Add(ResizeHandle(slot.Id, panel));
+                }
             }
             if (column.Widgets.Count == 0)
             {
@@ -200,6 +257,93 @@ public sealed class LayoutHost : Decorator
         zone.Classes.Add("dropZone");
         _dropZones.Add(zone);
         return zone;
+    }
+
+    // A slim bar in the gap below a card: an 8px hit area with a short grip mark in the middle.
+    private Panel ResizeHandle(string aboveId, WeightedStackPanel column)
+    {
+        var line = new Border();
+        line.Classes.Add("resizeLine");
+        var grip = new Border();
+        grip.Classes.Add("resizeGrip");
+        var hit = new Border { Background = Brushes.Transparent, Cursor = ResizeCursor };
+        hit.Classes.Add("resizeHit");
+
+        var handle = new Panel { Name = $"ResizeHandle_{aboveId}", MinHeight = Gap, Children = { line, grip, hit } };
+        handle.Classes.Add("resizeHandle");
+        WeightedStackPanel.SetWeight(handle, 0);
+        SetHandleEditing(handle, _isEditing);
+
+        hit.PointerPressed += (_, e) => OnHandlePressed(handle, aboveId, column, e);
+        hit.PointerMoved += (_, e) => OnHandleMoved(e);
+        hit.PointerReleased += (_, e) => OnHandleReleased(e);
+        hit.PointerCaptureLost += (_, _) => OnHandleCaptureLost();
+        _handles.Add(handle);
+        return handle;
+    }
+
+    private static void SetHandleEditing(Panel handle, bool editing)
+    {
+        handle.IsHitTestVisible = editing;
+        handle.Classes.Set("editing", editing);
+    }
+
+    private void OnHandlePressed(Panel handle, string aboveId, WeightedStackPanel column, PointerPressedEventArgs e)
+    {
+        if (!IsEditing || Layout is not { } layout || !e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+        layout.BeginResize();
+        if (!layout.IsResizing)
+        {
+            return;
+        }
+        _resizeHandle = handle;
+        _resizeWidget = aboveId;
+        _resizeStartY = e.GetPosition(this).Y;
+        _resizeSpace = column.Children.OfType<WidgetFrame>().Sum(f => f.Bounds.Height);
+        handle.Classes.Add("active");
+        e.Pointer.Capture((IInputElement?)e.Source);
+        e.Handled = true;
+    }
+
+    private void OnHandleMoved(PointerEventArgs e)
+    {
+        if (_resizeWidget is not { } id || Layout is not { IsResizing: true } layout || _resizeSpace <= 0)
+        {
+            return;
+        }
+        var dy = e.GetPosition(this).Y - _resizeStartY;
+        layout.PreviewResize(id, dy / _resizeSpace, WidgetRegistry.MinimumHeight / _resizeSpace);
+    }
+
+    private void OnHandleReleased(PointerReleasedEventArgs e)
+    {
+        if (_resizeWidget is not null)
+        {
+            OnHandleMoved(e);
+            Layout?.CommitResize();
+        }
+        EndResize();
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+
+    private void OnHandleCaptureLost()
+    {
+        if (_resizeWidget is not null)
+        {
+            Layout?.CancelResize();
+        }
+        EndResize();
+    }
+
+    private void EndResize()
+    {
+        _resizeHandle?.Classes.Remove("active");
+        _resizeHandle = null;
+        _resizeWidget = null;
     }
 
     private WidgetFrame Frame(WidgetDefinition widget)
