@@ -46,6 +46,21 @@ public static class ScheduleGridLayout
         return new GridRange(Math.Min(press, current), Math.Max(press, current));
     }
 
+    // Dragging within this many pixels of the top or bottom of the scroll area scrolls the grid.
+    public const double AutoScrollEdgePixels = 32;
+    public const double AutoScrollMaxStepPixels = 10;
+
+    // Pixels to scroll per tick for a pointer at y in a viewport of the given height: negative is up.
+    // Speeds up gently the deeper the pointer is in the edge zone, capped past the edge.
+    public static double AutoScrollStep(double y, double viewportHeight)
+    {
+        var depth = y < AutoScrollEdgePixels ? AutoScrollEdgePixels - y
+            : y > viewportHeight - AutoScrollEdgePixels ? -(y - (viewportHeight - AutoScrollEdgePixels))
+            : 0;
+        var fraction = Math.Clamp(depth / AutoScrollEdgePixels, -1, 1);
+        return -fraction * AutoScrollMaxStepPixels;
+    }
+
     // The nearest mark to a position, as minutes from midnight between 0 and max.
     public static int SnapMinute(double y, double scrollOffset, double pixelsPerMinute = 1.0, int max = MinutesPerDay)
     {
