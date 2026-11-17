@@ -47,6 +47,7 @@ public partial class ScheduleViewModel : ViewModelBase
         BlockEditor = new BlockEditorViewModel(scheduleRepository, _display, Refresh);
         MarkerEditor = new MarkerEditorViewModel(markerRepository, _display, Refresh);
         BlockEditor.PropertyChanged += OnBlockEditorChanged;
+        MarkerEditor.PropertyChanged += OnMarkerEditorChanged;
         Refresh();
     }
 
@@ -61,7 +62,7 @@ public partial class ScheduleViewModel : ViewModelBase
         OpenNewBlock(NextHour, NextHour.AddHours(1));
     }
 
-    // The hover guide line: where a click on empty grid space would add a block.
+    // The hover guide line: where a click on empty grid space would add a marker.
     [ObservableProperty]
     public partial bool IsHoverVisible { get; set; }
 
@@ -93,24 +94,57 @@ public partial class ScheduleViewModel : ViewModelBase
 
     public void HideHover() => IsHoverVisible = false;
 
-    // A new block from the guide line, an hour long but ending at midnight at the latest.
-    [RelayCommand]
-    private void AddBlockAtHover()
+    // A click on empty grid space: a new marker at that time, shown as a pending line until Save.
+    [ObservableProperty]
+    public partial bool IsMarkerPending { get; private set; }
+
+    [ObservableProperty]
+    public partial double PendingMarkerMinute { get; private set; }
+
+    [ObservableProperty]
+    public partial string PendingMarkerTime { get; private set; } = "";
+
+    [ObservableProperty]
+    public partial string PendingMarkerLabel { get; private set; } = "";
+
+    [ObservableProperty]
+    public partial bool IsPendingMarkerCheckpoint { get; private set; }
+
+    private void OpenPendingMarker(TimeOnly time)
     {
-        if (IsHoverVisible)
+        IsPending = false;
+        BlockEditor.Cancel();
+        MarkerEditor.OpenNew(time);
+        IsMarkerPending = true;
+        UpdatePendingMarkerFromEditor();
+    }
+
+    // The pending marker follows what is typed in the editor; an unreadable time keeps the last one.
+    private void UpdatePendingMarkerFromEditor()
+    {
+        if (!IsMarkerPending)
         {
-            OpenNewHourBlock(_hoverTime);
+            return;
+        }
+        PendingMarkerLabel = string.IsNullOrWhiteSpace(MarkerEditor.Label) ? "New marker" : MarkerEditor.Label;
+        IsPendingMarkerCheckpoint = MarkerEditor.Kind == MarkerKind.Checkpoint;
+        if (TimeFormatter.TryParse(MarkerEditor.TimeText, out var time))
+        {
+            PendingMarkerMinute = ScheduleGridLayout.MinuteOfDay(time);
+            PendingMarkerTime = _display.Time(time);
         }
     }
 
-    private void OpenNewHourBlock(TimeOnly start)
+    private void OnMarkerEditorChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var end = start.AddHours(1);
-        if (end < start)
+        if (e.PropertyName == nameof(MarkerEditorViewModel.IsOpen) && !MarkerEditor.IsOpen)
         {
-            end = TimeOnly.MinValue;
+            IsMarkerPending = false;
         }
-        OpenNewBlock(start, end);
+        else if (e.PropertyName is nameof(MarkerEditorViewModel.Label) or nameof(MarkerEditorViewModel.TimeText) or nameof(MarkerEditorViewModel.Kind))
+        {
+            UpdatePendingMarkerFromEditor();
+        }
     }
 
     private void OpenNewBlock(TimeOnly start, TimeOnly end)
@@ -122,7 +156,7 @@ public partial class ScheduleViewModel : ViewModelBase
 
     // Dragging on empty grid space. y and scrollOffset mean the same as in ScheduleGridLayout.SnapTime;
     // the scroll offset can change mid-drag when the grid auto-scrolls.
-    // Moving less than this, or not past the pressed mark, is still a plain click.
+    // Moving less than this, or not past the pressed mark, is still a plain click, which adds a marker.
     public const double DragThresholdPixels = 4;
 
     private double _pressContentY;
@@ -200,7 +234,7 @@ public partial class ScheduleViewModel : ViewModelBase
 
         if (!IsDragging)
         {
-            OpenNewHourBlock(GridRange.TimeAt(_pressMinute));
+            OpenPendingMarker(GridRange.TimeAt(_pressMinute));
             return;
         }
 
@@ -254,6 +288,7 @@ public partial class ScheduleViewModel : ViewModelBase
     [RelayCommand]
     private void AddMarker()
     {
+        IsMarkerPending = false;
         BlockEditor.Cancel();
         MarkerEditor.OpenNew(NextHour);
     }
@@ -278,6 +313,7 @@ public partial class ScheduleViewModel : ViewModelBase
         {
             return;
         }
+        IsMarkerPending = false;
         BlockEditor.Cancel();
         MarkerEditor.OpenEdit(item.MarkerIndex, _markers[item.MarkerIndex]);
     }
@@ -304,6 +340,7 @@ public partial class ScheduleViewModel : ViewModelBase
         {
             ShowPreview((int)PreviewStartMinute, (int)PreviewEndMinute);
         }
+        UpdatePendingMarkerFromEditor();
 
         HourLabels.Clear();
         for (var hour = 0; hour <= 24; hour++)

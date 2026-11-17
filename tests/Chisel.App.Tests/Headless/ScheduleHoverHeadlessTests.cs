@@ -131,16 +131,16 @@ public class ScheduleHoverHeadlessTests
     }
 
     [AvaloniaFact]
-    public void ClickOnEmptySpace_OpensTheBlockEditorAtTheLineForAnHour()
+    public void ClickOnEmptySpace_OpensTheMarkerEditorAtTheLine()
     {
         var window = Show();
 
         Click(window, At(window, 12 * 60 + 22));
 
-        Assert.True(Named<Border>(window, "BlockEditorPanel").IsVisible);
-        Assert.Equal("New block", Schedule(window).BlockEditor.Heading);
-        Assert.Equal("12:15", Named<TextBox>(window, "BlockStartBox").Text);
-        Assert.Equal("13:15", Named<TextBox>(window, "BlockEndBox").Text);
+        Assert.True(Named<Border>(window, "MarkerEditorPanel").IsVisible);
+        Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);
+        Assert.Equal("New marker", Schedule(window).MarkerEditor.Heading);
+        Assert.Equal("12:15", Named<TextBox>(window, "MarkerTimeBox").Text);
         window.Close();
     }
 

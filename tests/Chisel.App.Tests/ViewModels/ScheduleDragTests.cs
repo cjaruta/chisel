@@ -254,7 +254,7 @@ public class ScheduleDragTests
     [Theory]
     [InlineData(722)] // under the pixel threshold
     [InlineData(726)] // past the threshold but still the same snapped time
-    public void SmallMovement_IsAClickThatOpensANewBlockAtThePress(double releaseY)
+    public void SmallMovement_IsAClickThatOpensANewMarkerAtThePress(double releaseY)
     {
         var schedule = Create();
         schedule.BeginDrag(720, 0);
@@ -263,9 +263,9 @@ public class ScheduleDragTests
         Assert.False(schedule.IsPreviewVisible);
         schedule.EndDrag();
 
-        Assert.True(schedule.BlockEditor.IsOpen);
-        Assert.Equal("12:00", schedule.BlockEditor.StartText);
-        Assert.Equal("13:00", schedule.BlockEditor.EndText);
+        Assert.True(schedule.MarkerEditor.IsOpen);
+        Assert.Equal("12:00", schedule.MarkerEditor.TimeText);
+        Assert.False(schedule.BlockEditor.IsOpen);
         Assert.False(schedule.IsPending);
     }
 
