@@ -1,0 +1,44 @@
+<w:WidgetView xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:vm="using:Chisel.App.ViewModels"
+              xmlns:conv="using:Chisel.App.Converters"
+              xmlns:ctl="using:Chisel.App.Controls"
+              xmlns:convA="using:Avalonia.Data.Converters"
+              xmlns:w="using:Chisel.App.Views.Widgets"
+              x:Class="Chisel.App.Views.Widgets.TasksWidgetView"
+              x:DataType="vm:MainViewModel">
+
+    <w:WidgetView.HeaderActions>
+        <Button Content="Clear completed" Command="{Binding Tasks.ClearCompletedCommand}" />
+    </w:WidgetView.HeaderActions>
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,10,0,0">
+            <TextBox Text="{Binding Tasks.NewTaskText}" PlaceholderText="New task" Width="160">
+                <TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter" Command="{Binding Tasks.AddTaskCommand}" />
+                </TextBox.KeyBindings>
+            </TextBox>
+            <Button Content="Add" Command="{Binding Tasks.AddTaskCommand}" />
+        </StackPanel>
+        <StackPanel>
+            <TextBlock Classes="empty" Text="No tasks yet"
+                       IsVisible="{Binding Tasks.Tasks.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+            <ItemsControl Name="TaskItemsControl" ItemsSource="{Binding Tasks.Tasks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                            <CheckBox IsChecked="{Binding IsDone}"
+                                      Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.ToggleCompleteCommand}"
+                                      CommandParameter="{Binding}" />
+                            <TextBlock Text="{Binding Text}" Classes.done="{Binding IsDone}" VerticalAlignment="Center" />
+                            <Button Classes="iconButton" Content="x"
+                                    Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.RemoveTaskCommand}"
+                                    CommandParameter="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DockPanel>
+</w:WidgetView>

@@ -9,35 +9,31 @@ public class WidgetLayoutRepositoryTests : IDisposable
 {
     private readonly SqliteConnectionFixture _fixture = new();
 
+    private static readonly WidgetLayout Custom = new(new[]
+    {
+        new LayoutColumn(0.8, new[] { new WidgetPlacement("tasks", 2), new WidgetPlacement("links", 0.6) }),
+        new LayoutColumn(1.4, new[] { new WidgetPlacement("schedule") }),
+        new LayoutColumn(1.1, new[] { new WidgetPlacement("notes", 1.25) }),
+    });
+
     [Fact]
-    public void Get_OnEmptyDatabase_ReturnsEmptyLayout()
+    public void Get_OnEmptyDatabase_ReturnsNull()
     {
         using var context = _fixture.CreateContext();
-        var repository = new WidgetLayoutRepository(context);
 
-        var layout = repository.Get();
-
-        Assert.Empty(layout.Side);
-        Assert.Empty(layout.Main);
+        Assert.Null(new WidgetLayoutRepository(context).Get());
     }
 
     [Fact]
-    public void Save_ThenGet_RoundTripsBothColumns()
+    public void Save_ThenGet_RoundTripsColumnWidthsOrderAndHeightWeights()
     {
         using var context = _fixture.CreateContext();
-        var repository = new WidgetLayoutRepository(context);
-        var layout = new WidgetLayout();
-        layout.Move("clock", Column.Side, 0);
-        layout.Move("tasks", Column.Side, 1);
-        layout.Move("notes", Column.Main, 0);
-
-        repository.Save(layout);
+        new WidgetLayoutRepository(context).Save(Custom);
 
         using var readContext = _fixture.CreateContext();
-        var saved = new WidgetLayoutRepository(readContext).Get();
+        var loaded = new WidgetLayoutRepository(readContext).Get();
 
-        Assert.Equal(new[] { "clock", "tasks" }, saved.Side);
-        Assert.Equal(new[] { "notes" }, saved.Main);
+        Assert.Equal("0.8[tasks:2, links:0.6] | 1.4[schedule:1] | 1.1[notes:1.25]", loaded!.Describe());
     }
 
     [Fact]
@@ -45,19 +41,14 @@ public class WidgetLayoutRepositoryTests : IDisposable
     {
         using var context = _fixture.CreateContext();
         var repository = new WidgetLayoutRepository(context);
-        var first = new WidgetLayout();
-        first.Move("clock", Column.Side, 0);
-        repository.Save(first);
+        repository.Save(Custom);
 
-        var second = new WidgetLayout();
-        second.Move("notes", Column.Main, 0);
-        repository.Save(second);
+        repository.Save(new WidgetLayout(new[] { new LayoutColumn(1, new[] { new WidgetPlacement("schedule") }) }));
 
         using var readContext = _fixture.CreateContext();
-        var saved = new WidgetLayoutRepository(readContext).Get();
-
-        Assert.Empty(saved.Side);
-        Assert.Equal(new[] { "notes" }, saved.Main);
+        Assert.Equal("1[schedule:1]", new WidgetLayoutRepository(readContext).Get()!.Describe());
+        Assert.Single(readContext.LayoutColumns);
+        Assert.Single(readContext.WidgetPlacements);
     }
 
     public void Dispose() => _fixture.Dispose();

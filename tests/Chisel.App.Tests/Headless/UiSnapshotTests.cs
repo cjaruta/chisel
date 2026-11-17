@@ -38,8 +38,8 @@ public class UiSnapshotTests
         window.Close();
     }
 
-    // Renders the common window sizes (main-WIDTHxHEIGHT.png), plus the side panel scrolled
-    // to the bottom, so layout changes can be checked by looking at artifacts/ui.
+    // Renders the common window sizes (main-WIDTHxHEIGHT.png), plus every list widget scrolled
+    // to its bottom, so layout changes can be checked by looking at artifacts/ui.
     [AvaloniaTheory]
     [InlineData(1200, 760)]
     [InlineData(1000, 650)]
@@ -49,8 +49,10 @@ public class UiSnapshotTests
         var window = UiSnapshot.ShowMainWindow(width, height);
         UiSnapshot.Render(window, $"main-{width}x{height}");
 
-        var sidePanel = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "SidePanel");
-        sidePanel.FindAncestorOfType<ScrollViewer>()!.ScrollToEnd();
+        foreach (var frame in window.GetVisualDescendants().OfType<Chisel.App.Views.Widgets.WidgetFrame>().Where(f => f.Widget.ScrollsContent))
+        {
+            frame.View.FindAncestorOfType<ScrollViewer>()!.ScrollToEnd();
+        }
         var path = UiSnapshot.Render(window, $"main-{width}x{height}-scrolled");
 
         Assert.True(File.Exists(path));

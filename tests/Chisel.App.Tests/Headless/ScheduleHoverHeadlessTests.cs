@@ -109,8 +109,8 @@ public class ScheduleHoverHeadlessTests
         var window = Show();
         Move(window, At(window, 12 * 60 + 30));
 
-        var side = Named<StackPanel>(window, "SidePanel");
-        Move(window, side.TranslatePoint(new Point(20, 20), window)!.Value);
+        var tasks = window.GetVisualDescendants().OfType<Chisel.App.Views.Widgets.WidgetFrame>().Single(f => f.WidgetId == "tasks");
+        Move(window, tasks.TranslatePoint(new Point(20, 20), window)!.Value);
 
         Assert.False(Named<Control>(window, "HoverLine").IsVisible);
         window.Close();

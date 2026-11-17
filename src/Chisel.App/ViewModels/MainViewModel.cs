@@ -11,13 +11,17 @@ public partial class MainViewModel : ViewModelBase
     public QuickLinksViewModel QuickLinks { get; }
     public SettingsViewModel Settings { get; }
 
+    // Which widgets are shown where; the window's layout host is built from it.
+    public LayoutViewModel Layout { get; }
+
     public MainViewModel(
         ClockViewModel clock,
         ScheduleViewModel schedule,
         TaskListViewModel tasks,
         NotesViewModel notes,
         QuickLinksViewModel quickLinks,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        LayoutViewModel? layout = null)
     {
         Clock = clock;
         Schedule = schedule;
@@ -25,6 +29,7 @@ public partial class MainViewModel : ViewModelBase
         Notes = notes;
         QuickLinks = quickLinks;
         Settings = settings;
+        Layout = layout ?? new LayoutViewModel();
     }
 
     public void Refresh()

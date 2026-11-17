@@ -2,36 +2,74 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
+using Chisel.App.Views;
+using Chisel.App.Views.Widgets;
 
 namespace Chisel.App.Tests.Headless;
 
+// Short windows: the schedule scrolls inside its card, list widgets scroll inside theirs,
+// and a column whose cards' minimum heights don't fit scrolls instead of cutting cards off.
 public class LayoutScrollTests
 {
-    [AvaloniaTheory]
-    [InlineData("SidePanel")]
-    [InlineData("ScheduleGrid")]
-    public void Panel_SitsInAScrollViewerThatFitsInsideTheWindow(string panelName)
+    private static WidgetFrame Frame(Window window, string id) =>
+        window.GetVisualDescendants().OfType<WidgetFrame>().Single(f => f.WidgetId == id);
+
+    [AvaloniaFact]
+    public void ScheduleGrid_SitsInAScrollViewerThatFitsInsideTheWindow()
     {
         var window = UiSnapshot.ShowMainWindow(1000, 500);
 
-        var panel = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == panelName);
-        var scroller = panel.FindAncestorOfType<ScrollViewer>();
+        var grid = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "ScheduleGrid");
+        var scroller = grid.FindAncestorOfType<ScrollViewer>()!;
+        var bottom = scroller.TranslatePoint(new Point(0, scroller.Bounds.Height), window)!.Value.Y;
 
-        Assert.NotNull(scroller);
-        var bottom = scroller!.TranslatePoint(new Point(0, scroller.Bounds.Height), window)!.Value.Y;
-        Assert.True(bottom <= window.ClientSize.Height, $"{panelName} scroller ends at {bottom}, past the window height {window.ClientSize.Height}");
+        Assert.True(bottom <= window.ClientSize.Height, $"schedule scroller ends at {bottom}, past {window.ClientSize.Height}");
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData("tasks")]
+    [InlineData("notes")]
+    [InlineData("links")]
+    public void ListWidget_ScrollsInsideItsCard(string id)
+    {
+        var window = UiSnapshot.ShowMainWindow(1000, 650);
+
+        var frame = Frame(window, id);
+        var scroller = frame.View.FindAncestorOfType<ScrollViewer>()!;
+
+        Assert.Same(frame, scroller.FindAncestorOfType<WidgetFrame>());
+        Assert.True(scroller.Bounds.Height <= frame.Bounds.Height);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void SidePanel_ScrollsWhenTheWindowIsTooShort()
+    public void TooShortForTheMinimumHeights_TheRightColumnScrollsAndCardsKeepTheirMinimums()
     {
         var window = UiSnapshot.ShowMainWindow(1000, 500);
 
-        var panel = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "SidePanel");
-        var scroller = panel.FindAncestorOfType<ScrollViewer>()!;
+        var column = Frame(window, "links").FindAncestorOfType<ScrollViewer>()!;
+        Assert.Contains("layoutColumnScroller", column.Classes);
+        Assert.True(column.Extent.Height > column.Viewport.Height);
+        foreach (var id in new[] { "tasks", "notes", "links" })
+        {
+            Assert.True(Frame(window, id).Bounds.Height >= Frame(window, id).MinHeight - 0.5, id);
+        }
 
-        Assert.True(scroller.Extent.Height > scroller.Viewport.Height);
+        var bottom = column.TranslatePoint(new Point(0, column.Bounds.Height), window)!.Value.Y;
+        Assert.True(bottom <= window.ClientSize.Height);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TallEnough_NoColumnScrolls()
+    {
+        var window = UiSnapshot.ShowMainWindow(1200, 760);
+
+        var columns = window.GetVisualDescendants().OfType<ScrollViewer>().Where(s => s.Classes.Contains("layoutColumnScroller")).ToList();
+
+        Assert.Equal(2, columns.Count);
+        Assert.All(columns, c => Assert.True(c.Extent.Height <= c.Viewport.Height + 0.5));
         window.Close();
     }
 }
