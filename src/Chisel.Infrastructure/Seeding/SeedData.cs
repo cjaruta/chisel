@@ -11,11 +11,11 @@ public static class SeedData
     public static DaySchedule CreateSchedule() =>
         new(new[]
         {
-            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0)),
-            new ScheduleBlock("Focus", new TimeOnly(12, 0), new TimeOnly(14, 0)),
-            new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0)),
-            new ScheduleBlock("Focus", new TimeOnly(16, 0), new TimeOnly(18, 0)),
-            new ScheduleBlock("Read", new TimeOnly(22, 0), new TimeOnly(23, 0))
+            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0), BlockColor.Slate),
+            new ScheduleBlock("Focus", new TimeOnly(12, 0), new TimeOnly(14, 0), BlockColor.Slate),
+            new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0), BlockColor.Sage),
+            new ScheduleBlock("Focus", new TimeOnly(16, 0), new TimeOnly(18, 0), BlockColor.Slate),
+            new ScheduleBlock("Read", new TimeOnly(22, 0), new TimeOnly(23, 0), BlockColor.Lavender)
         });
 
     public static IReadOnlyList<Marker> CreateMarkers() =>

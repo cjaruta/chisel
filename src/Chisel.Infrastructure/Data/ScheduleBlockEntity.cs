@@ -1,3 +1,5 @@
+using Chisel.Core.Schedule;
+
 namespace Chisel.Infrastructure.Data;
 
 public class ScheduleBlockEntity
@@ -7,4 +9,7 @@ public class ScheduleBlockEntity
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; }
     public int Position { get; set; }
+
+    // A BlockColor palette key.
+    public string Color { get; set; } = BlockColor.Default;
 }

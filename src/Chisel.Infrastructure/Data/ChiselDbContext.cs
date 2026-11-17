@@ -1,3 +1,4 @@
+using Chisel.Core.Schedule;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chisel.Infrastructure.Data;
@@ -21,5 +22,13 @@ public class ChiselDbContext : DbContext
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
 
     public DbSet<WidgetPlacementEntity> WidgetPlacements => Set<WidgetPlacementEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Rows saved before blocks had colors get the neutral default.
+        modelBuilder.Entity<ScheduleBlockEntity>()
+            .Property(b => b.Color)
+            .HasDefaultValue(BlockColor.Default);
+    }
 }
 

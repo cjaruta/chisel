@@ -88,6 +88,12 @@ namespace Chisel.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("gray");
+
                     b.Property<TimeOnly>("End")
                         .HasColumnType("TEXT");
 
