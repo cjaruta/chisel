@@ -39,6 +39,17 @@ public class DayGridPanelTests
     }
 
     [Theory]
+    [InlineData(0, 0)]        // midnight at the top: kept inside instead of half above
+    [InlineData(1440, 1420)]  // midnight at the bottom: kept inside instead of half below
+    [InlineData(5, 0)]
+    public void ItemRect_PointItemNearTheEdges_StaysInsideTheDay(double startMinute, double expectedTop)
+    {
+        var rect = DayGridPanel.ItemRect(startMinute, double.NaN, 0, 1, width: 300, desiredHeight: 20, pixelsPerMinute: 1);
+
+        Assert.Equal(expectedTop, rect.Y);
+    }
+
+    [Theory]
     [InlineData(1.0, 1440)]
     [InlineData(1.0667, 1536.048)]
     public void DayHeight_IsTheWholeDayAtTheGivenScale(double pixelsPerMinute, double expected)

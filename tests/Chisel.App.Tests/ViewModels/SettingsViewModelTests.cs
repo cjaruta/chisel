@@ -76,13 +76,15 @@ public class SettingsViewModelTests
         var notes = new NotesViewModel(noteRepository, time, display);
 
         Assert.Equal("22:36:12", clock.TimeText);
-        Assert.Equal(new[] { "13:00", "23:00-06:30" }, schedule.Timeline.Select(e => e.TimeLabel));
+        Assert.Equal(new[] { "13:00" }, schedule.GridMarkers.Select(m => m.TimeLabel));
+        Assert.All(schedule.GridBlocks, b => Assert.Equal("23:00-06:30", b.TimeLabel));
         Assert.Equal("Updated Jan 1, 22:36", notes.Notes.Single().UpdatedLabel);
 
         settings.UseTwelveHour = true;
 
         Assert.Equal("10:36:12 PM", clock.TimeText);
-        Assert.Equal(new[] { "1:00 PM", "11:00 PM-6:30 AM" }, schedule.Timeline.Select(e => e.TimeLabel));
+        Assert.Equal(new[] { "1:00 PM" }, schedule.GridMarkers.Select(m => m.TimeLabel));
+        Assert.All(schedule.GridBlocks, b => Assert.Equal("11:00 PM-6:30 AM", b.TimeLabel));
         Assert.Equal("Updated Jan 1, 10:36 PM", notes.Notes.Single().UpdatedLabel);
         Assert.Equal(ClockFormat.TwelveHour, repository.Saved!.ClockFormat);
         Assert.False(settings.UseTwentyFourHour);

@@ -64,19 +64,20 @@ public class SettingsPanelHeadlessTests
         var texts = Texts(window).ToList();
         Assert.Contains("9:30:00 AM", texts);
         Assert.Contains("8:00 AM-11:00 AM", texts);
+        Assert.Contains("1:00 PM  Last coffee", texts);
         Assert.Contains("1:00 PM", texts);
         Assert.True(Named(window, "SettingsPanel").IsVisible);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void TwelveHourMode_TimeLabelsAreNotClipped()
+    public void TwelveHourMode_HourLabelsAreNotClipped()
     {
         var window = UiSnapshot.ShowMainWindow();
         Settings(window).UseTwelveHour = true;
         Dispatcher.UIThread.RunJobs();
 
-        var labels = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("timeLabel")).ToList();
+        var labels = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("hourLabel")).ToList();
 
         Assert.NotEmpty(labels);
         Assert.All(labels, label =>

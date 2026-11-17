@@ -87,15 +87,15 @@ public class MainViewModelTests
     public void Refresh_UpdatesClockAndSchedule()
     {
         var time = new FakeTimeProvider();
-        time.SetUtcNow(new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero));
+        time.SetUtcNow(new DateTimeOffset(2026, 11, 10, 7, 0, 0, TimeSpan.Zero));
         var scheduleRepository = new FakeScheduleRepository();
-        var viewModel = CreateViewModel(time, scheduleRepository);
-        Assert.Equal("No block", viewModel.Schedule.CurrentBlockTitle);
-
         scheduleRepository.Save(new DaySchedule(new[]
         {
             new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0))
         }));
+        var viewModel = CreateViewModel(time, scheduleRepository);
+        Assert.Equal("No block", viewModel.Schedule.CurrentBlockTitle);
+
         time.SetUtcNow(new DateTimeOffset(2026, 11, 10, 9, 30, 0, TimeSpan.Zero));
 
         viewModel.Refresh();

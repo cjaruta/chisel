@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
@@ -28,6 +29,8 @@ public partial class MainWindow : Window
         {
             _timer.Start();
             ApplySavedPlacement();
+            // Wait for layout so the grid has its size before scrolling to the current time.
+            Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
         Unloaded += (_, _) => _timer.Stop();
         Closing += (_, _) => SavePlacement();
@@ -44,6 +47,29 @@ public partial class MainWindow : Window
             }
         };
     }
+
+    // Scrolls the schedule so the now-line sits about a third of the way down.
+    public void ScrollToNow()
+    {
+        var scroller = this.FindControl<ScrollViewer>("ScheduleScroller");
+        var nowLine = this.FindControl<Control>("NowLine");
+        var grid = this.FindControl<Control>("ScheduleGrid");
+        if (scroller is null || nowLine is null || grid is null)
+        {
+            return;
+        }
+
+        var nowY = nowLine.TranslatePoint(new Point(0, nowLine.Bounds.Height / 2), grid)?.Y ?? 0;
+        scroller.Offset = new Vector(0, ScheduleScrollOffset(nowY + grid.Margin.Top, scroller.Viewport.Height, scroller.Extent.Height));
+    }
+
+    public static double ScheduleScrollOffset(double nowY, double viewportHeight, double extentHeight)
+    {
+        var max = Math.Max(0, extentHeight - viewportHeight);
+        return Math.Clamp(nowY - viewportHeight / 3, 0, max);
+    }
+
+    private void OnNowClick(object? sender, RoutedEventArgs e) => ScrollToNow();
 
     private void ApplySavedPlacement()
     {

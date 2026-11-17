@@ -6,7 +6,8 @@ namespace Chisel.App.Controls;
 
 // Lays children out on a 24-hour vertical day, by minutes from midnight.
 // A child with an EndMinute is a box from StartMinute to EndMinute in its Column of ColumnCount.
-// A child without one (NaN) is a full-width point item centered on StartMinute, like a marker line.
+// A child without one (NaN) is a full-width point item centered on StartMinute, like a marker line,
+// kept inside the day at the edges.
 public class DayGridPanel : Panel
 {
     public const double MinutesPerDay = 24 * 60;
@@ -55,7 +56,9 @@ public class DayGridPanel : Panel
         var top = startMinute * pixelsPerMinute;
         if (double.IsNaN(endMinute))
         {
-            return new Rect(0, top - desiredHeight / 2, width, desiredHeight);
+            // Keep labels at midnight fully inside the day instead of half outside it.
+            var pointTop = Math.Clamp(top - desiredHeight / 2, 0, Math.Max(0, DayHeight(pixelsPerMinute) - desiredHeight));
+            return new Rect(0, pointTop, width, desiredHeight);
         }
 
         var count = Math.Max(1, columnCount);
