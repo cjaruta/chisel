@@ -173,7 +173,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Hover guide line: where a click on empty space adds a block. Label sits just above its left end. -->
+                            <!-- Hover guide line: where a click on empty space adds a marker and a drag adds a block. Label sits just above its left end. -->
                             <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
                                 <Panel Name="HoverLine" Height="1" ctl:DayGridPanel.StartMinute="{Binding Schedule.HoverMinute}"
                                        IsVisible="{Binding Schedule.IsHoverVisible}">
@@ -216,6 +216,27 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- Pending marker: a new marker from a click on empty space, shown while its editor is open -->
+                            <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                                <Grid Name="PendingMarker" Classes="markerRow pendingMarker" Classes.checkpoint="{Binding Schedule.IsPendingMarkerCheckpoint}"
+                                      ColumnDefinitions="*,Auto" ctl:DayGridPanel.StartMinute="{Binding Schedule.PendingMarkerMinute}"
+                                      IsVisible="{Binding Schedule.IsMarkerPending}">
+                                    <Panel ClipToBounds="True" VerticalAlignment="Center" Height="2">
+                                        <Line Classes="markerLine" StartPoint="0,1" EndPoint="4000,1" />
+                                    </Panel>
+                                    <Border Grid.Column="1" Classes="markerPill">
+                                        <TextBlock Name="PendingMarkerText" Classes="markerText">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}  {1}">
+                                                    <Binding Path="Schedule.PendingMarkerTime" />
+                                                    <Binding Path="Schedule.PendingMarkerLabel" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Border>
+                                </Grid>
+                            </ctl:DayGridPanel>
 
                             <!-- Drag preview: the range being dragged, then the pending block while the editor is open -->
                             <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">

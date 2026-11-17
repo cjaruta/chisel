@@ -113,7 +113,8 @@ public class MainWindowHeadlessTests
     {
         var window = UiSnapshot.ShowMainWindow();
 
-        var markers = window.GetVisualDescendants().OfType<Grid>().Where(g => g.Classes.Contains("markerRow")).ToList();
+        var markers = window.GetVisualDescendants().OfType<Grid>()
+            .Where(g => g.Classes.Contains("markerRow") && !g.Classes.Contains("pendingMarker")).ToList();
         Assert.Equal(2, markers.Count);
         var midday = markers.Single(m => m.Classes.Contains("checkpoint"));
         var slot = ((Visual)midday.GetVisualParent()!).Bounds;

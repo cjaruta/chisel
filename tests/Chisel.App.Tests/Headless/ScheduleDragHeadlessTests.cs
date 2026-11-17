@@ -184,8 +184,9 @@ public class ScheduleDragHeadlessTests
         Release(window, point + new Point(0, 2));
 
         Assert.False(Named<Border>(window, "DragPreview").IsVisible);
-        Assert.Equal("12:15", Named<TextBox>(window, "BlockStartBox").Text);
-        Assert.Equal("13:15", Named<TextBox>(window, "BlockEndBox").Text);
+        Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);
+        Assert.True(Named<Border>(window, "MarkerEditorPanel").IsVisible);
+        Assert.Equal("12:15", Named<TextBox>(window, "MarkerTimeBox").Text);
         window.Close();
     }
 
