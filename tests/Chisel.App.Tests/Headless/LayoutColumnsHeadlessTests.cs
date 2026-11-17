@@ -122,7 +122,6 @@ public class LayoutColumnsHeadlessTests
         var label = Named<Border>(window, "NewColumnLabel");
         Assert.True(label.IsVisible);
         Assert.Contains("New column", label.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
-        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
         UiSnapshot.Render(window, "layout-new-column-drag");
         Release(window, ZoneCenter(window, 2));
         window.Close();

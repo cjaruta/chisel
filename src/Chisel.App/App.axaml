@@ -94,32 +94,24 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
-        <!-- Dragging a widget: its card stays put but faded, a ghost of its title bar follows the pointer,
-             and a slim accent line marks the landing spot -->
-        <!-- The card being moved: faded, but its title bar stays opaque so the heading under it never shows through -->
+        <!-- Dragging a widget: a snapshot of it floats with the pointer (slightly larger, soft shadow), and its
+             slot is an empty gap the other cards reflow around -->
         <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="Background" Value="#10F5A524" />
+            <Setter Property="BorderBrush" Value="#55F5A524" />
         </Style>
 
         <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
-            <Setter Property="Opacity" Value="0.2" />
+            <Setter Property="Opacity" Value="0" />
         </Style>
 
-        <Style Selector="Border.dropIndicator">
-            <Setter Property="Height" Value="4" />
-            <Setter Property="CornerRadius" Value="2" />
-            <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
-            <Setter Property="BoxShadow" Value="0 0 8 0 #80F5A524" />
+        <Style Selector="Border.widgetFrame.dragSource Grid.editLayer">
+            <Setter Property="Opacity" Value="0" />
         </Style>
 
-        <Style Selector="Border.dragGhost">
-            <Setter Property="Height" Value="50" />
-            <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Opacity" Value="0.92" />
-            <Setter Property="BoxShadow" Value="0 8 24 0 #A0000000" />
+        <Style Selector="Border.dragFloat">
+            <Setter Property="BoxShadow" Value="0 14 36 0 #B0000000" />
+            <Setter Property="CornerRadius" Value="12" />
         </Style>
 
         <!-- "New column" zones: a thin faint strip in each gap while dragging; the hovered one lights up -->

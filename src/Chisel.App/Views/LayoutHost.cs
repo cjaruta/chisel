@@ -8,6 +8,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Chisel.App.Controls;
 using Chisel.App.ViewModels;
 using Chisel.App.Views.Widgets;
@@ -19,9 +20,11 @@ namespace Chisel.App.Views;
 // Each column shares its height between its cards by weight. If the window is too short for the cards'
 // minimum heights, that column scrolls instead of cutting cards off.
 //
-// In edit mode a card's title bar can be dragged: past a small threshold the widget is picked up,
-// a ghost follows the pointer, an accent line shows where it will land, and releasing drops it there.
-// Nothing else moves until the drop; a column the drop empties then collapses.
+// In edit mode a card can be dragged: past a small threshold the widget is picked up. A floating snapshot of
+// it follows the pointer and its slot becomes an empty gap. The target (column and gap) comes from the card
+// positions captured at pick-up, so holding still never flips it; the other cards reflow around the gap live
+// (the layout the drop would give, see LayoutViewModel.PreviewDrop). Releasing drops the widget into the gap;
+// Esc, or releasing outside any column, puts everything back. A column the drop empties then collapses.
 //
 // While dragging, thin "New column" zones also show at the left and right edges and between columns
 // (when another column fits: see LayoutViewModel.CanOfferNewColumn); dropping on one makes a new column.
@@ -48,9 +51,7 @@ public sealed class LayoutHost : Decorator
     private readonly Dictionary<string, WidgetFrame> _frames = new();
     private readonly WeightedStackPanel _columns = new() { Orientation = Orientation.Horizontal, Spacing = Gap };
     private readonly Canvas _overlay = new() { IsHitTestVisible = false };
-    private readonly Border _indicator = new() { Name = "DropIndicator", IsVisible = false };
-    private readonly Border _ghost;
-    private readonly TextBlock _ghostTitle = new() { VerticalAlignment = VerticalAlignment.Center };
+    private readonly Border _float = new() { Name = "DragFloat", IsVisible = false };
     private readonly List<Panel> _handles = new();
     private readonly List<(int Index, Border Zone)> _newColumnZones = new();
     private readonly Border _newColumnLabel;
@@ -73,26 +74,22 @@ public sealed class LayoutHost : Decorator
     private Point _grabOffset;
     private bool _dragging;
     private (int Column, int Index)? _target;
+    private IPointer? _pointer;
+
+    // Where the columns and cards were at pick-up: targets are worked out from these, however the cards reflow.
+    private IReadOnlyList<Rect> _pickColumns = [];
+    private IReadOnlyList<IReadOnlyList<Rect>> _pickWidgets = [];
 
     public LayoutHost()
     {
-        _indicator.Classes.Add("dropIndicator");
-
-        _ghostTitle.Classes.Add("editTitle");
-        var grip = new Path { Data = Geometry.Parse(WidgetFrame.GripData), VerticalAlignment = VerticalAlignment.Center };
-        grip.Classes.Add("editGrip");
-        var ghostContent = new StackPanel { Orientation = Orientation.Horizontal, Children = { grip, _ghostTitle } };
-        ghostContent.Classes.Add("editBarContent");
-        _ghost = new Border { Name = "DragGhost", IsVisible = false, Child = ghostContent };
-        _ghost.Classes.Add("dragGhost");
+        _float.Classes.Add("dragFloat");
 
         var labelText = new TextBlock { Text = "New column" };
         _newColumnLabel = new Border { Name = "NewColumnLabel", IsVisible = false, Child = labelText };
         _newColumnLabel.Classes.Add("newColumnLabel");
 
-        _overlay.Children.Add(_indicator);
         _overlay.Children.Add(_newColumnLabel);
-        _overlay.Children.Add(_ghost);
+        _overlay.Children.Add(_float);
         Child = new Panel { Children = { _columns, _overlay } };
     }
 
@@ -182,17 +179,20 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    private string Structure() =>
-        Layout is null ? "" : string.Join("|", Layout.Columns.Select(c => string.Join(",", c.Widgets.Select(w => w.Id))));
+    private static string Structure(IReadOnlyList<LayoutColumnSlot> columns) =>
+        string.Join("|", columns.Select(c => string.Join(",", c.Widgets.Select(w => w.Id))));
+
+    private string Structure() => Layout is null ? "" : Structure(Layout.Columns);
 
     // Same widgets in the same places: just share the space out by the new weights, so nothing is rebuilt
     // (a live resize keeps hold of its handle).
     private void UpdateWeights()
     {
         var scrollers = ColumnScrollers;
-        for (var c = 0; c < scrollers.Count && c < Layout!.Columns.Count; c++)
+        var columns = Layout!.Columns;
+        for (var c = 0; c < scrollers.Count && c < columns.Count; c++)
         {
-            var column = Layout.Columns[c];
+            var column = columns[c];
             WeightedStackPanel.SetWeight(scrollers[c], column.WidthWeight);
             foreach (var slot in column.Widgets)
             {
@@ -203,7 +203,10 @@ public sealed class LayoutHost : Decorator
 
     private bool _isEditing;
 
-    private void Rebuild()
+    private void Rebuild() => Rebuild(Layout?.Columns);
+
+    // Builds the columns from the given slots: the layout itself, or the preview of a drop while dragging.
+    private void Rebuild(IReadOnlyList<LayoutColumnSlot>? slots)
     {
         // Take the reused cards out of their old columns first, so each can join its new one.
         foreach (var column in ColumnPanels)
@@ -212,16 +215,16 @@ public sealed class LayoutHost : Decorator
         }
         _columns.Children.Clear();
         _handles.Clear();
-        _builtStructure = Structure();
-
-        if (Layout is null)
+        if (slots is null)
         {
+            _builtStructure = "";
             return;
         }
+        _builtStructure = Structure(slots);
 
-        for (var c = 0; c < Layout.Columns.Count; c++)
+        for (var c = 0; c < slots.Count; c++)
         {
-            var column = Layout.Columns[c];
+            var column = slots[c];
             // Cards with a resize handle filling each gap between them (weight 0, so each gets exactly Gap).
             var panel = new WeightedStackPanel { Orientation = Orientation.Vertical };
             panel.Classes.Add("layoutColumn");
@@ -252,6 +255,7 @@ public sealed class LayoutHost : Decorator
             WeightedStackPanel.SetWeight(scroller, column.WidthWeight);
             _columns.Children.Add(scroller);
         }
+        MarkDragSource();
     }
 
     // A slim bar in the gap below a card: an 8px hit area with a short grip mark in the middle.
@@ -349,9 +353,6 @@ public sealed class LayoutHost : Decorator
             frame = new WidgetFrame(widget, view) { IsEditing = _isEditing };
             frame.EditBar.Cursor = GrabCursor;
             frame.EditBar.PointerPressed += (_, e) => OnBarPressed(frame, e);
-            frame.EditBar.PointerMoved += (_, e) => OnBarMoved(e);
-            frame.EditBar.PointerReleased += (_, e) => OnBarReleased(e);
-            frame.EditBar.PointerCaptureLost += (_, _) => OnBarCaptureLost();
             frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(frame.WidgetId);
             frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
             _frames[widget.Id] = frame;
@@ -401,7 +402,7 @@ public sealed class LayoutHost : Decorator
                 _trayWidget = null;
                 return;
             }
-            StartDragVisuals(null, widget.Title, 260);
+            StartDragVisuals(null, widget.Title);
         }
         if (layout.IsDraggingWidget)
         {
@@ -461,8 +462,31 @@ public sealed class LayoutHost : Decorator
         _pressed = frame;
         _pressPoint = e.GetPosition(this);
         _grabOffset = e.GetPosition(frame.EditBar);
-        e.Pointer.Capture(frame.EditBar);
+        // The host holds the pointer: the cards are rebuilt during a drag, which would drop a capture held by one.
+        _pointer = e.Pointer;
+        e.Pointer.Capture(this);
         e.Handled = true;
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        OnBarMoved(e);
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (_pressed is not null)
+        {
+            OnBarReleased(e);
+        }
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        OnBarCaptureLost();
     }
 
     private void OnBarMoved(PointerEventArgs e)
@@ -486,7 +510,7 @@ public sealed class LayoutHost : Decorator
                 _pressed = null;
                 return;
             }
-            StartDragVisuals(frame, frame.Widget.Title, Math.Min(frame.Bounds.Width, 360));
+            StartDragVisuals(frame, frame.Widget.Title);
         }
 
         if (layout.IsDraggingWidget)
@@ -504,7 +528,6 @@ public sealed class LayoutHost : Decorator
             Drop(layout);
         }
         EndDrag();
-        e.Pointer.Capture(null);
         e.Handled = true;
     }
 
@@ -519,19 +542,56 @@ public sealed class LayoutHost : Decorator
     }
 
     // frame: the card being moved, or null for a widget coming from the tray.
-    private void StartDragVisuals(WidgetFrame? frame, string title, double ghostWidth)
+    private void StartDragVisuals(WidgetFrame? frame, string title)
     {
         _dragging = true;
+        _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
+        _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
         ShowNewColumnZones(frame?.WidgetId);
+
         if (frame is not null)
         {
-            frame.Classes.Add("dragSource");
-            frame.EditBar.Cursor = DraggingCursor;
+            _float.Width = frame.Bounds.Width;
+            _float.Height = frame.Bounds.Height;
+            _float.Child = Snapshot(frame);
         }
-        _ghostTitle.Text = title;
-        _ghost.Width = ghostWidth;
-        _grabOffset = new Point(Math.Min(_grabOffset.X, _ghost.Width - 24), _grabOffset.Y);
-        _ghost.IsVisible = true;
+        else
+        {
+            var heading = new TextBlock { Text = title, VerticalAlignment = VerticalAlignment.Center };
+            heading.Classes.Add("cardHeading");
+            var card = new Border { Child = heading, Padding = new Thickness(16, 0) };
+            card.Classes.Add("card");
+            _float.Width = 260;
+            _float.Height = 64;
+            _float.Child = card;
+        }
+        _grabOffset = new Point(Math.Min(_grabOffset.X, _float.Width - 24), Math.Min(_grabOffset.Y, _float.Height - 8));
+        // Slightly larger, scaled around the grab point so that point stays under the pointer.
+        _float.RenderTransformOrigin = new RelativePoint(_grabOffset, RelativeUnit.Absolute);
+        _float.RenderTransform = new ScaleTransform(1.03, 1.03);
+        _float.IsVisible = true;
+        Cursor = DraggingCursor;
+        MarkDragSource();
+    }
+
+    // The widget as a bitmap, taken before its slot turns into a gap.
+    private Image Snapshot(WidgetFrame frame)
+    {
+        var scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        var size = new PixelSize(Math.Max(1, (int)Math.Ceiling(frame.Bounds.Width * scale)), Math.Max(1, (int)Math.Ceiling(frame.Bounds.Height * scale)));
+        var bitmap = new RenderTargetBitmap(size, new Vector(96 * scale, 96 * scale));
+        bitmap.Render(frame);
+        return new Image { Source = bitmap, Stretch = Stretch.Fill };
+    }
+
+    // The widget being dragged shows as an empty gap wherever it currently sits in the columns.
+    private void MarkDragSource()
+    {
+        var id = _dragging ? Layout?.DraggedWidgetId : null;
+        foreach (var (widgetId, frame) in _frames)
+        {
+            frame.Classes.Set("dragSource", widgetId == id);
+        }
     }
 
     // A thin zone in each gap where a new column could go. A widget alone in its column skips the two gaps
@@ -576,15 +636,11 @@ public sealed class LayoutHost : Decorator
         _newColumnLabel.IsVisible = false;
     }
 
-    // Moves the ghost with the pointer and shows where the widget would land.
+    // Moves the floating widget with the pointer and reflows the cards around the gap it would land in.
     private void UpdateDrag(Point point)
     {
-        Canvas.SetLeft(_ghost, point.X - _grabOffset.X);
-        Canvas.SetTop(_ghost, point.Y - _grabOffset.Y);
-
-        var scrollers = ColumnScrollers;
-        var frames = Frames;
-        var columnRects = scrollers.Select(BoundsInHost).ToList();
+        Canvas.SetLeft(_float, point.X - _grabOffset.X);
+        Canvas.SetTop(_float, point.Y - _grabOffset.Y);
 
         // A "New column" zone under the pointer wins over dropping into a column.
         _newColumnTarget = null;
@@ -593,65 +649,68 @@ public sealed class LayoutHost : Decorator
         {
             zone.Classes.Set("active", false);
         }
-        var gapIndex = LayoutDropTargets.FindNewColumn(point, columnRects, Gap, NewColumnReach);
+        var gapIndex = LayoutDropTargets.FindNewColumn(point, _pickColumns, Gap, NewColumnReach);
         if (gapIndex is { } g && _newColumnZones.FirstOrDefault(z => z.Index == g).Zone is { } hovered)
         {
             _newColumnTarget = g;
             _target = null;
-            _indicator.IsVisible = false;
             hovered.Classes.Set("active", true);
             ShowNewColumnLabel(Canvas.GetLeft(hovered) + 3, Canvas.GetTop(hovered));
-            return;
         }
-        var widgetRects = frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
-        var target = LayoutDropTargets.Find(point, columnRects, widgetRects, Gap);
-
-        // Dropping where it already is would change nothing, so that is not shown as a target.
-        if (target is { } t && Layout is { DraggedWidgetId: { } id, IsDraggingFromTray: false } layout
-            && ReferenceEquals(layout.Layout.Move(id, t.Column, t.Index), layout.Layout))
+        else
         {
-            target = null;
+            _target = LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap);
         }
-        _target = target;
+        ShowPreview();
+    }
 
-        _indicator.IsVisible = false;
-        if (target is not { } drop || widgetRects[drop.Column].Count == 0)
+    // Builds the columns as the drop on the current target would leave them (the layout as it is when there is
+    // none), unless that is what is already shown.
+    private void ShowPreview()
+    {
+        if (Layout is not { } layout)
         {
             return;
         }
-
-        var column = columnRects[drop.Column];
-        var cards = widgetRects[drop.Column];
-
-        // The line sits in the middle of the gap the widget would land in (just above the first card,
-        // just below the last).
-        var y = drop.Index == 0 ? cards[0].Top - Gap / 2
-            : drop.Index == cards.Count ? cards[^1].Bottom + Gap / 2
-            : (cards[drop.Index - 1].Bottom + cards[drop.Index].Top) / 2;
-        _indicator.Width = column.Width;
-        Canvas.SetLeft(_indicator, column.Left);
-        Canvas.SetTop(_indicator, y - _indicator.Height / 2);
-        _indicator.IsVisible = true;
+        var preview = _target is { } t ? layout.PreviewDrop(t.Column, t.Index) : null;
+        var slots = preview is null ? layout.Columns : LayoutViewModel.Slots(preview);
+        if (Structure(slots) != _builtStructure)
+        {
+            Rebuild(slots);
+        }
     }
 
     private void EndDrag()
     {
-        if (_pressed is { } frame)
-        {
-            frame.Classes.Remove("dragSource");
-            frame.EditBar.Cursor = GrabCursor;
-        }
-        foreach (var f in _frames.Values)
-        {
-            f.Classes.Remove("dragSource");
-        }
         _pressed = null;
         _trayWidget = null;
         _dragging = false;
         _target = null;
-        _indicator.IsVisible = false;
-        _ghost.IsVisible = false;
+        _float.IsVisible = false;
+        _float.Child = null;
+        Cursor = null;
         ClearNewColumnZones();
+        // Put the columns back as the layout has them (after a drop, the layout already has the new order).
+        if (Layout is not null)
+        {
+            if (Structure() != _builtStructure)
+            {
+                Rebuild();
+            }
+            else
+            {
+                UpdateWeights();
+            }
+        }
+        MarkDragSource();
+        if (_pointer is { } pointer)
+        {
+            _pointer = null;
+            if (pointer.Captured == this)
+            {
+                pointer.Capture(null);
+            }
+        }
     }
 
     // The "New column" pill near the top of a highlighted zone, kept inside the dashboard.
