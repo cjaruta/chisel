@@ -138,7 +138,7 @@ public class LayoutTrayHeadlessTests
     }
 
     [AvaloniaFact]
-    public void DraggingATrayCard_PlacesTheWidgetWhereTheIndicatorShows()
+    public void DraggingATrayCard_PlacesTheWidgetWhereTheGapShows()
     {
         var window = ShowEditing();
         Remove(window, "notes");
@@ -150,14 +150,12 @@ public class LayoutTrayHeadlessTests
         MoveTo(window, new Point(card.X + 10, card.Y + 30));
         MoveTo(window, above);
 
-        var indicator = Named<Border>(window, "DropIndicator");
-        Assert.True(indicator.IsVisible);
-        Assert.True(InWindow(indicator, window).Center.Y < target.Top + 1);
-        Assert.True(Named<Border>(window, "DragGhost").IsVisible);
+        Assert.Equal("schedule | notes,tasks,links", Order(window));
+        Assert.True(Named<Border>(window, "DragFloat").IsVisible);
         Release(window, above);
 
         Assert.Equal("schedule | notes,tasks,links", Order(window));
-        Assert.False(indicator.IsVisible);
+        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Assert.Empty(TrayCards(window));
         window.Close();
     }

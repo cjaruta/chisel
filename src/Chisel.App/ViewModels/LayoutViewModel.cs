@@ -69,7 +69,9 @@ public partial class LayoutViewModel : ViewModelBase
 
     private static double DefaultHeight(string widgetId) => WidgetRegistry.Get(widgetId)?.DefaultHeight ?? 1;
 
-    public IReadOnlyList<LayoutColumnSlot> Columns => Layout.Columns
+    public IReadOnlyList<LayoutColumnSlot> Columns => Slots(Layout);
+
+    public static IReadOnlyList<LayoutColumnSlot> Slots(WidgetLayout layout) => layout.Columns
         .Select(c => new LayoutColumnSlot(c.WidthWeight,
             c.Widgets.Select(w => new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight)).ToList()))
         .ToList();
@@ -188,14 +190,30 @@ public partial class LayoutViewModel : ViewModelBase
             return false;
         }
 
-        var moved = IsDraggingFromTray ? Layout.AddWidget(id, column, index, DefaultHeight(id)) : Layout.Move(id, column, index);
-        EndDrag();
-        if (ReferenceEquals(moved, Layout))
+        return Finish(PreviewDrop(column, index)!);
+    }
+
+    // The layout a drop into a gap of a column would give (nothing is changed); null when no drag is going on.
+    public WidgetLayout? PreviewDrop(int column, int index)
+    {
+        if (DraggedWidgetId is not { } id || column < 0 || column >= Layout.Columns.Count)
         {
-            return false;
+            return null;
         }
-        Layout = moved.RemoveEmptyColumns();
-        return true;
+        return IsDraggingFromTray ? Layout.AddWidget(id, column, index, DefaultHeight(id)) : Layout.Move(id, column, index);
+    }
+
+    // Ends the drag with the dropped layout, which replaces the working copy first so the host sees the new order
+    // (and not the old one) when the drag ends. Returns whether the layout changed.
+    private bool Finish(WidgetLayout moved)
+    {
+        var changed = !ReferenceEquals(moved, Layout);
+        if (changed)
+        {
+            Layout = moved.RemoveEmptyColumns();
+        }
+        EndDrag();
+        return changed;
     }
 
     // Puts the widget down where it was (or back in the tray), leaving the layout as it is.
@@ -219,14 +237,7 @@ public partial class LayoutViewModel : ViewModelBase
             return false;
         }
 
-        var moved = IsDraggingFromTray ? Layout.AddWidgetInNewColumn(id, columnIndex) : Layout.MoveToNewColumn(id, columnIndex);
-        EndDrag();
-        if (ReferenceEquals(moved, Layout))
-        {
-            return false;
-        }
-        Layout = moved.RemoveEmptyColumns();
-        return true;
+        return Finish(IsDraggingFromTray ? Layout.AddWidgetInNewColumn(id, columnIndex) : Layout.MoveToNewColumn(id, columnIndex));
     }
 
     // Whether "New column" drop zones should be offered for the widget being dragged, given the width the
