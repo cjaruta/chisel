@@ -114,6 +114,30 @@ public class MigrationTests
     }
 
     [Fact]
+    public void ExistingTwoColumnDatabase_LoadsExactlyAsBefore()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        // A two-column layout as the app has been saving it since columns and weights were added.
+        using (var context = new ChiselDbContext(options))
+        {
+            context.Database.Migrate();
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO LayoutColumns (Position, WidthWeight) VALUES (0, 1.3), (1, 1.0);" +
+                "INSERT INTO WidgetPlacements (Id, WidgetId, ColumnIndex, Position, HeightWeight) VALUES " +
+                "('6f1c2f4e-0000-0000-0000-000000000021', 'schedule', 0, 0, 1.0), " +
+                "('6f1c2f4e-0000-0000-0000-000000000022', 'tasks', 1, 0, 1.05), " +
+                "('6f1c2f4e-0000-0000-0000-000000000023', 'notes', 1, 1, 1.1), " +
+                "('6f1c2f4e-0000-0000-0000-000000000024', 'links', 1, 2, 0.85);");
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var layout = new Chisel.Infrastructure.Repositories.WidgetLayoutRepository(readContext).Get();
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]", layout!.Describe());
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();
