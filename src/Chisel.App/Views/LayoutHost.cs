@@ -22,13 +22,14 @@ namespace Chisel.App.Views;
 // minimum heights, that column scrolls instead of cutting cards off.
 //
 // In edit mode a card can be dragged: past a small threshold the widget is picked up. A floating snapshot of
-// it follows the pointer and its slot becomes an empty gap. The target (column and gap) comes from the card
-// positions captured at pick-up, so holding still never flips it; the other cards reflow around the gap live
-// (the layout the drop would give, see LayoutViewModel.PreviewDrop). Releasing drops the widget into the gap;
-// Esc, or releasing outside any column, puts everything back. A column the drop empties then collapses.
+// it follows the pointer and its slot becomes an empty gap. The board itself never moves during the drag: the
+// target (column and gap) comes from the card positions captured at pick-up, and an amber line marks the gap in
+// the hovered column. Releasing drops the widget there; Esc, or releasing outside any column, puts everything
+// back. A column the drop empties then collapses.
 //
-// While dragging, thin "New column" zones also show at the left and right edges and between columns
-// (when another column fits: see LayoutViewModel.CanOfferNewColumn); dropping on one makes a new column.
+// While dragging, the outer edges of the dashboard and a strip on each divider between columns are
+// "new column" zones (when another column fits: see LayoutViewModel.CanOfferNewColumn). Entering one shows a
+// translucent phantom column where it would land; dropping there makes a new column.
 //
 // Between stacked cards sits a resize handle in the gap (always there, so showing it moves nothing; usable
 // only in edit mode). Dragging it moves height between the two neighbours live; release keeps it.
@@ -41,8 +42,11 @@ public sealed class LayoutHost : Decorator
     // How far the pointer must move before a press on a title bar becomes a drag.
     public const double DragThreshold = 4;
 
-    // How close (horizontally) the pointer must be to a "New column" zone's center to target it.
-    public const double NewColumnReach = 14;
+    // The share of the dashboard's width, at each outer edge, that counts as a new-column zone.
+    public const double EdgeZoneFraction = 0.15;
+
+    // The width of the new-column zone centered on each divider between columns.
+    public const double DividerZoneWidth = 24;
 
     public static readonly StyledProperty<LayoutViewModel?> LayoutProperty =
         AvaloniaProperty.Register<LayoutHost, LayoutViewModel?>(nameof(Layout));
@@ -59,8 +63,9 @@ public sealed class LayoutHost : Decorator
     private readonly List<Panel> _handles = new();
     private readonly ColumnHandleLayer _columnHandleLayer;
     private readonly List<Panel> _columnHandles = new();
-    private readonly List<(int Index, Border Zone)> _newColumnZones = new();
-    private readonly Border _newColumnLabel;
+    private readonly Border _phantom;
+    private readonly Border _insertLine;
+    private IReadOnlyCollection<int> _newColumnGaps = [];
     private int? _newColumnTarget;
 
     // The columns' widget ids as last built; a layout with the same ones only needs new weights.
@@ -98,10 +103,15 @@ public sealed class LayoutHost : Decorator
         _float.Classes.Add("dragFloat");
 
         var labelText = new TextBlock { Text = "New column" };
-        _newColumnLabel = new Border { Name = "NewColumnLabel", IsVisible = false, Child = labelText };
-        _newColumnLabel.Classes.Add("newColumnLabel");
+        var label = new Border { Name = "NewColumnLabel", Child = labelText, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 12, 0, 0) };
+        label.Classes.Add("newColumnLabel");
+        _phantom = new Border { Name = "NewColumnPhantom", IsVisible = false, Child = label };
+        _phantom.Classes.Add("newColumnPhantom");
+        _insertLine = new Border { Name = "DropIndicator", IsVisible = false, Height = 3 };
+        _insertLine.Classes.Add("dropIndicator");
 
-        _overlay.Children.Add(_newColumnLabel);
+        _overlay.Children.Add(_phantom);
+        _overlay.Children.Add(_insertLine);
         _overlay.Children.Add(_float);
         Child = new Panel { Children = { _columns, _columnHandleLayer, _overlay } };
     }
@@ -217,11 +227,10 @@ public sealed class LayoutHost : Decorator
 
     private bool _isEditing;
 
-    private void Rebuild() => Rebuild(Layout?.Columns);
-
-    // Builds the columns from the given slots: the layout itself, or the preview of a drop while dragging.
-    private void Rebuild(IReadOnlyList<LayoutColumnSlot>? slots)
+    // Builds the columns from the layout.
+    private void Rebuild()
     {
+        var slots = Layout?.Columns;
         // Take the reused cards out of their old columns first, so each can join its new one.
         foreach (var column in ColumnPanels)
         {
@@ -640,7 +649,7 @@ public sealed class LayoutHost : Decorator
         _dragging = true;
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
         _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
-        ShowNewColumnZones(frame?.WidgetId);
+        FindNewColumnGaps(frame?.WidgetId);
 
         if (frame is not null)
         {
@@ -687,89 +696,49 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    // A thin zone in each gap where a new column could go. A widget alone in its column skips the two gaps
-    // beside its own column (it would land where it is).
-    private void ShowNewColumnZones(string? placedWidgetId)
+    // The gaps a new column could go into. A widget alone in its column skips the two gaps beside its own
+    // column (it would land where it is).
+    private void FindNewColumnGaps(string? placedWidgetId)
     {
-        ClearNewColumnZones();
+        _newColumnGaps = [];
         if (Layout is not { } layout || !layout.CanOfferNewColumn(Bounds.Width, Gap))
         {
             return;
         }
-
-        var columns = ColumnScrollers.Select(BoundsInHost).ToList();
-        var centers = LayoutDropTargets.NewColumnCenters(columns, Gap);
         var at = placedWidgetId is null ? null : layout.Layout.Find(placedWidgetId);
         var alone = at is { } a && layout.Layout.Columns[a.Column].Widgets.Count == 1;
-        var top = columns.Min(c => c.Top);
-        var height = columns.Max(c => c.Bottom) - top;
-        for (var i = 0; i < centers.Length; i++)
-        {
-            if (alone && (i == at!.Value.Column || i == at.Value.Column + 1))
-            {
-                continue;
-            }
-            var zone = new Border { Name = $"NewColumnZone{i}", Height = height };
-            zone.Classes.Add("newColumnZone");
-            Canvas.SetLeft(zone, centers[i] - 3);
-            Canvas.SetTop(zone, top);
-            _overlay.Children.Insert(_newColumnZones.Count, zone); // behind the label and ghost, in gap order
-            _newColumnZones.Add((i, zone));
-        }
+        _newColumnGaps = Enumerable.Range(0, _pickColumns.Count + 1)
+            .Where(i => !(alone && (i == at!.Value.Column || i == at.Value.Column + 1)))
+            .ToList();
     }
 
-    private void ClearNewColumnZones()
-    {
-        foreach (var (_, zone) in _newColumnZones)
-        {
-            _overlay.Children.Remove(zone);
-        }
-        _newColumnZones.Clear();
-        _newColumnTarget = null;
-        _newColumnLabel.IsVisible = false;
-    }
-
-    // Moves the floating widget with the pointer and reflows the cards around the gap it would land in.
+    // Moves the floating widget with the pointer and marks where it would land: a phantom column in a new-column
+    // zone, otherwise a line at the gap in the hovered column. Nothing on the board moves.
     private void UpdateDrag(Point point)
     {
         Canvas.SetLeft(_float, point.X - _grabOffset.X);
         Canvas.SetTop(_float, point.Y - _grabOffset.Y);
 
-        // A "New column" zone under the pointer wins over dropping into a column.
-        _newColumnTarget = null;
-        _newColumnLabel.IsVisible = false;
-        foreach (var (_, zone) in _newColumnZones)
-        {
-            zone.Classes.Set("active", false);
-        }
-        var gapIndex = LayoutDropTargets.FindNewColumn(point, _pickColumns, Gap, NewColumnReach);
-        if (gapIndex is { } g && _newColumnZones.FirstOrDefault(z => z.Index == g).Zone is { } hovered)
-        {
-            _newColumnTarget = g;
-            _target = null;
-            hovered.Classes.Set("active", true);
-            ShowNewColumnLabel(Canvas.GetLeft(hovered) + 3, Canvas.GetTop(hovered));
-        }
-        else
-        {
-            _target = LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap);
-        }
-        ShowPreview();
-    }
+        _newColumnTarget = LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps);
+        _target = _newColumnTarget is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
 
-    // Builds the columns as the drop on the current target would leave them (the layout as it is when there is
-    // none), unless that is what is already shown.
-    private void ShowPreview()
-    {
-        if (Layout is not { } layout)
+        _phantom.IsVisible = _newColumnTarget is not null;
+        if (_newColumnTarget is { } gap)
         {
-            return;
+            var rect = LayoutDropTargets.PhantomColumn(gap, _pickColumns, Bounds.Width, Gap);
+            _phantom.Width = rect.Width;
+            _phantom.Height = rect.Height;
+            Canvas.SetLeft(_phantom, rect.X);
+            Canvas.SetTop(_phantom, rect.Y);
         }
-        var preview = _target is { } t ? layout.PreviewDrop(t.Column, t.Index) : null;
-        var slots = preview is null ? layout.Columns : LayoutViewModel.Slots(preview);
-        if (Structure(slots) != _builtStructure)
+
+        _insertLine.IsVisible = _target is not null;
+        if (_target is { } t)
         {
-            Rebuild(slots);
+            var column = _pickColumns[t.Column];
+            _insertLine.Width = column.Width;
+            Canvas.SetLeft(_insertLine, column.Left);
+            Canvas.SetTop(_insertLine, LayoutDropTargets.InsertionY(column, _pickWidgets[t.Column], t.Index, Gap) - 1.5);
         }
     }
 
@@ -782,7 +751,10 @@ public sealed class LayoutHost : Decorator
         _float.IsVisible = false;
         _float.Child = null;
         Cursor = null;
-        ClearNewColumnZones();
+        _newColumnTarget = null;
+        _newColumnGaps = [];
+        _phantom.IsVisible = false;
+        _insertLine.IsVisible = false;
         // Put the columns back as the layout has them (after a drop, the layout already has the new order).
         if (Layout is not null)
         {
@@ -804,16 +776,6 @@ public sealed class LayoutHost : Decorator
                 pointer.Capture(null);
             }
         }
-    }
-
-    // The "New column" pill near the top of a highlighted zone, kept inside the dashboard.
-    private void ShowNewColumnLabel(double centerX, double top)
-    {
-        _newColumnLabel.IsVisible = true;
-        _newColumnLabel.Measure(Size.Infinity);
-        var width = _newColumnLabel.DesiredSize.Width;
-        Canvas.SetLeft(_newColumnLabel, Math.Clamp(centerX - width / 2, 0, Math.Max(0, Bounds.Width - width)));
-        Canvas.SetTop(_newColumnLabel, top + 12);
     }
 
     private Rect BoundsInHost(Visual visual) =>

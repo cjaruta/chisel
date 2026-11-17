@@ -138,7 +138,7 @@ public class LayoutTrayHeadlessTests
     }
 
     [AvaloniaFact]
-    public void DraggingATrayCard_PlacesTheWidgetWhereTheGapShows()
+    public void DraggingATrayCard_PlacesTheWidgetAtTheIndicatedSlot()
     {
         var window = ShowEditing();
         Remove(window, "notes");
@@ -150,7 +150,8 @@ public class LayoutTrayHeadlessTests
         MoveTo(window, new Point(card.X + 10, card.Y + 30));
         MoveTo(window, above);
 
-        Assert.Equal("schedule | notes,tasks,links", Order(window));
+        Assert.Equal("schedule | tasks,links", Order(window));
+        Assert.True(Named<Border>(window, "DropIndicator").IsVisible);
         Assert.True(Named<Border>(window, "DragFloat").IsVisible);
         Release(window, above);
 
@@ -161,7 +162,7 @@ public class LayoutTrayHeadlessTests
     }
 
     [AvaloniaFact]
-    public void DraggingATrayCard_ToANewColumnZone_MakesAColumn()
+    public void DraggingATrayCard_ToTheRightEdge_MakesAColumn()
     {
         var window = ShowEditing();
         Remove(window, "notes");
@@ -169,7 +170,8 @@ public class LayoutTrayHeadlessTests
 
         Press(window, card);
         MoveTo(window, new Point(card.X, card.Y + 40));
-        var zone = InWindow(Named<Control>(window, "NewColumnZone2"), window).Center;
+        var host = InWindow(Host(window), window);
+        var zone = new Point(host.Right - host.Width * 0.05, InWindow(Frame(window, "schedule"), window).Center.Y);
         MoveTo(window, zone);
         Release(window, zone);
 

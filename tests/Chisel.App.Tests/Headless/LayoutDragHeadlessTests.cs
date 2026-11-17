@@ -11,8 +11,8 @@ using Chisel.App.Views.Widgets;
 
 namespace Chisel.App.Tests.Headless;
 
-// In layout edit mode, dragging a widget moves it: a floating snapshot follows the pointer, the other widgets
-// reflow around the gap live, and dropping moves the widget in the working copy.
+// In layout edit mode, dragging a widget moves it: a floating snapshot follows the pointer, an amber line marks
+// the slot in the hovered column (the board itself stays put), and dropping moves the widget in the working copy.
 public class LayoutDragHeadlessTests
 {
     private static T Named<T>(Window window, string name) where T : Control =>
@@ -194,13 +194,15 @@ public class LayoutDragHeadlessTests
         Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
 
     [AvaloniaFact]
-    public void CrossingAMidline_ReflowsTheOthersAroundTheGap()
+    public void CrossingAMidline_MovesTheIndicator_NotTheBoard()
     {
         var window = ShowEditing();
         var belowMiddle = Within(window, "tasks", 0.7);
         var aboveMiddle = Within(window, "tasks", 0.3);
-        var tasksHeight = Frame(window, "tasks").Bounds.Height;
-        var notesHeight = Frame(window, "notes").Bounds.Height;
+        var tasks = InWindow(Frame(window, "tasks"), window);
+        var before = Positions(window);
+        var line = Named<Border>(window, "DropIndicator");
+        Assert.False(line.IsVisible);
 
         var from = Bar(window, "links");
         Press(window, from);
@@ -209,58 +211,29 @@ public class LayoutDragHeadlessTests
         Assert.Contains("dragSource", Frame(window, "links").Classes);
 
         MoveTo(window, belowMiddle);
-        Assert.Equal("schedule | tasks,links,notes", Order(window));
+        Assert.True(line.IsVisible);
+        Assert.InRange(InWindow(line, window).Center.Y, tasks.Bottom - 2, tasks.Bottom + 20);
+        Assert.Equal(before, Positions(window));
+
         MoveTo(window, aboveMiddle);
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
-        // Only positions change: the others keep their size, and the gap is as big as the widget was.
-        Assert.Equal(tasksHeight, Frame(window, "tasks").Bounds.Height, 1);
-        Assert.Equal(notesHeight, Frame(window, "notes").Bounds.Height, 1);
-        Assert.Equal(0, Frame(window, "links").Bounds.Top, 1);
+        Assert.InRange(InWindow(line, window).Center.Y, tasks.Top - 20, tasks.Top + 2);
+        Assert.Equal(before, Positions(window));
 
         Release(window, aboveMiddle);
+        Assert.False(line.IsVisible);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void HoldingThePointerStill_NeverFlipsTheLayout()
+    public void Dropping_PutsTheWidgetAtTheIndicatedSlot()
     {
         var window = ShowEditing();
-        var point = Within(window, "tasks", 0.3);
-        var from = Bar(window, "links");
-        Press(window, from);
-        MoveTo(window, new Point(from.X, from.Y - 20));
-        MoveTo(window, point);
-        var order = Order(window);
-        var positions = Positions(window);
+        var tasksTop = InWindow(Frame(window, "tasks"), window).Top;
 
-        for (var i = 0; i < 6; i++)
-        {
-            MoveTo(window, new Point(point.X + i % 2, point.Y + i % 3));
-        }
+        Drag(window, "links", Within(window, "tasks", 0.3));
 
-        Assert.Equal(order, Order(window));
-        Assert.Equal(positions, Positions(window));
-        Release(window, point);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void Dropping_LandsWhereTheGapWas()
-    {
-        var window = ShowEditing();
-        var point = Within(window, "tasks", 0.3);
-        var from = Bar(window, "links");
-        Press(window, from);
-        MoveTo(window, new Point(from.X, from.Y - 20));
-        MoveTo(window, point);
-        var gap = InWindow(Frame(window, "links"), window);
-
-        Release(window, point);
-
-        var landed = InWindow(Frame(window, "links"), window);
-        Assert.Equal(gap.Top, landed.Top, 1);
-        Assert.Equal(gap.Height, landed.Height, 1);
         Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.Equal(tasksTop, InWindow(Frame(window, "links"), window).Top, 1.5);
         AssertNoDragVisuals(window);
         window.Close();
     }
@@ -275,12 +248,13 @@ public class LayoutDragHeadlessTests
         var before = Positions(window);
         var over = Within(window, "tasks", 0.2);
         MoveTo(window, over);
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.True(Named<Border>(window, "DropIndicator").IsVisible);
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Dispatcher.UIThread.RunJobs();
         AssertNoDragVisuals(window);
         Assert.Equal(before, Positions(window));
+        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
         Release(window, over);
 
         Assert.Equal("schedule | tasks,notes,links", Order(window));

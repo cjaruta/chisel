@@ -11,8 +11,8 @@ using Chisel.App.Views.Widgets;
 
 namespace Chisel.App.Tests.Headless;
 
-// While a widget is dragged in layout edit mode, thin "New column" zones appear at the dashboard's edges and
-// between columns; dropping on one makes a new column there.
+// While a widget is dragged in layout edit mode, the dashboard's outer edges and the dividers between columns are
+// new-column zones: entering one shows a phantom column, and dropping there makes a new column.
 public class LayoutColumnsHeadlessTests
 {
     private static T Named<T>(Window window, string name) where T : Control =>
@@ -26,8 +26,10 @@ public class LayoutColumnsHeadlessTests
     private static string Order(Window window) =>
         string.Join(" | ", Host(window).Frames.Select(c => string.Join(",", c.Select(f => f.WidgetId))));
 
-    private static List<Control> Zones(Window window) =>
-        window.GetVisualDescendants().OfType<Control>().Where(c => c.Name?.StartsWith("NewColumnZone") == true && c.IsVisible).ToList();
+    private static Border Phantom(Window window) => Named<Border>(window, "NewColumnPhantom");
+
+    private static Rect[] Positions(Window window) =>
+        Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
 
     private static MainViewModel ViewModel(Window window) => (MainViewModel)window.DataContext!;
 
@@ -44,7 +46,22 @@ public class LayoutColumnsHeadlessTests
 
     private static Point Bar(Window window, string id) => InWindow(Frame(window, id).EditBar, window).Center;
 
-    private static Point ZoneCenter(Window window, int index) => InWindow(Named<Control>(window, $"NewColumnZone{index}"), window).Center;
+    // A point inside the new-column zone at a gap (0 = left edge, column count = right edge), level with the columns.
+    private static Point ZoneCenter(Window window, int index)
+    {
+        var host = InWindow(Host(window), window);
+        var columns = Host(window).Frames.Select(c => InWindow(c[0], window)).ToList();
+        var y = columns[0].Center.Y;
+        if (index == 0)
+        {
+            return new Point(host.Left + host.Width * 0.05, y);
+        }
+        if (index == columns.Count)
+        {
+            return new Point(host.Right - host.Width * 0.05, y);
+        }
+        return new Point((columns[index - 1].Right + columns[index].Left) / 2, y);
+    }
 
     private static void Press(Window window, Point point)
     {
@@ -82,48 +99,57 @@ public class LayoutColumnsHeadlessTests
     }
 
     [AvaloniaFact]
-    public void NewColumnZones_AppearOnlyWhileDragging()
+    public void Phantom_ShowsOnlyWhileTheDragIsInsideANewColumnZone()
     {
         var window = ShowEditing();
-        Assert.Empty(Zones(window));
+        Assert.False(Phantom(window).IsVisible);
 
         PickUp(window, "notes");
-        Assert.Equal(new[] { "NewColumnZone0", "NewColumnZone1", "NewColumnZone2" }, Zones(window).Select(z => z.Name));
-
-        Release(window, Bar(window, "notes"));
-        Assert.Empty(Zones(window));
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void NewColumnZones_SitAtTheEdgesAndBetweenTheColumns()
-    {
-        var window = ShowEditing();
-        PickUp(window, "notes");
-
-        var schedule = InWindow(Frame(window, "schedule"), window);
-        var tasks = InWindow(Frame(window, "tasks"), window);
-        Assert.InRange(ZoneCenter(window, 0).X, schedule.Left - 16, schedule.Left + 4);
-        Assert.InRange(ZoneCenter(window, 1).X, schedule.Right, tasks.Left);
-        Assert.InRange(ZoneCenter(window, 2).X, tasks.Right - 4, tasks.Right + 16);
-        Release(window, Bar(window, "notes"));
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void HoveringAZone_HighlightsItWithANewColumnLabel()
-    {
-        var window = ShowEditing();
-        PickUp(window, "notes");
+        Assert.False(Phantom(window).IsVisible);
 
         MoveTo(window, ZoneCenter(window, 2));
+        Assert.True(Phantom(window).IsVisible);
+        MoveTo(window, Within(window, "tasks"));
+        Assert.False(Phantom(window).IsVisible);
 
-        Assert.Contains("active", Named<Control>(window, "NewColumnZone2").Classes);
+        Release(window, Bar(window, "notes"));
+        Assert.False(Phantom(window).IsVisible);
+        window.Close();
+    }
+
+    private static Point Within(Window window, string id) => InWindow(Frame(window, id), window).Center;
+
+    [AvaloniaFact]
+    public void HoveringTheOuterEdge_ShowsAPhantomColumnAtTheEdge()
+    {
+        var window = ShowEditing();
+        PickUp(window, "notes");
+
+        MoveTo(window, ZoneCenter(window, 0));
+
+        var phantom = InWindow(Phantom(window), window);
+        var host = InWindow(Host(window), window);
+        Assert.Equal(host.Left, phantom.Left, 1.5);
+        Assert.InRange(phantom.Width, host.Width / 4, host.Width / 2);
         var label = Named<Border>(window, "NewColumnLabel");
-        Assert.True(label.IsVisible);
         Assert.Contains("New column", label.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
+        Release(window, ZoneCenter(window, 0));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void HoveringADivider_ShowsAPhantomColumnOnIt()
+    {
+        var window = ShowEditing();
+        PickUp(window, "notes");
+
+        MoveTo(window, ZoneCenter(window, 1));
+
+        var phantom = InWindow(Phantom(window), window);
+        Assert.True(phantom.Left < ZoneCenter(window, 1).X && ZoneCenter(window, 1).X < phantom.Right);
         UiSnapshot.Render(window, "layout-new-column-drag");
-        Release(window, ZoneCenter(window, 2));
+        Release(window, ZoneCenter(window, 1));
+        Assert.Equal("schedule | notes | tasks,links", Order(window));
         window.Close();
     }
 
@@ -138,7 +164,7 @@ public class LayoutColumnsHeadlessTests
         Assert.Equal(3, Host(window).Frames.Count);
         Assert.Equal("schedule | tasks,links | notes", Order(window));
         Assert.True(InWindow(Frame(window, "notes"), window).Left > InWindow(Frame(window, "tasks"), window).Right);
-        Assert.Empty(Zones(window));
+        Assert.False(Phantom(window).IsVisible);
         UiSnapshot.Render(window, "layout-three-columns-1200x760");
         window.Close();
     }
@@ -155,30 +181,33 @@ public class LayoutColumnsHeadlessTests
     }
 
     [AvaloniaFact]
-    public void DuringADrag_NoWidgetChangesSize()
+    public void DuringADrag_NoColumnOrWidgetMoves()
     {
         var window = ShowEditing();
-        Rect[] Positions() => Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
-        var before = Positions();
+        var before = Positions(window);
 
         PickUp(window, "notes");
         MoveTo(window, ZoneCenter(window, 1));
+        Assert.Equal(before, Positions(window));
         MoveTo(window, ZoneCenter(window, 2));
+        Assert.Equal(before, Positions(window));
+        MoveTo(window, Within(window, "schedule"));
+        Assert.Equal(before, Positions(window));
 
-        Assert.Equal(before, Positions());
         Release(window, new Point(100, 30));
-        Assert.Equal(before, Positions());
+        Assert.Equal(before, Positions(window));
         window.Close();
     }
 
     [AvaloniaFact]
-    public void TooNarrowForAnotherColumn_NoZonesAreOffered()
+    public void TooNarrowForAnotherColumn_NoPhantomIsShown()
     {
         var window = ShowEditing(820, 650);
 
         PickUp(window, "notes");
+        MoveTo(window, ZoneCenter(window, 2));
 
-        Assert.Empty(Zones(window));
+        Assert.False(Phantom(window).IsVisible);
         Release(window, Bar(window, "notes"));
         window.Close();
     }
@@ -232,6 +261,16 @@ public class LayoutColumnsHeadlessTests
         Dispatcher.UIThread.RunJobs();
         Release(window, tasks.Center);
         Assert.Equal(before, Order(window));
+
+        PickUp(window, "notes");
+        MoveTo(window, ZoneCenter(window, 0));
+        Assert.True(Phantom(window).IsVisible);
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+        Dispatcher.UIThread.RunJobs();
+        Release(window, ZoneCenter(window, 0));
+        Assert.False(Phantom(window).IsVisible);
+        Assert.Equal(before, Order(window));
+        Assert.True(ViewModel(window).Layout.IsEditing);
         window.Close();
     }
 
