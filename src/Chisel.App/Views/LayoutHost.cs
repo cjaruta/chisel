@@ -66,8 +66,9 @@ public sealed class LayoutHost : Decorator
     private double _resizeStartY;
     private double _resizeSpace;
 
-    // The title bar press that may turn into a drag.
+    // The title bar press (or tray card press) that may turn into a drag.
     private WidgetFrame? _pressed;
+    private WidgetDefinition? _trayWidget;
     private Point _pressPoint;
     private Point _grabOffset;
     private bool _dragging;
@@ -152,6 +153,9 @@ public sealed class LayoutHost : Decorator
                 {
                     EndDrag();
                 }
+                break;
+            case nameof(LayoutViewModel.CanRemoveWidgets):
+                UpdateRemoveButtons();
                 break;
             case nameof(LayoutViewModel.DraggedWidgetId) when Layout?.IsDraggingWidget != true:
                 // Dropped, or cancelled (Esc): clear the drag visuals.
@@ -348,9 +352,104 @@ public sealed class LayoutHost : Decorator
             frame.EditBar.PointerMoved += (_, e) => OnBarMoved(e);
             frame.EditBar.PointerReleased += (_, e) => OnBarReleased(e);
             frame.EditBar.PointerCaptureLost += (_, _) => OnBarCaptureLost();
+            frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(frame.WidgetId);
+            frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
             _frames[widget.Id] = frame;
         }
         return frame;
+    }
+
+    // The last widget on the dashboard cannot be removed.
+    private void UpdateRemoveButtons()
+    {
+        foreach (var frame in _frames.Values)
+        {
+            frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
+        }
+    }
+
+    // Tray cards (in the edit toolbar) hand their pointer over here, in this host's coordinates. A press that
+    // moves past the threshold drags the widget onto the dashboard like a title bar; one that doesn't is a click,
+    // which adds the widget at the bottom of the first column.
+    public void TrayCardPressed(WidgetDefinition widget, Point point, Point grabOffset)
+    {
+        if (!IsEditing)
+        {
+            return;
+        }
+        _trayWidget = widget;
+        _pressPoint = point;
+        _grabOffset = grabOffset;
+    }
+
+    public void TrayCardMoved(Point point)
+    {
+        if (_trayWidget is not { } widget || Layout is not { } layout)
+        {
+            return;
+        }
+        if (!_dragging)
+        {
+            var moved = point - _pressPoint;
+            if (Math.Sqrt(moved.X * moved.X + moved.Y * moved.Y) < DragThreshold)
+            {
+                return;
+            }
+            layout.BeginTrayDrag(widget.Id);
+            if (!layout.IsDraggingWidget)
+            {
+                _trayWidget = null;
+                return;
+            }
+            StartDragVisuals(null, widget.Title, 260);
+        }
+        if (layout.IsDraggingWidget)
+        {
+            UpdateDrag(point);
+        }
+    }
+
+    public void TrayCardReleased(Point point)
+    {
+        if (_trayWidget is { } widget && Layout is { } layout)
+        {
+            if (_dragging && layout.IsDraggingWidget)
+            {
+                UpdateDrag(point);
+                Drop(layout);
+            }
+            else if (!_dragging)
+            {
+                layout.AddWidgetFromTray(widget.Id);
+            }
+        }
+        EndDrag();
+    }
+
+    public void TrayCardCaptureLost()
+    {
+        if (_dragging)
+        {
+            Layout?.CancelWidgetDrag();
+        }
+        EndDrag();
+    }
+
+    // Drops the dragged widget on the current target, or puts it back when there is none.
+    private void Drop(LayoutViewModel layout)
+    {
+        if (_newColumnTarget is { } newColumn)
+        {
+            layout.DropWidgetInNewColumn(newColumn);
+        }
+        else if (_target is { } target)
+        {
+            layout.DropWidget(target.Column, target.Index);
+        }
+        else
+        {
+            layout.CancelWidgetDrag();
+        }
     }
 
     private void OnBarPressed(WidgetFrame frame, PointerPressedEventArgs e)
@@ -387,7 +486,7 @@ public sealed class LayoutHost : Decorator
                 _pressed = null;
                 return;
             }
-            StartDragVisuals(frame);
+            StartDragVisuals(frame, frame.Widget.Title, Math.Min(frame.Bounds.Width, 360));
         }
 
         if (layout.IsDraggingWidget)
@@ -402,18 +501,7 @@ public sealed class LayoutHost : Decorator
         if (_dragging && layout is { IsDraggingWidget: true })
         {
             UpdateDrag(e.GetPosition(this));
-            if (_newColumnTarget is { } newColumn)
-            {
-                layout.DropWidgetInNewColumn(newColumn);
-            }
-            else if (_target is { } target)
-            {
-                layout.DropWidget(target.Column, target.Index);
-            }
-            else
-            {
-                layout.CancelWidgetDrag();
-            }
+            Drop(layout);
         }
         EndDrag();
         e.Pointer.Capture(null);
@@ -430,21 +518,25 @@ public sealed class LayoutHost : Decorator
         EndDrag();
     }
 
-    private void StartDragVisuals(WidgetFrame frame)
+    // frame: the card being moved, or null for a widget coming from the tray.
+    private void StartDragVisuals(WidgetFrame? frame, string title, double ghostWidth)
     {
         _dragging = true;
-        ShowNewColumnZones(frame);
-        frame.Classes.Add("dragSource");
-        frame.EditBar.Cursor = DraggingCursor;
-        _ghostTitle.Text = frame.Widget.Title;
-        _ghost.Width = Math.Min(frame.Bounds.Width, 360);
+        ShowNewColumnZones(frame?.WidgetId);
+        if (frame is not null)
+        {
+            frame.Classes.Add("dragSource");
+            frame.EditBar.Cursor = DraggingCursor;
+        }
+        _ghostTitle.Text = title;
+        _ghost.Width = ghostWidth;
         _grabOffset = new Point(Math.Min(_grabOffset.X, _ghost.Width - 24), _grabOffset.Y);
         _ghost.IsVisible = true;
     }
 
     // A thin zone in each gap where a new column could go. A widget alone in its column skips the two gaps
     // beside its own column (it would land where it is).
-    private void ShowNewColumnZones(WidgetFrame frame)
+    private void ShowNewColumnZones(string? placedWidgetId)
     {
         ClearNewColumnZones();
         if (Layout is not { } layout || !layout.CanOfferNewColumn(Bounds.Width, Gap))
@@ -454,7 +546,7 @@ public sealed class LayoutHost : Decorator
 
         var columns = ColumnScrollers.Select(BoundsInHost).ToList();
         var centers = LayoutDropTargets.NewColumnCenters(columns, Gap);
-        var at = layout.Layout.Find(frame.WidgetId);
+        var at = placedWidgetId is null ? null : layout.Layout.Find(placedWidgetId);
         var alone = at is { } a && layout.Layout.Columns[a.Column].Widgets.Count == 1;
         var top = columns.Min(c => c.Top);
         var height = columns.Max(c => c.Bottom) - top;
@@ -515,7 +607,7 @@ public sealed class LayoutHost : Decorator
         var target = LayoutDropTargets.Find(point, columnRects, widgetRects, Gap);
 
         // Dropping where it already is would change nothing, so that is not shown as a target.
-        if (target is { } t && Layout is { DraggedWidgetId: { } id } layout
+        if (target is { } t && Layout is { DraggedWidgetId: { } id, IsDraggingFromTray: false } layout
             && ReferenceEquals(layout.Layout.Move(id, t.Column, t.Index), layout.Layout))
         {
             target = null;
@@ -554,6 +646,7 @@ public sealed class LayoutHost : Decorator
             f.Classes.Remove("dragSource");
         }
         _pressed = null;
+        _trayWidget = null;
         _dragging = false;
         _target = null;
         _indicator.IsVisible = false;

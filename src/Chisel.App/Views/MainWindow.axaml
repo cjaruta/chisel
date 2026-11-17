@@ -52,6 +52,36 @@
                 HorizontalAlignment="Left" VerticalAlignment="Top"
                 IsVisible="{Binding Layout.IsEditing}">
             <StackPanel Orientation="Horizontal" Spacing="6">
+                <!-- The tray: widgets not on the dashboard. Drag a card onto the dashboard, or click it to add it
+                     to the first column. Lives in the toolbar so it never covers or moves a widget. -->
+                <StackPanel Name="LayoutTray" Orientation="Horizontal" Spacing="6" IsVisible="{Binding Layout.HasHiddenWidgets}">
+                    <Button Name="TrayToggle" Classes="trayToggle" Command="{Binding Layout.ToggleTrayCommand}"
+                            ToolTip.Tip="Show or hide the widgets that are not on the dashboard">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{Binding Layout.TrayWidgets.Count, StringFormat='Widgets ({0})'}" VerticalAlignment="Center" />
+                            <Path Classes="trayChevron" Classes.open="{Binding Layout.IsTrayOpen}" Data="M1,1 L5,5 L9,1" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <ItemsControl Name="TrayCards" ItemsSource="{Binding Layout.TrayWidgets}" IsVisible="{Binding Layout.IsTrayOpen}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WidgetDefinition">
+                                <Border Classes="trayCard" ToolTip.Tip="Drag onto the dashboard, or click to add"
+                                        PointerPressed="OnTrayCardPressed" PointerMoved="OnTrayCardMoved"
+                                        PointerReleased="OnTrayCardReleased" PointerCaptureLost="OnTrayCardCaptureLost">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Path Classes="trayIcon" Data="{Binding Icon, Converter={x:Static conv:GeometryConverter.Instance}}" />
+                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="trayPlus" Text="+" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Classes="toolbarDivider" />
+                </StackPanel>
                 <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
                 <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
                 <Button Name="LayoutDoneButton" Classes="accent" Content="Done" Command="{Binding Layout.DoneCommand}" />
