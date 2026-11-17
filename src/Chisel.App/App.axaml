@@ -20,8 +20,15 @@
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
         <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
-        <SolidColorBrush x:Key="EditPageBrush" Color="#181D28" />
-        <SolidColorBrush x:Key="EditBarBrush" Color="#273149" />
+        <!-- The one edit-mode accent: drop line, New column zones, Done button. Warm amber, readable on light and dark. -->
+        <Color x:Key="EditAccentColor">#F5A524</Color>
+        <SolidColorBrush x:Key="EditAccentBrush" Color="{StaticResource EditAccentColor}" />
+        <SolidColorBrush x:Key="EditHairlineBrush" Color="#FFFFFF" Opacity="0.16" />
+        <SolidColorBrush x:Key="EditHairlineHoverBrush" Color="#FFFFFF" Opacity="0.35" />
+        <SolidColorBrush x:Key="EditPillBrush" Color="#FFFFFF" Opacity="0.28" />
+        <SolidColorBrush x:Key="EditBadgeBrush" Color="#2B2E36" />
+        <SolidColorBrush x:Key="EditPageBrush" Color="#16181D" />
+        <SolidColorBrush x:Key="EditBarBrush" Color="#262932" />
         <SolidColorBrush x:Key="DragPreviewBrush" Color="#405B8DEF" />
         <!-- Block colors and text come from the chosen palette (Models/BlockPalette.cs).
              BlockPaletteTests checks this outline stands out on every fill of every palette. -->
@@ -45,26 +52,31 @@
         <Style Selector="Border.widgetFrame">
             <Setter Property="Padding" Value="0" />
             <Setter Property="ClipToBounds" Value="True" />
-            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
 
-        <!-- Layout edit mode: accent outline, slim title bar with a grip, dimmed inert content, tinted page -->
+        <!-- Layout edit mode: neutral hairline, soft shadow, a slight scale-down (render transform, so nothing
+             moves), dimmed inert content. Not clipped. -->
         <Style Selector="Border.widgetFrame.editing">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="BoxShadow" Value="0 6 18 0 #55000000" />
+            <Setter Property="ClipToBounds" Value="False" />
+        </Style>
+
+        <Style Selector="Border.widgetFrame.editing > Panel">
+            <Setter Property="RenderTransform" Value="scale(0.985)" />
         </Style>
 
         <Style Selector="Border.widgetFrame.editing DockPanel.widgetContent">
             <Setter Property="Opacity" Value="0.55" />
         </Style>
 
-        <!-- As tall as the heading row (12 + 32 + 6), so it covers the heading and its buttons exactly -->
+        <!-- The drag surface: covers the whole widget -->
         <Style Selector="Border.editBar">
-            <Setter Property="Height" Value="50" />
-            <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
-            <Setter Property="CornerRadius" Value="8,8,0,0" />
-            <Setter Property="BorderBrush" Value="#405B8DEF" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Cursor" Value="SizeAll" />
         </Style>
 
         <Style Selector="StackPanel.editBarContent">
@@ -86,29 +98,25 @@
              and a slim accent line marks the landing spot -->
         <!-- The card being moved: faded, but its title bar stays opaque so the heading under it never shows through -->
         <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="BorderBrush" Value="#665B8DEF" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
         </Style>
 
         <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
             <Setter Property="Opacity" Value="0.2" />
         </Style>
 
-        <Style Selector="Border.widgetFrame.dragSource StackPanel.editBarContent">
-            <Setter Property="Opacity" Value="0.4" />
-        </Style>
-
         <Style Selector="Border.dropIndicator">
             <Setter Property="Height" Value="4" />
             <Setter Property="CornerRadius" Value="2" />
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BoxShadow" Value="0 0 8 0 #805B8DEF" />
+            <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
+            <Setter Property="BoxShadow" Value="0 0 8 0 #80F5A524" />
         </Style>
 
         <Style Selector="Border.dragGhost">
             <Setter Property="Height" Value="50" />
             <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Opacity" Value="0.92" />
             <Setter Property="BoxShadow" Value="0 8 24 0 #A0000000" />
@@ -118,16 +126,16 @@
         <Style Selector="Border.newColumnZone">
             <Setter Property="Width" Value="6" />
             <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="Background" Value="#335B8DEF" />
+            <Setter Property="Background" Value="#33F5A524" />
         </Style>
 
         <Style Selector="Border.newColumnZone.active">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BoxShadow" Value="0 0 12 1 #995B8DEF" />
+            <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
+            <Setter Property="BoxShadow" Value="0 0 12 1 #99F5A524" />
         </Style>
 
         <Style Selector="Border.newColumnLabel">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="10,3" />
             <Setter Property="BoxShadow" Value="0 4 12 0 #80000000" />
@@ -136,30 +144,26 @@
         <Style Selector="Border.newColumnLabel TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#1A1305" />
         </Style>
 
-        <!-- Resize handles in the gaps between stacked cards: invisible outside edit mode; in edit mode a faint
-             line with a short accent grip, brighter on hover and while dragging -->
+        <!-- Resize handles in the gaps between stacked cards: invisible outside edit mode; in edit mode a small
+             neutral pill centered on the divider, brighter on hover and while dragging -->
         <Style Selector="Panel.resizeHandle Border.resizeLine">
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Margin" Value="12,0" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="#265B8DEF" />
             <Setter Property="IsVisible" Value="False" />
         </Style>
 
         <Style Selector="Panel.resizeHandle Border.resizeGrip">
-            <Setter Property="Width" Value="40" />
+            <Setter Property="Width" Value="36" />
             <Setter Property="Height" Value="4" />
             <Setter Property="CornerRadius" Value="2" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="#995B8DEF" />
+            <Setter Property="Background" Value="{StaticResource EditPillBrush}" />
             <Setter Property="IsVisible" Value="False" />
         </Style>
 
-        <Style Selector="Panel.resizeHandle.editing Border.resizeLine, Panel.resizeHandle.editing Border.resizeGrip">
+        <Style Selector="Panel.resizeHandle.editing Border.resizeGrip">
             <Setter Property="IsVisible" Value="True" />
         </Style>
 
@@ -169,43 +173,39 @@
         </Style>
 
         <Style Selector="Panel.resizeHandle.editing:pointerover Border.resizeGrip, Panel.resizeHandle.active Border.resizeGrip">
-            <Setter Property="Width" Value="64" />
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-        </Style>
-
-        <Style Selector="Panel.resizeHandle.active Border.resizeLine">
-            <Setter Property="Background" Value="#805B8DEF" />
+            <Setter Property="Background" Value="{StaticResource EditHairlineHoverBrush}" />
         </Style>
 
         <Style Selector="Panel.page.editing">
             <Setter Property="Background" Value="{StaticResource EditPageBrush}" />
         </Style>
 
-        <!-- Remove button on a widget's edit title bar: a small X, red on hover, faded when it is the last widget -->
+        <!-- Remove badge: a small round "-" overlapping the widget's top-left corner; faded when it is the last widget -->
         <Style Selector="Button.removeWidget">
-            <Setter Property="Width" Value="26" />
-            <Setter Property="Height" Value="26" />
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="MinHeight" Value="0" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0,0,10,0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{StaticResource EditBadgeBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
 
         <Style Selector="Button.removeWidget Path">
-            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="Stroke" Value="White" />
             <Setter Property="StrokeThickness" Value="1.8" />
             <Setter Property="StrokeLineCap" Value="Round" />
         </Style>
 
         <Style Selector="Button.removeWidget:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#33E06C75" />
-        </Style>
-
-        <Style Selector="Button.removeWidget:pointerover Path">
-            <Setter Property="Stroke" Value="{StaticResource CheckpointBrush}" />
+            <Setter Property="Background" Value="#3A3E49" />
         </Style>
 
         <Style Selector="Button.removeWidget:disabled /template/ ContentPresenter#PART_ContentPresenter">
@@ -233,7 +233,7 @@
 
         <Style Selector="Border.trayCard">
             <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
-            <Setter Property="BorderBrush" Value="#665B8DEF" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="8,5" />
@@ -241,14 +241,14 @@
         </Style>
 
         <Style Selector="Border.trayCard:pointerover">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
         </Style>
 
         <Style Selector="Path.trayIcon">
             <Setter Property="Width" Value="16" />
             <Setter Property="Height" Value="16" />
             <Setter Property="Stretch" Value="Uniform" />
-            <Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
             <Setter Property="StrokeThickness" Value="1.6" />
             <Setter Property="StrokeLineCap" Value="Round" />
             <Setter Property="StrokeJoin" Value="Round" />
@@ -256,7 +256,7 @@
         </Style>
 
         <Style Selector="TextBlock.trayPlus">
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
@@ -268,12 +268,29 @@
 
         <Style Selector="Border.layoutToolbar">
             <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="22" />
+            <Setter Property="Padding" Value="8" />
             <Setter Property="Margin" Value="0,-14,0,0" />
-            <Setter Property="BoxShadow" Value="0 6 20 0 #80000000" />
+            <Setter Property="BoxShadow" Value="0 10 28 0 #99000000" />
+        </Style>
+
+        <!-- Done is the primary button; Cancel and Reset stay secondary (plain) -->
+        <Style Selector="Button.editPrimary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
+            <Setter Property="Foreground" Value="#1A1305" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.editPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FFB84A" />
+            <Setter Property="Foreground" Value="#1A1305" />
+        </Style>
+
+        <Style Selector="Button.editPrimary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E09418" />
+            <Setter Property="Foreground" Value="#1A1305" />
         </Style>
 
         <Style Selector="Grid.widgetHeader">

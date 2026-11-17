@@ -84,7 +84,7 @@
                 </StackPanel>
                 <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
                 <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
-                <Button Name="LayoutDoneButton" Classes="accent" Content="Done" Command="{Binding Layout.DoneCommand}" />
+                <Button Name="LayoutDoneButton" Classes="editPrimary" Content="Done" Command="{Binding Layout.DoneCommand}" />
             </StackPanel>
         </Border>
 

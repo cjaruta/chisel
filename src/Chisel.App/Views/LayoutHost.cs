@@ -41,7 +41,7 @@ public sealed class LayoutHost : Decorator
     public static readonly StyledProperty<LayoutViewModel?> LayoutProperty =
         AvaloniaProperty.Register<LayoutHost, LayoutViewModel?>(nameof(Layout));
 
-    private static readonly Cursor GrabCursor = new(StandardCursorType.Hand);
+    private static readonly Cursor GrabCursor = new(StandardCursorType.SizeAll);
     private static readonly Cursor DraggingCursor = new(StandardCursorType.DragMove);
     private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeNorthSouth);
 
