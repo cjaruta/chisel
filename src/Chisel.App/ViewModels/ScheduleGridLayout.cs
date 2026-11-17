@@ -9,6 +9,16 @@ namespace Chisel.App.ViewModels;
 // An overnight block gives two pieces. Overlapping pieces share the width: Column of ColumnCount.
 public sealed record GridSegment(int BlockIndex, int StartMinute, int EndMinute, int Column, int ColumnCount);
 
+// A time range on the grid in minutes from midnight. EndMinute 1440 is midnight at the end of the day,
+// which a block stores as an end of 00:00.
+public sealed record GridRange(int StartMinute, int EndMinute)
+{
+    public TimeOnly Start => TimeAt(StartMinute);
+    public TimeOnly End => TimeAt(EndMinute);
+
+    public static TimeOnly TimeAt(int minute) => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(minute % ScheduleGridLayout.MinutesPerDay));
+}
+
 public static class ScheduleGridLayout
 {
     public const int MinutesPerDay = 24 * 60;
@@ -20,12 +30,43 @@ public static class ScheduleGridLayout
 
     // y: pointer position in the viewport, measured from where midnight would be with no scrolling.
     // scrollOffset: how far the grid is scrolled down. Rounds to the nearest mark, kept within the day.
-    public static TimeOnly SnapTime(double y, double scrollOffset, double pixelsPerMinute = 1.0)
+    public static TimeOnly SnapTime(double y, double scrollOffset, double pixelsPerMinute = 1.0) =>
+        GridRange.TimeAt(SnapMinute(y, scrollOffset, pixelsPerMinute, MinutesPerDay - HoverSnapMinutes));
+
+    // A dragged range: the press and current positions (same meaning as in SnapTime), snapped,
+    // earlier one first, at least one interval long, and inside the day. The end may be 1440 (midnight).
+    public static GridRange DragRange(double pressY, double currentY, double scrollOffset, double pixelsPerMinute = 1.0)
+    {
+        var press = SnapMinute(pressY, scrollOffset, pixelsPerMinute, MinutesPerDay - HoverSnapMinutes);
+        var current = SnapMinute(currentY, scrollOffset, pixelsPerMinute, MinutesPerDay);
+        if (current == press)
+        {
+            return new GridRange(press, press + HoverSnapMinutes);
+        }
+        return new GridRange(Math.Min(press, current), Math.Max(press, current));
+    }
+
+    // Dragging within this many pixels of the top or bottom of the scroll area scrolls the grid.
+    public const double AutoScrollEdgePixels = 32;
+    public const double AutoScrollMaxStepPixels = 10;
+
+    // Pixels to scroll per tick for a pointer at y in a viewport of the given height: negative is up.
+    // Speeds up gently the deeper the pointer is in the edge zone, capped past the edge.
+    public static double AutoScrollStep(double y, double viewportHeight)
+    {
+        var depth = y < AutoScrollEdgePixels ? AutoScrollEdgePixels - y
+            : y > viewportHeight - AutoScrollEdgePixels ? -(y - (viewportHeight - AutoScrollEdgePixels))
+            : 0;
+        var fraction = Math.Clamp(depth / AutoScrollEdgePixels, -1, 1);
+        return -fraction * AutoScrollMaxStepPixels;
+    }
+
+    // The nearest mark to a position, as minutes from midnight between 0 and max.
+    public static int SnapMinute(double y, double scrollOffset, double pixelsPerMinute = 1.0, int max = MinutesPerDay)
     {
         var minute = (y + scrollOffset) / pixelsPerMinute;
         var marks = Math.Round(minute / HoverSnapMinutes, MidpointRounding.AwayFromZero);
-        var snapped = Math.Clamp(marks * HoverSnapMinutes, 0, MinutesPerDay - HoverSnapMinutes);
-        return TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(snapped));
+        return (int)Math.Clamp(marks * HoverSnapMinutes, 0, max);
     }
 
     public static IReadOnlyList<GridSegment> Segments(IReadOnlyList<ScheduleBlock> blocks)
