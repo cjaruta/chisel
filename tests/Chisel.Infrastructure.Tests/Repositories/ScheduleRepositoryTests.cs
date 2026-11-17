@@ -50,5 +50,22 @@ public class ScheduleRepositoryTests : IDisposable
         Assert.Equal("New", block.Title);
     }
 
+    [Fact]
+    public void Save_KeepsEachBlocksColor()
+    {
+        using var context = _fixture.CreateContext();
+        new ScheduleRepository(context).Save(new DaySchedule(new[]
+        {
+            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0), "teal"),
+            new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0), "terracotta"),
+            new ScheduleBlock("Read", new TimeOnly(22, 0), new TimeOnly(23, 0))
+        }));
+
+        using var readContext = _fixture.CreateContext();
+        var colors = new ScheduleRepository(readContext).Get().Blocks.Select(b => b.Color).ToList();
+
+        Assert.Equal(new[] { "teal", "terracotta", BlockColor.Default }, colors);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

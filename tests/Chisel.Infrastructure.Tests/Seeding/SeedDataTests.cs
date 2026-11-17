@@ -37,6 +37,16 @@ public class SeedDataTests
     }
 
     [Fact]
+    public void CreateSchedule_GivesEachKindOfBlockItsOwnColor()
+    {
+        var blocks = SeedData.CreateSchedule().Blocks;
+
+        var colorByTitle = blocks.GroupBy(b => b.Title).ToDictionary(g => g.Key, g => Assert.Single(g.Select(b => b.Color).Distinct()));
+        Assert.Equal(colorByTitle.Count, colorByTitle.Values.Distinct().Count());
+        Assert.DoesNotContain(Chisel.Core.Schedule.BlockColor.Default, colorByTitle.Values);
+    }
+
+    [Fact]
     public void CreateMarkers_ReturnsCoffeeWorkAndDinnerMarkers()
     {
         var markers = SeedData.CreateMarkers();

@@ -77,6 +77,21 @@
                                     <TextBox Name="BlockEndBox" Text="{Binding Schedule.BlockEditor.EndText}" />
                                 </StackPanel>
                             </Grid>
+                            <TextBlock Classes="dim" Text="Color" />
+                            <ItemsControl Name="BlockSwatches" ItemsSource="{Binding Schedule.BlockEditor.Swatches}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ColorSwatchOption">
+                                        <Button Classes="swatch" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Name}"
+                                                Command="{Binding #BlockSwatches.((vm:MainViewModel)DataContext).Schedule.BlockEditor.SelectColorCommand}"
+                                                CommandParameter="{Binding Key}">
+                                            <Ellipse Classes="swatchDot" Fill="{Binding Brush}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <TextBlock Name="BlockEditorError" Classes="editorError" Text="{Binding Schedule.BlockEditor.ErrorMessage}"
                                        IsVisible="{Binding Schedule.BlockEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
                             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -158,15 +173,22 @@
                                         <Button Classes="gridItem" ToolTip.Tip="Edit block"
                                                 Command="{Binding #ScheduleBlocks.((vm:MainViewModel)DataContext).Schedule.EditBlockCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}">
-                                                <StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <TextBlock Classes="blockTitle" Text="{Binding Title}" />
-                                                        <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
-                                                                   IsVisible="{Binding IsShort}" />
-                                                    </StackPanel>
-                                                    <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" IsVisible="{Binding !IsShort}" />
-                                                </StackPanel>
+                                            <!-- Tinted fill and a solid left stripe in the block's color; the outer border carries the current-block outline -->
+                                            <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}"
+                                                    Background="{Binding ColorKey, Converter={x:Static conv:BlockColorConverter.Fill}}">
+                                                <Border Classes="blockInner">
+                                                    <Panel>
+                                                        <Border Classes="blockStripe" Background="{Binding ColorKey, Converter={x:Static conv:BlockColorConverter.Stripe}}" />
+                                                        <StackPanel Classes="blockContent">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Classes="blockTitle" Text="{Binding Title}" />
+                                                                <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
+                                                                           IsVisible="{Binding IsShort}" />
+                                                            </StackPanel>
+                                                            <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" IsVisible="{Binding !IsShort}" />
+                                                        </StackPanel>
+                                                    </Panel>
+                                                </Border>
                                             </Border>
                                         </Button>
                                     </DataTemplate>
@@ -244,10 +266,16 @@
                                         ctl:DayGridPanel.StartMinute="{Binding Schedule.PreviewStartMinute}"
                                         ctl:DayGridPanel.EndMinute="{Binding Schedule.PreviewEndMinute}"
                                         IsVisible="{Binding Schedule.IsPreviewVisible}">
-                                    <StackPanel VerticalAlignment="Top">
-                                        <TextBlock Name="DragPreviewTitle" Classes="blockTitle" Text="{Binding Schedule.PreviewTitle}" />
-                                        <TextBlock Name="DragPreviewLabel" Classes="blockTime" Text="{Binding Schedule.PreviewLabel}" />
-                                    </StackPanel>
+                                    <Panel>
+                                        <Border Name="PendingFill" IsVisible="{Binding Schedule.IsPending}"
+                                                Background="{Binding Schedule.PreviewColorKey, Converter={x:Static conv:BlockColorConverter.Fill}}" />
+                                        <Border Name="PendingStripe" Classes="blockStripe" IsVisible="{Binding Schedule.IsPending}"
+                                                Background="{Binding Schedule.PreviewColorKey, Converter={x:Static conv:BlockColorConverter.Stripe}}" />
+                                        <StackPanel Classes="blockContent">
+                                            <TextBlock Name="DragPreviewTitle" Classes="blockTitle" Text="{Binding Schedule.PreviewTitle}" />
+                                            <TextBlock Name="DragPreviewLabel" Classes="blockTime" Text="{Binding Schedule.PreviewLabel}" />
+                                        </StackPanel>
+                                    </Panel>
                                 </Border>
                             </ctl:DayGridPanel>
 

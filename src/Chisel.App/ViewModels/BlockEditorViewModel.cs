@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chisel.App.Models;
 using Chisel.Core.Schedule;
 using Chisel.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -32,11 +33,29 @@ public partial class BlockEditorViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? ErrorMessage { get; set; }
 
+    // The chosen BlockColor key; the matching swatch shows a ring.
+    [ObservableProperty]
+    public partial string ColorKey { get; set; } = BlockColor.Default;
+
+    public IReadOnlyList<ColorSwatchOption> Swatches { get; } = BlockPalette.All.Select(s => new ColorSwatchOption(s)).ToList();
+
+    partial void OnColorKeyChanged(string value)
+    {
+        foreach (var swatch in Swatches)
+        {
+            swatch.IsSelected = swatch.Key == value;
+        }
+    }
+
+    [RelayCommand]
+    private void SelectColor(string? key) => ColorKey = BlockColor.Normalize(key);
+
     public BlockEditorViewModel(IScheduleRepository repository, TimeDisplay display, Action saved)
     {
         _repository = repository;
         _display = display;
         _saved = saved;
+        OnColorKeyChanged(ColorKey);
     }
 
     // Position of the block being edited in the saved schedule; null when adding a new one.
@@ -49,16 +68,17 @@ public partial class BlockEditorViewModel : ViewModelBase
 
     public void OpenNew(TimeOnly start) => OpenNew(start, start.AddHours(1));
 
-    public void OpenNew(TimeOnly start, TimeOnly end) => Open(null, "", start, end);
+    public void OpenNew(TimeOnly start, TimeOnly end) => Open(null, "", start, end, BlockColor.Default);
 
-    public void OpenEdit(int index, ScheduleBlock block) => Open(index, block.Title, block.Start, block.End);
+    public void OpenEdit(int index, ScheduleBlock block) => Open(index, block.Title, block.Start, block.End, block.Color);
 
-    private void Open(int? index, string title, TimeOnly start, TimeOnly end)
+    private void Open(int? index, string title, TimeOnly start, TimeOnly end, string color)
     {
         EditingIndex = index;
         Title = title;
         StartText = _display.Time(start);
         EndText = _display.Time(end);
+        ColorKey = BlockColor.Normalize(color);
         ErrorMessage = null;
         IsOpen = true;
     }
@@ -88,7 +108,7 @@ public partial class BlockEditorViewModel : ViewModelBase
         }
 
         var blocks = _repository.Get().Blocks.ToList();
-        var block = new ScheduleBlock(Title, start, end);
+        var block = new ScheduleBlock(Title, start, end, ColorKey);
         if (EditingIndex is { } index && index < blocks.Count)
         {
             blocks[index] = block;

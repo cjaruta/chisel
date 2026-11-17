@@ -10,9 +10,10 @@ public static class ScheduleBlockMapper
         Id = Guid.NewGuid(),
         Title = block.Title,
         Start = block.Start,
-        End = block.End
+        End = block.End,
+        Color = block.Color
     };
 
     public static ScheduleBlock ToDomain(this ScheduleBlockEntity entity) =>
-        new(entity.Title, entity.Start, entity.End);
+        new(entity.Title, entity.Start, entity.End, entity.Color);
 }

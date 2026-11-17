@@ -1,3 +1,6 @@
+using Chisel.Core.Schedule;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Chisel.Infrastructure.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +37,24 @@ public class MigrationTests
 
         using var readContext = new ChiselDbContext(options);
         Assert.Single(readContext.Tasks);
+    }
+
+    [Fact]
+    public void AddBlockColor_GivesExistingBlocksTheDefaultColor()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261111192348_AddClockFormat");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO ScheduleBlocks (Id, Title, Start, \"End\", Position) VALUES ('6f1c2f4e-0000-0000-0000-000000000001', 'Focus', '08:00:00', '11:00:00', 0)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        Assert.Equal(BlockColor.Default, Assert.Single(readContext.ScheduleBlocks).Color);
     }
 
     [Fact]

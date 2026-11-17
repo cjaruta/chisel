@@ -2,7 +2,8 @@ namespace Chisel.Core.Schedule;
 
 public class ScheduleBlock
 {
-    public ScheduleBlock(string title, TimeOnly start, TimeOnly end)
+    // color: a BlockColor key; missing or unknown keys become BlockColor.Default.
+    public ScheduleBlock(string title, TimeOnly start, TimeOnly end, string? color = null)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -15,11 +16,13 @@ public class ScheduleBlock
         Title = title.Trim();
         Start = start;
         End = end;
+        Color = BlockColor.Normalize(color);
     }
 
     public string Title { get; }
     public TimeOnly Start { get; }
     public TimeOnly End { get; }
+    public string Color { get; }
 
     public TimeSpan Duration => End - Start;
 

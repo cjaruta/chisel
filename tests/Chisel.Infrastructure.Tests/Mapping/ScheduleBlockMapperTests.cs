@@ -37,4 +37,30 @@ public class ScheduleBlockMapperTests
         Assert.Equal(new TimeOnly(8, 0), block.Start);
         Assert.Equal(new TimeOnly(11, 0), block.End);
     }
+
+    [Fact]
+    public void ToEntity_CopiesTheColorKey()
+    {
+        var block = new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(9, 0), "sage");
+
+        Assert.Equal("sage", block.ToEntity().Color);
+    }
+
+    [Fact]
+    public void ToDomain_CopiesTheColorKey()
+    {
+        var entity = new ScheduleBlockEntity { Title = "Focus", Start = new TimeOnly(8, 0), End = new TimeOnly(9, 0), Color = "lavender" };
+
+        Assert.Equal("lavender", entity.ToDomain().Color);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("neon")]
+    public void ToDomain_MissingOrUnknownColor_IsTheDefault(string color)
+    {
+        var entity = new ScheduleBlockEntity { Title = "Focus", Start = new TimeOnly(8, 0), End = new TimeOnly(9, 0), Color = color };
+
+        Assert.Equal(BlockColor.Default, entity.ToDomain().Color);
+    }
 }
