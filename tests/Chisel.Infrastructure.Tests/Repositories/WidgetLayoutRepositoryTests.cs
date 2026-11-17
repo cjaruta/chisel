@@ -51,5 +51,54 @@ public class WidgetLayoutRepositoryTests : IDisposable
         Assert.Single(readContext.WidgetPlacements);
     }
 
+    public static TheoryData<string> ColumnCounts => new()
+    {
+        "1[schedule:1, tasks:0.5, notes:1.25, links:2.25]",
+        "1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]",
+        "1.3[schedule:1] | 1[tasks:1.2, links:0.8] | 1.15[notes:1]",
+        "1.15[links:1] | 1.3[schedule:1] | 1[tasks:1] | 1.15[notes:1]",
+    };
+
+    [Theory]
+    [MemberData(nameof(ColumnCounts))]
+    public void LayoutsWithOneToFourColumns_SaveAndLoadUnchanged(string described)
+    {
+        var layout = Parse(described);
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(layout);
+
+        using var readContext = _fixture.CreateContext();
+
+        Assert.Equal(described, new WidgetLayoutRepository(readContext).Get()!.Describe());
+    }
+
+    [Fact]
+    public void GoingFromFourColumnsBackToTwo_LeavesNoStaleColumns()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new WidgetLayoutRepository(context);
+        repository.Save(Parse("1.15[links:1] | 1.3[schedule:1] | 1[tasks:1] | 1.15[notes:1]"));
+
+        repository.Save(Parse("1.3[schedule:1] | 1[tasks:1, notes:1, links:1]"));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1, links:1]", new WidgetLayoutRepository(readContext).Get()!.Describe());
+        Assert.Equal(2, readContext.LayoutColumns.Count());
+    }
+
+    // The inverse of WidgetLayout.Describe, for writing test layouts compactly.
+    private static WidgetLayout Parse(string described) =>
+        new(described.Split(" | ").Select(column =>
+        {
+            var open = column.IndexOf('[');
+            var width = double.Parse(column[..open], System.Globalization.CultureInfo.InvariantCulture);
+            var widgets = column[(open + 1)..^1].Split(", ").Select(w =>
+            {
+                var parts = w.Split(':');
+                return new WidgetPlacement(parts[0], double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+            });
+            return new LayoutColumn(width, widgets.ToList());
+        }));
+
     public void Dispose() => _fixture.Dispose();
 }

@@ -139,4 +139,22 @@ public class WidgetLayoutNormalizerTests
         Assert.Equal(1, normalized.Columns[0].WidthWeight);
         Assert.Equal(1, normalized.Columns[0].Widgets[0].HeightWeight);
     }
+
+    [Fact]
+    public void MoreColumnsThanTheMaximum_FoldIntoTheLastAllowedColumn()
+    {
+        var layout = Layout(
+            Col(1, ("schedule", 1)), Col(1, ("tasks", 1)), Col(1, ("notes", 1)),
+            Col(1, ("links", 1)), Col(1, ("extra", 1)));
+        var defaults = new WidgetLayout(new[]
+        {
+            new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"),
+                new WidgetPlacement("links"), new WidgetPlacement("extra") }),
+        });
+
+        var normalized = WidgetLayoutNormalizer.Normalize(layout, defaults);
+
+        Assert.Equal(LayoutLimits.MaximumColumns, normalized.Columns.Count);
+        Assert.Equal("1[schedule:1] | 1[tasks:1] | 1[notes:1] | 1[links:1, extra:1]", normalized.Describe());
+    }
 }

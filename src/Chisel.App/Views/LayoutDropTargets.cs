@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
@@ -22,6 +23,43 @@ public static class LayoutDropTargets
             {
                 // The gap above the first widget whose middle is still below the pointer.
                 return (c, widgets[c].Count(w => w.Center.Y < pointer.Y));
+            }
+        }
+        return null;
+    }
+
+    // The x of each gap a new column could go into: left of the first column, between each pair, right of the
+    // last (index 0 to Count). The edge gaps sit half a gap outside the columns.
+    public static double[] NewColumnCenters(IReadOnlyList<Rect> columns, double gap)
+    {
+        var centers = new double[columns.Count + 1];
+        if (columns.Count == 0)
+        {
+            return centers;
+        }
+        centers[0] = columns[0].Left - gap / 2;
+        for (var i = 1; i < columns.Count; i++)
+        {
+            centers[i] = (columns[i - 1].Right + columns[i].Left) / 2;
+        }
+        centers[^1] = columns[^1].Right + gap / 2;
+        return centers;
+    }
+
+    // The new-column gap the pointer is within `reach` of (horizontally), while it is level with the columns;
+    // null otherwise.
+    public static int? FindNewColumn(Point pointer, IReadOnlyList<Rect> columns, double gap, double reach)
+    {
+        if (columns.Count == 0 || pointer.Y < columns.Min(c => c.Top) || pointer.Y > columns.Max(c => c.Bottom))
+        {
+            return null;
+        }
+        var centers = NewColumnCenters(columns, gap);
+        for (var i = 0; i < centers.Length; i++)
+        {
+            if (Math.Abs(pointer.X - centers[i]) <= reach)
+            {
+                return i;
             }
         }
         return null;

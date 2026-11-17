@@ -70,9 +70,11 @@ public partial class LayoutViewModel : ViewModelBase
 
     private bool CanEnterEdit() => !IsEditing;
 
+    // Empty columns are dropped first, so what is saved is exactly what is shown and what loads next time.
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void Done()
     {
+        Layout = Layout.RemoveEmptyColumns();
         _repository?.Save(Layout);
         Exit();
     }
@@ -135,6 +137,45 @@ public partial class LayoutViewModel : ViewModelBase
 
     // Puts the widget down where it was, leaving the layout as it is.
     public void CancelWidgetDrag() => DraggedWidgetId = null;
+
+    // Drops the dragged widget into a new column at a gap between columns (0 = left edge, Count = right edge),
+    // changing only the working copy. See WidgetLayout.MoveToNewColumn. Ends the drag either way.
+    public bool DropWidgetInNewColumn(int columnIndex)
+    {
+        if (DraggedWidgetId is not { } id || !Layout.CanMoveToNewColumn(id) || columnIndex < 0 || columnIndex > Layout.Columns.Count)
+        {
+            CancelWidgetDrag();
+            return false;
+        }
+
+        var moved = Layout.MoveToNewColumn(id, columnIndex);
+        DraggedWidgetId = null;
+        if (ReferenceEquals(moved, Layout))
+        {
+            return false;
+        }
+        Layout = moved;
+        return true;
+    }
+
+    // Whether "New column" drop zones should be offered for the widget being dragged, given the width the
+    // columns share (gap between columns in pixels): not past LayoutLimits.MaximumColumns, and only while every
+    // column could still be LayoutLimits.MinimumColumnWidth wide. A widget alone in its column only moves its
+    // column, so it can always go.
+    public bool CanOfferNewColumn(double availableWidth, double gap)
+    {
+        if (DraggedWidgetId is not { } id || !Layout.CanMoveToNewColumn(id))
+        {
+            return false;
+        }
+        var (column, _) = Layout.Find(id)!.Value;
+        if (Layout.Columns[column].Widgets.Count == 1)
+        {
+            return true;
+        }
+        var count = Layout.Columns.Count + 1;
+        return count * LayoutLimits.MinimumColumnWidth + (count - 1) * gap <= availableWidth;
+    }
 
     // The layout from when the current resize began; null when no resize is going on.
     private WidgetLayout? _resizeStart;

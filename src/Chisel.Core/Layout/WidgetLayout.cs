@@ -78,6 +78,63 @@ public sealed class WidgetLayout
         }));
     }
 
+    // Moves a widget into a new column placed at a gap between columns: 0 is left of the first column,
+    // Count right of the last (counted as the layout is before the move). The widget fills the new column
+    // (height weight 1), the new column gets the average of the current column widths, and the column it
+    // left is rescaled (and kept, even if empty; see RemoveEmptyColumns).
+    // A widget that is alone in its column moves its whole column instead (keeping its width), so nothing is
+    // left empty; next to its own column that is a no-op and returns this same layout.
+    // Rejects an unknown widget, a gap that does not exist, and going over LayoutLimits.MaximumColumns.
+    public WidgetLayout MoveToNewColumn(string widgetId, int columnIndex)
+    {
+        var (fromColumn, fromIndex) = Find(widgetId)
+            ?? throw new ArgumentException($"'{widgetId}' is not in the layout.", nameof(widgetId));
+        if (columnIndex < 0 || columnIndex > Columns.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, "There is no such gap between columns.");
+        }
+
+        var columns = Columns.ToList();
+        var source = Columns[fromColumn];
+        if (source.Widgets.Count == 1)
+        {
+            if (columnIndex == fromColumn || columnIndex == fromColumn + 1)
+            {
+                return this;
+            }
+            columns.RemoveAt(fromColumn);
+            columns.Insert(columnIndex > fromColumn ? columnIndex - 1 : columnIndex, source);
+            return new WidgetLayout(columns);
+        }
+
+        if (!CanMoveToNewColumn(widgetId))
+        {
+            throw new InvalidOperationException($"A layout can have at most {LayoutLimits.MaximumColumns} columns.");
+        }
+
+        var width = Math.Round(Columns.Average(c => c.WidthWeight), 3);
+        var placement = source.Widgets[fromIndex] with { HeightWeight = 1 };
+        columns[fromColumn] = NormalizeHeights(source with { Widgets = source.Widgets.Where((_, i) => i != fromIndex).ToList() });
+        columns.Insert(columnIndex, new LayoutColumn(width, new[] { placement }));
+        return new WidgetLayout(columns);
+    }
+
+    // Whether the widget can go into a new column: always for a widget alone in its column (its column just
+    // moves), otherwise only while there is room for another column.
+    public bool CanMoveToNewColumn(string widgetId) =>
+        Find(widgetId) is { } at && (Columns[at.Column].Widgets.Count == 1 || Columns.Count < LayoutLimits.MaximumColumns);
+
+    // Drops columns with no widgets, keeping the others in order with their widths and their heights
+    // rescaled to average 1. Returns this same layout when no column is empty.
+    public WidgetLayout RemoveEmptyColumns()
+    {
+        if (Columns.All(c => c.Widgets.Count > 0))
+        {
+            return this;
+        }
+        return new WidgetLayout(Columns.Where(c => c.Widgets.Count > 0).Select(NormalizeHeights));
+    }
+
     // Makes a widget taller (positive delta) or shorter (negative) by moving height weight between it and the
     // widget right below it in its column. delta and minimumFraction are fractions of the column's height
     // (the UI divides pixels by the column's height). Neither widget goes below minimumFraction; the move stops
