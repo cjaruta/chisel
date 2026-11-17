@@ -1,0 +1,142 @@
+using Chisel.Core.Layout;
+using Xunit;
+
+namespace Chisel.Core.Tests.Layout;
+
+// Normalizing a loaded layout against the default: unknown widgets go, missing widgets come back
+// in their default place, empty columns are dropped and weights are kept sensible.
+public class WidgetLayoutNormalizerTests
+{
+    private static readonly WidgetLayout Defaults = new(new[]
+    {
+        new LayoutColumn(1.3, new[] { new WidgetPlacement("schedule") }),
+        new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("notes", 1.2), new WidgetPlacement("links", 0.8) }),
+    });
+
+    private static WidgetLayout Layout(params LayoutColumn[] columns) => new(columns);
+
+    private static LayoutColumn Col(double width, params (string Id, double Height)[] widgets) =>
+        new(width, widgets.Select(w => new WidgetPlacement(w.Id, w.Height)).ToList());
+
+    private static string Normalize(WidgetLayout layout) => WidgetLayoutNormalizer.Normalize(layout, Defaults).Describe();
+
+    [Fact]
+    public void DefaultLayout_IsUnchanged()
+    {
+        Assert.Equal(Defaults.Describe(), Normalize(Defaults));
+    }
+
+    [Fact]
+    public void CustomLayoutWithEveryWidget_IsKept()
+    {
+        var layout = Layout(Col(1, ("tasks", 2), ("schedule", 1)), Col(2, ("links", 1)), Col(0.5, ("notes", 3)));
+
+        Assert.Equal("1[tasks:2, schedule:1] | 2[links:1] | 0.5[notes:3]", Normalize(layout));
+    }
+
+    [Fact]
+    public void UnknownWidgetIds_AreIgnored()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1), ("weather", 1)), Col(1, ("tasks", 1), ("notes", 1.2), ("media", 1), ("links", 0.8)));
+
+        Assert.Equal(Defaults.Describe(), Normalize(layout));
+    }
+
+    [Fact]
+    public void DuplicateWidgets_KeepOnlyTheFirst()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1), ("tasks", 1)), Col(1, ("tasks", 5), ("notes", 1.2), ("links", 0.8)));
+
+        Assert.Equal("1.3[schedule:1, tasks:1] | 1[notes:1.2, links:0.8]", Normalize(layout));
+    }
+
+    [Fact]
+    public void MissingWidget_IsAddedInItsDefaultColumnAndPosition()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("links", 0.8)));
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1.2, links:0.8]", Normalize(layout));
+    }
+
+    [Fact]
+    public void MissingWidget_WithNoDefaultNeighboursLeft_GetsItsOwnColumnOnItsDefaultSide()
+    {
+        var layout = Layout(Col(1, ("tasks", 1), ("notes", 1), ("links", 1)));
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1, links:1]", Normalize(layout));
+    }
+
+    [Fact]
+    public void MissingWidget_JoinsItsDefaultNeighboursWhereverTheyAreNow()
+    {
+        // Tasks and links were moved left; notes belongs between them.
+        var layout = Layout(Col(1, ("tasks", 1), ("links", 1), ("schedule", 1)));
+
+        Assert.Equal("1[tasks:1, notes:1.2, links:1, schedule:1]", Normalize(layout));
+    }
+
+    [Fact]
+    public void MissingFirstWidgetOfItsColumn_GoesBeforeItsNeighbours()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("notes", 1.2), ("links", 0.8)));
+
+        Assert.Equal(Defaults.Describe(), Normalize(layout));
+    }
+
+    [Fact]
+    public void MissingWidget_PastTheEndOfItsColumn_GoesLast()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1)));
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1.2, links:0.8]", Normalize(layout));
+    }
+
+    [Fact]
+    public void EmptyColumns_AreDropped()
+    {
+        var layout = Layout(Col(1), Col(1.3, ("schedule", 1)), Col(2), Col(1, ("tasks", 1), ("notes", 1.2), ("links", 0.8)), Col(1));
+
+        Assert.Equal(Defaults.Describe(), Normalize(layout));
+    }
+
+    [Fact]
+    public void ColumnLeftWithOnlyUnknownWidgets_IsDropped()
+    {
+        var layout = Layout(Col(1.3, ("schedule", 1)), Col(3, ("weather", 1)), Col(1, ("tasks", 1), ("notes", 1.2), ("links", 0.8)));
+
+        Assert.Equal(Defaults.Describe(), Normalize(layout));
+    }
+
+    [Fact]
+    public void EmptyLayout_BecomesTheDefault()
+    {
+        Assert.Equal(Defaults.Describe(), Normalize(Layout()));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-2)]
+    [InlineData(0.01)]
+    public void TooSmallWeights_AreRaisedToTheMinimum(double weight)
+    {
+        var layout = Layout(Col(weight, ("schedule", weight)), Col(1, ("tasks", 1), ("notes", 1.2), ("links", 0.8)));
+
+        var normalized = WidgetLayoutNormalizer.Normalize(layout, Defaults);
+
+        Assert.Equal(WidgetLayout.MinimumWeight, normalized.Columns[0].WidthWeight);
+        Assert.Equal(WidgetLayout.MinimumWeight, normalized.Columns[0].Widgets[0].HeightWeight);
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void InvalidWeights_BecomeOne(double weight)
+    {
+        var layout = Layout(Col(weight, ("schedule", weight)), Col(1, ("tasks", 1), ("notes", 1.2), ("links", 0.8)));
+
+        var normalized = WidgetLayoutNormalizer.Normalize(layout, Defaults);
+
+        Assert.Equal(1, normalized.Columns[0].WidthWeight);
+        Assert.Equal(1, normalized.Columns[0].Widgets[0].HeightWeight);
+    }
+}

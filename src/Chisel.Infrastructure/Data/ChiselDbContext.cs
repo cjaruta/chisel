@@ -23,6 +23,8 @@ public class ChiselDbContext : DbContext
 
     public DbSet<WidgetPlacementEntity> WidgetPlacements => Set<WidgetPlacementEntity>();
 
+    public DbSet<LayoutColumnEntity> LayoutColumns => Set<LayoutColumnEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Rows saved before blocks had colors get the neutral default.
@@ -34,6 +36,17 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<UserSettingsEntity>()
             .Property(s => s.SchedulePalette)
             .HasDefaultValue(Core.Settings.UserSettings.DefaultSchedulePalette);
+
+        // Layout columns are keyed by their index; widgets point at it with ColumnIndex.
+        modelBuilder.Entity<LayoutColumnEntity>(column =>
+        {
+            column.HasKey(c => c.Position);
+            column.Property(c => c.Position).ValueGeneratedNever();
+            column.Property(c => c.WidthWeight).HasDefaultValue(1.0);
+        });
+        modelBuilder.Entity<WidgetPlacementEntity>()
+            .Property(p => p.HeightWeight)
+            .HasDefaultValue(1.0);
     }
 }
 

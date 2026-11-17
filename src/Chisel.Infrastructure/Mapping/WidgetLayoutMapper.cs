@@ -5,33 +5,33 @@ namespace Chisel.Infrastructure.Mapping;
 
 public static class WidgetLayoutMapper
 {
-    public static List<WidgetPlacementEntity> ToEntities(this WidgetLayout layout)
+    public static (List<LayoutColumnEntity> Columns, List<WidgetPlacementEntity> Placements) ToEntities(this WidgetLayout layout)
     {
-        var entities = new List<WidgetPlacementEntity>();
-        entities.AddRange(ToColumnEntities(layout.Side, Column.Side));
-        entities.AddRange(ToColumnEntities(layout.Main, Column.Main));
-        return entities;
+        var columns = layout.Columns
+            .Select((column, index) => new LayoutColumnEntity { Position = index, WidthWeight = column.WidthWeight })
+            .ToList();
+        var placements = layout.Columns
+            .SelectMany((column, columnIndex) => column.Widgets.Select((widget, position) => new WidgetPlacementEntity
+            {
+                Id = Guid.NewGuid(),
+                WidgetId = widget.WidgetId,
+                ColumnIndex = columnIndex,
+                Position = position,
+                HeightWeight = widget.HeightWeight,
+            }))
+            .ToList();
+        return (columns, placements);
     }
 
-    public static WidgetLayout ToLayout(this IEnumerable<WidgetPlacementEntity> entities)
+    // Column indexes only order the columns, so gaps are fine. A column with no width row gets width 1.
+    public static WidgetLayout ToLayout(IEnumerable<LayoutColumnEntity> columns, IEnumerable<WidgetPlacementEntity> placements)
     {
-        var layout = new WidgetLayout();
-
-        foreach (var placement in entities.OrderBy(e => e.Position))
-        {
-            var index = placement.Column == Column.Side ? layout.Side.Count : layout.Main.Count;
-            layout.Move(placement.WidgetId, placement.Column, index);
-        }
-
-        return layout;
+        var widths = columns.ToDictionary(c => c.Position, c => c.WidthWeight);
+        return new WidgetLayout(placements
+            .GroupBy(p => p.ColumnIndex)
+            .OrderBy(g => g.Key)
+            .Select(g => new LayoutColumn(
+                widths.GetValueOrDefault(g.Key, 1),
+                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight)).ToList())));
     }
-
-    private static IEnumerable<WidgetPlacementEntity> ToColumnEntities(IReadOnlyList<string> widgetIds, Column column) =>
-        widgetIds.Select((widgetId, position) => new WidgetPlacementEntity
-        {
-            Id = Guid.NewGuid(),
-            WidgetId = widgetId,
-            Column = column,
-            Position = position
-        });
 }

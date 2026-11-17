@@ -17,6 +17,21 @@ namespace Chisel.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.LayoutColumnEntity", b =>
+                {
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("WidthWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("REAL")
+                        .HasDefaultValue(1.0);
+
+                    b.HasKey("Position");
+
+                    b.ToTable("LayoutColumns");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.MarkerEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -169,8 +184,13 @@ namespace Chisel.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Column")
+                    b.Property<int>("ColumnIndex")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("HeightWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("REAL")
+                        .HasDefaultValue(1.0);
 
                     b.Property<int>("Position")
                         .HasColumnType("INTEGER");
