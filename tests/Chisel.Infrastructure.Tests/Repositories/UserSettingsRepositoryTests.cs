@@ -72,5 +72,27 @@ public class UserSettingsRepositoryTests : IDisposable
         Assert.Equal(ClockFormat.TwelveHour, settings.WithClockFormat(ClockFormat.TwelveHour).ClockFormat);
     }
 
+    [Fact]
+    public void Save_ThenGet_PersistsTheSchedulePalette()
+    {
+        using var context = _fixture.CreateContext();
+        new UserSettingsRepository(context).Save(
+            new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), ClockFormat.TwelveHour, "saturated"));
+
+        using var readContext = _fixture.CreateContext();
+        var saved = new UserSettingsRepository(readContext).Get()!;
+        Assert.Equal(("saturated", ClockFormat.TwelveHour), (saved.SchedulePalette, saved.ClockFormat));
+    }
+
+    [Fact]
+    public void Save_WithoutAPalette_StoresTheDefault()
+    {
+        using var context = _fixture.CreateContext();
+        new UserSettingsRepository(context).Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(UserSettings.DefaultSchedulePalette, new UserSettingsRepository(readContext).Get()!.SchedulePalette);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

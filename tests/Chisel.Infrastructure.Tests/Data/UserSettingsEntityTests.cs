@@ -30,5 +30,11 @@ public class UserSettingsEntityTests : IDisposable
         Assert.Equal(new TimeOnly(23, 0), saved.BedTime);
     }
 
+    [Fact]
+    public void SchedulePalette_WhenNotSet_IsTheDefault()
+    {
+        Assert.Equal(Chisel.Core.Settings.UserSettings.DefaultSchedulePalette, new UserSettingsEntity().SchedulePalette);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

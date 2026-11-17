@@ -149,6 +149,12 @@ namespace Chisel.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SchedulePalette")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("minimal");
+
                     b.Property<TimeOnly>("WakeTime")
                         .HasColumnType("TEXT");
 

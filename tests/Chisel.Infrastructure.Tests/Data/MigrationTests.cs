@@ -58,6 +58,26 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddSchedulePalette_GivesExistingSettingsTheMinimalPalette()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261117175519_AddBlockColor");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO UserSettings (Id, Name, WakeTime, BedTime, ClockFormat) VALUES ('6f1c2f4e-0000-0000-0000-000000000002', 'Test User', '06:30:00', '23:00:00', 1)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var saved = Assert.Single(readContext.UserSettings);
+        Assert.Equal(Chisel.Core.Settings.UserSettings.DefaultSchedulePalette, saved.SchedulePalette);
+        Assert.Equal(1, saved.ClockFormat);
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();
