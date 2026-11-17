@@ -66,6 +66,29 @@ public partial class ScheduleViewModel : ViewModelBase
         MarkerEditor.OpenNew(NextHour);
     }
 
+    // Clicking a block on the grid. Both pieces of an overnight block carry the same BlockIndex.
+    [RelayCommand]
+    private void EditBlock(ScheduleGridBlock? item)
+    {
+        if (item is null || item.BlockIndex >= _blocks.Count)
+        {
+            return;
+        }
+        MarkerEditor.Cancel();
+        BlockEditor.OpenEdit(item.BlockIndex, _blocks[item.BlockIndex]);
+    }
+
+    [RelayCommand]
+    private void EditMarker(ScheduleGridMarker? item)
+    {
+        if (item is null || item.MarkerIndex >= _markers.Count)
+        {
+            return;
+        }
+        BlockEditor.Cancel();
+        MarkerEditor.OpenEdit(item.MarkerIndex, _markers[item.MarkerIndex]);
+    }
+
     [RelayCommand]
     private void CloseEditors()
     {

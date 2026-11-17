@@ -51,7 +51,6 @@
                         <TextBlock Grid.Column="0" Classes="cardHeading" Text="Today" Margin="0" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                             <Button Name="NowButton" Content="Now" Click="OnNowClick" />
-                            <Button Content="Edit schedule" Command="{Binding OpenScheduleEditorCommand}" />
                             <Button Name="AddMarkerButton" Content="+ Marker" Command="{Binding Schedule.AddMarkerCommand}" />
                             <Button Name="AddBlockButton" Classes="accent" Content="+ Block" Command="{Binding Schedule.AddBlockCommand}" />
                         </StackPanel>
@@ -65,7 +64,7 @@
                             <KeyBinding Gesture="Enter" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
                         </Border.KeyBindings>
                         <StackPanel Spacing="8">
-                            <TextBlock Classes="cardHeading" Text="New block" Margin="0" />
+                            <TextBlock Classes="cardHeading" Text="{Binding Schedule.BlockEditor.Heading}" Margin="0" />
                             <TextBlock Classes="dim" Text="Title" />
                             <TextBox Name="BlockTitleBox" Text="{Binding Schedule.BlockEditor.Title}" PlaceholderText="What are you doing?" />
                             <Grid ColumnDefinitions="*,10,*">
@@ -80,10 +79,15 @@
                             </Grid>
                             <TextBlock Name="BlockEditorError" Classes="editorError" Text="{Binding Schedule.BlockEditor.ErrorMessage}"
                                        IsVisible="{Binding Schedule.BlockEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
-                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                <Button Name="BlockCancelButton" Content="Cancel" Command="{Binding Schedule.BlockEditor.CancelCommand}" />
-                                <Button Name="BlockSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
-                            </StackPanel>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Name="BlockDeleteButton" Classes="danger" Content="Delete"
+                                        Command="{Binding Schedule.BlockEditor.DeleteCommand}"
+                                        IsVisible="{Binding Schedule.BlockEditor.IsEditing}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                    <Button Name="BlockCancelButton" Content="Cancel" Command="{Binding Schedule.BlockEditor.CancelCommand}" />
+                                    <Button Name="BlockSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -94,7 +98,7 @@
                             <KeyBinding Gesture="Enter" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
                         </Border.KeyBindings>
                         <StackPanel Spacing="8">
-                            <TextBlock Classes="cardHeading" Text="New marker" Margin="0" />
+                            <TextBlock Classes="cardHeading" Text="{Binding Schedule.MarkerEditor.Heading}" Margin="0" />
                             <TextBlock Classes="dim" Text="Label" />
                             <TextBox Name="MarkerLabelBox" Text="{Binding Schedule.MarkerEditor.Label}" PlaceholderText="What happens then?" />
                             <Grid ColumnDefinitions="*,10,*">
@@ -111,10 +115,15 @@
                             </Grid>
                             <TextBlock Name="MarkerEditorError" Classes="editorError" Text="{Binding Schedule.MarkerEditor.ErrorMessage}"
                                        IsVisible="{Binding Schedule.MarkerEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
-                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                <Button Name="MarkerCancelButton" Content="Cancel" Command="{Binding Schedule.MarkerEditor.CancelCommand}" />
-                                <Button Name="MarkerSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
-                            </StackPanel>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Name="MarkerDeleteButton" Classes="danger" Content="Delete"
+                                        Command="{Binding Schedule.MarkerEditor.DeleteCommand}"
+                                        IsVisible="{Binding Schedule.MarkerEditor.IsEditing}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                    <Button Name="MarkerCancelButton" Content="Cancel" Command="{Binding Schedule.MarkerEditor.CancelCommand}" />
+                                    <Button Name="MarkerSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -141,16 +150,20 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ScheduleGridBlock">
-                                        <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}">
-                                            <StackPanel>
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <TextBlock Classes="blockTitle" Text="{Binding Title}" />
-                                                    <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
-                                                               IsVisible="{Binding IsShort}" />
+                                        <Button Classes="gridItem" ToolTip.Tip="Edit block"
+                                                Command="{Binding #ScheduleBlocks.((vm:MainViewModel)DataContext).Schedule.EditBlockCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Classes="blockTitle" Text="{Binding Title}" />
+                                                        <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsShort}" />
+                                                    </StackPanel>
+                                                    <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" IsVisible="{Binding !IsShort}" />
                                                 </StackPanel>
-                                                <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" IsVisible="{Binding !IsShort}" />
-                                            </StackPanel>
-                                        </Border>
+                                            </Border>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -163,19 +176,24 @@
                                     <DataTemplate x:DataType="vm:ScheduleGridMarker">
                                         <Grid Classes="markerRow" Classes.checkpoint="{Binding IsCheckpoint}" Classes.past="{Binding IsPast}"
                                               ColumnDefinitions="*,Auto">
-                                            <Panel ClipToBounds="True" VerticalAlignment="Center" Height="2">
+                                            <!-- Only the pill is clickable; the line lets clicks through to blocks underneath. -->
+                                            <Panel ClipToBounds="True" VerticalAlignment="Center" Height="2" IsHitTestVisible="False">
                                                 <Line Classes="markerLine" StartPoint="0,1" EndPoint="4000,1" />
                                             </Panel>
-                                            <Border Grid.Column="1" Classes="markerPill">
-                                                <TextBlock Classes="markerText">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}  {1}">
-                                                            <Binding Path="TimeLabel" />
-                                                            <Binding Path="Label" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </Border>
+                                            <Button Grid.Column="1" Classes="gridItem" ToolTip.Tip="Edit marker"
+                                                    Command="{Binding #ScheduleMarkers.((vm:MainViewModel)DataContext).Schedule.EditMarkerCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <Border Classes="markerPill">
+                                                    <TextBlock Classes="markerText">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0}  {1}">
+                                                                <Binding Path="TimeLabel" />
+                                                                <Binding Path="Label" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </Border>
+                                            </Button>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

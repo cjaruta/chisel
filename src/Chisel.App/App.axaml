@@ -91,6 +91,40 @@
             <Setter Property="BoxShadow" Value="0 6 24 0 #80000000" />
         </Style>
 
+        <!-- Clickable grid items: a bare button around a block or marker pill, no button chrome -->
+        <Style Selector="Button.gridItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.gridItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.gridItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Button.gridItem:pressed">
+            <Setter Property="RenderTransform" Value="{x:Null}" />
+        </Style>
+
+        <Style Selector="Button.gridItem:pointerover Border.gridBlock">
+            <Setter Property="BorderThickness" Value="3,1,1,1" />
+        </Style>
+
+        <Style Selector="Button.gridItem:pointerover Border.markerPill">
+            <Setter Property="Background" Value="{StaticResource GridLineBrush}" />
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Foreground" Value="IndianRed" />
+        </Style>
+
         <Style Selector="TextBlock.editorError">
             <Setter Property="Foreground" Value="IndianRed" />
             <Setter Property="FontSize" Value="12" />
