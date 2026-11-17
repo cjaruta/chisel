@@ -132,7 +132,8 @@
                                   ScrollChanged="OnScheduleScrollChanged">
                         <!-- Transparent background so clicks on empty space reach the grid -->
                         <Grid Name="ScheduleGrid" ColumnDefinitions="76,*" Margin="0,14,14,14" Background="Transparent"
-                              PointerPressed="OnScheduleGridPointerPressed">
+                              PointerPressed="OnScheduleGridPointerPressed" PointerReleased="OnScheduleGridPointerReleased"
+                              PointerCaptureLost="OnScheduleGridPointerCaptureLost">
                             <!-- Hour rows: label on the left, faint line across -->
                             <ItemsControl Grid.ColumnSpan="2" Classes="dayGrid" ItemsSource="{Binding Schedule.HourLabels}">
                                 <ItemsControl.ItemsPanel>
@@ -215,6 +216,19 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- Drag preview: the range being dragged, then the pending block while the editor is open -->
+                            <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                                <Border Name="DragPreview" Classes="dragPreview" Classes.pending="{Binding Schedule.IsPending}"
+                                        ctl:DayGridPanel.StartMinute="{Binding Schedule.PreviewStartMinute}"
+                                        ctl:DayGridPanel.EndMinute="{Binding Schedule.PreviewEndMinute}"
+                                        IsVisible="{Binding Schedule.IsPreviewVisible}">
+                                    <StackPanel VerticalAlignment="Top">
+                                        <TextBlock Name="DragPreviewTitle" Classes="blockTitle" Text="{Binding Schedule.PreviewTitle}" />
+                                        <TextBlock Name="DragPreviewLabel" Classes="blockTime" Text="{Binding Schedule.PreviewLabel}" />
+                                    </StackPanel>
+                                </Border>
+                            </ctl:DayGridPanel>
 
                             <!-- Now line -->
                             <ctl:DayGridPanel Grid.ColumnSpan="2" IsHitTestVisible="False">

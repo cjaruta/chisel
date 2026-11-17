@@ -20,6 +20,8 @@
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
         <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
+        <SolidColorBrush x:Key="DragPreviewBrush" Color="#405B8DEF" />
+        <SolidColorBrush x:Key="PendingBlockBrush" Color="#665B8DEF" />
         <SolidColorBrush x:Key="BlockBackgroundBrush" Color="#C02B3350" />
         <SolidColorBrush x:Key="CurrentBlockBackgroundBrush" Color="#D0324A80" />
         <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
@@ -241,6 +243,21 @@
             <Setter Property="FontSize" Value="10" />
             <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
             <Setter Property="Opacity" Value="0.8" />
+        </Style>
+
+        <!-- Drag-to-create preview: translucent accent box; a little stronger once it is pending in the editor -->
+        <Style Selector="Border.dragPreview">
+            <Setter Property="Margin" Value="2,1" />
+            <Setter Property="Padding" Value="10,2,8,2" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="Background" Value="{StaticResource DragPreviewBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="Border.dragPreview.pending">
+            <Setter Property="Background" Value="{StaticResource PendingBlockBrush}" />
         </Style>
 
         <Style Selector="Border.nowLine">

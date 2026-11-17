@@ -66,32 +66,128 @@ public partial class MainWindow : Window
 
     private ScheduleViewModel? Schedule => (DataContext as MainViewModel)?.Schedule;
 
+    private bool IsDragActive => Schedule?.IsDragActive == true;
+
+    // Pointer y in the viewport, measured from where midnight would be with no scrolling.
+    private double GridY(Point pointer) => pointer.Y - ScheduleGrid.Margin.Top;
+
     private void OnSchedulePointerMoved(object? sender, PointerEventArgs e)
     {
         _schedulePointer = e.GetPosition(ScheduleScroller);
+        if (IsDragActive)
+        {
+            UpdateDrag();
+            UpdateAutoScroll();
+            return;
+        }
         UpdateHover();
     }
 
     private void OnSchedulePointerExited(object? sender, PointerEventArgs e)
     {
+        // During a drag the pointer is captured and keeps being tracked outside the grid.
+        if (IsDragActive)
+        {
+            return;
+        }
         _schedulePointer = null;
         Schedule?.HideHover();
     }
 
-    // The grid can scroll under a still pointer (mouse wheel), which changes the time under it.
-    private void OnScheduleScrollChanged(object? sender, ScrollChangedEventArgs e) => UpdateHover();
+    // The grid can scroll under a still pointer (mouse wheel or auto-scroll), which changes the time under it.
+    private void OnScheduleScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        if (IsDragActive)
+        {
+            UpdateDrag();
+            return;
+        }
+        UpdateHover();
+    }
 
     // Blocks and markers are buttons and handle their own presses, so this only sees empty space.
+    // A press starts tracking a drag; releasing without real movement is a plain click.
     private void OnScheduleGridPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(ScheduleGrid).Properties.IsLeftButtonPressed)
+        if (Schedule is not { } schedule || !e.GetCurrentPoint(ScheduleGrid).Properties.IsLeftButtonPressed)
         {
             return;
         }
         _schedulePointer = e.GetPosition(ScheduleScroller);
         UpdateHover();
-        Schedule?.AddBlockAtHoverCommand.Execute(null);
+        schedule.BeginDrag(GridY(_schedulePointer.Value), ScheduleScroller.Offset.Y);
+        e.Pointer.Capture(ScheduleGrid);
         e.Handled = true;
+    }
+
+    private void OnScheduleGridPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        StopAutoScroll();
+        if (Schedule is not { } schedule || !schedule.IsDragActive)
+        {
+            return;
+        }
+        _schedulePointer = e.GetPosition(ScheduleScroller);
+        UpdateDrag();
+        schedule.EndDrag();
+        e.Pointer.Capture(null);
+        e.Handled = true;
+
+        if (schedule.IsPending)
+        {
+            // The editor becomes visible on this change; focus once it has been laid out.
+            Dispatcher.UIThread.Post(() => BlockTitleBox.Focus(), DispatcherPriority.Background);
+        }
+    }
+
+    // Losing the pointer mid-drag (another window took it) cancels the drag.
+    private void OnScheduleGridPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        StopAutoScroll();
+        if (IsDragActive)
+        {
+            Schedule?.CancelDrag();
+        }
+    }
+
+    private void UpdateDrag()
+    {
+        if (_schedulePointer is { } pointer)
+        {
+            Schedule?.UpdateDrag(GridY(pointer), ScheduleScroller.Offset.Y);
+        }
+    }
+
+    private DispatcherTimer? _autoScrollTimer;
+
+    private void UpdateAutoScroll()
+    {
+        if (_schedulePointer is not { } pointer || ScheduleGridLayout.AutoScrollStep(pointer.Y, ScheduleScroller.Viewport.Height) == 0)
+        {
+            StopAutoScroll();
+            return;
+        }
+        if (_autoScrollTimer is null)
+        {
+            _autoScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
+            _autoScrollTimer.Tick += (_, _) => AutoScrollTick();
+        }
+        _autoScrollTimer.Start();
+    }
+
+    private void StopAutoScroll() => _autoScrollTimer?.Stop();
+
+    // One step of auto-scroll while dragging near the top or bottom; the scroll change extends the drag.
+    public void AutoScrollTick()
+    {
+        if (!IsDragActive || _schedulePointer is not { } pointer)
+        {
+            StopAutoScroll();
+            return;
+        }
+        var step = ScheduleGridLayout.AutoScrollStep(pointer.Y, ScheduleScroller.Viewport.Height);
+        var max = Math.Max(0, ScheduleScroller.Extent.Height - ScheduleScroller.Viewport.Height);
+        ScheduleScroller.Offset = new Vector(ScheduleScroller.Offset.X, Math.Clamp(ScheduleScroller.Offset.Y + step, 0, max));
     }
 
     private void UpdateHover()
