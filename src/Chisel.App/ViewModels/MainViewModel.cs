@@ -63,10 +63,16 @@ public partial class MainViewModel : ViewModelBase
         Schedule.UpdateNow();
     }
 
-    // Escape cancels layout editing, or else closes whatever floats over the window: settings or a schedule editor.
+    // Escape cancels a widget drag; otherwise it cancels layout editing; otherwise it closes whatever
+    // floats over the window: settings or a schedule editor.
     [RelayCommand]
     private void CloseOverlays()
     {
+        if (Layout.IsDraggingWidget)
+        {
+            Layout.CancelWidgetDrag();
+            return;
+        }
         if (Layout.IsEditing)
         {
             Layout.CancelCommand.Execute(null);
