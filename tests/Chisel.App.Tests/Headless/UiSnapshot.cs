@@ -24,8 +24,9 @@ public static class UiSnapshot
     // 09:30 on 2000-01-01, so "Focus" (08:00-11:00) and the overlapping "Call" (09:00-10:00) are current.
     public static readonly DateTimeOffset SampleNow = new(2000, 1, 1, 9, 30, 0, TimeSpan.Zero);
 
-    // now: the clock time to show; defaults to SampleNow.
-    public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null)
+    // now: the clock time to show; defaults to SampleNow. blocks: the schedule to show instead of the sample one.
+    public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
+        IEnumerable<ScheduleBlock>? blocks = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -39,6 +40,10 @@ public static class UiSnapshot
         var notes = new NoteRepository(context, time);
         var links = new QuickLinkRepository(context);
         Seed(schedule, markers, tasks, notes, links, time);
+        if (blocks is not null)
+        {
+            schedule.Save(new DaySchedule(blocks));
+        }
         var userSettings = new UserSettingsRepository(context);
         userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)));
         var timeDisplay = new TimeDisplay();
@@ -90,11 +95,11 @@ public static class UiSnapshot
     {
         schedule.Save(new DaySchedule(new[]
         {
-            new ScheduleBlock("Wake up", new TimeOnly(6, 30), new TimeOnly(7, 0)),
-            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0)),
-            new ScheduleBlock("Call", new TimeOnly(9, 0), new TimeOnly(10, 0)),
-            new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0)),
-            new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30)),
+            new ScheduleBlock("Wake up", new TimeOnly(6, 30), new TimeOnly(7, 0), BlockColor.Amber),
+            new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0), BlockColor.Slate),
+            new ScheduleBlock("Call", new TimeOnly(9, 0), new TimeOnly(10, 0), BlockColor.Teal),
+            new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0), BlockColor.Sage),
+            new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30), BlockColor.Lavender),
         }));
         markers.ReplaceAll(new[]
         {
