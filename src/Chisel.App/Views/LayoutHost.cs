@@ -785,6 +785,31 @@ public sealed class LayoutHost : Decorator
     // i-th column. It is arranged after the columns, so their final positions are known.
     private sealed class ColumnHandleLayer(Panel columns) : Panel
     {
+        private readonly List<Rect> _arranged = new();
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            columns.LayoutUpdated += OnColumnsLayoutUpdated;
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            columns.LayoutUpdated -= OnColumnsLayoutUpdated;
+            base.OnDetachedFromVisualTree(e);
+        }
+
+        // The columns can move (weights changed, a widget moved) without this layer being invalidated, so
+        // re-arrange the handles whenever a column's bounds differ from where they were last placed.
+        private void OnColumnsLayoutUpdated(object? sender, EventArgs e)
+        {
+            var bounds = columns.Children.OfType<ScrollViewer>().Select(s => s.Bounds).ToList();
+            if (!bounds.SequenceEqual(_arranged))
+            {
+                InvalidateArrange();
+            }
+        }
+
         protected override Size MeasureOverride(Size availableSize)
         {
             foreach (var child in Children)
@@ -797,6 +822,8 @@ public sealed class LayoutHost : Decorator
         protected override Size ArrangeOverride(Size finalSize)
         {
             var scrollers = columns.Children.OfType<ScrollViewer>().ToList();
+            _arranged.Clear();
+            _arranged.AddRange(scrollers.Select(s => s.Bounds));
             for (var i = 0; i < Children.Count && i + 1 < scrollers.Count; i++)
             {
                 var column = scrollers[i].Bounds;

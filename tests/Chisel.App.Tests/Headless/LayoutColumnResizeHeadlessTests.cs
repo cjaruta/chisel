@@ -75,6 +75,23 @@ public class LayoutColumnResizeHeadlessTests
     }
 
     [AvaloniaFact]
+    public void Handles_FollowTheColumnDividers_AfterAResize()
+    {
+        var window = ShowThreeColumns();
+        var handle = InWindow(Handle(window, 0), window).Center;
+
+        DragHandle(window, 0, 60);
+        Release(window, handle.X + 60, handle.Y);
+
+        foreach (var c in new[] { 0, 1 })
+        {
+            var column = Host(window).Frames[c][0].GetVisualAncestors().OfType<ScrollViewer>().First();
+            Assert.Equal(InWindow(column, window).Right, InWindow(Handle(window, c), window).Left, 1);
+        }
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Escape_RestoresTheStartingWidths_AndStaysInEditMode()
     {
         var window = ShowThreeColumns();
