@@ -61,7 +61,7 @@ public class BlockColorsHeadlessTests
         foreach (var block in EveryColor)
         {
             var border = Block(window, block.Title);
-            var swatch = BlockPalette.Get(block.Color);
+            var swatch = BlockPalettes.Minimal.Get(block.Color);
             Assert.Equal(swatch.Fill, BrushColor(border.Background));
             Assert.Equal(swatch.Stripe, BrushColor(Stripe(border).Background));
         }
@@ -83,7 +83,7 @@ public class BlockColorsHeadlessTests
         Assert.True(past.Opacity < 1);
         Assert.Contains("current", current.Classes);
         Assert.Equal(1, current.Opacity);
-        Assert.Equal(BlockPalette.Get(BlockColor.Slate).Fill, BrushColor(current.Background));
+        Assert.Equal(BlockPalettes.Minimal.Get(BlockColor.Slate).Fill, BrushColor(current.Background));
         Assert.Equal(Color.Parse("#F2F4F8"), BrushColor(current.BorderBrush));
         Assert.True(current.BorderThickness.Left > 0);
         Assert.NotEqual(default, current.BoxShadow);
@@ -121,8 +121,8 @@ public class BlockColorsHeadlessTests
 
         Assert.Equal(BlockColor.Sage, Schedule(window).BlockEditor.ColorKey);
         Assert.Contains("selected", sage.Classes);
-        Assert.Equal(BlockPalette.Get(BlockColor.Sage).Fill, BrushColor(Named<Border>(window, "PendingFill").Background));
-        Assert.Equal(BlockPalette.Get(BlockColor.Sage).Stripe, BrushColor(Named<Border>(window, "PendingStripe").Background));
+        Assert.Equal(BlockPalettes.Minimal.Get(BlockColor.Sage).Fill, BrushColor(Named<Border>(window, "PendingFill").Background));
+        Assert.Equal(BlockPalettes.Minimal.Get(BlockColor.Sage).Stripe, BrushColor(Named<Border>(window, "PendingStripe").Background));
         UiSnapshot.Render(window, "block-colors-editor");
         window.Close();
     }

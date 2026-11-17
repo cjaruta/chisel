@@ -175,17 +175,18 @@
                                                 CommandParameter="{Binding}">
                                             <!-- Tinted fill and a solid left stripe in the block's color; the outer border carries the current-block outline -->
                                             <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}"
-                                                    Background="{Binding ColorKey, Converter={x:Static conv:BlockColorConverter.Fill}}">
+                                                    Background="{Binding Brushes.Fill}">
                                                 <Border Classes="blockInner">
                                                     <Panel>
-                                                        <Border Classes="blockStripe" Background="{Binding ColorKey, Converter={x:Static conv:BlockColorConverter.Stripe}}" />
+                                                        <Border Classes="blockStripe" Background="{Binding Brushes.Stripe}" />
                                                         <StackPanel Classes="blockContent">
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                <TextBlock Classes="blockTitle" Text="{Binding Title}" />
+                                                                <TextBlock Classes="blockTitle" Text="{Binding Title}" Foreground="{Binding Brushes.Text}" />
                                                                 <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
-                                                                           IsVisible="{Binding IsShort}" />
+                                                                           Foreground="{Binding Brushes.TimeText}" IsVisible="{Binding IsShort}" />
                                                             </StackPanel>
-                                                            <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" IsVisible="{Binding !IsShort}" />
+                                                            <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" Foreground="{Binding Brushes.TimeText}"
+                                                                       IsVisible="{Binding !IsShort}" />
                                                         </StackPanel>
                                                     </Panel>
                                                 </Border>
@@ -268,9 +269,9 @@
                                         IsVisible="{Binding Schedule.IsPreviewVisible}">
                                     <Panel>
                                         <Border Name="PendingFill" IsVisible="{Binding Schedule.IsPending}"
-                                                Background="{Binding Schedule.PreviewColorKey, Converter={x:Static conv:BlockColorConverter.Fill}}" />
+                                                Background="{Binding Schedule.PreviewBrushes.Fill, FallbackValue={x:Null}}" />
                                         <Border Name="PendingStripe" Classes="blockStripe" IsVisible="{Binding Schedule.IsPending}"
-                                                Background="{Binding Schedule.PreviewColorKey, Converter={x:Static conv:BlockColorConverter.Stripe}}" />
+                                                Background="{Binding Schedule.PreviewBrushes.Stripe, FallbackValue={x:Null}}" />
                                         <StackPanel Classes="blockContent">
                                             <TextBlock Name="DragPreviewTitle" Classes="blockTitle" Text="{Binding Schedule.PreviewTitle}" />
                                             <TextBlock Name="DragPreviewLabel" Classes="blockTime" Text="{Binding Schedule.PreviewLabel}" />
@@ -420,9 +421,36 @@
                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,44,0,0" Width="280">
             <StackPanel Spacing="10">
                 <TextBlock Classes="cardHeading" Text="Settings" />
+
+                <TextBlock Classes="settingsSection" Text="General" />
                 <TextBlock Classes="dim" Text="Clock format" />
                 <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
                 <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+
+                <TextBlock Classes="settingsSection" Text="Schedule" />
+                <TextBlock Classes="dim" Text="Color palette" />
+                <!-- Each palette shows a strip of its eight colors; choosing one recolors the schedule right away -->
+                <ListBox Name="PaletteList" Classes="paletteList" ItemsSource="{Binding Settings.PaletteOptions}"
+                         SelectedItem="{Binding Settings.SelectedPalette}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PaletteOption">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="{Binding Name}" />
+                                <ItemsControl ItemsSource="{Binding Preview}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="IBrush">
+                                            <Border Classes="paletteChip" Background="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
                 <Button Content="Close" HorizontalAlignment="Right" Command="{Binding Settings.CloseCommand}" />
             </StackPanel>
         </Border>

@@ -25,8 +25,9 @@ public static class UiSnapshot
     public static readonly DateTimeOffset SampleNow = new(2000, 1, 1, 9, 30, 0, TimeSpan.Zero);
 
     // now: the clock time to show; defaults to SampleNow. blocks: the schedule to show instead of the sample one.
+    // palette: the saved schedule palette id; defaults to Default Minimal.
     public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
-        IEnumerable<ScheduleBlock>? blocks = null)
+        IEnumerable<ScheduleBlock>? blocks = null, string? palette = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -45,16 +46,18 @@ public static class UiSnapshot
             schedule.Save(new DaySchedule(blocks));
         }
         var userSettings = new UserSettingsRepository(context);
-        userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)));
+        userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette));
         var timeDisplay = new TimeDisplay();
+        var paletteDisplay = new PaletteDisplay();
+        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay);
 
         var viewModel = new MainViewModel(
             new ClockViewModel(time, timeDisplay),
-            new ScheduleViewModel(schedule, markers, time, timeDisplay),
+            new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),
             new TaskListViewModel(tasks),
             new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
-            new SettingsViewModel(userSettings, timeDisplay));
+            settings);
 
         var window = new MainWindow(windowPlacementPath: null)
         {

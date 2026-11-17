@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using Chisel.App.Models;
 using Chisel.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -8,6 +11,7 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly IUserSettingsRepository _repository;
     private readonly TimeDisplay _display;
+    private readonly PaletteDisplay _palette;
 
     [ObservableProperty]
     public partial bool IsOpen { get; set; }
@@ -22,14 +26,41 @@ public partial class SettingsViewModel : ViewModelBase
         set => UseTwelveHour = !value;
     }
 
-    public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display)
+    // Schedule color palettes, each with a preview strip of its eight colors.
+    public IReadOnlyList<PaletteOption> PaletteOptions { get; } = BlockPalettes.All.Select(p => new PaletteOption(p)).ToList();
+
+    [ObservableProperty]
+    public partial PaletteOption SelectedPalette { get; set; }
+
+    public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null)
     {
         _repository = repository;
         _display = display;
+        _palette = palette ?? new PaletteDisplay();
 
-        var saved = _repository.Get()?.ClockFormat ?? ClockFormat.TwentyFourHour;
+        var stored = _repository.Get();
+        var saved = stored?.ClockFormat ?? ClockFormat.TwentyFourHour;
         _display.Format = saved;
         UseTwelveHour = saved == ClockFormat.TwelveHour;
+
+        // Unknown ids resolve to Default Minimal.
+        _palette.Use(stored?.SchedulePalette);
+        SelectedPalette = PaletteOptions.Single(o => o.Id == _palette.Palette.Id);
+    }
+
+    partial void OnSelectedPaletteChanged(PaletteOption value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+        _palette.Use(value.Id);
+
+        var settings = _repository.Get();
+        if (settings is not null && settings.SchedulePalette != value.Id)
+        {
+            _repository.Save(settings.WithSchedulePalette(value.Id));
+        }
     }
 
     partial void OnUseTwelveHourChanged(bool value)
