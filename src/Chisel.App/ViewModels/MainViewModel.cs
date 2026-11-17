@@ -44,6 +44,14 @@ public partial class MainViewModel : ViewModelBase
         Schedule.UpdateNow();
     }
 
+    // Escape closes whatever floats over the window: settings or a schedule editor.
+    [RelayCommand]
+    private void CloseOverlays()
+    {
+        Settings.IsOpen = false;
+        Schedule.CloseEditorsCommand.Execute(null);
+    }
+
     [RelayCommand]
     private void OpenScheduleEditor()
     {
