@@ -39,38 +39,61 @@ public sealed class WidgetLayout
         return null;
     }
 
-    // Places the widget at index in the given column (indexes as in this layout). A column index past the
-    // last column starts a new column. A column left empty is dropped. An unplaced widget is added.
+    // Moves a widget into the gap at index of a column: 0 is above the first widget, Count below the last,
+    // counted as the column is before the move (moving down within a column adjusts for the widget's own gap).
+    // Columns are never added or removed, so a column can be left empty. The widget keeps its height weight,
+    // and the columns it leaves and joins are rescaled to average 1 (NormalizeHeights).
+    // Moving a widget onto its own position returns this same layout.
     public WidgetLayout Move(string widgetId, int columnIndex, int index)
     {
+        var (fromColumn, fromIndex) = Find(widgetId)
+            ?? throw new ArgumentException($"'{widgetId}' is not in the layout.", nameof(widgetId));
+        if (columnIndex < 0 || columnIndex >= Columns.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, "There is no such column.");
+        }
+
+        var target = Math.Clamp(index, 0, Columns[columnIndex].Widgets.Count);
+        if (columnIndex == fromColumn)
+        {
+            if (target == fromIndex || target == fromIndex + 1)
+            {
+                return this;
+            }
+            if (target > fromIndex)
+            {
+                target--;
+            }
+        }
+
         var columns = Columns.Select(c => c.Widgets.ToList()).ToList();
-        var widths = Columns.Select(c => c.WidthWeight).ToList();
-        var from = Find(widgetId);
-        var placement = from is { } f ? columns[f.Column][f.Index] : new WidgetPlacement(widgetId);
+        var placement = columns[fromColumn][fromIndex];
+        columns[fromColumn].RemoveAt(fromIndex);
+        columns[columnIndex].Insert(target, placement);
 
-        if (from is { } same && same.Column == columnIndex)
+        return new WidgetLayout(Columns.Select((column, i) =>
         {
-            columns[same.Column].RemoveAt(same.Index);
-            columns[columnIndex].Insert(Math.Clamp(index, 0, columns[columnIndex].Count), placement);
-        }
-        else
-        {
-            if (columnIndex >= columns.Count || columnIndex < 0)
-            {
-                columns.Add(new List<WidgetPlacement> { placement });
-                widths.Add(1);
-            }
-            else
-            {
-                columns[columnIndex].Insert(Math.Clamp(index, 0, columns[columnIndex].Count), placement);
-            }
-            if (from is { } old)
-            {
-                columns[old.Column].RemoveAt(old.Index);
-            }
-        }
+            var moved = column with { Widgets = columns[i] };
+            return i == fromColumn || i == columnIndex ? NormalizeHeights(moved) : moved;
+        }));
+    }
 
-        return Build(widths, columns);
+    // Rescales a column's height weights so they average 1, keeping their proportions
+    // (rounded to 3 decimals, never below MinimumWeight).
+    public static LayoutColumn NormalizeHeights(LayoutColumn column)
+    {
+        var total = column.Widgets.Sum(w => w.HeightWeight);
+        if (column.Widgets.Count == 0 || total <= 0)
+        {
+            return column;
+        }
+        var scale = column.Widgets.Count / total;
+        return column with
+        {
+            Widgets = column.Widgets
+                .Select(w => w with { HeightWeight = Math.Max(MinimumWeight, Math.Round(w.HeightWeight * scale, 3)) })
+                .ToList(),
+        };
     }
 
     public WidgetLayout Remove(string widgetId)

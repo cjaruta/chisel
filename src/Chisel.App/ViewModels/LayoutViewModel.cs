@@ -91,7 +91,47 @@ public partial class LayoutViewModel : ViewModelBase
 
     private void Exit()
     {
+        CancelWidgetDrag();
         Snapshot = null;
         IsEditing = false;
     }
+
+    // The widget being dragged in edit mode; null when no drag is going on.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDraggingWidget))]
+    public partial string? DraggedWidgetId { get; private set; }
+
+    public bool IsDraggingWidget => DraggedWidgetId is not null;
+
+    // Picks up a widget. Only in edit mode, and only a widget that is in the layout.
+    public void BeginWidgetDrag(string widgetId)
+    {
+        if (IsEditing && Layout.Find(widgetId) is not null)
+        {
+            DraggedWidgetId = widgetId;
+        }
+    }
+
+    // Drops the dragged widget into a gap of a column (see WidgetLayout.Move), changing only the working copy.
+    // Returns whether the layout changed; dropping onto its own place changes nothing. Ends the drag either way.
+    public bool DropWidget(int column, int index)
+    {
+        if (DraggedWidgetId is not { } id || column < 0 || column >= Layout.Columns.Count)
+        {
+            CancelWidgetDrag();
+            return false;
+        }
+
+        var moved = Layout.Move(id, column, index);
+        DraggedWidgetId = null;
+        if (ReferenceEquals(moved, Layout))
+        {
+            return false;
+        }
+        Layout = moved;
+        return true;
+    }
+
+    // Puts the widget down where it was, leaving the layout as it is.
+    public void CancelWidgetDrag() => DraggedWidgetId = null;
 }

@@ -21,7 +21,7 @@ public sealed class WidgetFrame : Border
         AvaloniaProperty.Register<WidgetFrame, bool>(nameof(IsEditing));
 
     // Six dots in two columns: the "drag me" handle.
-    private const string GripData = "M0,0 h3 v3 h-3 Z M6,0 h3 v3 h-3 Z M0,6 h3 v3 h-3 Z M6,6 h3 v3 h-3 Z M0,12 h3 v3 h-3 Z M6,12 h3 v3 h-3 Z";
+    public const string GripData = "M0,0 h3 v3 h-3 Z M6,0 h3 v3 h-3 Z M0,6 h3 v3 h-3 Z M6,6 h3 v3 h-3 Z M0,12 h3 v3 h-3 Z M6,12 h3 v3 h-3 Z";
 
     private readonly Grid _editLayer;
 

@@ -82,6 +82,59 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
+        <!-- Dragging a widget: its card stays put but faded, a ghost of its title bar follows the pointer,
+             and a slim accent line (or a highlighted dashed zone in an empty column) marks the landing spot -->
+        <!-- The card being moved: faded, but its title bar stays opaque so the heading under it never shows through -->
+        <Style Selector="Border.widgetFrame.dragSource">
+            <Setter Property="BorderBrush" Value="#665B8DEF" />
+        </Style>
+
+        <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
+            <Setter Property="Opacity" Value="0.2" />
+        </Style>
+
+        <Style Selector="Border.widgetFrame.dragSource StackPanel.editBarContent">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+
+        <Style Selector="Border.dropIndicator">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BoxShadow" Value="0 0 8 0 #805B8DEF" />
+        </Style>
+
+        <Style Selector="Border.dragGhost">
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Opacity" Value="0.92" />
+            <Setter Property="BoxShadow" Value="0 8 24 0 #A0000000" />
+        </Style>
+
+        <Style Selector="Panel.dropZone Rectangle.dropZoneOutline">
+            <Setter Property="Stroke" Value="#665B8DEF" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="StrokeDashArray" Value="4,3" />
+            <Setter Property="Fill" Value="#0D5B8DEF" />
+        </Style>
+
+        <Style Selector="Panel.dropZone.active Rectangle.dropZoneOutline">
+            <Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Fill" Value="#265B8DEF" />
+        </Style>
+
+        <Style Selector="TextBlock.dropZoneLabel">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <Style Selector="Panel.dropZone.active TextBlock.dropZoneLabel">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+        </Style>
+
         <Style Selector="Panel.page.editing">
             <Setter Property="Background" Value="{StaticResource EditPageBrush}" />
         </Style>
