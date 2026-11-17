@@ -1,7 +1,8 @@
 namespace Chisel.Core.Layout;
 
 // Makes a loaded layout safe to show. The default layout says which widgets exist and where they belong:
-// widgets not in it are dropped (and repeats of one widget), empty columns go, and weights are kept sensible.
+// widgets not in it are dropped (and repeats of one widget), empty columns go, columns past
+// LayoutLimits.MaximumColumns fold into the last one, and weights are kept sensible.
 // A widget missing from the loaded layout comes back next to its default neighbours (the widgets of its
 // default column), right after the nearest one before it; with none of them left it gets its own column
 // on its default side.
@@ -20,11 +21,18 @@ public static class WidgetLayoutNormalizer
                 .Where(w => known.Contains(w.WidgetId) && seen.Add(w.WidgetId))
                 .Select(w => w with { HeightWeight = Weight(w.HeightWeight) })
                 .ToList();
-            if (widgets.Count > 0)
+            if (widgets.Count == 0)
             {
-                widths.Add(Weight(column.WidthWeight));
-                columns.Add(widgets);
+                continue;
             }
+            if (columns.Count == LayoutLimits.MaximumColumns)
+            {
+                // Too many columns: the extra widgets go to the bottom of the last allowed column.
+                columns[^1].AddRange(widgets);
+                continue;
+            }
+            widths.Add(Weight(column.WidthWeight));
+            columns.Add(widgets);
         }
 
         for (var c = 0; c < defaults.Columns.Count; c++)
