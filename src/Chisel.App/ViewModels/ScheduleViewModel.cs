@@ -59,6 +59,51 @@ public partial class ScheduleViewModel : ViewModelBase
         BlockEditor.OpenNew(NextHour);
     }
 
+    // The hover guide line: where a click on empty grid space would add a block.
+    [ObservableProperty]
+    public partial bool IsHoverVisible { get; set; }
+
+    [ObservableProperty]
+    public partial double HoverMinute { get; set; }
+
+    [ObservableProperty]
+    public partial string HoverLabel { get; set; } = "";
+
+    private TimeOnly _hoverTime;
+
+    // overItem: the pointer is over a block or marker, which are clicked to edit instead.
+    public void HoverAt(TimeOnly time, bool overItem = false)
+    {
+        if (overItem)
+        {
+            HideHover();
+            return;
+        }
+        _hoverTime = time;
+        HoverMinute = ScheduleGridLayout.MinuteOfDay(time);
+        HoverLabel = _display.Time(time);
+        IsHoverVisible = true;
+    }
+
+    public void HideHover() => IsHoverVisible = false;
+
+    // A new block from the guide line, an hour long but ending at midnight at the latest.
+    [RelayCommand]
+    private void AddBlockAtHover()
+    {
+        if (!IsHoverVisible)
+        {
+            return;
+        }
+        var end = _hoverTime.AddHours(1);
+        if (end < _hoverTime)
+        {
+            end = TimeOnly.MinValue;
+        }
+        MarkerEditor.Cancel();
+        BlockEditor.OpenNew(_hoverTime, end);
+    }
+
     [RelayCommand]
     private void AddMarker()
     {
@@ -100,6 +145,7 @@ public partial class ScheduleViewModel : ViewModelBase
     {
         _blocks = _scheduleRepository.Get().Blocks;
         _markers = _markerRepository.GetAll();
+        HoverLabel = _display.Time(_hoverTime);
 
         HourLabels.Clear();
         for (var hour = 0; hour <= 24; hour++)
