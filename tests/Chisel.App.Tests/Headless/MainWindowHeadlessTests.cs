@@ -19,7 +19,8 @@ public class MainWindowHeadlessTests
         block.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("blockTitle")).Text ?? "";
 
     // The block's slot on the day grid (its container), relative to the grid panel.
-    private static Rect Slot(Border block) => ((Visual)block.GetVisualParent()!).Bounds;
+    private static Rect Slot(Border block) =>
+        block.GetVisualAncestors().OfType<Visual>().First(v => v.GetVisualParent() is Chisel.App.Controls.DayGridPanel).Bounds;
 
     private static T Named<T>(Window window, string name) where T : Control =>
         window.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);

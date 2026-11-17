@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -177,6 +178,110 @@ public class ScheduleEditorHeadlessTests
 
         Assert.Equal("10:00 AM", Named<TextBox>(window, "BlockStartBox").Text);
         Assert.Equal("11:00 AM", Named<TextBox>(window, "BlockEndBox").Text);
+        window.Close();
+    }
+
+    // --- Click to edit and delete ---
+
+    // A real mouse click at the middle of the control, so hit testing is part of the test.
+    private static void MouseClick(Window window, Control target)
+    {
+        var center = target.TranslatePoint(new Avalonia.Point(target.Bounds.Width / 2, target.Bounds.Height / 2), window)!.Value;
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static Border GridBlock(Window window, string title) =>
+        window.GetVisualDescendants().OfType<Border>()
+            .First(b => b.Classes.Contains("gridBlock") && b.DataContext is ScheduleGridBlock block && block.Title == title);
+
+    private static Border MarkerPill(Window window, string label) =>
+        window.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Classes.Contains("markerPill") && b.DataContext is ScheduleGridMarker marker && marker.Label == label);
+
+    [AvaloniaFact]
+    public void Header_NoLongerHasTheEditScheduleButton()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Button>(), b => Equals(b.Content, "Edit schedule"));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingABlock_OpensTheEditorWithItsValuesAndADeleteButton()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+
+        MouseClick(window, GridBlock(window, "Workout"));
+
+        Assert.True(Named<Border>(window, "BlockEditorPanel").IsVisible);
+        Assert.Equal("Workout", Named<TextBox>(window, "BlockTitleBox").Text);
+        Assert.Equal("14:00", Named<TextBox>(window, "BlockStartBox").Text);
+        Assert.Equal("15:00", Named<TextBox>(window, "BlockEndBox").Text);
+        Assert.True(Named<Button>(window, "BlockDeleteButton").IsVisible);
+        Assert.Contains("Edit block", Texts(window));
+        UiSnapshot.Render(window, "editor-edit-block");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void NewBlockEditor_HasNoDeleteButton()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+
+        Click(window, "AddBlockButton");
+
+        Assert.False(Named<Button>(window, "BlockDeleteButton").IsVisible);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingABlock_SaveChangesItOnTheGrid()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        MouseClick(window, GridBlock(window, "Workout"));
+
+        Type(window, "BlockTitleBox", "Run");
+        Click(window, "BlockSaveButton");
+
+        Assert.Contains("Run", BlockTitles(window));
+        Assert.DoesNotContain("Workout", BlockTitles(window));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingABlock_DeleteRemovesItFromTheGrid()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        MouseClick(window, GridBlock(window, "Workout"));
+
+        Click(window, "BlockDeleteButton");
+
+        Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);
+        Assert.DoesNotContain("Workout", BlockTitles(window));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingAMarker_OpensTheMarkerEditorAndDeleteRemovesIt()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+
+        MouseClick(window, MarkerPill(window, "Midday"));
+
+        Assert.True(Named<Border>(window, "MarkerEditorPanel").IsVisible);
+        Assert.Equal("Midday", Named<TextBox>(window, "MarkerLabelBox").Text);
+        Assert.Equal("12:00", Named<TextBox>(window, "MarkerTimeBox").Text);
+        Assert.Equal(MarkerKind.Checkpoint, Named<ComboBox>(window, "MarkerKindBox").SelectedItem);
+        Assert.Contains("Edit marker", Texts(window));
+        UiSnapshot.Render(window, "editor-edit-marker");
+
+        Click(window, "MarkerDeleteButton");
+
+        Assert.False(Named<Border>(window, "MarkerEditorPanel").IsVisible);
+        Assert.DoesNotContain(Schedule(window).GridMarkers, m => m.Label == "Midday");
         window.Close();
     }
 }
