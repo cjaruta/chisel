@@ -21,9 +21,12 @@
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
         <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
         <SolidColorBrush x:Key="DragPreviewBrush" Color="#405B8DEF" />
-        <SolidColorBrush x:Key="PendingBlockBrush" Color="#665B8DEF" />
-        <SolidColorBrush x:Key="BlockBackgroundBrush" Color="#C02B3350" />
-        <SolidColorBrush x:Key="CurrentBlockBackgroundBrush" Color="#D0324A80" />
+        <!-- Text on colored blocks; BlockPaletteTests checks both stay readable on every palette fill -->
+        <Color x:Key="BlockTitleColor">#ECEEF2</Color>
+        <Color x:Key="BlockTimeColor">#BCC1CA</Color>
+        <SolidColorBrush x:Key="BlockTitleBrush" Color="{StaticResource BlockTitleColor}" />
+        <SolidColorBrush x:Key="BlockTimeBrush" Color="{StaticResource BlockTimeColor}" />
+        <SolidColorBrush x:Key="CurrentBlockOutlineBrush" Color="#F2F4F8" />
         <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
         <SolidColorBrush x:Key="ReminderBrush" Color="#C9B77A" />
     </Application.Resources>
@@ -117,7 +120,7 @@
         </Style>
 
         <Style Selector="Button.gridItem:pointerover Border.gridBlock">
-            <Setter Property="BorderThickness" Value="3,1,1,1" />
+            <Setter Property="BorderBrush" Value="#55FFFFFF" />
         </Style>
 
         <Style Selector="Button.gridItem:pointerover Border.markerPill">
@@ -154,19 +157,42 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!-- Blocks: fill comes from the block's color; the inner border clips the stripe to the rounded corners -->
         <Style Selector="Border.gridBlock">
             <Setter Property="Margin" Value="2,1" />
-            <Setter Property="Padding" Value="10,4,8,4" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="ClipToBounds" Value="True" />
-            <Setter Property="Background" Value="{StaticResource BlockBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderThickness" Value="3,0,0,0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
 
+        <Style Selector="Border.blockInner">
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <Style Selector="Border.blockStripe">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+
+        <Style Selector="StackPanel.blockContent">
+            <Setter Property="Margin" Value="11,3,8,3" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style Selector="Border.gridBlock TextBlock.blockTitle, Border.dragPreview TextBlock.blockTitle">
+            <Setter Property="Foreground" Value="{StaticResource BlockTitleBrush}" />
+        </Style>
+
+        <Style Selector="Border.gridBlock TextBlock.blockTime, Border.dragPreview TextBlock.blockTime">
+            <Setter Property="Foreground" Value="{StaticResource BlockTimeBrush}" />
+        </Style>
+
+        <!-- The current block keeps its own color and gets a bright outline and soft glow instead -->
         <Style Selector="Border.gridBlock.current">
-            <Setter Property="Background" Value="{StaticResource CurrentBlockBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="3,1,1,1" />
+            <Setter Property="BorderBrush" Value="{StaticResource CurrentBlockOutlineBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="BoxShadow" Value="0 0 10 1 #55FFFFFF" />
         </Style>
 
         <Style Selector="Border.gridBlock.past">
@@ -253,7 +279,7 @@
         <!-- Drag-to-create preview: translucent accent box; a little stronger once it is pending in the editor -->
         <Style Selector="Border.dragPreview">
             <Setter Property="Margin" Value="2,1" />
-            <Setter Property="Padding" Value="10,2,8,2" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="ClipToBounds" Value="True" />
             <Setter Property="Background" Value="{StaticResource DragPreviewBrush}" />
@@ -261,8 +287,37 @@
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
+        <!-- Pending: the editor's color shows through the fill and stripe; the accent outline marks it unsaved -->
         <Style Selector="Border.dragPreview.pending">
-            <Setter Property="Background" Value="{StaticResource PendingBlockBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Color picker swatches: a small dot; the selected one gets a ring -->
+        <Style Selector="Button.swatch">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.swatch:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.swatch:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#66FFFFFF" />
+        </Style>
+
+        <Style Selector="Button.swatch.selected /template/ ContentPresenter#PART_ContentPresenter, Button.swatch.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource BlockTitleBrush}" />
+        </Style>
+
+        <Style Selector="Ellipse.swatchDot">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
         </Style>
 
         <Style Selector="Border.nowLine">

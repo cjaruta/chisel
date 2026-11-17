@@ -192,6 +192,10 @@ public partial class ScheduleViewModel : ViewModelBase
     [ObservableProperty]
     public partial string PreviewTitle { get; private set; } = "";
 
+    // The pending block's color from the editor; null while still dragging (drawn in the accent color).
+    [ObservableProperty]
+    public partial string? PreviewColorKey { get; private set; }
+
     public void BeginDrag(double y, double scrollOffset)
     {
         _pressContentY = y + scrollOffset;
@@ -223,6 +227,7 @@ public partial class ScheduleViewModel : ViewModelBase
         _dragRange = ScheduleGridLayout.DragRange(_pressContentY - scrollOffset, y, scrollOffset);
         ShowPreview(_dragRange.StartMinute, _dragRange.EndMinute);
         PreviewTitle = "New block";
+        PreviewColorKey = null;
     }
 
     public void EndDrag()
@@ -266,6 +271,7 @@ public partial class ScheduleViewModel : ViewModelBase
             return;
         }
         PreviewTitle = string.IsNullOrWhiteSpace(BlockEditor.Title) ? "New block" : BlockEditor.Title;
+        PreviewColorKey = BlockEditor.ColorKey;
         if (TimeFormatter.TryParse(BlockEditor.StartText, out var start) && TimeFormatter.TryParse(BlockEditor.EndText, out var end))
         {
             var startMinute = (int)ScheduleGridLayout.MinuteOfDay(start);
@@ -280,7 +286,7 @@ public partial class ScheduleViewModel : ViewModelBase
         {
             IsPending = false;
         }
-        else if (e.PropertyName is nameof(BlockEditorViewModel.Title) or nameof(BlockEditorViewModel.StartText) or nameof(BlockEditorViewModel.EndText))
+        else if (e.PropertyName is nameof(BlockEditorViewModel.Title) or nameof(BlockEditorViewModel.StartText) or nameof(BlockEditorViewModel.EndText) or nameof(BlockEditorViewModel.ColorKey))
         {
             UpdatePendingFromEditor();
         }
@@ -358,6 +364,7 @@ public partial class ScheduleViewModel : ViewModelBase
                 BlockIndex = segment.BlockIndex,
                 Title = block.Title,
                 TimeLabel = _display.Range(block.Start, block.End),
+                ColorKey = block.Color,
                 StartMinute = segment.StartMinute,
                 EndMinute = segment.EndMinute,
                 Column = segment.Column,

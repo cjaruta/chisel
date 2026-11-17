@@ -21,6 +21,8 @@ public sealed partial class ScheduleGridBlock : ScheduleGridItem
     public required int BlockIndex { get; init; }
     public required string Title { get; init; }
     public required string TimeLabel { get; init; }
+    // BlockColor key; the view turns it into the fill and the left stripe.
+    public string ColorKey { get; init; } = BlockColor.Default;
     public bool IsShort => EndMinute - StartMinute < ShortMinutes;
 
     [ObservableProperty]
