@@ -48,5 +48,19 @@ public class WidgetPlacementEntityTests : IDisposable
         Assert.Equal(new[] { 1.3, 1.0 }, widths);
     }
 
+    [Fact]
+    public void HiddenWidgets_AddAndSave_CanBeReadBackInOrder()
+    {
+        using var context = _fixture.CreateContext();
+        context.HiddenWidgets.AddRange(
+            new HiddenWidgetEntity { WidgetId = "links", Position = 1 },
+            new HiddenWidgetEntity { WidgetId = "notes", Position = 0 });
+        context.SaveChanges();
+
+        using var readContext = _fixture.CreateContext();
+
+        Assert.Equal(new[] { "notes", "links" }, readContext.HiddenWidgets.OrderBy(h => h.Position).Select(h => h.WidgetId));
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

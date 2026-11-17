@@ -44,6 +44,30 @@ public partial class MainWindow : Window
         Closing += (_, _) => SavePlacement();
     }
 
+    // Tray cards hand their pointer to the layout host, which shares the title bars' drag and drop.
+    private void OnTrayCardPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control card || card.DataContext is not WidgetDefinition widget
+            || !e.GetCurrentPoint(card).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+        LayoutHost.TrayCardPressed(widget, e.GetPosition(LayoutHost), e.GetPosition(card));
+        e.Pointer.Capture(card);
+        e.Handled = true;
+    }
+
+    private void OnTrayCardMoved(object? sender, PointerEventArgs e) => LayoutHost.TrayCardMoved(e.GetPosition(LayoutHost));
+
+    private void OnTrayCardReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        LayoutHost.TrayCardReleased(e.GetPosition(LayoutHost));
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+
+    private void OnTrayCardCaptureLost(object? sender, PointerCaptureLostEventArgs e) => LayoutHost.TrayCardCaptureLost();
+
     // Centered over the window, or just right of the clock and date when centering would cover them.
     private void PlaceLayoutToolbar()
     {

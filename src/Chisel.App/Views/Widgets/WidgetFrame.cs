@@ -67,7 +67,20 @@ public sealed class WidgetFrame : Border
         title.Classes.Add("editTitle");
         var barContent = new StackPanel { Orientation = Orientation.Horizontal, Children = { grip, title } };
         barContent.Classes.Add("editBarContent");
-        EditBar = new Border { Child = barContent, VerticalAlignment = VerticalAlignment.Top };
+
+        // Takes the widget off the dashboard (into the tray); its data stays.
+        RemoveButton = new Button
+        {
+            Name = $"RemoveWidget_{widget.Id}",
+            Content = new Path { Data = Geometry.Parse("M1,1 L9,9 M9,1 L1,9") },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        RemoveButton.Classes.Add("removeWidget");
+        ToolTip.SetTip(RemoveButton, "Remove from dashboard");
+        Grid.SetColumn(RemoveButton, 1);
+
+        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { barContent, RemoveButton } };
+        EditBar = new Border { Child = bar, VerticalAlignment = VerticalAlignment.Top };
         EditBar.Classes.Add("editBar");
 
         // Transparent so it catches every click and hover meant for the content underneath.
@@ -87,6 +100,9 @@ public sealed class WidgetFrame : Border
 
     // The slim bar with the grip and title shown in edit mode.
     public Border EditBar { get; }
+
+    // The button on the title bar that removes the widget from the dashboard.
+    public Button RemoveButton { get; }
 
     public bool IsEditing
     {

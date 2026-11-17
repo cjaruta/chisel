@@ -51,44 +51,53 @@ public class WidgetLayoutNormalizerTests
     }
 
     [Fact]
-    public void MissingWidget_IsAddedInItsDefaultColumnAndPosition()
+    public void NeverSeenWidget_IsAddedAtTheBottomOfTheFirstColumn()
     {
+        // Notes is neither placed nor hidden, so it is new: it joins the first column with its default
+        // height, and that column is rescaled to average 1.
         var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("links", 0.8)));
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1.2, links:0.8]", Normalize(layout));
+        Assert.Equal("1.3[schedule:0.909, notes:1.091] | 1[tasks:1, links:0.8]", Normalize(layout));
     }
 
     [Fact]
-    public void MissingWidget_WithNoDefaultNeighboursLeft_GetsItsOwnColumnOnItsDefaultSide()
+    public void SeveralNeverSeenWidgets_JoinTheFirstColumnInRegistryOrder()
     {
-        var layout = Layout(Col(1, ("tasks", 1), ("notes", 1), ("links", 1)));
+        var layout = Layout(Col(1, ("tasks", 1)));
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1, links:1]", Normalize(layout));
+        Assert.Equal("1[tasks:1, schedule:1, notes:1.2, links:0.8]", Normalize(layout));
     }
 
     [Fact]
-    public void MissingWidget_JoinsItsDefaultNeighboursWhereverTheyAreNow()
+    public void HiddenWidget_StaysHidden()
     {
-        // Tasks and links were moved left; notes belongs between them.
-        var layout = Layout(Col(1, ("tasks", 1), ("links", 1), ("schedule", 1)));
+        var layout = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("links", 0.8)) }, new[] { "notes" });
 
-        Assert.Equal("1[tasks:1, notes:1.2, links:1, schedule:1]", Normalize(layout));
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, links:0.8] (hidden: notes)", Normalize(layout));
     }
 
     [Fact]
-    public void MissingFirstWidgetOfItsColumn_GoesBeforeItsNeighbours()
+    public void HiddenList_DropsUnknownWidgetsAndWidgetsThatArePlaced()
     {
-        var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("notes", 1.2), ("links", 0.8)));
+        var layout = new WidgetLayout(Defaults.Columns, new[] { "weather", "tasks" });
 
         Assert.Equal(Defaults.Describe(), Normalize(layout));
     }
 
     [Fact]
-    public void MissingWidget_PastTheEndOfItsColumn_GoesLast()
+    public void HiddenWidgets_AreListedInRegistryOrder()
     {
-        var layout = Layout(Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1)));
+        var layout = new WidgetLayout(new[] { Col(1, ("tasks", 1)) }, new[] { "links", "schedule", "notes" });
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1.2, links:0.8]", Normalize(layout));
+        Assert.Equal("1[tasks:1] (hidden: schedule, notes, links)", Normalize(layout));
+    }
+
+    [Fact]
+    public void NothingPlaced_BecomesTheDefault()
+    {
+        var layout = new WidgetLayout(Array.Empty<LayoutColumn>(), new[] { "schedule", "tasks", "notes", "links" });
+
+        Assert.Equal(Defaults.Describe(), Normalize(layout));
     }
 
     [Fact]

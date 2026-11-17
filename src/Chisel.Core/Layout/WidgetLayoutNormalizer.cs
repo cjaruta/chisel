@@ -1,16 +1,18 @@
 namespace Chisel.Core.Layout;
 
-// Makes a loaded layout safe to show. The default layout says which widgets exist and where they belong:
+// Makes a loaded layout safe to show. The default layout says which widgets exist (and their default heights):
 // widgets not in it are dropped (and repeats of one widget), empty columns go, columns past
 // LayoutLimits.MaximumColumns fold into the last one, and weights are kept sensible.
-// A widget missing from the loaded layout comes back next to its default neighbours (the widgets of its
-// default column), right after the nearest one before it; with none of them left it gets its own column
-// on its default side.
+//
+// A known widget missing from the layout is either hidden (the user removed it: it is in HiddenWidgetIds and
+// stays off the dashboard) or new (neither placed nor hidden, e.g. a widget added in a later version): a new
+// widget is added at the bottom of the first column with its default height. A layout with nothing placed
+// becomes the default.
 public static class WidgetLayoutNormalizer
 {
     public static WidgetLayout Normalize(WidgetLayout layout, WidgetLayout defaults)
     {
-        var known = defaults.WidgetIds.ToHashSet();
+        var known = defaults.WidgetIds.ToList();
         var seen = new HashSet<string>();
 
         var widths = new List<double>();
@@ -35,34 +37,25 @@ public static class WidgetLayoutNormalizer
             columns.Add(widgets);
         }
 
-        for (var c = 0; c < defaults.Columns.Count; c++)
+        if (columns.Count == 0)
         {
-            var defaultColumn = defaults.Columns[c];
-            for (var i = 0; i < defaultColumn.Widgets.Count; i++)
-            {
-                var placement = defaultColumn.Widgets[i];
-                if (!seen.Add(placement.WidgetId))
-                {
-                    continue;
-                }
-
-                var siblings = defaultColumn.Widgets.Select(w => w.WidgetId).ToList();
-                var home = columns.FirstOrDefault(col => col.Any(w => siblings.Contains(w.WidgetId)));
-                if (home is null)
-                {
-                    var at = Math.Min(c, columns.Count);
-                    widths.Insert(at, defaultColumn.WidthWeight);
-                    columns.Insert(at, new List<WidgetPlacement> { placement });
-                    continue;
-                }
-
-                var before = siblings.Take(i).ToHashSet();
-                var after = home.FindLastIndex(w => before.Contains(w.WidgetId));
-                home.Insert(after + 1, placement);
-            }
+            return defaults;
         }
 
-        return new WidgetLayout(columns.Select((widgets, i) => new LayoutColumn(widths[i], widgets)));
+        var hidden = known.Where(id => !seen.Contains(id) && layout.HiddenWidgetIds.Contains(id)).ToList();
+        var brandNew = known.Where(id => !seen.Contains(id) && !hidden.Contains(id)).ToList();
+        foreach (var id in brandNew)
+        {
+            var defaultHeight = defaults.Columns.SelectMany(c => c.Widgets).First(w => w.WidgetId == id).HeightWeight;
+            columns[0].Add(new WidgetPlacement(id, defaultHeight));
+        }
+
+        var result = columns.Select((widgets, i) => new LayoutColumn(widths[i], widgets)).ToList();
+        if (brandNew.Count > 0)
+        {
+            result[0] = WidgetLayout.NormalizeHeights(result[0]);
+        }
+        return new WidgetLayout(result, hidden);
     }
 
     // NaN or infinite weights become 1; small or negative ones are raised to the minimum.

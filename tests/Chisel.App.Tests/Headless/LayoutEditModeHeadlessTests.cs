@@ -139,7 +139,7 @@ public class LayoutEditModeHeadlessTests
         EnterEditMode(window);
 
         var toolbar = Named<Border>(window, "LayoutToolbar");
-        var buttons = toolbar.GetVisualDescendants().OfType<Button>().Select(b => b.Content as string).ToList();
+        var buttons = toolbar.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Content as string).ToList();
 
         Assert.Equal(new[] { "Reset layout", "Cancel", "Done" }, buttons);
         var bounds = InWindow(toolbar, window);

@@ -25,6 +25,8 @@ public class ChiselDbContext : DbContext
 
     public DbSet<LayoutColumnEntity> LayoutColumns => Set<LayoutColumnEntity>();
 
+    public DbSet<HiddenWidgetEntity> HiddenWidgets => Set<HiddenWidgetEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Rows saved before blocks had colors get the neutral default.
@@ -47,6 +49,9 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<WidgetPlacementEntity>()
             .Property(p => p.HeightWeight)
             .HasDefaultValue(1.0);
+
+        // One row per widget taken off the dashboard.
+        modelBuilder.Entity<HiddenWidgetEntity>().HasKey(h => h.WidgetId);
     }
 }
 

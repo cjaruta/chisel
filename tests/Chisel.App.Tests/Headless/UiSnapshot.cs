@@ -26,8 +26,9 @@ public static class UiSnapshot
 
     // now: the clock time to show; defaults to SampleNow. blocks: the schedule to show instead of the sample one.
     // palette: the saved schedule palette id; defaults to Default Minimal.
+    // layoutRepository: where the widget layout is kept, so a test can reopen the window with it; none by default.
     public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
-        IEnumerable<ScheduleBlock>? blocks = null, string? palette = null)
+        IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -57,7 +58,8 @@ public static class UiSnapshot
             new TaskListViewModel(tasks),
             new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
-            settings);
+            settings,
+            new LayoutViewModel(layoutRepository));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

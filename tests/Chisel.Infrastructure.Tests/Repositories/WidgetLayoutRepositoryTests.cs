@@ -100,5 +100,48 @@ public class WidgetLayoutRepositoryTests : IDisposable
             return new LayoutColumn(width, widgets.ToList());
         }));
 
+    [Fact]
+    public void HiddenWidgets_SaveAndLoadStillHidden()
+    {
+        var layout = new WidgetLayout(
+            new[] { new LayoutColumn(1.3, new[] { new WidgetPlacement("schedule") }), new LayoutColumn(1, new[] { new WidgetPlacement("tasks") }) },
+            new[] { "notes", "links" });
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(layout);
+
+        using var readContext = _fixture.CreateContext();
+        var loaded = new WidgetLayoutRepository(readContext).Get()!;
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1] (hidden: notes, links)", loaded.Describe());
+    }
+
+    [Fact]
+    public void SavingAgain_ReplacesTheHiddenWidgets()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new WidgetLayoutRepository(context);
+        repository.Save(new WidgetLayout(new[] { new LayoutColumn(1, new[] { new WidgetPlacement("schedule") }) }, new[] { "notes", "links" }));
+
+        repository.Save(new WidgetLayout(new[] { new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("notes") }) }, new[] { "links" }));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(new[] { "links" }, new WidgetLayoutRepository(readContext).Get()!.HiddenWidgetIds);
+        Assert.Single(readContext.HiddenWidgets);
+    }
+
+    [Fact]
+    public void AWidgetThatWasNeverSaved_IsPlacedAtTheBottomOfTheFirstColumnWhenLoaded()
+    {
+        // Saved before "links" existed: it is neither placed nor hidden.
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(Parse("1.3[schedule:1] | 1[tasks:1, notes:1]"));
+        var defaults = Parse("1.3[schedule:1] | 1[tasks:1, notes:1, links:1]");
+
+        using var readContext = _fixture.CreateContext();
+        var loaded = WidgetLayoutNormalizer.Normalize(new WidgetLayoutRepository(readContext).Get()!, defaults);
+
+        Assert.Equal("1.3[schedule:1, links:1] | 1[tasks:1, notes:1]", loaded.Describe());
+    }
+
     public void Dispose() => _fixture.Dispose();
 }
