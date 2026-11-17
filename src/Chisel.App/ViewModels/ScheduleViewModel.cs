@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Chisel.Core.Schedule;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
 
@@ -31,6 +32,9 @@ public partial class ScheduleViewModel : ViewModelBase
     public ObservableCollection<ScheduleGridMarker> GridMarkers { get; } = new();
     public ObservableCollection<ScheduleHourLabel> HourLabels { get; } = new();
 
+    public BlockEditorViewModel BlockEditor { get; }
+    public MarkerEditorViewModel MarkerEditor { get; }
+
     public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time, TimeDisplay? display = null)
     {
         _scheduleRepository = scheduleRepository;
@@ -38,7 +42,35 @@ public partial class ScheduleViewModel : ViewModelBase
         _time = time;
         _display = display ?? new TimeDisplay();
         _display.PropertyChanged += (_, _) => Refresh();
+        BlockEditor = new BlockEditorViewModel(scheduleRepository, _display, Refresh);
+        MarkerEditor = new MarkerEditorViewModel(markerRepository, _display, Refresh);
         Refresh();
+    }
+
+    private TimeOnly Now => TimeOnly.FromDateTime(_time.GetLocalNow().DateTime);
+
+    // New items start at the next full hour.
+    private TimeOnly NextHour => new TimeOnly(Now.Hour, 0).AddHours(1);
+
+    [RelayCommand]
+    private void AddBlock()
+    {
+        MarkerEditor.Cancel();
+        BlockEditor.OpenNew(NextHour);
+    }
+
+    [RelayCommand]
+    private void AddMarker()
+    {
+        BlockEditor.Cancel();
+        MarkerEditor.OpenNew(NextHour);
+    }
+
+    [RelayCommand]
+    private void CloseEditors()
+    {
+        BlockEditor.Cancel();
+        MarkerEditor.Cancel();
     }
 
     public void Refresh()
@@ -86,7 +118,7 @@ public partial class ScheduleViewModel : ViewModelBase
 
     public void UpdateNow()
     {
-        var now = TimeOnly.FromDateTime(_time.GetLocalNow().DateTime);
+        var now = Now;
         NowMinute = ScheduleGridLayout.MinuteOfDay(now);
         NowLabel = _display.Time(now);
         CurrentBlockTitle = _blocks.FirstOrDefault(b => b.Contains(now))?.Title ?? "No block";
