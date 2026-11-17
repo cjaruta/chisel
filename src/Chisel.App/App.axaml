@@ -38,6 +38,23 @@
             <Setter Property="Padding" Value="16" />
         </Style>
 
+        <!-- Widget frames: a card with the widget's heading row; list widgets scroll inside the card -->
+        <Style Selector="Border.widgetFrame">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <Style Selector="Grid.widgetHeader">
+            <Setter Property="Margin" Value="16,12,12,6" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+
+        <!-- Top-aligned so a list's input row stays right under the list, as before, when the card is taller -->
+        <Style Selector=":is(UserControl).scrolledWidget">
+            <Setter Property="Margin" Value="16,0,16,16" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
         <Style Selector="TextBlock.cardHeading">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />

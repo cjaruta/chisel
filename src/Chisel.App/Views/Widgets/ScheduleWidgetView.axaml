@@ -1,0 +1,270 @@
+<w:WidgetView xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:vm="using:Chisel.App.ViewModels"
+              xmlns:conv="using:Chisel.App.Converters"
+              xmlns:ctl="using:Chisel.App.Controls"
+              xmlns:convA="using:Avalonia.Data.Converters"
+              xmlns:w="using:Chisel.App.Views.Widgets"
+              x:Class="Chisel.App.Views.Widgets.ScheduleWidgetView"
+              x:DataType="vm:MainViewModel">
+
+    <w:WidgetView.Styles>
+        <!-- Items in a day grid get their place from the item's minutes and overlap column. -->
+        <Style Selector="ItemsControl.dayGrid > ContentPresenter" x:DataType="vm:ScheduleGridItem">
+            <Setter Property="ctl:DayGridPanel.StartMinute" Value="{Binding StartMinute}" />
+            <Setter Property="ctl:DayGridPanel.EndMinute" Value="{Binding EndMinute}" />
+            <Setter Property="ctl:DayGridPanel.Column" Value="{Binding Column}" />
+            <Setter Property="ctl:DayGridPanel.ColumnCount" Value="{Binding ColumnCount}" />
+        </Style>
+    </w:WidgetView.Styles>
+
+    <w:WidgetView.HeaderActions>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Name="NowButton" Content="Now" Click="OnNowClick" />
+            <Button Name="AddMarkerButton" Content="+ Marker" Command="{Binding Schedule.AddMarkerCommand}" />
+            <Button Name="AddBlockButton" Classes="accent" Content="+ Block" Command="{Binding Schedule.AddBlockCommand}" />
+        </StackPanel>
+    </w:WidgetView.HeaderActions>
+
+    <!-- A 24-hour day grid. Blocks are boxes sized by their times, markers are lines. -->
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Classes="divider" />
+        <Panel>
+        <!-- Block editor: floats over the grid, under the header buttons -->
+        <Border Name="BlockEditorPanel" Classes="card editorPanel" ZIndex="10"
+                IsVisible="{Binding Schedule.BlockEditor.IsOpen}">
+            <Border.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
+            </Border.KeyBindings>
+            <StackPanel Spacing="8">
+                <TextBlock Classes="cardHeading" Text="{Binding Schedule.BlockEditor.Heading}" Margin="0" />
+                <TextBlock Classes="dim" Text="Title" />
+                <TextBox Name="BlockTitleBox" Text="{Binding Schedule.BlockEditor.Title}" PlaceholderText="What are you doing?" />
+                <Grid ColumnDefinitions="*,10,*">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="dim" Text="Start" />
+                        <TextBox Name="BlockStartBox" Text="{Binding Schedule.BlockEditor.StartText}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Classes="dim" Text="End" />
+                        <TextBox Name="BlockEndBox" Text="{Binding Schedule.BlockEditor.EndText}" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Classes="dim" Text="Color" />
+                <ItemsControl Name="BlockSwatches" ItemsSource="{Binding Schedule.BlockEditor.Swatches}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ColorSwatchOption">
+                            <Button Classes="swatch" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Name}"
+                                    Command="{Binding #BlockSwatches.((vm:MainViewModel)DataContext).Schedule.BlockEditor.SelectColorCommand}"
+                                    CommandParameter="{Binding Key}">
+                                <Ellipse Classes="swatchDot" Fill="{Binding Brush}" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Name="BlockEditorError" Classes="editorError" Text="{Binding Schedule.BlockEditor.ErrorMessage}"
+                           IsVisible="{Binding Schedule.BlockEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Button Name="BlockDeleteButton" Classes="danger" Content="Delete"
+                            Command="{Binding Schedule.BlockEditor.DeleteCommand}"
+                            IsVisible="{Binding Schedule.BlockEditor.IsEditing}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                        <Button Name="BlockCancelButton" Content="Cancel" Command="{Binding Schedule.BlockEditor.CancelCommand}" />
+                        <Button Name="BlockSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Marker editor -->
+        <Border Name="MarkerEditorPanel" Classes="card editorPanel" ZIndex="10"
+                IsVisible="{Binding Schedule.MarkerEditor.IsOpen}">
+            <Border.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
+            </Border.KeyBindings>
+            <StackPanel Spacing="8">
+                <TextBlock Classes="cardHeading" Text="{Binding Schedule.MarkerEditor.Heading}" Margin="0" />
+                <TextBlock Classes="dim" Text="Label" />
+                <TextBox Name="MarkerLabelBox" Text="{Binding Schedule.MarkerEditor.Label}" PlaceholderText="What happens then?" />
+                <Grid ColumnDefinitions="*,10,*">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="dim" Text="Time" />
+                        <TextBox Name="MarkerTimeBox" Text="{Binding Schedule.MarkerEditor.TimeText}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Classes="dim" Text="Kind" />
+                        <ComboBox Name="MarkerKindBox" HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding Schedule.MarkerEditor.Kinds}"
+                                  SelectedItem="{Binding Schedule.MarkerEditor.Kind}" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Name="MarkerEditorError" Classes="editorError" Text="{Binding Schedule.MarkerEditor.ErrorMessage}"
+                           IsVisible="{Binding Schedule.MarkerEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Button Name="MarkerDeleteButton" Classes="danger" Content="Delete"
+                            Command="{Binding Schedule.MarkerEditor.DeleteCommand}"
+                            IsVisible="{Binding Schedule.MarkerEditor.IsEditing}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                        <Button Name="MarkerCancelButton" Content="Cancel" Command="{Binding Schedule.MarkerEditor.CancelCommand}" />
+                        <Button Name="MarkerSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Name="ScheduleScroller" HorizontalScrollBarVisibility="Disabled"
+                      PointerMoved="OnSchedulePointerMoved" PointerExited="OnSchedulePointerExited"
+                      ScrollChanged="OnScheduleScrollChanged">
+            <!-- Transparent background so clicks on empty space reach the grid -->
+            <Grid Name="ScheduleGrid" ColumnDefinitions="76,*" Margin="0,14,14,14" Background="Transparent"
+                  PointerPressed="OnScheduleGridPointerPressed" PointerReleased="OnScheduleGridPointerReleased"
+                  PointerCaptureLost="OnScheduleGridPointerCaptureLost">
+                <!-- Hour rows: label on the left, faint line across -->
+                <ItemsControl Grid.ColumnSpan="2" Classes="dayGrid" ItemsSource="{Binding Schedule.HourLabels}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><ctl:DayGridPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ScheduleHourLabel">
+                            <Grid ColumnDefinitions="76,*">
+                                <TextBlock Classes="hourLabel" Text="{Binding Text}" />
+                                <Border Grid.Column="1" Classes="hourLine" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ItemsControl Name="ScheduleBlocks" Grid.Column="1" Classes="dayGrid" ItemsSource="{Binding Schedule.GridBlocks}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><ctl:DayGridPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ScheduleGridBlock">
+                            <Button Classes="gridItem" ToolTip.Tip="Edit block"
+                                    Command="{Binding #ScheduleBlocks.((vm:MainViewModel)DataContext).Schedule.EditBlockCommand}"
+                                    CommandParameter="{Binding}">
+                                <!-- Tinted fill and a solid left stripe in the block's color; the outer border carries the current-block outline -->
+                                <Border Classes="gridBlock" Classes.current="{Binding IsCurrent}" Classes.past="{Binding IsPast}"
+                                        Background="{Binding Brushes.Fill}">
+                                    <Border Classes="blockInner">
+                                        <Panel>
+                                            <Border Classes="blockStripe" Background="{Binding Brushes.Stripe}" />
+                                            <StackPanel Classes="blockContent">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Classes="blockTitle" Text="{Binding Title}" Foreground="{Binding Brushes.Text}" />
+                                                    <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" VerticalAlignment="Center"
+                                                               Foreground="{Binding Brushes.TimeText}" IsVisible="{Binding IsShort}" />
+                                                </StackPanel>
+                                                <TextBlock Classes="blockTime" Text="{Binding TimeLabel}" Foreground="{Binding Brushes.TimeText}"
+                                                           IsVisible="{Binding !IsShort}" />
+                                            </StackPanel>
+                                        </Panel>
+                                    </Border>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Hover guide line: where a click on empty space adds a marker and a drag adds a block. Label sits just above its left end. -->
+                <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                    <Panel Name="HoverLine" Height="1" ctl:DayGridPanel.StartMinute="{Binding Schedule.HoverMinute}"
+                           IsVisible="{Binding Schedule.IsHoverVisible}">
+                        <Border Classes="hoverLine" />
+                        <Canvas>
+                            <Border Classes="hoverLabel" Canvas.Left="4" Canvas.Bottom="1">
+                                <TextBlock Name="HoverLabel" Text="{Binding Schedule.HoverLabel}" />
+                            </Border>
+                        </Canvas>
+                    </Panel>
+                </ctl:DayGridPanel>
+
+                <ItemsControl Name="ScheduleMarkers" Grid.Column="1" Classes="dayGrid" ItemsSource="{Binding Schedule.GridMarkers}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><ctl:DayGridPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ScheduleGridMarker">
+                            <Grid Classes="markerRow" Classes.checkpoint="{Binding IsCheckpoint}" Classes.past="{Binding IsPast}"
+                                  ColumnDefinitions="*,Auto">
+                                <!-- Only the pill is clickable; the line lets clicks through to blocks underneath. -->
+                                <Panel ClipToBounds="True" VerticalAlignment="Center" Height="2" IsHitTestVisible="False">
+                                    <Line Classes="markerLine" StartPoint="0,1" EndPoint="4000,1" />
+                                </Panel>
+                                <Button Grid.Column="1" Classes="gridItem" ToolTip.Tip="Edit marker"
+                                        Command="{Binding #ScheduleMarkers.((vm:MainViewModel)DataContext).Schedule.EditMarkerCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Border Classes="markerPill">
+                                        <TextBlock Classes="markerText">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}  {1}">
+                                                    <Binding Path="TimeLabel" />
+                                                    <Binding Path="Label" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Border>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Pending marker: a new marker from a click on empty space, shown while its editor is open -->
+                <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                    <Grid Name="PendingMarker" Classes="markerRow pendingMarker" Classes.checkpoint="{Binding Schedule.IsPendingMarkerCheckpoint}"
+                          ColumnDefinitions="*,Auto" ctl:DayGridPanel.StartMinute="{Binding Schedule.PendingMarkerMinute}"
+                          IsVisible="{Binding Schedule.IsMarkerPending}">
+                        <Panel ClipToBounds="True" VerticalAlignment="Center" Height="2">
+                            <Line Classes="markerLine" StartPoint="0,1" EndPoint="4000,1" />
+                        </Panel>
+                        <Border Grid.Column="1" Classes="markerPill">
+                            <TextBlock Name="PendingMarkerText" Classes="markerText">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}  {1}">
+                                        <Binding Path="Schedule.PendingMarkerTime" />
+                                        <Binding Path="Schedule.PendingMarkerLabel" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Border>
+                    </Grid>
+                </ctl:DayGridPanel>
+
+                <!-- Drag preview: the range being dragged, then the pending block while the editor is open -->
+                <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                    <Border Name="DragPreview" Classes="dragPreview" Classes.pending="{Binding Schedule.IsPending}"
+                            ctl:DayGridPanel.StartMinute="{Binding Schedule.PreviewStartMinute}"
+                            ctl:DayGridPanel.EndMinute="{Binding Schedule.PreviewEndMinute}"
+                            IsVisible="{Binding Schedule.IsPreviewVisible}">
+                        <Panel>
+                            <Border Name="PendingFill" IsVisible="{Binding Schedule.IsPending}"
+                                    Background="{Binding Schedule.PreviewBrushes.Fill, FallbackValue={x:Null}}" />
+                            <Border Name="PendingStripe" Classes="blockStripe" IsVisible="{Binding Schedule.IsPending}"
+                                    Background="{Binding Schedule.PreviewBrushes.Stripe, FallbackValue={x:Null}}" />
+                            <StackPanel Classes="blockContent">
+                                <TextBlock Name="DragPreviewTitle" Classes="blockTitle" Text="{Binding Schedule.PreviewTitle}" />
+                                <TextBlock Name="DragPreviewLabel" Classes="blockTime" Text="{Binding Schedule.PreviewLabel}" />
+                            </StackPanel>
+                        </Panel>
+                    </Border>
+                </ctl:DayGridPanel>
+
+                <!-- Now line -->
+                <ctl:DayGridPanel Grid.ColumnSpan="2" IsHitTestVisible="False">
+                    <Grid Name="NowLine" ctl:DayGridPanel.StartMinute="{Binding Schedule.NowMinute}" ColumnDefinitions="76,*">
+                        <Border Grid.Column="1" Classes="nowLine" />
+                        <Ellipse Grid.Column="1" Classes="nowDot" />
+                        <Border Classes="nowPill">
+                            <TextBlock Text="{Binding Schedule.NowLabel}" />
+                        </Border>
+                    </Grid>
+                </ctl:DayGridPanel>
+            </Grid>
+        </ScrollViewer>
+        </Panel>
+    </DockPanel>
+</w:WidgetView>

@@ -1,0 +1,124 @@
+using Chisel.App.ViewModels;
+using Chisel.App.Views.Widgets;
+using Chisel.Core.Layout;
+
+namespace Chisel.App.Tests.ViewModels;
+
+// The widget registry, the default layout, and the view model the layout host is built from.
+public class LayoutViewModelTests
+{
+    private sealed class FakeLayoutRepository : IWidgetLayoutRepository
+    {
+        public WidgetLayout? Saved { get; set; }
+        public int SaveCalls { get; private set; }
+        public WidgetLayout? Get() => Saved;
+        public void Save(WidgetLayout layout)
+        {
+            Saved = layout;
+            SaveCalls++;
+        }
+    }
+
+    private static WidgetLayout Layout(params LayoutColumn[] columns) => new(columns);
+
+    private static LayoutColumn Col(double width, params (string Id, double Height)[] widgets) =>
+        new(width, widgets.Select(w => new WidgetPlacement(w.Id, w.Height)).ToList());
+
+    private static string Describe(LayoutViewModel layout) =>
+        string.Join(" | ", layout.Columns.Select(c => $"{c.WidthWeight}[{string.Join(", ", c.Widgets.Select(w => $"{w.Id}:{w.HeightWeight}"))}]"));
+
+    [Fact]
+    public void Registry_HasTheFourWidgetsWithStableIdsTitlesAndViews()
+    {
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "links" }, WidgetRegistry.All.Select(w => w.Id));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links" }, WidgetRegistry.All.Select(w => w.Title));
+        Assert.All(WidgetRegistry.All, w =>
+        {
+            Assert.True(w.MinHeight > 0);
+            Assert.True(typeof(WidgetView).IsAssignableFrom(w.ViewType), w.Id);
+        });
+        Assert.Equal("tasks", WidgetRegistry.Get("tasks")!.Id);
+        Assert.Null(WidgetRegistry.Get("weather"));
+    }
+
+    [Fact]
+    public void Registry_OnlyTheScheduleScrollsItself()
+    {
+        Assert.Equal(new[] { "schedule" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
+    }
+
+    [Fact]
+    public void DefaultLayout_IsScheduleOnTheLeftAndTheListsStackedOnTheRight()
+    {
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]", WidgetRegistry.DefaultLayout.Describe());
+    }
+
+    [Fact]
+    public void WithNoRepository_UsesTheDefaultLayout()
+    {
+        var layout = new LayoutViewModel();
+
+        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+    }
+
+    [Fact]
+    public void WithNothingSaved_UsesTheDefaultAndSavesIt()
+    {
+        var repository = new FakeLayoutRepository();
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(1, repository.SaveCalls);
+        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), repository.Saved!.Describe());
+    }
+
+    [Fact]
+    public void WithASavedLayout_LoadsItNormalizedAndDoesNotOverwriteIt()
+    {
+        var repository = new FakeLayoutRepository
+        {
+            Saved = Layout(Col(1, ("tasks", 2), ("weather", 1)), Col(0), Col(2, ("schedule", 1), ("links", 0.5))),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.Equal("1[tasks:2, notes:1.1] | 2[schedule:1, links:0.5]", layout.Layout.Describe());
+        Assert.Equal(0, repository.SaveCalls);
+    }
+
+    [Fact]
+    public void Columns_AreBuiltFromTheLayout()
+    {
+        var layout = new LayoutViewModel();
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]", Describe(layout));
+        var tasks = layout.Columns[1].Widgets[0];
+        Assert.Equal(("Tasks", WidgetRegistry.Get("tasks")!.MinHeight), (tasks.Title, tasks.MinHeight));
+        Assert.Same(WidgetRegistry.Get("tasks"), tasks.Widget);
+    }
+
+    [Fact]
+    public void Apply_ReplacesTheLayoutAndRebuildsTheColumns()
+    {
+        var layout = new LayoutViewModel();
+        var changed = new List<string?>();
+        layout.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        layout.Apply(Layout(Col(1, ("notes", 1), ("links", 1)), Col(2, ("schedule", 1)), Col(1, ("tasks", 3))));
+
+        Assert.Equal("1[notes:1, links:1] | 2[schedule:1] | 1[tasks:3]", Describe(layout));
+        Assert.Contains(nameof(LayoutViewModel.Layout), changed);
+        Assert.Contains(nameof(LayoutViewModel.Columns), changed);
+    }
+
+    [Fact]
+    public void Apply_NormalizesTheNewLayout()
+    {
+        var layout = new LayoutViewModel();
+
+        layout.Apply(Layout(Col(1, ("schedule", 0), ("weather", 1))));
+
+        Assert.Equal("1[schedule:0.1] | 1[tasks:1.05, notes:1.1, links:0.85]", layout.Layout.Describe());
+    }
+}

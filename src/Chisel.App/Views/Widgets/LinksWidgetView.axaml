@@ -1,0 +1,45 @@
+<w:WidgetView xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:vm="using:Chisel.App.ViewModels"
+              xmlns:conv="using:Chisel.App.Converters"
+              xmlns:ctl="using:Chisel.App.Controls"
+              xmlns:convA="using:Avalonia.Data.Converters"
+              xmlns:w="using:Chisel.App.Views.Widgets"
+              x:Class="Chisel.App.Views.Widgets.LinksWidgetView"
+              x:DataType="vm:MainViewModel">
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
+            <TextBox Text="{Binding QuickLinks.NewLinkLabel}" PlaceholderText="Label" />
+            <TextBox Text="{Binding QuickLinks.NewLinkUrl}" PlaceholderText="https://..." />
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Content="Save" Command="{Binding QuickLinks.SaveQuickLinkCommand}" />
+                <Button Content="Cancel" Command="{Binding QuickLinks.CancelEditCommand}"
+                        IsVisible="{Binding QuickLinks.EditingLinkId, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+            <TextBlock Classes="dim" Foreground="IndianRed" Text="{Binding QuickLinks.ErrorMessage}"
+                       IsVisible="{Binding QuickLinks.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <StackPanel>
+            <TextBlock Classes="empty" Text="No quick links yet"
+                       IsVisible="{Binding QuickLinks.QuickLinks.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
+            <ItemsControl Name="QuickLinkItemsControl" ItemsSource="{Binding QuickLinks.QuickLinks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                            <Button Classes="link" Content="{Binding Label}"
+                                    Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.OpenQuickLinkCommand}"
+                                    CommandParameter="{Binding}" />
+                            <Button Classes="iconButton" Content="e"
+                                    Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.SelectQuickLinkCommand}"
+                                    CommandParameter="{Binding}" />
+                            <Button Classes="iconButton" Content="x"
+                                    Command="{Binding #QuickLinkItemsControl.((vm:MainViewModel)DataContext).QuickLinks.RemoveQuickLinkCommand}"
+                                    CommandParameter="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DockPanel>
+</w:WidgetView>
