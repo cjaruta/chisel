@@ -24,7 +24,7 @@
     </Window.Styles>
 
     <Window.KeyBindings>
-        <KeyBinding Gesture="Escape" Command="{Binding Settings.CloseCommand}" />
+        <KeyBinding Gesture="Escape" Command="{Binding CloseOverlaysCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
@@ -52,9 +52,72 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                             <Button Name="NowButton" Content="Now" Click="OnNowClick" />
                             <Button Content="Edit schedule" Command="{Binding OpenScheduleEditorCommand}" />
+                            <Button Name="AddMarkerButton" Content="+ Marker" Command="{Binding Schedule.AddMarkerCommand}" />
+                            <Button Name="AddBlockButton" Classes="accent" Content="+ Block" Command="{Binding Schedule.AddBlockCommand}" />
                         </StackPanel>
                     </Grid>
                     <Border DockPanel.Dock="Top" Classes="divider" />
+                    <Panel>
+                    <!-- Block editor: floats over the grid, under the header buttons -->
+                    <Border Name="BlockEditorPanel" Classes="card editorPanel" ZIndex="10"
+                            IsVisible="{Binding Schedule.BlockEditor.IsOpen}">
+                        <Border.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
+                        </Border.KeyBindings>
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="cardHeading" Text="New block" Margin="0" />
+                            <TextBlock Classes="dim" Text="Title" />
+                            <TextBox Name="BlockTitleBox" Text="{Binding Schedule.BlockEditor.Title}" PlaceholderText="What are you doing?" />
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Classes="dim" Text="Start" />
+                                    <TextBox Name="BlockStartBox" Text="{Binding Schedule.BlockEditor.StartText}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Classes="dim" Text="End" />
+                                    <TextBox Name="BlockEndBox" Text="{Binding Schedule.BlockEditor.EndText}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Name="BlockEditorError" Classes="editorError" Text="{Binding Schedule.BlockEditor.ErrorMessage}"
+                                       IsVisible="{Binding Schedule.BlockEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                <Button Name="BlockCancelButton" Content="Cancel" Command="{Binding Schedule.BlockEditor.CancelCommand}" />
+                                <Button Name="BlockSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.BlockEditor.SaveCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Marker editor -->
+                    <Border Name="MarkerEditorPanel" Classes="card editorPanel" ZIndex="10"
+                            IsVisible="{Binding Schedule.MarkerEditor.IsOpen}">
+                        <Border.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
+                        </Border.KeyBindings>
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="cardHeading" Text="New marker" Margin="0" />
+                            <TextBlock Classes="dim" Text="Label" />
+                            <TextBox Name="MarkerLabelBox" Text="{Binding Schedule.MarkerEditor.Label}" PlaceholderText="What happens then?" />
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Classes="dim" Text="Time" />
+                                    <TextBox Name="MarkerTimeBox" Text="{Binding Schedule.MarkerEditor.TimeText}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Classes="dim" Text="Kind" />
+                                    <ComboBox Name="MarkerKindBox" HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding Schedule.MarkerEditor.Kinds}"
+                                              SelectedItem="{Binding Schedule.MarkerEditor.Kind}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Name="MarkerEditorError" Classes="editorError" Text="{Binding Schedule.MarkerEditor.ErrorMessage}"
+                                       IsVisible="{Binding Schedule.MarkerEditor.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                <Button Name="MarkerCancelButton" Content="Cancel" Command="{Binding Schedule.MarkerEditor.CancelCommand}" />
+                                <Button Name="MarkerSaveButton" Classes="accent" Content="Save" Command="{Binding Schedule.MarkerEditor.SaveCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
                     <ScrollViewer Name="ScheduleScroller" HorizontalScrollBarVisibility="Disabled">
                         <Grid Name="ScheduleGrid" ColumnDefinitions="76,*" Margin="0,14,14,14">
                             <!-- Hour rows: label on the left, faint line across -->
@@ -130,6 +193,7 @@
                             </ctl:DayGridPanel>
                         </Grid>
                     </ScrollViewer>
+                    </Panel>
                 </DockPanel>
             </Border>
 
