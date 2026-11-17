@@ -12,9 +12,10 @@ namespace Chisel.App.Views.Widgets;
 // The card around one widget: its heading (with the widget's header actions on the right) and its content,
 // scrolled inside the card when the widget asks for it. Created once per widget and reused when the layout changes.
 //
-// In layout edit mode the card gets an accent outline and a slim title bar with a grip over its heading,
-// and its content is dimmed and ignores the mouse and keyboard. The outline's space is always reserved
-// (a transparent border outside edit mode) and the title bar floats over the heading, so nothing moves.
+// In layout edit mode the card gets a neutral hairline, a soft shadow and a slight scale-down (render
+// transform), and its content is dimmed and ignores the mouse and keyboard. A transparent layer over the
+// whole card is the drag handle, with a round remove badge on the top-left corner. The border's space is
+// always reserved (transparent outside edit mode), so nothing moves.
 public sealed class WidgetFrame : Border
 {
     public static readonly StyledProperty<bool> IsEditingProperty =
@@ -61,31 +62,20 @@ public sealed class WidgetFrame : Border
         Content = new DockPanel { Children = { header, body } };
         Content.Classes.Add("widgetContent");
 
-        var grip = new Path { Data = Geometry.Parse(GripData), VerticalAlignment = VerticalAlignment.Center };
-        grip.Classes.Add("editGrip");
-        var title = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center };
-        title.Classes.Add("editTitle");
-        var barContent = new StackPanel { Orientation = Orientation.Horizontal, Children = { grip, title } };
-        barContent.Classes.Add("editBarContent");
-
-        // Takes the widget off the dashboard (into the tray); its data stays.
+        // Takes the widget off the dashboard (into the tray); its data stays. A small badge on the top-left corner.
         RemoveButton = new Button
         {
             Name = $"RemoveWidget_{widget.Id}",
-            Content = new Path { Data = Geometry.Parse("M1,1 L9,9 M9,1 L1,9") },
-            VerticalAlignment = VerticalAlignment.Center,
+            Content = new Path { Data = Geometry.Parse("M0,0 L6,0") },
         };
         RemoveButton.Classes.Add("removeWidget");
         ToolTip.SetTip(RemoveButton, "Remove from dashboard");
-        Grid.SetColumn(RemoveButton, 1);
 
-        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { barContent, RemoveButton } };
-        EditBar = new Border { Child = bar, VerticalAlignment = VerticalAlignment.Top };
+        // The whole widget is the drag handle. Transparent so it catches every click and hover meant for the
+        // content underneath; focusable so focus can be moved off the content when editing starts.
+        EditBar = new Border { Background = Brushes.Transparent, Focusable = true };
         EditBar.Classes.Add("editBar");
-
-        // Transparent so it catches every click and hover meant for the content underneath.
-        // Focusable so focus can be moved off the content when editing starts.
-        _editLayer = new Grid { Background = Brushes.Transparent, IsVisible = false, Focusable = true, Children = { EditBar } };
+        _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton } };
         _editLayer.Classes.Add("editLayer");
 
         Child = new Panel { Children = { Content, _editLayer } };
@@ -98,10 +88,10 @@ public sealed class WidgetFrame : Border
     // The heading and the widget's view; inert and dimmed in edit mode.
     public DockPanel Content { get; }
 
-    // The slim bar with the grip and title shown in edit mode.
+    // The transparent layer over the whole card that drags the widget in edit mode.
     public Border EditBar { get; }
 
-    // The button on the title bar that removes the widget from the dashboard.
+    // The corner badge that removes the widget from the dashboard.
     public Button RemoveButton { get; }
 
     public bool IsEditing
@@ -128,7 +118,7 @@ public sealed class WidgetFrame : Border
             var focus = TopLevel.GetTopLevel(this)?.FocusManager;
             if (editing && focus?.GetFocusedElement() is Visual focused && Content.IsVisualAncestorOf(focused))
             {
-                _editLayer.Focus();
+                EditBar.Focus();
             }
         }
     }

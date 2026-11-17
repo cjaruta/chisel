@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Chisel.App.ViewModels;
@@ -89,7 +90,10 @@ public class LayoutEditModeHeadlessTests
         {
             Assert.Contains("editing", frame.Classes);
             Assert.True(frame.EditBar.IsEffectivelyVisible, frame.WidgetId);
-            Assert.Equal(frame.Widget.Title, frame.EditBar.GetVisualDescendants().OfType<TextBlock>().Single().Text);
+            Assert.Empty(frame.EditBar.GetVisualDescendants().OfType<TextBlock>());
+            Assert.Equal(1, frame.BorderThickness.Left);
+            Assert.NotEqual(Colors.Transparent, ((ISolidColorBrush)frame.BorderBrush!).Color);
+            Assert.True(frame.RemoveButton.IsEffectivelyVisible, frame.WidgetId);
             Assert.False(frame.Content.IsHitTestVisible, $"{frame.WidgetId} content should ignore the mouse");
             Assert.Equal(KeyboardNavigationMode.None, KeyboardNavigation.GetTabNavigation(frame.Content));
             Assert.True(frame.Content.Opacity < 1, $"{frame.WidgetId} content should be dimmed");
@@ -117,7 +121,7 @@ public class LayoutEditModeHeadlessTests
     }
 
     [AvaloniaFact]
-    public void TheTitleBarCoversTheHeadingRow()
+    public void TheDragSurfaceCoversTheWholeWidget()
     {
         var window = Show();
         EnterEditMode(window);
@@ -125,9 +129,8 @@ public class LayoutEditModeHeadlessTests
         foreach (var frame in Frames(window))
         {
             var bar = InWindow(frame.EditBar, window);
-            var heading = frame.GetVisualDescendants().OfType<Grid>().First(g => g.Classes.Contains("widgetHeader"));
-            var headingRow = InWindow(heading, window).Inflate(new Thickness(0, 0, 0, 6));
-            Assert.True(bar.Bottom >= headingRow.Bottom - 0.5, $"{frame.WidgetId} heading row shows below the bar");
+            var content = InWindow(frame.Content, window);
+            Assert.True(bar.Contains(content.TopLeft) && bar.Contains(content.BottomRight), $"{frame.WidgetId} content shows outside the drag surface");
         }
         window.Close();
     }
@@ -260,7 +263,7 @@ public class LayoutEditModeHeadlessTests
     public void EnteringAndLeaving_DoesNotMoveOrResizeAnyWidget(int width, int height)
     {
         var window = Show(width, height);
-        Rect[] Snapshot() => Frames(window).SelectMany(f => new[] { InWindow(f, window), InWindow(f.View, window) }).ToArray();
+        Rect[] Snapshot() => Frames(window).SelectMany(f => new[] { InWindow(f, window), f.View.Bounds }).ToArray();
         var before = Snapshot();
 
         EnterEditMode(window);

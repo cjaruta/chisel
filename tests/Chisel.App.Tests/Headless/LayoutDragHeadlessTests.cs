@@ -90,11 +90,27 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
-    public void TitleBar_ShowsAHandCursor()
+    public void Widget_ShowsAMoveCursor()
     {
         var window = ShowEditing();
 
         Assert.NotNull(Frame(window, "tasks").EditBar.Cursor);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DraggingFromTheBodyOfAWidget_MovesIt()
+    {
+        var window = ShowEditing();
+        var body = Within(window, "links", 0.8);
+        var to = Within(window, "tasks", 0.2);
+
+        Press(window, body);
+        MoveTo(window, new Point(body.X + 10, body.Y + 10));
+        MoveTo(window, to);
+        Release(window, to);
+
+        Assert.Equal("schedule | links,tasks,notes", Order(window));
         window.Close();
     }
 
