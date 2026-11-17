@@ -126,6 +126,30 @@ public class ScheduleBlockTests
         Assert.Equal("Workout", title);
     }
 
+    [Fact]
+    public void Color_WhenNotGiven_IsTheDefault()
+    {
+        var block = new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(9, 0));
+
+        Assert.Equal(BlockColor.Default, block.Color);
+    }
+
+    [Fact]
+    public void Color_WhenGiven_IsKept()
+    {
+        var block = new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(9, 0), "sage");
+
+        Assert.Equal("sage", block.Color);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("neon")]
+    public void Color_MissingOrUnknown_FallsBackToTheDefault(string? color)
+    {
+        var block = new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(9, 0), color);
+
+        Assert.Equal(BlockColor.Default, block.Color);
+    }
 }
-
-
