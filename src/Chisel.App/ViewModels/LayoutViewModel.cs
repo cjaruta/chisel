@@ -70,7 +70,7 @@ public partial class LayoutViewModel : ViewModelBase
 
     private bool CanEnterEdit() => !IsEditing;
 
-    // Empty columns are dropped first, so what is saved is exactly what is shown and what loads next time.
+    // Drops already remove emptied columns; this is a safety net so what is saved is exactly what loads.
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void Done()
     {
@@ -116,6 +116,7 @@ public partial class LayoutViewModel : ViewModelBase
     }
 
     // Drops the dragged widget into a gap of a column (see WidgetLayout.Move), changing only the working copy.
+    // A column the drop leaves empty is removed right away, so the edit view always matches what Done saves.
     // Returns whether the layout changed; dropping onto its own place changes nothing. Ends the drag either way.
     public bool DropWidget(int column, int index)
     {
@@ -131,7 +132,7 @@ public partial class LayoutViewModel : ViewModelBase
         {
             return false;
         }
-        Layout = moved;
+        Layout = moved.RemoveEmptyColumns();
         return true;
     }
 
@@ -154,7 +155,7 @@ public partial class LayoutViewModel : ViewModelBase
         {
             return false;
         }
-        Layout = moved;
+        Layout = moved.RemoveEmptyColumns();
         return true;
     }
 

@@ -126,15 +126,47 @@ public class LayoutDragTests
     }
 
     [Fact]
-    public void Drop_KeepsAnEmptiedColumnInTheWorkingCopy()
+    public void Drop_ThatEmptiesAColumn_RemovesItFromTheWorkingCopyRightAway()
     {
         var layout = Editing();
+        var saves = _repository.SaveCalls;
         layout.BeginWidgetDrag("schedule");
 
         layout.DropWidget(1, 0);
 
-        Assert.Equal(" | schedule,tasks,notes,links", Order(layout.Layout));
-        Assert.Empty(layout.Columns[0].Widgets);
+        Assert.Equal("schedule,tasks,notes,links", Order(layout.Layout));
+        Assert.Single(layout.Columns);
+        Assert.True(layout.IsEditing);
+        Assert.Equal(saves, _repository.SaveCalls);
+    }
+
+    [Fact]
+    public void CancelledOrInvalidDrops_LeaveTheColumnsAsTheyWere()
+    {
+        var layout = Editing();
+        var before = layout.Layout;
+
+        layout.BeginWidgetDrag("schedule");
+        layout.CancelWidgetDrag();
+        layout.BeginWidgetDrag("schedule");
+        layout.DropWidget(-1, 0);
+        layout.BeginWidgetDrag("schedule");
+        layout.DropWidget(7, 0);
+
+        Assert.Same(before, layout.Layout);
+        Assert.Equal(2, layout.Layout.Columns.Count);
+    }
+
+    [Fact]
+    public void Cancel_AfterACollapse_RestoresTheOriginalColumns()
+    {
+        var layout = Editing();
+        layout.BeginWidgetDrag("schedule");
+        layout.DropWidget(1, 0);
+
+        layout.CancelCommand.Execute(null);
+
+        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
     }
 
     [Fact]

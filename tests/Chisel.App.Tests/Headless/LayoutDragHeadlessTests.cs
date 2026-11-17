@@ -164,29 +164,14 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
-    public void AnEmptiedColumn_ShowsADropZone_AndAcceptsAWidget()
+    public void MovingAColumnsOnlyWidgetAway_CollapsesThatColumnOnDrop()
     {
         var window = ShowEditing();
 
         Drag(window, "schedule", Within(window, "links", 0.9));
-        Assert.Equal(" | tasks,notes,links,schedule", Order(window));
 
-        var zone = Named<Control>(window, "DropZone0");
-        Assert.True(zone.IsEffectivelyVisible);
-        Assert.Contains("Drop here", zone.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
-
-        // Mid-drag over the empty column, the zone lights up instead of showing a line.
-        var from = Bar(window, "notes");
-        Press(window, from);
-        MoveTo(window, new Point(from.X - 30, from.Y));
-        MoveTo(window, InWindow(zone, window).Center);
-        Assert.Contains("active", zone.Classes);
-        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
-        UiSnapshot.Render(window, "layout-drop-zone");
-        Release(window, InWindow(zone, window).Center);
-
-        Assert.Equal("notes | tasks,links,schedule", Order(window));
-        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "DropZone0");
+        Assert.Equal("tasks,notes,links,schedule", Order(window));
+        Assert.True(ViewModel(window).Layout.IsEditing);
         window.Close();
     }
 

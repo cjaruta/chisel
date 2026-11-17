@@ -185,22 +185,54 @@ public class LayoutColumnsHeadlessTests
     }
 
     [AvaloniaFact]
-    public void AnEmptiedColumn_ShowsDropHereInEditMode_AndIsGoneAfterDone()
+    public void AnEmptiedColumn_CollapsesAsSoonAsTheDropCompletes_AndTheRestFillTheWidth()
     {
         var window = ShowEditing();
-        PickUp(window, "schedule");
-        var target = InWindow(Frame(window, "links"), window);
-        var bottom = new Point(target.Center.X, target.Bottom - 10);
-        MoveTo(window, bottom);
-        Release(window, bottom);
-        Assert.True(Named<Control>(window, "DropZone0").IsEffectivelyVisible);
+        DragToNewColumn(window, "notes", 2);
+        Assert.Equal(3, Host(window).Frames.Count);
+        UiSnapshot.Render(window, "collapse-before-1200x760");
+        var hostWidth = Host(window).Bounds.Width;
+
+        // Notes is alone in the third column; drop it under Quick links.
+        PickUp(window, "notes");
+        var links = InWindow(Frame(window, "links"), window);
+        var below = new Point(links.Center.X, links.Bottom - 10);
+        MoveTo(window, below);
+        Assert.Equal(3, Host(window).Frames.Count); // only dimmed while dragging
+        Release(window, below);
+
         Assert.Equal(2, Host(window).Frames.Count);
+        Assert.Equal("schedule | tasks,links,notes", Order(window));
+        var schedule = InWindow(Frame(window, "schedule"), window);
+        var right = InWindow(Frame(window, "tasks"), window);
+        var host = InWindow(Host(window), window);
+        Assert.Equal(host.Left, schedule.Left, 1.5);
+        Assert.Equal(host.Right, right.Right, 1.5);
+        Assert.Equal(1.3, schedule.Width / right.Width, 1);
+        Assert.Equal(hostWidth, Host(window).Bounds.Width);
+        Assert.True(ViewModel(window).Layout.IsEditing);
+        UiSnapshot.Render(window, "collapse-after-1200x760");
+        window.Close();
+    }
 
-        ViewModel(window).Layout.DoneCommand.Execute(null);
+    [AvaloniaFact]
+    public void AnInvalidDropOrEscape_LeavesEveryColumnAsItWas()
+    {
+        var window = ShowEditing();
+        DragToNewColumn(window, "notes", 2);
+        var before = Order(window);
+
+        PickUp(window, "notes");
+        Release(window, new Point(100, 30)); // over the clock
+        Assert.Equal(before, Order(window));
+
+        PickUp(window, "notes");
+        var tasks = InWindow(Frame(window, "tasks"), window);
+        MoveTo(window, tasks.Center);
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Dispatcher.UIThread.RunJobs();
-
-        Assert.Single(Host(window).Frames);
-        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "DropZone0");
+        Release(window, tasks.Center);
+        Assert.Equal(before, Order(window));
         window.Close();
     }
 
