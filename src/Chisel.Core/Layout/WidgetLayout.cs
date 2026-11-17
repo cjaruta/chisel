@@ -176,6 +176,37 @@ public sealed class WidgetLayout
         return With(Columns.Select((c, i) => i == column ? c with { Widgets = resized } : c));
     }
 
+    // Makes a column wider (positive delta) or narrower (negative) by moving width weight between it and the
+    // column right of it. delta and minimumFraction are fractions of the total width (the UI divides pixels by
+    // the width the columns share). Neither column goes below minimumFraction; the move stops there. The total
+    // width weight and every other column are unchanged. Returns this same layout when nothing changes.
+    // The column must have a column to its right.
+    public WidgetLayout ResizeColumns(int columnIndex, double delta, double minimumFraction)
+    {
+        if (columnIndex < 0 || columnIndex + 1 >= Columns.Count)
+        {
+            throw new ArgumentException($"Column {columnIndex} has no column to its right to resize against.", nameof(columnIndex));
+        }
+
+        var total = Columns.Sum(c => c.WidthWeight);
+        var minimum = minimumFraction * total;
+        var left = Columns[columnIndex];
+        var right = Columns[columnIndex + 1];
+
+        var most = right.WidthWeight - minimum;
+        var least = minimum - left.WidthWeight;
+        var change = least > most ? 0 : Math.Clamp(delta * total, Math.Min(least, 0), Math.Max(most, 0));
+        if (Math.Abs(change) < 1e-12)
+        {
+            return this;
+        }
+
+        return With(Columns.Select((c, i) =>
+            i == columnIndex ? c with { WidthWeight = left.WidthWeight + change }
+            : i == columnIndex + 1 ? c with { WidthWeight = right.WidthWeight - change }
+            : c));
+    }
+
     // Rescales a column's height weights so they average 1, keeping their proportions
     // (rounded to 3 decimals, never below MinimumWeight).
     public static LayoutColumn NormalizeHeights(LayoutColumn column)
