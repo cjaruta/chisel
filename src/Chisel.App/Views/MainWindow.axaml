@@ -36,7 +36,7 @@
         </Button>
         </StackPanel>
 
-        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,16">
+        <StackPanel Grid.Row="0" Name="ClockPanel" Spacing="2" Margin="0,0,0,16" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <TextBlock Text="{Binding Clock.TimeText}" FontSize="36" FontWeight="Bold" />
                 <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:dddd, MMMM d}'}" FontSize="20" VerticalAlignment="Center" />
@@ -49,7 +49,7 @@
 
         <!-- Layout edit mode toolbar: floats at the top center; Esc is the same as Cancel -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="LayoutToolbar" Classes="layoutToolbar" ZIndex="20"
-                HorizontalAlignment="Center" VerticalAlignment="Top"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
                 IsVisible="{Binding Layout.IsEditing}">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />

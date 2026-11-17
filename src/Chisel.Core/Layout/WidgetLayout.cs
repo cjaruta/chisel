@@ -78,6 +78,41 @@ public sealed class WidgetLayout
         }));
     }
 
+    // Makes a widget taller (positive delta) or shorter (negative) by moving height weight between it and the
+    // widget right below it in its column. delta and minimumFraction are fractions of the column's height
+    // (the UI divides pixels by the column's height). Neither widget goes below minimumFraction; the move stops
+    // there rather than pushing anything else. The column's weight total and every other widget are unchanged.
+    // Returns this same layout when nothing changes. The widget must have a widget below it.
+    public WidgetLayout Resize(string widgetId, double delta, double minimumFraction)
+    {
+        var (column, index) = Find(widgetId)
+            ?? throw new ArgumentException($"'{widgetId}' is not in the layout.", nameof(widgetId));
+        var widgets = Columns[column].Widgets;
+        if (index + 1 >= widgets.Count)
+        {
+            throw new ArgumentException($"'{widgetId}' has no widget below it to resize against.", nameof(widgetId));
+        }
+
+        var total = widgets.Sum(w => w.HeightWeight);
+        var minimum = minimumFraction * total;
+        var above = widgets[index];
+        var below = widgets[index + 1];
+
+        // How far the weight can move: down to the minimum on either side.
+        var most = below.HeightWeight - minimum;
+        var least = minimum - above.HeightWeight;
+        var change = least > most ? 0 : Math.Clamp(delta * total, Math.Min(least, 0), Math.Max(most, 0));
+        if (Math.Abs(change) < 1e-12)
+        {
+            return this;
+        }
+
+        var resized = widgets.ToList();
+        resized[index] = above with { HeightWeight = above.HeightWeight + change };
+        resized[index + 1] = below with { HeightWeight = below.HeightWeight - change };
+        return new WidgetLayout(Columns.Select((c, i) => i == column ? c with { Widgets = resized } : c));
+    }
+
     // Rescales a column's height weights so they average 1, keeping their proportions
     // (rounded to 3 decimals, never below MinimumWeight).
     public static LayoutColumn NormalizeHeights(LayoutColumn column)

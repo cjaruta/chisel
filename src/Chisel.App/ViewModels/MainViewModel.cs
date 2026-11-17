@@ -63,7 +63,7 @@ public partial class MainViewModel : ViewModelBase
         Schedule.UpdateNow();
     }
 
-    // Escape cancels a widget drag; otherwise it cancels layout editing; otherwise it closes whatever
+    // Escape cancels a widget drag or resize; otherwise it cancels layout editing; otherwise it closes whatever
     // floats over the window: settings or a schedule editor.
     [RelayCommand]
     private void CloseOverlays()
@@ -71,6 +71,11 @@ public partial class MainViewModel : ViewModelBase
         if (Layout.IsDraggingWidget)
         {
             Layout.CancelWidgetDrag();
+            return;
+        }
+        if (Layout.IsResizing)
+        {
+            Layout.CancelResize();
             return;
         }
         if (Layout.IsEditing)

@@ -19,12 +19,16 @@ public static class WidgetRegistry
     public const string Notes = "notes";
     public const string Links = "links";
 
+    // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
+    // Resizing stops here, and a column too short for its widgets' minimums scrolls.
+    public const double MinimumHeight = 110;
+
     public static IReadOnlyList<WidgetDefinition> All { get; } = new[]
     {
-        new WidgetDefinition(Schedule, "Today", 240, ScrollsContent: false, typeof(ScheduleWidgetView)),
-        new WidgetDefinition(Tasks, "Tasks", 120, ScrollsContent: true, typeof(TasksWidgetView)),
-        new WidgetDefinition(Notes, "Notes", 140, ScrollsContent: true, typeof(NotesWidgetView)),
-        new WidgetDefinition(Links, "Quick links", 120, ScrollsContent: true, typeof(LinksWidgetView)),
+        new WidgetDefinition(Schedule, "Today", MinimumHeight, ScrollsContent: false, typeof(ScheduleWidgetView)),
+        new WidgetDefinition(Tasks, "Tasks", MinimumHeight, ScrollsContent: true, typeof(TasksWidgetView)),
+        new WidgetDefinition(Notes, "Notes", MinimumHeight, ScrollsContent: true, typeof(NotesWidgetView)),
+        new WidgetDefinition(Links, "Quick links", MinimumHeight, ScrollsContent: true, typeof(LinksWidgetView)),
     };
 
     // Schedule on the left at full height; Tasks, Notes and Quick links stacked on the right.

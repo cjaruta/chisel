@@ -148,6 +148,21 @@ public class LayoutEditModeHeadlessTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData(1000, 650)]
+    [InlineData(1200, 760)]
+    public void Toolbar_NeverCoversTheClockOrDate(int width, int height)
+    {
+        var window = Show(width, height);
+        EnterEditMode(window);
+
+        var toolbar = InWindow(Named<Border>(window, "LayoutToolbar"), window);
+        var clock = InWindow(Named<StackPanel>(window, "ClockPanel"), window);
+
+        Assert.True(toolbar.Left >= clock.Right, $"toolbar starts at {toolbar.Left}, the clock and date end at {clock.Right}");
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void InEditMode_TheScheduleIgnoresHoverAndClicks()
     {

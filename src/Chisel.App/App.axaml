@@ -135,6 +135,44 @@
             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
         </Style>
 
+        <!-- Resize handles in the gaps between stacked cards: invisible outside edit mode; in edit mode a faint
+             line with a short accent grip, brighter on hover and while dragging -->
+        <Style Selector="Panel.resizeHandle Border.resizeLine">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="#265B8DEF" />
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Panel.resizeHandle Border.resizeGrip">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="4" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="#995B8DEF" />
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Panel.resizeHandle.editing Border.resizeLine, Panel.resizeHandle.editing Border.resizeGrip">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <Style Selector="Panel.resizeHandle Border.resizeHit">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Panel.resizeHandle.editing:pointerover Border.resizeGrip, Panel.resizeHandle.active Border.resizeGrip">
+            <Setter Property="Width" Value="64" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <Style Selector="Panel.resizeHandle.active Border.resizeLine">
+            <Setter Property="Background" Value="#805B8DEF" />
+        </Style>
+
         <Style Selector="Panel.page.editing">
             <Setter Property="Background" Value="{StaticResource EditPageBrush}" />
         </Style>
