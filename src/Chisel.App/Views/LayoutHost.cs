@@ -12,6 +12,7 @@ using Avalonia.Media.Imaging;
 using Chisel.App.Controls;
 using Chisel.App.ViewModels;
 using Chisel.App.Views.Widgets;
+using Chisel.Core.Layout;
 
 namespace Chisel.App.Views;
 
@@ -31,6 +32,8 @@ namespace Chisel.App.Views;
 //
 // Between stacked cards sits a resize handle in the gap (always there, so showing it moves nothing; usable
 // only in edit mode). Dragging it moves height between the two neighbours live; release keeps it.
+// Likewise a slim vertical handle floats over each gap between columns (a layer above the columns, so it
+// never shifts anything) and moves width between the two neighbours; Esc puts the starting widths back.
 public sealed class LayoutHost : Decorator
 {
     public const double Gap = 16;
@@ -47,12 +50,15 @@ public sealed class LayoutHost : Decorator
     private static readonly Cursor GrabCursor = new(StandardCursorType.SizeAll);
     private static readonly Cursor DraggingCursor = new(StandardCursorType.DragMove);
     private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeNorthSouth);
+    private static readonly Cursor ColumnResizeCursor = new(StandardCursorType.SizeWestEast);
 
     private readonly Dictionary<string, WidgetFrame> _frames = new();
     private readonly WeightedStackPanel _columns = new() { Orientation = Orientation.Horizontal, Spacing = Gap };
     private readonly Canvas _overlay = new() { IsHitTestVisible = false };
     private readonly Border _float = new() { Name = "DragFloat", IsVisible = false };
     private readonly List<Panel> _handles = new();
+    private readonly ColumnHandleLayer _columnHandleLayer;
+    private readonly List<Panel> _columnHandles = new();
     private readonly List<(int Index, Border Zone)> _newColumnZones = new();
     private readonly Border _newColumnLabel;
     private int? _newColumnTarget;
@@ -66,6 +72,12 @@ public sealed class LayoutHost : Decorator
     private string? _resizeWidget;
     private double _resizeStartY;
     private double _resizeSpace;
+
+    // The column handle being dragged: the column to its left, the pointer's starting x, and the width
+    // the columns share (weights share this out).
+    private int? _resizeColumn;
+    private double _resizeStartX;
+    private double _resizeColumnSpace;
 
     // The title bar press (or tray card press) that may turn into a drag.
     private WidgetFrame? _pressed;
@@ -82,6 +94,7 @@ public sealed class LayoutHost : Decorator
 
     public LayoutHost()
     {
+        _columnHandleLayer = new ColumnHandleLayer(_columns);
         _float.Classes.Add("dragFloat");
 
         var labelText = new TextBlock { Text = "New column" };
@@ -90,7 +103,7 @@ public sealed class LayoutHost : Decorator
 
         _overlay.Children.Add(_newColumnLabel);
         _overlay.Children.Add(_float);
-        Child = new Panel { Children = { _columns, _overlay } };
+        Child = new Panel { Children = { _columns, _columnHandleLayer, _overlay } };
     }
 
     public LayoutViewModel? Layout
@@ -172,12 +185,13 @@ public sealed class LayoutHost : Decorator
             {
                 frame.IsEditing = value;
             }
-            foreach (var handle in _handles)
+            foreach (var handle in _handles.Concat(_columnHandles))
             {
                 SetHandleEditing(handle, value);
             }
         }
     }
+
 
     private static string Structure(IReadOnlyList<LayoutColumnSlot> columns) =>
         string.Join("|", columns.Select(c => string.Join(",", c.Widgets.Select(w => w.Id))));
@@ -215,6 +229,8 @@ public sealed class LayoutHost : Decorator
         }
         _columns.Children.Clear();
         _handles.Clear();
+        _columnHandleLayer.Children.Clear();
+        _columnHandles.Clear();
         if (slots is null)
         {
             _builtStructure = "";
@@ -255,7 +271,83 @@ public sealed class LayoutHost : Decorator
             WeightedStackPanel.SetWeight(scroller, column.WidthWeight);
             _columns.Children.Add(scroller);
         }
+        for (var c = 0; c + 1 < slots.Count; c++)
+        {
+            var handle = ColumnResizeHandle(c);
+            _columnHandles.Add(handle);
+            _columnHandleLayer.Children.Add(handle);
+        }
         MarkDragSource();
+    }
+
+    // A slim vertical pill in the gap right of a column, with a hit area as wide as the gap.
+    private Panel ColumnResizeHandle(int columnIndex)
+    {
+        var grip = new Border();
+        grip.Classes.Add("columnResizeGrip");
+        var hit = new Border { Background = Brushes.Transparent, Cursor = ColumnResizeCursor };
+
+        var handle = new Panel { Name = $"ColumnResizeHandle_{columnIndex}", Children = { grip, hit } };
+        handle.Classes.Add("columnResizeHandle");
+        SetHandleEditing(handle, _isEditing);
+
+        hit.PointerPressed += (_, e) => OnColumnHandlePressed(handle, columnIndex, e);
+        hit.PointerMoved += (_, e) => OnColumnHandleMoved(e);
+        hit.PointerReleased += (_, e) => OnColumnHandleReleased(e);
+        hit.PointerCaptureLost += (_, _) => OnColumnHandleCaptureLost();
+        return handle;
+    }
+
+    private void OnColumnHandlePressed(Panel handle, int columnIndex, PointerPressedEventArgs e)
+    {
+        if (!IsEditing || Layout is not { } layout || !e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+        layout.BeginResize();
+        if (!layout.IsResizing)
+        {
+            return;
+        }
+        _resizeHandle = handle;
+        _resizeColumn = columnIndex;
+        _resizeStartX = e.GetPosition(this).X;
+        _resizeColumnSpace = ColumnScrollers.Sum(s => s.Bounds.Width);
+        handle.Classes.Add("active");
+        e.Pointer.Capture((IInputElement?)e.Source);
+        e.Handled = true;
+    }
+
+    // Columns never go under the minimum width; when the window is too narrow for that, nothing moves.
+    private void OnColumnHandleMoved(PointerEventArgs e)
+    {
+        if (_resizeColumn is not { } column || Layout is not { IsResizing: true } layout || _resizeColumnSpace <= 0)
+        {
+            return;
+        }
+        var dx = e.GetPosition(this).X - _resizeStartX;
+        layout.PreviewColumnResize(column, dx / _resizeColumnSpace, LayoutLimits.MinimumColumnWidth / _resizeColumnSpace);
+    }
+
+    private void OnColumnHandleReleased(PointerReleasedEventArgs e)
+    {
+        if (_resizeColumn is not null)
+        {
+            OnColumnHandleMoved(e);
+            Layout?.CommitResize();
+        }
+        EndResize();
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+
+    private void OnColumnHandleCaptureLost()
+    {
+        if (_resizeColumn is not null)
+        {
+            Layout?.CancelResize();
+        }
+        EndResize();
     }
 
     // A slim bar in the gap below a card: an 8px hit area with a short grip mark in the middle.
@@ -343,6 +435,7 @@ public sealed class LayoutHost : Decorator
         _resizeHandle?.Classes.Remove("active");
         _resizeHandle = null;
         _resizeWidget = null;
+        _resizeColumn = null;
     }
 
     private WidgetFrame Frame(WidgetDefinition widget)
@@ -725,4 +818,29 @@ public sealed class LayoutHost : Decorator
 
     private Rect BoundsInHost(Visual visual) =>
         new(visual.TranslatePoint(new Point(0, 0), this) ?? default, visual.Bounds.Size);
+
+    // Lays the column handles over the gaps of the columns panel: the i-th handle fills the gap right of the
+    // i-th column. It is arranged after the columns, so their final positions are known.
+    private sealed class ColumnHandleLayer(Panel columns) : Panel
+    {
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            foreach (var child in Children)
+            {
+                child.Measure(new Size(Gap, availableSize.Height));
+            }
+            return default;
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            var scrollers = columns.Children.OfType<ScrollViewer>().ToList();
+            for (var i = 0; i < Children.Count && i + 1 < scrollers.Count; i++)
+            {
+                var column = scrollers[i].Bounds;
+                Children[i].Arrange(new Rect(column.Right, column.Top, Gap, column.Height));
+            }
+            return finalSize;
+        }
+    }
 }

@@ -168,6 +168,26 @@
             <Setter Property="Background" Value="{StaticResource EditHairlineHoverBrush}" />
         </Style>
 
+        <!-- Column resize handles: a slim vertical pill centered on the gap between two columns, shown only in
+             edit mode; brighter on hover and while dragging -->
+        <Style Selector="Panel.columnResizeHandle Border.columnResizeGrip">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{StaticResource EditPillBrush}" />
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Panel.columnResizeHandle.editing Border.columnResizeGrip">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <Style Selector="Panel.columnResizeHandle.editing:pointerover Border.columnResizeGrip, Panel.columnResizeHandle.active Border.columnResizeGrip">
+            <Setter Property="Background" Value="{StaticResource EditHairlineHoverBrush}" />
+        </Style>
+
         <Style Selector="Panel.page.editing">
             <Setter Property="Background" Value="{StaticResource EditPageBrush}" />
         </Style>

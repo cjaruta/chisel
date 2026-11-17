@@ -284,6 +284,17 @@ public partial class LayoutViewModel : ViewModelBase
         }
     }
 
+    // Shows a column resize live: the column grows by delta (a fraction of the columns' shared width, negative
+    // shrinks it) against the column to its right, from the widths the resize started with.
+    // See WidgetLayout.ResizeColumns.
+    public void PreviewColumnResize(int columnIndex, double delta, double minimumFraction)
+    {
+        if (_resizeStart is { } start)
+        {
+            Layout = start.ResizeColumns(columnIndex, delta, minimumFraction);
+        }
+    }
+
     // Keeps the resized weights in the working copy.
     public void CommitResize()
     {
