@@ -20,6 +20,8 @@
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
         <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
+        <SolidColorBrush x:Key="EditPageBrush" Color="#181D28" />
+        <SolidColorBrush x:Key="EditBarBrush" Color="#273149" />
         <SolidColorBrush x:Key="DragPreviewBrush" Color="#405B8DEF" />
         <!-- Block colors and text come from the chosen palette (Models/BlockPalette.cs).
              BlockPaletteTests checks this outline stands out on every fill of every palette. -->
@@ -38,10 +40,60 @@
             <Setter Property="Padding" Value="16" />
         </Style>
 
-        <!-- Widget frames: a card with the widget's heading row; list widgets scroll inside the card -->
+        <!-- Widget frames: a card with the widget's heading row; list widgets scroll inside the card.
+             The 2px border is always there (transparent) so the edit-mode outline never moves anything. -->
         <Style Selector="Border.widgetFrame">
             <Setter Property="Padding" Value="0" />
             <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <!-- Layout edit mode: accent outline, slim title bar with a grip, dimmed inert content, tinted page -->
+        <Style Selector="Border.widgetFrame.editing">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <Style Selector="Border.widgetFrame.editing DockPanel.widgetContent">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+
+        <!-- As tall as the heading row (12 + 32 + 6), so it covers the heading and its buttons exactly -->
+        <Style Selector="Border.editBar">
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
+            <Setter Property="CornerRadius" Value="8,8,0,0" />
+            <Setter Property="BorderBrush" Value="#405B8DEF" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <Style Selector="StackPanel.editBarContent">
+            <Setter Property="Spacing" Value="10" />
+            <Setter Property="Margin" Value="14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Path.editGrip">
+            <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.editTitle">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Panel.page.editing">
+            <Setter Property="Background" Value="{StaticResource EditPageBrush}" />
+        </Style>
+
+        <Style Selector="Border.layoutToolbar">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Margin" Value="0,-14,0,0" />
+            <Setter Property="BoxShadow" Value="0 6 20 0 #80000000" />
         </Style>
 
         <Style Selector="Grid.widgetHeader">
@@ -85,6 +137,27 @@
         <Style Selector="Button.gearButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6" />
+        </Style>
+
+        <Style Selector="Button.gearButton Path">
+            <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
+        </Style>
+
+        <Style Selector="Button.gearButton.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#335B8DEF" />
+        </Style>
+
+        <!-- Disabled (the gear while editing): no grey box, just a faded icon -->
+        <Style Selector="Button.gearButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Button.gearButton:disabled Path">
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+
+        <Style Selector="Button.gearButton.active Path">
+            <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
         </Style>
 
         <Style Selector="Border.settingsPanel">

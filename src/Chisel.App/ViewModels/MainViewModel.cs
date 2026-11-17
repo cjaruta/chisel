@@ -30,6 +30,31 @@ public partial class MainViewModel : ViewModelBase
         QuickLinks = quickLinks;
         Settings = settings;
         Layout = layout ?? new LayoutViewModel();
+        Layout.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
+            {
+                OnPropertyChanged(nameof(CanOpenSettings));
+            }
+        };
+    }
+
+    // The settings gear is off while the layout is being edited.
+    public bool CanOpenSettings => !Layout.IsEditing;
+
+    // Enters layout edit mode, closing anything that floats over the widgets first.
+    [RelayCommand]
+    private void CustomizeLayout()
+    {
+        if (Layout.IsEditing)
+        {
+            return;
+        }
+        Settings.IsOpen = false;
+        Schedule.CancelDrag();
+        Schedule.CloseEditorsCommand.Execute(null);
+        Schedule.HideHover();
+        Layout.EnterEditCommand.Execute(null);
     }
 
     public void Refresh()
@@ -38,10 +63,15 @@ public partial class MainViewModel : ViewModelBase
         Schedule.UpdateNow();
     }
 
-    // Escape closes whatever floats over the window: settings or a schedule editor.
+    // Escape cancels layout editing, or else closes whatever floats over the window: settings or a schedule editor.
     [RelayCommand]
     private void CloseOverlays()
     {
+        if (Layout.IsEditing)
+        {
+            Layout.CancelCommand.Execute(null);
+            return;
+        }
         Settings.IsOpen = false;
         Schedule.CloseEditorsCommand.Execute(null);
     }

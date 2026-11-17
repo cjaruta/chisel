@@ -52,6 +52,7 @@ public sealed class LayoutHost : Decorator
             {
                 old.PropertyChanged -= OnLayoutChanged;
             }
+            IsEditing = change.NewValue is LayoutViewModel { IsEditing: true };
             if (change.NewValue is LayoutViewModel layout)
             {
                 layout.PropertyChanged += OnLayoutChanged;
@@ -66,7 +67,27 @@ public sealed class LayoutHost : Decorator
         {
             Rebuild();
         }
+        else if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
+        {
+            IsEditing = Layout?.IsEditing == true;
+        }
     }
+
+    // Puts every card in or out of its editing look.
+    private bool IsEditing
+    {
+        get => _isEditing;
+        set
+        {
+            _isEditing = value;
+            foreach (var frame in _frames.Values)
+            {
+                frame.IsEditing = value;
+            }
+        }
+    }
+
+    private bool _isEditing;
 
     private void Rebuild()
     {
@@ -115,7 +136,7 @@ public sealed class LayoutHost : Decorator
         if (!_frames.TryGetValue(widget.Id, out var frame))
         {
             var view = (WidgetView)Activator.CreateInstance(widget.ViewType)!;
-            frame = new WidgetFrame(widget, view);
+            frame = new WidgetFrame(widget, view) { IsEditing = _isEditing };
             _frames[widget.Id] = frame;
         }
         return frame;
