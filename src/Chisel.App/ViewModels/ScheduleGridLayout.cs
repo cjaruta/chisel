@@ -46,7 +46,8 @@ public static class ScheduleGridLayout
         return new GridRange(Math.Min(press, current), Math.Max(press, current));
     }
 
-    private static int SnapMinute(double y, double scrollOffset, double pixelsPerMinute, int max)
+    // The nearest mark to a position, as minutes from midnight between 0 and max.
+    public static int SnapMinute(double y, double scrollOffset, double pixelsPerMinute = 1.0, int max = MinutesPerDay)
     {
         var minute = (y + scrollOffset) / pixelsPerMinute;
         var marks = Math.Round(minute / HoverSnapMinutes, MidpointRounding.AwayFromZero);

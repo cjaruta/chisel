@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using Chisel.Core.Schedule;
+using Chisel.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -44,6 +46,7 @@ public partial class ScheduleViewModel : ViewModelBase
         _display.PropertyChanged += (_, _) => Refresh();
         BlockEditor = new BlockEditorViewModel(scheduleRepository, _display, Refresh);
         MarkerEditor = new MarkerEditorViewModel(markerRepository, _display, Refresh);
+        BlockEditor.PropertyChanged += OnBlockEditorChanged;
         Refresh();
     }
 
@@ -55,8 +58,7 @@ public partial class ScheduleViewModel : ViewModelBase
     [RelayCommand]
     private void AddBlock()
     {
-        MarkerEditor.Cancel();
-        BlockEditor.OpenNew(NextHour);
+        OpenNewBlock(NextHour, NextHour.AddHours(1));
     }
 
     // The hover guide line: where a click on empty grid space would add a block.
@@ -74,6 +76,10 @@ public partial class ScheduleViewModel : ViewModelBase
     // overItem: the pointer is over a block or marker, which are clicked to edit instead.
     public void HoverAt(TimeOnly time, bool overItem = false)
     {
+        if (IsDragging)
+        {
+            return;
+        }
         if (overItem)
         {
             HideHover();
@@ -91,17 +97,158 @@ public partial class ScheduleViewModel : ViewModelBase
     [RelayCommand]
     private void AddBlockAtHover()
     {
-        if (!IsHoverVisible)
+        if (IsHoverVisible)
         {
-            return;
+            OpenNewHourBlock(_hoverTime);
         }
-        var end = _hoverTime.AddHours(1);
-        if (end < _hoverTime)
+    }
+
+    private void OpenNewHourBlock(TimeOnly start)
+    {
+        var end = start.AddHours(1);
+        if (end < start)
         {
             end = TimeOnly.MinValue;
         }
+        OpenNewBlock(start, end);
+    }
+
+    private void OpenNewBlock(TimeOnly start, TimeOnly end)
+    {
+        IsPending = false;
         MarkerEditor.Cancel();
-        BlockEditor.OpenNew(_hoverTime, end);
+        BlockEditor.OpenNew(start, end);
+    }
+
+    // Dragging on empty grid space. y and scrollOffset mean the same as in ScheduleGridLayout.SnapTime;
+    // the scroll offset can change mid-drag when the grid auto-scrolls.
+    // Moving less than this, or not past the pressed mark, is still a plain click.
+    public const double DragThresholdPixels = 4;
+
+    private double _pressContentY;
+    private int _pressMinute;
+    private GridRange _dragRange = new(0, ScheduleGridLayout.HoverSnapMinutes);
+
+    // The pointer is down on empty space and being tracked.
+    [ObservableProperty]
+    public partial bool IsDragActive { get; private set; }
+
+    // The pointer has moved enough to be a drag: the preview shows.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPreviewVisible))]
+    public partial bool IsDragging { get; private set; }
+
+    // A dragged block waiting in the editor; nothing is saved until Save.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPreviewVisible))]
+    public partial bool IsPending { get; private set; }
+
+    public bool IsPreviewVisible => IsDragging || IsPending;
+
+    [ObservableProperty]
+    public partial double PreviewStartMinute { get; private set; }
+
+    [ObservableProperty]
+    public partial double PreviewEndMinute { get; private set; }
+
+    [ObservableProperty]
+    public partial string PreviewLabel { get; private set; } = "";
+
+    [ObservableProperty]
+    public partial string PreviewTitle { get; private set; } = "";
+
+    public void BeginDrag(double y, double scrollOffset)
+    {
+        _pressContentY = y + scrollOffset;
+        _pressMinute = ScheduleGridLayout.SnapMinute(y, scrollOffset, max: ScheduleGridLayout.MinutesPerDay - ScheduleGridLayout.HoverSnapMinutes);
+        _dragRange = new GridRange(_pressMinute, _pressMinute + ScheduleGridLayout.HoverSnapMinutes);
+        IsDragging = false;
+        IsDragActive = true;
+    }
+
+    public void UpdateDrag(double y, double scrollOffset)
+    {
+        if (!IsDragActive)
+        {
+            return;
+        }
+
+        if (!IsDragging)
+        {
+            var moved = Math.Abs(y + scrollOffset - _pressContentY) >= DragThresholdPixels;
+            var pastMark = ScheduleGridLayout.SnapMinute(y, scrollOffset) != _pressMinute;
+            if (!moved || !pastMark)
+            {
+                return;
+            }
+            HideHover();
+            IsDragging = true;
+        }
+
+        _dragRange = ScheduleGridLayout.DragRange(_pressContentY - scrollOffset, y, scrollOffset);
+        ShowPreview(_dragRange.StartMinute, _dragRange.EndMinute);
+        PreviewTitle = "New block";
+    }
+
+    public void EndDrag()
+    {
+        if (!IsDragActive)
+        {
+            return;
+        }
+        IsDragActive = false;
+
+        if (!IsDragging)
+        {
+            OpenNewHourBlock(GridRange.TimeAt(_pressMinute));
+            return;
+        }
+
+        OpenNewBlock(_dragRange.Start, _dragRange.End);
+        IsDragging = false;
+        IsPending = true;
+        UpdatePendingFromEditor();
+    }
+
+    public void CancelDrag()
+    {
+        IsDragActive = false;
+        IsDragging = false;
+    }
+
+    private void ShowPreview(int startMinute, int endMinute)
+    {
+        PreviewStartMinute = startMinute;
+        PreviewEndMinute = endMinute;
+        PreviewLabel = _display.Range(GridRange.TimeAt(startMinute), GridRange.TimeAt(endMinute));
+    }
+
+    // The pending block follows what is typed in the editor. Overnight times show up to midnight.
+    private void UpdatePendingFromEditor()
+    {
+        if (!IsPending)
+        {
+            return;
+        }
+        PreviewTitle = string.IsNullOrWhiteSpace(BlockEditor.Title) ? "New block" : BlockEditor.Title;
+        if (TimeFormatter.TryParse(BlockEditor.StartText, out var start) && TimeFormatter.TryParse(BlockEditor.EndText, out var end))
+        {
+            var startMinute = (int)ScheduleGridLayout.MinuteOfDay(start);
+            var endMinute = (int)ScheduleGridLayout.MinuteOfDay(end);
+            ShowPreview(startMinute, endMinute <= startMinute ? ScheduleGridLayout.MinutesPerDay : endMinute);
+        }
+    }
+
+    private void OnBlockEditorChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(BlockEditorViewModel.IsOpen) && !BlockEditor.IsOpen)
+        {
+            IsPending = false;
+        }
+        else if (e.PropertyName is nameof(BlockEditorViewModel.Title) or nameof(BlockEditorViewModel.StartText) or nameof(BlockEditorViewModel.EndText))
+        {
+            UpdatePendingFromEditor();
+        }
     }
 
     [RelayCommand]
@@ -119,6 +266,7 @@ public partial class ScheduleViewModel : ViewModelBase
         {
             return;
         }
+        IsPending = false;
         MarkerEditor.Cancel();
         BlockEditor.OpenEdit(item.BlockIndex, _blocks[item.BlockIndex]);
     }
@@ -137,6 +285,12 @@ public partial class ScheduleViewModel : ViewModelBase
     [RelayCommand]
     private void CloseEditors()
     {
+        // Escape during a drag only cancels the drag.
+        if (IsDragActive)
+        {
+            CancelDrag();
+            return;
+        }
         BlockEditor.Cancel();
         MarkerEditor.Cancel();
     }
@@ -146,6 +300,10 @@ public partial class ScheduleViewModel : ViewModelBase
         _blocks = _scheduleRepository.Get().Blocks;
         _markers = _markerRepository.GetAll();
         HoverLabel = _display.Time(_hoverTime);
+        if (IsPreviewVisible)
+        {
+            ShowPreview((int)PreviewStartMinute, (int)PreviewEndMinute);
+        }
 
         HourLabels.Clear();
         for (var hour = 0; hour <= 24; hour++)
