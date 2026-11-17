@@ -27,8 +27,47 @@ public partial class LayoutViewModel : ViewModelBase
     private readonly IWidgetLayoutRepository? _repository;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Columns))]
+    [NotifyPropertyChangedFor(nameof(Columns), nameof(TrayWidgets), nameof(HasHiddenWidgets), nameof(CanRemoveWidgets))]
     public partial WidgetLayout Layout { get; private set; }
+
+    // The widgets that are not on the dashboard, in registry order: what the tray lists.
+    public IReadOnlyList<WidgetDefinition> TrayWidgets =>
+        WidgetRegistry.All.Where(w => Layout.HiddenWidgetIds.Contains(w.Id)).ToList();
+
+    public bool HasHiddenWidgets => Layout.HiddenWidgetIds.Count > 0;
+
+    // False when only one widget is left: it cannot be removed.
+    public bool CanRemoveWidgets => Layout.CanRemoveWidget;
+
+    // Whether the tray shows its cards. It opens when entering edit mode with widgets hidden and when one is removed.
+    [ObservableProperty]
+    public partial bool IsTrayOpen { get; set; }
+
+    [RelayCommand]
+    private void ToggleTray() => IsTrayOpen = !IsTrayOpen;
+
+    // Takes a widget off the dashboard (working copy only; its data is untouched). Not the last one.
+    public void RemoveWidget(string widgetId)
+    {
+        if (!IsEditing || Layout.Find(widgetId) is null || !Layout.CanRemoveWidget)
+        {
+            return;
+        }
+        Layout = Layout.RemoveWidget(widgetId);
+        IsTrayOpen = true;
+    }
+
+    // The quick path from the tray: the widget goes to the bottom of the first column.
+    public void AddWidgetFromTray(string widgetId)
+    {
+        if (!IsEditing || !Layout.HiddenWidgetIds.Contains(widgetId))
+        {
+            return;
+        }
+        Layout = Layout.AddWidget(widgetId, 0, Layout.Columns[0].Widgets.Count, DefaultHeight(widgetId));
+    }
+
+    private static double DefaultHeight(string widgetId) => WidgetRegistry.Get(widgetId)?.DefaultHeight ?? 1;
 
     public IReadOnlyList<LayoutColumnSlot> Columns => Layout.Columns
         .Select(c => new LayoutColumnSlot(c.WidthWeight,
@@ -72,6 +111,7 @@ public partial class LayoutViewModel : ViewModelBase
     private void EnterEdit()
     {
         Snapshot = Layout;
+        IsTrayOpen = HasHiddenWidgets;
         IsEditing = true;
     }
 
@@ -113,11 +153,26 @@ public partial class LayoutViewModel : ViewModelBase
 
     public bool IsDraggingWidget => DraggedWidgetId is not null;
 
+    // The widget being dragged comes from the tray (it is hidden) rather than from the dashboard.
+    [ObservableProperty]
+    public partial bool IsDraggingFromTray { get; private set; }
+
+    // Picks a hidden widget up from the tray. Only in edit mode.
+    public void BeginTrayDrag(string widgetId)
+    {
+        if (IsEditing && Layout.HiddenWidgetIds.Contains(widgetId))
+        {
+            IsDraggingFromTray = true;
+            DraggedWidgetId = widgetId;
+        }
+    }
+
     // Picks up a widget. Only in edit mode, and only a widget that is in the layout.
     public void BeginWidgetDrag(string widgetId)
     {
         if (IsEditing && Layout.Find(widgetId) is not null)
         {
+            IsDraggingFromTray = false;
             DraggedWidgetId = widgetId;
         }
     }
@@ -133,8 +188,8 @@ public partial class LayoutViewModel : ViewModelBase
             return false;
         }
 
-        var moved = Layout.Move(id, column, index);
-        DraggedWidgetId = null;
+        var moved = IsDraggingFromTray ? Layout.AddWidget(id, column, index, DefaultHeight(id)) : Layout.Move(id, column, index);
+        EndDrag();
         if (ReferenceEquals(moved, Layout))
         {
             return false;
@@ -143,21 +198,29 @@ public partial class LayoutViewModel : ViewModelBase
         return true;
     }
 
-    // Puts the widget down where it was, leaving the layout as it is.
-    public void CancelWidgetDrag() => DraggedWidgetId = null;
+    // Puts the widget down where it was (or back in the tray), leaving the layout as it is.
+    public void CancelWidgetDrag() => EndDrag();
+
+    private void EndDrag()
+    {
+        DraggedWidgetId = null;
+        IsDraggingFromTray = false;
+    }
+
+    private bool CanDropInNewColumn(string id) => IsDraggingFromTray ? Layout.CanAddInNewColumn : Layout.CanMoveToNewColumn(id);
 
     // Drops the dragged widget into a new column at a gap between columns (0 = left edge, Count = right edge),
     // changing only the working copy. See WidgetLayout.MoveToNewColumn. Ends the drag either way.
     public bool DropWidgetInNewColumn(int columnIndex)
     {
-        if (DraggedWidgetId is not { } id || !Layout.CanMoveToNewColumn(id) || columnIndex < 0 || columnIndex > Layout.Columns.Count)
+        if (DraggedWidgetId is not { } id || !CanDropInNewColumn(id) || columnIndex < 0 || columnIndex > Layout.Columns.Count)
         {
             CancelWidgetDrag();
             return false;
         }
 
-        var moved = Layout.MoveToNewColumn(id, columnIndex);
-        DraggedWidgetId = null;
+        var moved = IsDraggingFromTray ? Layout.AddWidgetInNewColumn(id, columnIndex) : Layout.MoveToNewColumn(id, columnIndex);
+        EndDrag();
         if (ReferenceEquals(moved, Layout))
         {
             return false;
@@ -172,12 +235,11 @@ public partial class LayoutViewModel : ViewModelBase
     // column, so it can always go.
     public bool CanOfferNewColumn(double availableWidth, double gap)
     {
-        if (DraggedWidgetId is not { } id || !Layout.CanMoveToNewColumn(id))
+        if (DraggedWidgetId is not { } id || !CanDropInNewColumn(id))
         {
             return false;
         }
-        var (column, _) = Layout.Find(id)!.Value;
-        if (Layout.Columns[column].Widgets.Count == 1)
+        if (!IsDraggingFromTray && Layout.Columns[Layout.Find(id)!.Value.Column].Widgets.Count == 1)
         {
             return true;
         }
