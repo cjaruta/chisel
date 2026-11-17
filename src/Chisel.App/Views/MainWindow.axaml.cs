@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
@@ -58,6 +60,60 @@ public partial class MainWindow : Window
     }
 
     private void OnNowClick(object? sender, RoutedEventArgs e) => ScrollToNow();
+
+    // Last pointer position over the schedule, relative to the scroller; null when outside it.
+    private Point? _schedulePointer;
+
+    private ScheduleViewModel? Schedule => (DataContext as MainViewModel)?.Schedule;
+
+    private void OnSchedulePointerMoved(object? sender, PointerEventArgs e)
+    {
+        _schedulePointer = e.GetPosition(ScheduleScroller);
+        UpdateHover();
+    }
+
+    private void OnSchedulePointerExited(object? sender, PointerEventArgs e)
+    {
+        _schedulePointer = null;
+        Schedule?.HideHover();
+    }
+
+    // The grid can scroll under a still pointer (mouse wheel), which changes the time under it.
+    private void OnScheduleScrollChanged(object? sender, ScrollChangedEventArgs e) => UpdateHover();
+
+    // Blocks and markers are buttons and handle their own presses, so this only sees empty space.
+    private void OnScheduleGridPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(ScheduleGrid).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+        _schedulePointer = e.GetPosition(ScheduleScroller);
+        UpdateHover();
+        Schedule?.AddBlockAtHoverCommand.Execute(null);
+        e.Handled = true;
+    }
+
+    private void UpdateHover()
+    {
+        if (Schedule is not { } schedule || _schedulePointer is not { } pointer)
+        {
+            return;
+        }
+
+        var inGrid = ScheduleScroller.TranslatePoint(pointer, ScheduleGrid);
+        if (inGrid is not { } p || p.X < 0 || p.Y < 0 || p.X > ScheduleGrid.Bounds.Width || p.Y > ScheduleGrid.Bounds.Height)
+        {
+            schedule.HideHover();
+            return;
+        }
+
+        var time = ScheduleGridLayout.SnapTime(pointer.Y - ScheduleGrid.Margin.Top, ScheduleScroller.Offset.Y);
+        schedule.HoverAt(time, overItem: IsOverGridItem(ScheduleGrid.InputHitTest(p)));
+    }
+
+    private static bool IsOverGridItem(IInputElement? hit) =>
+        hit is Visual visual && visual.GetSelfAndVisualAncestors().OfType<Button>().Any(b => b.Classes.Contains("gridItem"));
 
     private void ApplySavedPlacement()
     {

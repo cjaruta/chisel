@@ -19,6 +19,7 @@
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
+        <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
         <SolidColorBrush x:Key="BlockBackgroundBrush" Color="#C02B3350" />
         <SolidColorBrush x:Key="CurrentBlockBackgroundBrush" Color="#D0324A80" />
         <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
@@ -222,6 +223,24 @@
 
         <Style Selector="Grid.markerRow.past">
             <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <!-- Hover guide line: faint, a step above the hour lines, never competing with the now-line -->
+        <Style Selector="Border.hoverLine">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+
+        <Style Selector="Border.hoverLabel">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="3,0" />
+        </Style>
+
+        <Style Selector="Border.hoverLabel TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="Opacity" Value="0.8" />
         </Style>
 
         <Style Selector="Border.nowLine">

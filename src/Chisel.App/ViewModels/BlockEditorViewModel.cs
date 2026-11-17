@@ -47,7 +47,9 @@ public partial class BlockEditorViewModel : ViewModelBase
     public bool IsEditing => EditingIndex is not null;
     public string Heading => IsEditing ? "Edit block" : "New block";
 
-    public void OpenNew(TimeOnly start) => Open(null, "", start, start.AddHours(1));
+    public void OpenNew(TimeOnly start) => OpenNew(start, start.AddHours(1));
+
+    public void OpenNew(TimeOnly start, TimeOnly end) => Open(null, "", start, end);
 
     public void OpenEdit(int index, ScheduleBlock block) => Open(index, block.Title, block.Start, block.End);
 

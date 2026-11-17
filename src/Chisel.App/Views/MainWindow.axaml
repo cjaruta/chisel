@@ -127,8 +127,12 @@
                         </StackPanel>
                     </Border>
 
-                    <ScrollViewer Name="ScheduleScroller" HorizontalScrollBarVisibility="Disabled">
-                        <Grid Name="ScheduleGrid" ColumnDefinitions="76,*" Margin="0,14,14,14">
+                    <ScrollViewer Name="ScheduleScroller" HorizontalScrollBarVisibility="Disabled"
+                                  PointerMoved="OnSchedulePointerMoved" PointerExited="OnSchedulePointerExited"
+                                  ScrollChanged="OnScheduleScrollChanged">
+                        <!-- Transparent background so clicks on empty space reach the grid -->
+                        <Grid Name="ScheduleGrid" ColumnDefinitions="76,*" Margin="0,14,14,14" Background="Transparent"
+                              PointerPressed="OnScheduleGridPointerPressed">
                             <!-- Hour rows: label on the left, faint line across -->
                             <ItemsControl Grid.ColumnSpan="2" Classes="dayGrid" ItemsSource="{Binding Schedule.HourLabels}">
                                 <ItemsControl.ItemsPanel>
@@ -167,6 +171,19 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- Hover guide line: where a click on empty space adds a block. Label sits just above its left end. -->
+                            <ctl:DayGridPanel Grid.Column="1" IsHitTestVisible="False">
+                                <Panel Name="HoverLine" Height="1" ctl:DayGridPanel.StartMinute="{Binding Schedule.HoverMinute}"
+                                       IsVisible="{Binding Schedule.IsHoverVisible}">
+                                    <Border Classes="hoverLine" />
+                                    <Canvas>
+                                        <Border Classes="hoverLabel" Canvas.Left="4" Canvas.Bottom="1">
+                                            <TextBlock Name="HoverLabel" Text="{Binding Schedule.HoverLabel}" />
+                                        </Border>
+                                    </Canvas>
+                                </Panel>
+                            </ctl:DayGridPanel>
 
                             <ItemsControl Name="ScheduleMarkers" Grid.Column="1" Classes="dayGrid" ItemsSource="{Binding Schedule.GridMarkers}">
                                 <ItemsControl.ItemsPanel>

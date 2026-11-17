@@ -13,7 +13,20 @@ public static class ScheduleGridLayout
 {
     public const int MinutesPerDay = 24 * 60;
 
+    // The hover guide line and click-to-add snap to this many minutes.
+    public const int HoverSnapMinutes = 15;
+
     public static double MinuteOfDay(TimeOnly time) => time.ToTimeSpan().TotalMinutes;
+
+    // y: pointer position in the viewport, measured from where midnight would be with no scrolling.
+    // scrollOffset: how far the grid is scrolled down. Rounds to the nearest mark, kept within the day.
+    public static TimeOnly SnapTime(double y, double scrollOffset, double pixelsPerMinute = 1.0)
+    {
+        var minute = (y + scrollOffset) / pixelsPerMinute;
+        var marks = Math.Round(minute / HoverSnapMinutes, MidpointRounding.AwayFromZero);
+        var snapped = Math.Clamp(marks * HoverSnapMinutes, 0, MinutesPerDay - HoverSnapMinutes);
+        return TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(snapped));
+    }
 
     public static IReadOnlyList<GridSegment> Segments(IReadOnlyList<ScheduleBlock> blocks)
     {
