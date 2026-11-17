@@ -59,12 +59,11 @@ public class LayoutColumnsTests
     }
 
     [Fact]
-    public void Done_RemovesEmptyColumnsBeforeSaving_SoWhatIsShownIsWhatLoads()
+    public void Done_AfterAColumnCollapsed_SavesWhatIsShown_AndThatIsWhatLoads()
     {
         var layout = Editing();
         layout.BeginWidgetDrag("schedule");
         layout.DropWidget(1, 0);
-        Assert.Empty(layout.Layout.Columns[0].Widgets);
 
         layout.DoneCommand.Execute(null);
 
@@ -136,21 +135,24 @@ public class LayoutColumnsTests
         Assert.False(layout.CanOfferNewColumn(811, Gap));
     }
 
+    // With four widgets, four columns means every widget is alone, so at the maximum a "New column" drop can
+    // only move a column, never add one. (The hard limit itself is covered in the Core tests.)
     [Fact]
-    public void NewColumnZones_AreNotOfferedAtTheMaximum()
+    public void AtTheMaximum_ANewColumnDropOnlyMovesAColumn()
     {
         var layout = Editing();
         layout.BeginWidgetDrag("tasks");
         layout.DropWidgetInNewColumn(2);
-        layout.BeginWidgetDrag("schedule");
-        layout.DropWidget(1, 0);
         layout.BeginWidgetDrag("notes");
         layout.DropWidgetInNewColumn(3);
-        Assert.Equal(" | schedule,links | tasks | notes", Order(layout.Layout));
+        Assert.Equal(LayoutLimits.MaximumColumns, layout.Layout.Columns.Count);
 
         layout.BeginWidgetDrag("links");
+        Assert.True(layout.CanOfferNewColumn(1100, Gap));
+        layout.DropWidgetInNewColumn(0);
 
-        Assert.False(layout.CanOfferNewColumn(5000, Gap));
+        Assert.Equal(LayoutLimits.MaximumColumns, layout.Layout.Columns.Count);
+        Assert.Equal("links | schedule | tasks | notes", Order(layout.Layout));
     }
 
     [Fact]

@@ -83,7 +83,7 @@
         </Style>
 
         <!-- Dragging a widget: its card stays put but faded, a ghost of its title bar follows the pointer,
-             and a slim accent line (or a highlighted dashed zone in an empty column) marks the landing spot -->
+             and a slim accent line marks the landing spot -->
         <!-- The card being moved: faded, but its title bar stays opaque so the heading under it never shows through -->
         <Style Selector="Border.widgetFrame.dragSource">
             <Setter Property="BorderBrush" Value="#665B8DEF" />
@@ -137,27 +137,6 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="White" />
-        </Style>
-
-        <Style Selector="Panel.dropZone Rectangle.dropZoneOutline">
-            <Setter Property="Stroke" Value="#665B8DEF" />
-            <Setter Property="StrokeThickness" Value="2" />
-            <Setter Property="StrokeDashArray" Value="4,3" />
-            <Setter Property="Fill" Value="#0D5B8DEF" />
-        </Style>
-
-        <Style Selector="Panel.dropZone.active Rectangle.dropZoneOutline">
-            <Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
-            <Setter Property="Fill" Value="#265B8DEF" />
-        </Style>
-
-        <Style Selector="TextBlock.dropZoneLabel">
-            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
-            <Setter Property="FontSize" Value="14" />
-        </Style>
-
-        <Style Selector="Panel.dropZone.active TextBlock.dropZoneLabel">
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
         </Style>
 
         <!-- Resize handles in the gaps between stacked cards: invisible outside edit mode; in edit mode a faint

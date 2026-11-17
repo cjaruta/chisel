@@ -20,8 +20,8 @@ namespace Chisel.App.Views;
 // minimum heights, that column scrolls instead of cutting cards off.
 //
 // In edit mode a card's title bar can be dragged: past a small threshold the widget is picked up,
-// a ghost follows the pointer, an accent line (or a highlighted "Drop here" zone in an empty column)
-// shows where it will land, and releasing drops it there. Nothing else moves until the drop.
+// a ghost follows the pointer, an accent line shows where it will land, and releasing drops it there.
+// Nothing else moves until the drop; a column the drop empties then collapses.
 //
 // While dragging, thin "New column" zones also show at the left and right edges and between columns
 // (when another column fits: see LayoutViewModel.CanOfferNewColumn); dropping on one makes a new column.
@@ -51,7 +51,6 @@ public sealed class LayoutHost : Decorator
     private readonly Border _indicator = new() { Name = "DropIndicator", IsVisible = false };
     private readonly Border _ghost;
     private readonly TextBlock _ghostTitle = new() { VerticalAlignment = VerticalAlignment.Center };
-    private readonly List<Control> _dropZones = new();
     private readonly List<Panel> _handles = new();
     private readonly List<(int Index, Border Zone)> _newColumnZones = new();
     private readonly Border _newColumnLabel;
@@ -161,7 +160,7 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    // Puts every card (and the empty columns' drop zones) in or out of the editing look.
+    // Puts every card (and the resize handles) in or out of the editing look.
     private bool IsEditing
     {
         get => _isEditing;
@@ -171,10 +170,6 @@ public sealed class LayoutHost : Decorator
             foreach (var frame in _frames.Values)
             {
                 frame.IsEditing = value;
-            }
-            foreach (var zone in _dropZones)
-            {
-                zone.IsVisible = value;
             }
             foreach (var handle in _handles)
             {
@@ -212,7 +207,6 @@ public sealed class LayoutHost : Decorator
             column.Children.Clear();
         }
         _columns.Children.Clear();
-        _dropZones.Clear();
         _handles.Clear();
         _builtStructure = Structure();
 
@@ -238,10 +232,6 @@ public sealed class LayoutHost : Decorator
                     panel.Children.Add(ResizeHandle(slot.Id, panel));
                 }
             }
-            if (column.Widgets.Count == 0)
-            {
-                panel.Children.Add(DropZone(c));
-            }
 
             var minimum = Math.Max(0, column.Widgets.Sum(w => w.MinHeight) + Gap * (column.Widgets.Count - 1));
             var scroller = new ScrollViewer
@@ -258,19 +248,6 @@ public sealed class LayoutHost : Decorator
             WeightedStackPanel.SetWeight(scroller, column.WidthWeight);
             _columns.Children.Add(scroller);
         }
-    }
-
-    // A dashed "Drop here" area filling an empty column; shown only in edit mode.
-    private Control DropZone(int column)
-    {
-        var outline = new Rectangle { RadiusX = 10, RadiusY = 10 };
-        outline.Classes.Add("dropZoneOutline");
-        var label = new TextBlock { Text = "Drop here", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        label.Classes.Add("dropZoneLabel");
-        var zone = new Panel { Name = $"DropZone{column}", IsVisible = _isEditing, Children = { outline, label } };
-        zone.Classes.Add("dropZone");
-        _dropZones.Add(zone);
-        return zone;
     }
 
     // A slim bar in the gap below a card: an 8px hit area with a short grip mark in the middle.
@@ -530,10 +507,6 @@ public sealed class LayoutHost : Decorator
             _newColumnTarget = g;
             _target = null;
             _indicator.IsVisible = false;
-            foreach (var zone in _dropZones)
-            {
-                zone.Classes.Set("active", false);
-            }
             hovered.Classes.Set("active", true);
             ShowNewColumnLabel(Canvas.GetLeft(hovered) + 3, Canvas.GetTop(hovered));
             return;
@@ -549,23 +522,14 @@ public sealed class LayoutHost : Decorator
         }
         _target = target;
 
-        foreach (var zone in _dropZones)
-        {
-            zone.Classes.Set("active", false);
-        }
         _indicator.IsVisible = false;
-        if (target is not { } drop)
+        if (target is not { } drop || widgetRects[drop.Column].Count == 0)
         {
             return;
         }
 
         var column = columnRects[drop.Column];
         var cards = widgetRects[drop.Column];
-        if (cards.Count == 0)
-        {
-            _dropZones.FirstOrDefault(z => z.Name == $"DropZone{drop.Column}")?.Classes.Set("active", true);
-            return;
-        }
 
         // The line sits in the middle of the gap the widget would land in (just above the first card,
         // just below the last).
@@ -588,10 +552,6 @@ public sealed class LayoutHost : Decorator
         foreach (var f in _frames.Values)
         {
             f.Classes.Remove("dragSource");
-        }
-        foreach (var zone in _dropZones)
-        {
-            zone.Classes.Set("active", false);
         }
         _pressed = null;
         _dragging = false;
