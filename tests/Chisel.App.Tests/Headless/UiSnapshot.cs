@@ -49,8 +49,6 @@ public static class UiSnapshot
             new TaskListViewModel(tasks),
             new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
-            schedule,
-            markers,
             new SettingsViewModel(userSettings, timeDisplay));
 
         var window = new MainWindow(windowPlacementPath: null)

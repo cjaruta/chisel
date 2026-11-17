@@ -34,18 +34,6 @@ public partial class MainWindow : Window
         };
         Unloaded += (_, _) => _timer.Stop();
         Closing += (_, _) => SavePlacement();
-
-        DataContextChanged += (_, _) =>
-        {
-            if (DataContext is MainViewModel viewModel)
-            {
-                viewModel.ScheduleEditorRequested += editor =>
-                {
-                    var dialog = new EditScheduleWindow(editor);
-                    dialog.ShowDialog(this);
-                };
-            }
-        };
     }
 
     // Scrolls the schedule so the now-line sits about a third of the way down.
