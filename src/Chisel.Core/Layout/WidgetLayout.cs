@@ -8,19 +8,25 @@ public sealed record WidgetPlacement(string WidgetId, double HeightWeight = 1);
 // One column of the window. WidthWeight is its share of the window's width, relative to the other columns.
 public sealed record LayoutColumn(double WidthWeight, IReadOnlyList<WidgetPlacement> Widgets);
 
-// The window's arrangement: an ordered list of columns, each an ordered list of widgets.
-// Immutable: Move and Remove return a new layout, so a changed layout is a new object.
+// The window's arrangement: an ordered list of columns, each an ordered list of widgets, plus the widgets
+// the user took off the dashboard (hidden; their data is untouched). Remembering hidden widgets is what tells
+// a removed widget (stays hidden) apart from a brand-new one (gets placed; see WidgetLayoutNormalizer).
+// Immutable: every change returns a new layout, so a changed layout is a new object.
 public sealed class WidgetLayout
 {
     // Smallest width or height weight a column or widget can have.
     public const double MinimumWeight = 0.1;
 
-    public WidgetLayout(IEnumerable<LayoutColumn> columns)
+    public WidgetLayout(IEnumerable<LayoutColumn> columns, IEnumerable<string>? hiddenWidgetIds = null)
     {
         Columns = columns.ToList();
+        HiddenWidgetIds = hiddenWidgetIds?.ToList() ?? new List<string>();
     }
 
     public IReadOnlyList<LayoutColumn> Columns { get; }
+
+    // Widgets taken off the dashboard, in the order they should be listed.
+    public IReadOnlyList<string> HiddenWidgetIds { get; }
 
     public IEnumerable<string> WidgetIds => Columns.SelectMany(c => c.Widgets).Select(w => w.WidgetId);
 
@@ -71,7 +77,7 @@ public sealed class WidgetLayout
         columns[fromColumn].RemoveAt(fromIndex);
         columns[columnIndex].Insert(target, placement);
 
-        return new WidgetLayout(Columns.Select((column, i) =>
+        return With(Columns.Select((column, i) =>
         {
             var moved = column with { Widgets = columns[i] };
             return i == fromColumn || i == columnIndex ? NormalizeHeights(moved) : moved;
@@ -104,7 +110,7 @@ public sealed class WidgetLayout
             }
             columns.RemoveAt(fromColumn);
             columns.Insert(columnIndex > fromColumn ? columnIndex - 1 : columnIndex, source);
-            return new WidgetLayout(columns);
+            return With(columns);
         }
 
         if (!CanMoveToNewColumn(widgetId))
@@ -112,11 +118,11 @@ public sealed class WidgetLayout
             throw new InvalidOperationException($"A layout can have at most {LayoutLimits.MaximumColumns} columns.");
         }
 
-        var width = Math.Round(Columns.Average(c => c.WidthWeight), 3);
+        var width = NewColumnWidth;
         var placement = source.Widgets[fromIndex] with { HeightWeight = 1 };
         columns[fromColumn] = NormalizeHeights(source with { Widgets = source.Widgets.Where((_, i) => i != fromIndex).ToList() });
         columns.Insert(columnIndex, new LayoutColumn(width, new[] { placement }));
-        return new WidgetLayout(columns);
+        return With(columns);
     }
 
     // Whether the widget can go into a new column: always for a widget alone in its column (its column just
@@ -132,7 +138,7 @@ public sealed class WidgetLayout
         {
             return this;
         }
-        return new WidgetLayout(Columns.Where(c => c.Widgets.Count > 0).Select(NormalizeHeights));
+        return With(Columns.Where(c => c.Widgets.Count > 0).Select(NormalizeHeights));
     }
 
     // Makes a widget taller (positive delta) or shorter (negative) by moving height weight between it and the
@@ -167,7 +173,7 @@ public sealed class WidgetLayout
         var resized = widgets.ToList();
         resized[index] = above with { HeightWeight = above.HeightWeight + change };
         resized[index + 1] = below with { HeightWeight = below.HeightWeight - change };
-        return new WidgetLayout(Columns.Select((c, i) => i == column ? c with { Widgets = resized } : c));
+        return With(Columns.Select((c, i) => i == column ? c with { Widgets = resized } : c));
     }
 
     // Rescales a column's height weights so they average 1, keeping their proportions
@@ -188,19 +194,86 @@ public sealed class WidgetLayout
         };
     }
 
-    public WidgetLayout Remove(string widgetId)
+    // Takes a widget off the dashboard: it joins the hidden widgets (its data is untouched), its column is
+    // rescaled, and a column it leaves empty collapses. The last widget on the dashboard cannot be removed.
+    public WidgetLayout RemoveWidget(string widgetId)
     {
-        var columns = Columns.Select(c => c.Widgets.Where(w => w.WidgetId != widgetId).ToList()).ToList();
-        return Build(Columns.Select(c => c.WidthWeight).ToList(), columns);
+        var (column, index) = Find(widgetId)
+            ?? throw new ArgumentException($"'{widgetId}' is not on the dashboard.", nameof(widgetId));
+        if (!CanRemoveWidget)
+        {
+            throw new InvalidOperationException("At least one widget has to stay on the dashboard.");
+        }
+
+        var left = Columns[column] with { Widgets = Columns[column].Widgets.Where((_, i) => i != index).ToList() };
+        var columns = Columns.Select((c, i) => i == column ? NormalizeHeights(left) : c).Where(c => c.Widgets.Count > 0);
+        return new WidgetLayout(columns, HiddenWidgetIds.Append(widgetId));
     }
 
-    // A compact text form for tests and logs, like "1.3[schedule:1] | 1[tasks:1, notes:1.2]".
+    // Whether a widget can be removed: not when it is the only one left on the dashboard.
+    public bool CanRemoveWidget => WidgetIds.Skip(1).Any();
+
+    // Puts a hidden widget back on the dashboard in a column gap (0 = top, Count = bottom), with the given
+    // height weight (its default); the column is then rescaled to average 1.
+    public WidgetLayout AddWidget(string widgetId, int columnIndex, int index, double heightWeight)
+    {
+        RequireHidden(widgetId);
+        if (columnIndex < 0 || columnIndex >= Columns.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, "There is no such column.");
+        }
+
+        var widgets = Columns[columnIndex].Widgets.ToList();
+        widgets.Insert(Math.Clamp(index, 0, widgets.Count), new WidgetPlacement(widgetId, heightWeight));
+        var columns = Columns.Select((c, i) => i == columnIndex ? NormalizeHeights(c with { Widgets = widgets }) : c);
+        return new WidgetLayout(columns, HiddenWidgetIds.Where(id => id != widgetId));
+    }
+
+    // Puts a hidden widget back on the dashboard in a new column at a gap between columns (0 = left edge,
+    // Count = right edge). Like MoveToNewColumn, it fills the column and the column gets the average width.
+    public WidgetLayout AddWidgetInNewColumn(string widgetId, int columnIndex)
+    {
+        RequireHidden(widgetId);
+        if (columnIndex < 0 || columnIndex > Columns.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, "There is no such gap between columns.");
+        }
+        if (!CanAddInNewColumn)
+        {
+            throw new InvalidOperationException($"A layout can have at most {LayoutLimits.MaximumColumns} columns.");
+        }
+
+        var columns = Columns.ToList();
+        columns.Insert(columnIndex, new LayoutColumn(NewColumnWidth, new[] { new WidgetPlacement(widgetId) }));
+        return new WidgetLayout(columns, HiddenWidgetIds.Where(id => id != widgetId));
+    }
+
+    // Whether there is room for another column.
+    public bool CanAddInNewColumn => Columns.Count < LayoutLimits.MaximumColumns;
+
+    private void RequireHidden(string widgetId)
+    {
+        if (Find(widgetId) is not null)
+        {
+            throw new ArgumentException($"'{widgetId}' is already on the dashboard.", nameof(widgetId));
+        }
+        if (!HiddenWidgetIds.Contains(widgetId))
+        {
+            throw new ArgumentException($"'{widgetId}' is not a hidden widget of this layout.", nameof(widgetId));
+        }
+    }
+
+    // A new column's width: the average of the current ones (1 when there are none).
+    private double NewColumnWidth => Columns.Count == 0 ? 1 : Math.Round(Columns.Average(c => c.WidthWeight), 3);
+
+    // The same hidden widgets with different columns.
+    private WidgetLayout With(IEnumerable<LayoutColumn> columns) => new(columns, HiddenWidgetIds);
+
+    // A compact text form for tests and logs, like "1.3[schedule:1] | 1[tasks:1, notes:1.2] (hidden: links)".
     public string Describe() =>
         string.Join(" | ", Columns.Select(c =>
-            $"{Number(c.WidthWeight)}[{string.Join(", ", c.Widgets.Select(w => $"{w.WidgetId}:{Number(w.HeightWeight)}"))}]"));
+            $"{Number(c.WidthWeight)}[{string.Join(", ", c.Widgets.Select(w => $"{w.WidgetId}:{Number(w.HeightWeight)}"))}]"))
+        + (HiddenWidgetIds.Count > 0 ? $" (hidden: {string.Join(", ", HiddenWidgetIds)})" : "");
 
     private static string Number(double value) => value.ToString(CultureInfo.InvariantCulture);
-
-    private static WidgetLayout Build(IReadOnlyList<double> widths, IReadOnlyList<List<WidgetPlacement>> columns) =>
-        new(columns.Select((widgets, i) => new LayoutColumn(widths[i], widgets)).Where(c => c.Widgets.Count > 0));
 }

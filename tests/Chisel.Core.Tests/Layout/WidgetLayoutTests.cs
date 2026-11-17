@@ -41,11 +41,11 @@ public class WidgetLayoutTests
     }
 
     [Fact]
-    public void Remove_TakesTheWidgetOutAndDropsAnEmptiedColumn()
+    public void Describe_ListsHiddenWidgetsAtTheEnd()
     {
-        var layout = Layout(Col(1.3, "schedule"), Col(1, "tasks", "notes"));
+        var layout = new WidgetLayout(new[] { Col(1, "schedule") }, new[] { "tasks", "notes" });
 
-        Assert.Equal("1[tasks:1, notes:1]", layout.Remove("schedule").Describe());
-        Assert.Equal("1.3[schedule:1] | 1[notes:1]", layout.Remove("tasks").Describe());
+        Assert.Equal("1[schedule:1] (hidden: tasks, notes)", layout.Describe());
+        Assert.Equal(new[] { "tasks", "notes" }, layout.HiddenWidgetIds);
     }
 }

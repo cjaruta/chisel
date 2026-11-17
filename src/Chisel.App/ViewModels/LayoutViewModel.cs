@@ -48,6 +48,13 @@ public partial class LayoutViewModel : ViewModelBase
         else
         {
             Layout = WidgetLayoutNormalizer.Normalize(saved, WidgetRegistry.DefaultLayout);
+            // A widget the saved layout never had (neither placed nor hidden) was just placed: save that once,
+            // so from now on it is remembered like the others.
+            var known = saved.WidgetIds.Concat(saved.HiddenWidgetIds).ToHashSet();
+            if (Layout.WidgetIds.Any(id => !known.Contains(id)))
+            {
+                repository!.Save(Layout);
+            }
         }
     }
 

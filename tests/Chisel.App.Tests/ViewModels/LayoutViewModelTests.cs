@@ -74,8 +74,9 @@ public class LayoutViewModelTests
     }
 
     [Fact]
-    public void WithASavedLayout_LoadsItNormalizedAndDoesNotOverwriteIt()
+    public void WithASavedLayout_LoadsItNormalized_AndSavesOnceToPlaceANewWidget()
     {
+        // Notes is neither placed nor hidden here, so it is new: it joins the bottom of the first column.
         var repository = new FakeLayoutRepository
         {
             Saved = Layout(Col(1, ("tasks", 2), ("weather", 1)), Col(0), Col(2, ("schedule", 1), ("links", 0.5))),
@@ -83,7 +84,25 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1[tasks:2, notes:1.1] | 2[schedule:1, links:0.5]", layout.Layout.Describe());
+        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, links:0.5]", layout.Layout.Describe());
+        Assert.Equal(1, repository.SaveCalls);
+        Assert.Equal(layout.Layout.Describe(), repository.Saved!.Describe());
+
+        new LayoutViewModel(repository);
+        Assert.Equal(1, repository.SaveCalls);
+    }
+
+    [Fact]
+    public void WithASavedLayout_ThatHidesAWidget_KeepsItHiddenWithoutSaving()
+    {
+        var repository = new FakeLayoutRepository
+        {
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("links", 1)) }, new[] { "notes" }),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, links:1] (hidden: notes)", layout.Layout.Describe());
         Assert.Equal(0, repository.SaveCalls);
     }
 
@@ -119,6 +138,7 @@ public class LayoutViewModelTests
 
         layout.Apply(Layout(Col(1, ("schedule", 0), ("weather", 1))));
 
-        Assert.Equal("1[schedule:0.1] | 1[tasks:1.05, notes:1.1, links:0.85]", layout.Layout.Describe());
+        // Weather is dropped, schedule raised to the minimum, and the widgets never seen join the first column.
+        Assert.Equal("1[schedule:0.129, tasks:1.355, notes:1.419, links:1.097]", layout.Layout.Describe());
     }
 }
