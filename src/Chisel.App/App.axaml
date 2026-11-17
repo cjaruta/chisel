@@ -21,12 +21,10 @@
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
         <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
         <SolidColorBrush x:Key="DragPreviewBrush" Color="#405B8DEF" />
-        <!-- Text on colored blocks; BlockPaletteTests checks both stay readable on every palette fill -->
-        <Color x:Key="BlockTitleColor">#ECEEF2</Color>
-        <Color x:Key="BlockTimeColor">#BCC1CA</Color>
-        <SolidColorBrush x:Key="BlockTitleBrush" Color="{StaticResource BlockTitleColor}" />
-        <SolidColorBrush x:Key="BlockTimeBrush" Color="{StaticResource BlockTimeColor}" />
-        <SolidColorBrush x:Key="CurrentBlockOutlineBrush" Color="#F2F4F8" />
+        <!-- Block colors and text come from the chosen palette (Models/BlockPalette.cs).
+             BlockPaletteTests checks this outline stands out on every fill of every palette. -->
+        <Color x:Key="CurrentBlockOutlineColor">#F2F4F8</Color>
+        <SolidColorBrush x:Key="CurrentBlockOutlineBrush" Color="{StaticResource CurrentBlockOutlineColor}" />
         <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
         <SolidColorBrush x:Key="ReminderBrush" Color="#C9B77A" />
     </Application.Resources>
@@ -76,6 +74,39 @@
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BoxShadow" Value="0 6 24 0 #80000000" />
+        </Style>
+
+        <!-- Settings: section headings and the palette chooser -->
+        <Style Selector="TextBlock.settingsSection">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="LetterSpacing" Value="0.6" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+
+        <Style Selector="ListBox.paletteList">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style Selector="ListBox.paletteList ListBoxItem">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
+        </Style>
+
+        <Style Selector="ListBox.paletteList ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A5B8DEF" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <Style Selector="Border.paletteChip">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="CornerRadius" Value="3" />
         </Style>
 
         <Style Selector="Button.link">
@@ -180,12 +211,12 @@
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
 
-        <Style Selector="Border.gridBlock TextBlock.blockTitle, Border.dragPreview TextBlock.blockTitle">
-            <Setter Property="Foreground" Value="{StaticResource BlockTitleBrush}" />
+        <Style Selector="Border.dragPreview TextBlock.blockTitle">
+            <Setter Property="Foreground" Value="#ECEEF2" />
         </Style>
 
-        <Style Selector="Border.gridBlock TextBlock.blockTime, Border.dragPreview TextBlock.blockTime">
-            <Setter Property="Foreground" Value="{StaticResource BlockTimeBrush}" />
+        <Style Selector="Border.dragPreview TextBlock.blockTime">
+            <Setter Property="Foreground" Value="#BCC1CA" />
         </Style>
 
         <!-- The current block keeps its own color and gets a bright outline and soft glow instead -->
@@ -312,7 +343,7 @@
         </Style>
 
         <Style Selector="Button.swatch.selected /template/ ContentPresenter#PART_ContentPresenter, Button.swatch.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="BorderBrush" Value="{StaticResource BlockTitleBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource CurrentBlockOutlineBrush}" />
         </Style>
 
         <Style Selector="Ellipse.swatchDot">

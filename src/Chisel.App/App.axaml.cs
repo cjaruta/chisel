@@ -30,10 +30,12 @@ public partial class App : Application
             else
             {
                 var timeDisplay = new TimeDisplay();
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay);
+                var paletteDisplay = new PaletteDisplay();
+                // Settings first: it loads the saved clock format and palette before anything is shown.
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay);
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
-                    new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay),
+                    new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
                     new TaskListViewModel(_services.Tasks),
                     new NotesViewModel(_services.Notes, _services.Time, timeDisplay),
                     new QuickLinksViewModel(_services.QuickLinks),

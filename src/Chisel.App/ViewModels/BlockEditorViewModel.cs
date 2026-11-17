@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Chisel.App.Models;
 using Chisel.Core.Schedule;
 using Chisel.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +16,7 @@ public partial class BlockEditorViewModel : ViewModelBase
     private readonly IScheduleRepository _repository;
     private readonly TimeDisplay _display;
     private readonly Action _saved;
+    private readonly PaletteDisplay _palette;
 
     [ObservableProperty]
     public partial bool IsOpen { get; set; }
@@ -37,7 +37,8 @@ public partial class BlockEditorViewModel : ViewModelBase
     [ObservableProperty]
     public partial string ColorKey { get; set; } = BlockColor.Default;
 
-    public IReadOnlyList<ColorSwatchOption> Swatches { get; } = BlockPalette.All.Select(s => new ColorSwatchOption(s)).ToList();
+    // One per color key, drawn in the current palette.
+    public IReadOnlyList<ColorSwatchOption> Swatches { get; }
 
     partial void OnColorKeyChanged(string value)
     {
@@ -50,11 +51,22 @@ public partial class BlockEditorViewModel : ViewModelBase
     [RelayCommand]
     private void SelectColor(string? key) => ColorKey = BlockColor.Normalize(key);
 
-    public BlockEditorViewModel(IScheduleRepository repository, TimeDisplay display, Action saved)
+    public BlockEditorViewModel(IScheduleRepository repository, TimeDisplay display, Action saved, PaletteDisplay? palette = null)
     {
         _repository = repository;
         _display = display;
         _saved = saved;
+        _palette = palette ?? new PaletteDisplay();
+        Swatches = BlockColor.Keys
+            .Select(key => new ColorSwatchOption(key, _palette.Palette.Get(key).Name, _palette.Brushes(key).Stripe))
+            .ToList();
+        _palette.PropertyChanged += (_, _) =>
+        {
+            foreach (var swatch in Swatches)
+            {
+                swatch.Brush = _palette.Brushes(swatch.Key).Stripe;
+            }
+        };
         OnColorKeyChanged(ColorKey);
     }
 

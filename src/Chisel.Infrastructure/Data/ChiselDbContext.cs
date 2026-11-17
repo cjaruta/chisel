@@ -29,6 +29,11 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<ScheduleBlockEntity>()
             .Property(b => b.Color)
             .HasDefaultValue(BlockColor.Default);
+
+        // Settings saved before palettes existed get the minimal palette.
+        modelBuilder.Entity<UserSettingsEntity>()
+            .Property(s => s.SchedulePalette)
+            .HasDefaultValue(Core.Settings.UserSettings.DefaultSchedulePalette);
     }
 }
 

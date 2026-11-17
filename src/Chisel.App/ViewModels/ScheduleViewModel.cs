@@ -18,6 +18,7 @@ public partial class ScheduleViewModel : ViewModelBase
     private readonly IMarkerRepository _markerRepository;
     private readonly TimeProvider _time;
     private readonly TimeDisplay _display;
+    private readonly PaletteDisplay _palette;
     private IReadOnlyList<ScheduleBlock> _blocks = Array.Empty<ScheduleBlock>();
     private IReadOnlyList<Marker> _markers = Array.Empty<Marker>();
 
@@ -37,14 +38,17 @@ public partial class ScheduleViewModel : ViewModelBase
     public BlockEditorViewModel BlockEditor { get; }
     public MarkerEditorViewModel MarkerEditor { get; }
 
-    public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time, TimeDisplay? display = null)
+    public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time,
+        TimeDisplay? display = null, PaletteDisplay? palette = null)
     {
         _scheduleRepository = scheduleRepository;
         _markerRepository = markerRepository;
         _time = time;
         _display = display ?? new TimeDisplay();
         _display.PropertyChanged += (_, _) => Refresh();
-        BlockEditor = new BlockEditorViewModel(scheduleRepository, _display, Refresh);
+        _palette = palette ?? new PaletteDisplay();
+        _palette.PropertyChanged += (_, _) => Refresh();
+        BlockEditor = new BlockEditorViewModel(scheduleRepository, _display, Refresh, _palette);
         MarkerEditor = new MarkerEditorViewModel(markerRepository, _display, Refresh);
         BlockEditor.PropertyChanged += OnBlockEditorChanged;
         MarkerEditor.PropertyChanged += OnMarkerEditorChanged;
@@ -196,6 +200,13 @@ public partial class ScheduleViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? PreviewColorKey { get; private set; }
 
+    // What the pending block is drawn with; null while still dragging.
+    [ObservableProperty]
+    public partial BlockBrushes? PreviewBrushes { get; private set; }
+
+    partial void OnPreviewColorKeyChanged(string? value) =>
+        PreviewBrushes = value is null ? null : _palette.Brushes(value);
+
     public void BeginDrag(double y, double scrollOffset)
     {
         _pressContentY = y + scrollOffset;
@@ -343,6 +354,7 @@ public partial class ScheduleViewModel : ViewModelBase
         _blocks = _scheduleRepository.Get().Blocks;
         _markers = _markerRepository.GetAll();
         HoverLabel = _display.Time(_hoverTime);
+        OnPreviewColorKeyChanged(PreviewColorKey);
         if (IsPreviewVisible)
         {
             ShowPreview((int)PreviewStartMinute, (int)PreviewEndMinute);
@@ -365,6 +377,7 @@ public partial class ScheduleViewModel : ViewModelBase
                 Title = block.Title,
                 TimeLabel = _display.Range(block.Start, block.End),
                 ColorKey = block.Color,
+                Brushes = _palette.Brushes(block.Color),
                 StartMinute = segment.StartMinute,
                 EndMinute = segment.EndMinute,
                 Column = segment.Column,
