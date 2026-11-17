@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Chisel.Core.Schedule;
 using Chisel.Core.Settings;
@@ -38,11 +39,24 @@ public partial class BlockEditorViewModel : ViewModelBase
         _saved = saved;
     }
 
-    public void OpenNew(TimeOnly start)
+    // Position of the block being edited in the saved schedule; null when adding a new one.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEditing), nameof(Heading))]
+    public partial int? EditingIndex { get; set; }
+
+    public bool IsEditing => EditingIndex is not null;
+    public string Heading => IsEditing ? "Edit block" : "New block";
+
+    public void OpenNew(TimeOnly start) => Open(null, "", start, start.AddHours(1));
+
+    public void OpenEdit(int index, ScheduleBlock block) => Open(index, block.Title, block.Start, block.End);
+
+    private void Open(int? index, string title, TimeOnly start, TimeOnly end)
     {
-        Title = "";
+        EditingIndex = index;
+        Title = title;
         StartText = _display.Time(start);
-        EndText = _display.Time(start.AddHours(1));
+        EndText = _display.Time(end);
         ErrorMessage = null;
         IsOpen = true;
     }
@@ -71,7 +85,34 @@ public partial class BlockEditorViewModel : ViewModelBase
             return;
         }
 
-        var blocks = _repository.Get().Blocks.Append(new ScheduleBlock(Title, start, end));
+        var blocks = _repository.Get().Blocks.ToList();
+        var block = new ScheduleBlock(Title, start, end);
+        if (EditingIndex is { } index && index < blocks.Count)
+        {
+            blocks[index] = block;
+        }
+        else
+        {
+            blocks.Add(block);
+        }
+        Commit(blocks);
+    }
+
+    [RelayCommand]
+    private void Delete()
+    {
+        var blocks = _repository.Get().Blocks.ToList();
+        if (EditingIndex is not { } index || index >= blocks.Count)
+        {
+            return;
+        }
+
+        blocks.RemoveAt(index);
+        Commit(blocks);
+    }
+
+    private void Commit(IEnumerable<ScheduleBlock> blocks)
+    {
         _repository.Save(new DaySchedule(blocks));
         ErrorMessage = null;
         IsOpen = false;
