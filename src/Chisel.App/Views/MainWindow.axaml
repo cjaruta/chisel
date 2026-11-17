@@ -18,13 +18,23 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseOverlaysCommand}" />
     </Window.KeyBindings>
 
+    <!-- The page: tinted while the layout is being edited -->
+    <Panel Name="Page" Classes="page" Classes.editing="{Binding Layout.IsEditing}">
     <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
-        <Button Grid.Row="0" Name="SettingsButton" Classes="gearButton"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" ZIndex="1"
+                    HorizontalAlignment="Right" VerticalAlignment="Top">
+        <!-- Customize layout: a 2x2 grid of tiles; highlighted while editing -->
+        <Button Name="CustomizeLayoutButton" Classes="gearButton" Classes.active="{Binding Layout.IsEditing}"
+                ToolTip.Tip="Customize layout" Command="{Binding CustomizeLayoutCommand}">
+            <Path Width="18" Height="18" Stretch="Uniform"
+                  Data="M3,3 h7 v7 h-7 Z M14,3 h7 v7 h-7 Z M3,14 h7 v7 h-7 Z M14,14 h7 v7 h-7 Z" />
+        </Button>
+        <Button Name="SettingsButton" Classes="gearButton" IsEnabled="{Binding CanOpenSettings}"
                 ToolTip.Tip="Settings" Command="{Binding Settings.ToggleCommand}">
             <Path Width="20" Height="20" Stretch="Uniform" Fill="{StaticResource DimTextBrush}"
                   Data="M10.13,4.22 L10.52,1.60 L13.48,1.60 L13.87,4.22 L16.18,5.18 L18.30,3.60 L20.40,5.70 L18.82,7.82 L19.78,10.13 L22.40,10.52 L22.40,13.48 L19.78,13.87 L18.82,16.18 L20.40,18.30 L18.30,20.40 L16.18,18.82 L13.87,19.78 L13.48,22.40 L10.52,22.40 L10.13,19.78 L7.82,18.82 L5.70,20.40 L3.60,18.30 L5.18,16.18 L4.22,13.87 L1.60,13.48 L1.60,10.52 L4.22,10.13 L5.18,7.82 L3.60,5.70 L5.70,3.60 L7.82,5.18 Z M15.20,12 A3.2,3.2 0 1 0 8.80,12 A3.2,3.2 0 1 0 15.20,12 Z" />
         </Button>
+        </StackPanel>
 
         <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal" Spacing="16">
@@ -36,6 +46,17 @@
 
         <!-- Widgets in columns, built from the saved layout -->
         <views:LayoutHost Grid.Row="1" Name="LayoutHost" Layout="{Binding Layout}" />
+
+        <!-- Layout edit mode toolbar: floats at the top center; Esc is the same as Cancel -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Name="LayoutToolbar" Classes="layoutToolbar" ZIndex="20"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                IsVisible="{Binding Layout.IsEditing}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
+                <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
+                <Button Name="LayoutDoneButton" Classes="accent" Content="Done" Command="{Binding Layout.DoneCommand}" />
+            </StackPanel>
+        </Border>
 
         <!-- Settings panel: floats over the content, below the gear button -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="card settingsPanel"
@@ -77,4 +98,5 @@
             </StackPanel>
         </Border>
     </Grid>
+    </Panel>
 </Window>
