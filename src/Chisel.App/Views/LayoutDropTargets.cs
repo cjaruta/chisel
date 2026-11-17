@@ -46,22 +46,57 @@ public static class LayoutDropTargets
         return centers;
     }
 
-    // The new-column gap the pointer is within `reach` of (horizontally), while it is level with the columns;
-    // null otherwise.
-    public static int? FindNewColumn(Point pointer, IReadOnlyList<Rect> columns, double gap, double reach)
+    // The new-column gap the pointer is in, while it is level with the columns; null otherwise. The outer
+    // `edgeFraction` of the dashboard's width on each side counts for the two edge gaps, and a zone `dividerWidth`
+    // wide centered on each divider for the gaps between columns. Only gaps in `allowed` are offered.
+    public static int? FindNewColumn(Point pointer, IReadOnlyList<Rect> columns, double hostWidth, double gap,
+        double edgeFraction, double dividerWidth, IReadOnlyCollection<int> allowed)
     {
         if (columns.Count == 0 || pointer.Y < columns.Min(c => c.Top) || pointer.Y > columns.Max(c => c.Bottom))
         {
             return null;
         }
-        var centers = NewColumnCenters(columns, gap);
-        for (var i = 0; i < centers.Length; i++)
+        var edge = hostWidth * edgeFraction;
+        if (pointer.X < edge)
         {
-            if (Math.Abs(pointer.X - centers[i]) <= reach)
+            return allowed.Contains(0) ? 0 : null;
+        }
+        if (pointer.X > hostWidth - edge)
+        {
+            return allowed.Contains(columns.Count) ? columns.Count : null;
+        }
+        var centers = NewColumnCenters(columns, gap);
+        for (var i = 1; i < columns.Count; i++)
+        {
+            if (Math.Abs(pointer.X - centers[i]) <= dividerWidth / 2 && allowed.Contains(i))
             {
                 return i;
             }
         }
         return null;
+    }
+
+    // Where a new column at gap `index` would land: an equal share of the width, centered on the gap and kept
+    // inside the dashboard, as tall as the columns.
+    public static Rect PhantomColumn(int index, IReadOnlyList<Rect> columns, double hostWidth, double gap)
+    {
+        var width = (hostWidth - gap * columns.Count) / (columns.Count + 1);
+        var left = Math.Clamp(NewColumnCenters(columns, gap)[index] - width / 2, 0, Math.Max(0, hostWidth - width));
+        var top = columns.Min(c => c.Top);
+        return new Rect(left, top, width, columns.Max(c => c.Bottom) - top);
+    }
+
+    // The y of the insertion line for a gap in a column: above the first widget, between two, or below the last.
+    public static double InsertionY(Rect column, IReadOnlyList<Rect> widgets, int index, double gap)
+    {
+        if (widgets.Count == 0)
+        {
+            return column.Top;
+        }
+        if (index <= 0)
+        {
+            return widgets[0].Top - gap / 2;
+        }
+        return index >= widgets.Count ? widgets[^1].Bottom + gap / 2 : (widgets[index - 1].Bottom + widgets[index].Top) / 2;
     }
 }

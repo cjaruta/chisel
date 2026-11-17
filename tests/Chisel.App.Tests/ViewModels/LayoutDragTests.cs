@@ -302,27 +302,58 @@ public class LayoutDragTests
         Assert.Equal((1, 0), LayoutDropTargets.Find(new Point(500, 300), Columns, widgets, gap: 16));
     }
 
-    // New-column zones sit at the left edge (-8), between the columns (408) and at the right edge (724).
+    // Hosts 716 wide: the outer 15% (107) are edge zones, 24px around the divider (408) is a divider zone.
+    private static readonly int[] AllGaps = { 0, 1, 2 };
+
     [Theory]
-    [InlineData(-8, 300, 0)]
-    [InlineData(2, 300, 0)]
+    [InlineData(5, 300, 0)]
+    [InlineData(100, 300, 0)]
     [InlineData(408, 300, 1)]
-    [InlineData(400, 300, 1)]
-    [InlineData(724, 300, 2)]
-    [InlineData(716, 300, 2)]
-    public void NewColumnTarget_IsTheGapNearestThePointer(double x, double y, int index)
+    [InlineData(398, 300, 1)]
+    [InlineData(419, 300, 1)]
+    [InlineData(710, 300, 2)]
+    [InlineData(620, 300, 2)]
+    public void NewColumnTarget_IsTheEdgeOrDividerZoneUnderThePointer(double x, double y, int index)
     {
-        Assert.Equal(index, LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, gap: 16, reach: 12));
+        Assert.Equal(index, LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, 716, 16, 0.15, 24, AllGaps));
     }
 
     [Theory]
     [InlineData(200, 300)]   // well inside the left column
     [InlineData(560, 300)]   // well inside the right column
-    [InlineData(408, -30)]   // above the columns
-    [InlineData(408, 650)]   // below them
-    public void NewColumnTarget_AwayFromTheGaps_IsNone(double x, double y)
+    [InlineData(5, -30)]     // above the columns
+    [InlineData(5, 650)]     // below them
+    public void NewColumnTarget_AwayFromTheZones_IsNone(double x, double y)
     {
-        Assert.Null(LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, gap: 16, reach: 12));
+        Assert.Null(LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, 716, 16, 0.15, 24, AllGaps));
+    }
+
+    [Fact]
+    public void NewColumnTarget_SkipsGapsThatAreNotAllowed()
+    {
+        Assert.Null(LayoutDropTargets.FindNewColumn(new Point(5, 300), Columns, 716, 16, 0.15, 24, new[] { 1, 2 }));
+    }
+
+    [Theory]
+    [InlineData(0, 0, 228)]      // at the left edge: kept inside the dashboard
+    [InlineData(1, 294, 228)]    // centered on the divider
+    [InlineData(2, 488, 228)]    // at the right edge
+    public void PhantomColumn_IsAnEqualShareCenteredOnTheGapAndKeptInside(int index, double left, double width)
+    {
+        var phantom = LayoutDropTargets.PhantomColumn(index, Columns, 716, 16);
+
+        Assert.Equal(left, phantom.Left, 1);
+        Assert.Equal(width, phantom.Width, 1);
+        Assert.Equal(600, phantom.Height);
+    }
+
+    [Theory]
+    [InlineData(0, -8)]     // above the first widget
+    [InlineData(1, 108)]    // between the first two
+    [InlineData(3, 340)]    // below the last
+    public void InsertionLine_SitsInTheGap(int index, double y)
+    {
+        Assert.Equal(y, LayoutDropTargets.InsertionY(Columns[1], Widgets[1], index, gap: 16));
     }
 
     [Fact]
