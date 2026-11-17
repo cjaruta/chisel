@@ -269,4 +269,33 @@ public class LayoutDragTests
 
         Assert.Equal((1, 0), LayoutDropTargets.Find(new Point(500, 300), Columns, widgets, gap: 16));
     }
+
+    // New-column zones sit at the left edge (-8), between the columns (408) and at the right edge (724).
+    [Theory]
+    [InlineData(-8, 300, 0)]
+    [InlineData(2, 300, 0)]
+    [InlineData(408, 300, 1)]
+    [InlineData(400, 300, 1)]
+    [InlineData(724, 300, 2)]
+    [InlineData(716, 300, 2)]
+    public void NewColumnTarget_IsTheGapNearestThePointer(double x, double y, int index)
+    {
+        Assert.Equal(index, LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, gap: 16, reach: 12));
+    }
+
+    [Theory]
+    [InlineData(200, 300)]   // well inside the left column
+    [InlineData(560, 300)]   // well inside the right column
+    [InlineData(408, -30)]   // above the columns
+    [InlineData(408, 650)]   // below them
+    public void NewColumnTarget_AwayFromTheGaps_IsNone(double x, double y)
+    {
+        Assert.Null(LayoutDropTargets.FindNewColumn(new Point(x, y), Columns, gap: 16, reach: 12));
+    }
+
+    [Fact]
+    public void NewColumnGapCenters_AreTheEdgesAndTheMiddlesOfTheGaps()
+    {
+        Assert.Equal(new[] { -8.0, 408.0, 724.0 }, LayoutDropTargets.NewColumnCenters(Columns, gap: 16));
+    }
 }

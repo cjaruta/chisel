@@ -23,6 +23,9 @@ namespace Chisel.App.Views;
 // a ghost follows the pointer, an accent line (or a highlighted "Drop here" zone in an empty column)
 // shows where it will land, and releasing drops it there. Nothing else moves until the drop.
 //
+// While dragging, thin "New column" zones also show at the left and right edges and between columns
+// (when another column fits: see LayoutViewModel.CanOfferNewColumn); dropping on one makes a new column.
+//
 // Between stacked cards sits a resize handle in the gap (always there, so showing it moves nothing; usable
 // only in edit mode). Dragging it moves height between the two neighbours live; release keeps it.
 public sealed class LayoutHost : Decorator
@@ -31,6 +34,9 @@ public sealed class LayoutHost : Decorator
 
     // How far the pointer must move before a press on a title bar becomes a drag.
     public const double DragThreshold = 4;
+
+    // How close (horizontally) the pointer must be to a "New column" zone's center to target it.
+    public const double NewColumnReach = 14;
 
     public static readonly StyledProperty<LayoutViewModel?> LayoutProperty =
         AvaloniaProperty.Register<LayoutHost, LayoutViewModel?>(nameof(Layout));
@@ -47,6 +53,9 @@ public sealed class LayoutHost : Decorator
     private readonly TextBlock _ghostTitle = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly List<Control> _dropZones = new();
     private readonly List<Panel> _handles = new();
+    private readonly List<(int Index, Border Zone)> _newColumnZones = new();
+    private readonly Border _newColumnLabel;
+    private int? _newColumnTarget;
 
     // The columns' widget ids as last built; a layout with the same ones only needs new weights.
     private string _builtStructure = "";
@@ -77,7 +86,12 @@ public sealed class LayoutHost : Decorator
         _ghost = new Border { Name = "DragGhost", IsVisible = false, Child = ghostContent };
         _ghost.Classes.Add("dragGhost");
 
+        var labelText = new TextBlock { Text = "New column" };
+        _newColumnLabel = new Border { Name = "NewColumnLabel", IsVisible = false, Child = labelText };
+        _newColumnLabel.Classes.Add("newColumnLabel");
+
         _overlay.Children.Add(_indicator);
+        _overlay.Children.Add(_newColumnLabel);
         _overlay.Children.Add(_ghost);
         Child = new Panel { Children = { _columns, _overlay } };
     }
@@ -411,7 +425,11 @@ public sealed class LayoutHost : Decorator
         if (_dragging && layout is { IsDraggingWidget: true })
         {
             UpdateDrag(e.GetPosition(this));
-            if (_target is { } target)
+            if (_newColumnTarget is { } newColumn)
+            {
+                layout.DropWidgetInNewColumn(newColumn);
+            }
+            else if (_target is { } target)
             {
                 layout.DropWidget(target.Column, target.Index);
             }
@@ -438,12 +456,55 @@ public sealed class LayoutHost : Decorator
     private void StartDragVisuals(WidgetFrame frame)
     {
         _dragging = true;
+        ShowNewColumnZones(frame);
         frame.Classes.Add("dragSource");
         frame.EditBar.Cursor = DraggingCursor;
         _ghostTitle.Text = frame.Widget.Title;
         _ghost.Width = Math.Min(frame.Bounds.Width, 360);
         _grabOffset = new Point(Math.Min(_grabOffset.X, _ghost.Width - 24), _grabOffset.Y);
         _ghost.IsVisible = true;
+    }
+
+    // A thin zone in each gap where a new column could go. A widget alone in its column skips the two gaps
+    // beside its own column (it would land where it is).
+    private void ShowNewColumnZones(WidgetFrame frame)
+    {
+        ClearNewColumnZones();
+        if (Layout is not { } layout || !layout.CanOfferNewColumn(Bounds.Width, Gap))
+        {
+            return;
+        }
+
+        var columns = ColumnScrollers.Select(BoundsInHost).ToList();
+        var centers = LayoutDropTargets.NewColumnCenters(columns, Gap);
+        var at = layout.Layout.Find(frame.WidgetId);
+        var alone = at is { } a && layout.Layout.Columns[a.Column].Widgets.Count == 1;
+        var top = columns.Min(c => c.Top);
+        var height = columns.Max(c => c.Bottom) - top;
+        for (var i = 0; i < centers.Length; i++)
+        {
+            if (alone && (i == at!.Value.Column || i == at.Value.Column + 1))
+            {
+                continue;
+            }
+            var zone = new Border { Name = $"NewColumnZone{i}", Height = height };
+            zone.Classes.Add("newColumnZone");
+            Canvas.SetLeft(zone, centers[i] - 3);
+            Canvas.SetTop(zone, top);
+            _overlay.Children.Insert(_newColumnZones.Count, zone); // behind the label and ghost, in gap order
+            _newColumnZones.Add((i, zone));
+        }
+    }
+
+    private void ClearNewColumnZones()
+    {
+        foreach (var (_, zone) in _newColumnZones)
+        {
+            _overlay.Children.Remove(zone);
+        }
+        _newColumnZones.Clear();
+        _newColumnTarget = null;
+        _newColumnLabel.IsVisible = false;
     }
 
     // Moves the ghost with the pointer and shows where the widget would land.
@@ -455,6 +516,28 @@ public sealed class LayoutHost : Decorator
         var scrollers = ColumnScrollers;
         var frames = Frames;
         var columnRects = scrollers.Select(BoundsInHost).ToList();
+
+        // A "New column" zone under the pointer wins over dropping into a column.
+        _newColumnTarget = null;
+        _newColumnLabel.IsVisible = false;
+        foreach (var (_, zone) in _newColumnZones)
+        {
+            zone.Classes.Set("active", false);
+        }
+        var gapIndex = LayoutDropTargets.FindNewColumn(point, columnRects, Gap, NewColumnReach);
+        if (gapIndex is { } g && _newColumnZones.FirstOrDefault(z => z.Index == g).Zone is { } hovered)
+        {
+            _newColumnTarget = g;
+            _target = null;
+            _indicator.IsVisible = false;
+            foreach (var zone in _dropZones)
+            {
+                zone.Classes.Set("active", false);
+            }
+            hovered.Classes.Set("active", true);
+            ShowNewColumnLabel(Canvas.GetLeft(hovered) + 3, Canvas.GetTop(hovered));
+            return;
+        }
         var widgetRects = frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
         var target = LayoutDropTargets.Find(point, columnRects, widgetRects, Gap);
 
@@ -515,6 +598,17 @@ public sealed class LayoutHost : Decorator
         _target = null;
         _indicator.IsVisible = false;
         _ghost.IsVisible = false;
+        ClearNewColumnZones();
+    }
+
+    // The "New column" pill near the top of a highlighted zone, kept inside the dashboard.
+    private void ShowNewColumnLabel(double centerX, double top)
+    {
+        _newColumnLabel.IsVisible = true;
+        _newColumnLabel.Measure(Size.Infinity);
+        var width = _newColumnLabel.DesiredSize.Width;
+        Canvas.SetLeft(_newColumnLabel, Math.Clamp(centerX - width / 2, 0, Math.Max(0, Bounds.Width - width)));
+        Canvas.SetTop(_newColumnLabel, top + 12);
     }
 
     private Rect BoundsInHost(Visual visual) =>
