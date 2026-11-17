@@ -17,6 +17,19 @@ namespace Chisel.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.HiddenWidgetEntity", b =>
+                {
+                    b.Property<string>("WidgetId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("WidgetId");
+
+                    b.ToTable("HiddenWidgets");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.LayoutColumnEntity", b =>
                 {
                     b.Property<int>("Position")

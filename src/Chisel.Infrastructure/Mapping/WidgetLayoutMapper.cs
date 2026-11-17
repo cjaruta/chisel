@@ -23,15 +23,21 @@ public static class WidgetLayoutMapper
         return (columns, placements);
     }
 
+    public static List<HiddenWidgetEntity> ToHiddenEntities(this WidgetLayout layout) =>
+        layout.HiddenWidgetIds.Select((id, position) => new HiddenWidgetEntity { WidgetId = id, Position = position }).ToList();
+
     // Column indexes only order the columns, so gaps are fine. A column with no width row gets width 1.
-    public static WidgetLayout ToLayout(IEnumerable<LayoutColumnEntity> columns, IEnumerable<WidgetPlacementEntity> placements)
+    public static WidgetLayout ToLayout(IEnumerable<LayoutColumnEntity> columns, IEnumerable<WidgetPlacementEntity> placements,
+        IEnumerable<HiddenWidgetEntity>? hidden = null)
     {
         var widths = columns.ToDictionary(c => c.Position, c => c.WidthWeight);
+        var hiddenIds = (hidden ?? Enumerable.Empty<HiddenWidgetEntity>()).OrderBy(h => h.Position).Select(h => h.WidgetId);
         return new WidgetLayout(placements
             .GroupBy(p => p.ColumnIndex)
             .OrderBy(g => g.Key)
             .Select(g => new LayoutColumn(
                 widths.GetValueOrDefault(g.Key, 1),
-                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight)).ToList())));
+                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight)).ToList())),
+            hiddenIds);
     }
 }

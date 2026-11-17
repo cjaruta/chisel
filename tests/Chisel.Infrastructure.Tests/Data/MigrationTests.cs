@@ -138,6 +138,31 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddHiddenWidgets_LeavesAnExistingLayoutExactlyAsItWas()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261117183845_AddLayoutColumnsAndWeights");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO LayoutColumns (Position, WidthWeight) VALUES (0, 1.3), (1, 1.0);" +
+                "INSERT INTO WidgetPlacements (Id, WidgetId, ColumnIndex, Position, HeightWeight) VALUES " +
+                "('6f1c2f4e-0000-0000-0000-000000000031', 'schedule', 0, 0, 1.0), " +
+                "('6f1c2f4e-0000-0000-0000-000000000032', 'tasks', 1, 0, 1.05), " +
+                "('6f1c2f4e-0000-0000-0000-000000000033', 'notes', 1, 1, 1.1), " +
+                "('6f1c2f4e-0000-0000-0000-000000000034', 'links', 1, 2, 0.85);");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var layout = new Chisel.Infrastructure.Repositories.WidgetLayoutRepository(readContext).Get()!;
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]", layout.Describe());
+        Assert.Empty(readContext.HiddenWidgets);
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();

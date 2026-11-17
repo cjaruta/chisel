@@ -17,7 +17,9 @@ public class WidgetLayoutRepository : IWidgetLayoutRepository
     public WidgetLayout? Get()
     {
         var placements = _context.WidgetPlacements.ToList();
-        return placements.Count == 0 ? null : WidgetLayoutMapper.ToLayout(_context.LayoutColumns.ToList(), placements);
+        return placements.Count == 0
+            ? null
+            : WidgetLayoutMapper.ToLayout(_context.LayoutColumns.ToList(), placements, _context.HiddenWidgets.ToList());
     }
 
     public void Save(WidgetLayout layout)
@@ -25,9 +27,11 @@ public class WidgetLayoutRepository : IWidgetLayoutRepository
         var (columns, placements) = layout.ToEntities();
         _context.WidgetPlacements.RemoveRange(_context.WidgetPlacements);
         _context.LayoutColumns.RemoveRange(_context.LayoutColumns);
+        _context.HiddenWidgets.RemoveRange(_context.HiddenWidgets);
         _context.SaveChanges();
         _context.LayoutColumns.AddRange(columns);
         _context.WidgetPlacements.AddRange(placements);
+        _context.HiddenWidgets.AddRange(layout.ToHiddenEntities());
         _context.SaveChanges();
     }
 }
