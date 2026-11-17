@@ -18,6 +18,11 @@
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
+        <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
+        <SolidColorBrush x:Key="BlockBackgroundBrush" Color="#C02B3350" />
+        <SolidColorBrush x:Key="CurrentBlockBackgroundBrush" Color="#D0324A80" />
+        <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
+        <SolidColorBrush x:Key="ReminderBrush" Color="#C9B77A" />
     </Application.Resources>
 
     <Application.Styles>
@@ -76,30 +81,124 @@
             <Setter Property="Cursor" Value="Hand" />
         </Style>
 
-        <Style Selector="Border.timelineRow">
+        <!-- Schedule day grid -->
+        <Style Selector="Border.divider">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource GridLineBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.hourLabel">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+
+        <Style Selector="Border.hourLine">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource GridLineBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.gridBlock">
+            <Setter Property="Margin" Value="2,1" />
+            <Setter Property="Padding" Value="10,4,8,4" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="Background" Value="{StaticResource BlockBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
         </Style>
 
-        <Style Selector="Border.timelineRow.current">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Style Selector="Border.gridBlock.current">
+            <Setter Property="Background" Value="{StaticResource CurrentBlockBackgroundBrush}" />
+            <Setter Property="BorderThickness" Value="3,1,1,1" />
         </Style>
 
-        <Style Selector="Border.timelineRow.current TextBlock">
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
-        <Style Selector="Border.timelineRow.past">
+        <Style Selector="Border.gridBlock.past">
             <Setter Property="Opacity" Value="0.45" />
         </Style>
 
-        <Style Selector="TextBlock.timeLabel">
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        <Style Selector="TextBlock.blockTitle">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
 
-        <Style Selector="Border.timelineRow.current TextBlock.timeLabel">
+        <Style Selector="Border.gridBlock.current TextBlock.blockTitle">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="TextBlock.blockTime">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style Selector="Line.markerLine">
+            <Setter Property="StrokeThickness" Value="1.5" />
+            <Setter Property="Stroke" Value="{StaticResource ReminderBrush}" />
+            <Setter Property="StrokeDashArray" Value="1,3" />
+        </Style>
+
+        <Style Selector="Grid.markerRow.checkpoint Line.markerLine">
+            <Setter Property="Stroke" Value="{StaticResource CheckpointBrush}" />
+            <Setter Property="StrokeDashArray" Value="4,3" />
+        </Style>
+
+        <Style Selector="Border.markerPill">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ReminderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="8,1" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
+
+        <Style Selector="Grid.markerRow.checkpoint Border.markerPill">
+            <Setter Property="BorderBrush" Value="{StaticResource CheckpointBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.markerText">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource ReminderBrush}" />
+        </Style>
+
+        <Style Selector="Grid.markerRow.checkpoint TextBlock.markerText">
+            <Setter Property="Foreground" Value="{StaticResource CheckpointBrush}" />
+        </Style>
+
+        <Style Selector="Grid.markerRow.past">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <Style Selector="Border.nowLine">
+            <Setter Property="Height" Value="2" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Ellipse.nowDot">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="-4,0,0,0" />
+        </Style>
+
+        <Style Selector="Border.nowPill">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <Style Selector="Border.nowPill TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="White" />
         </Style>
     </Application.Styles>

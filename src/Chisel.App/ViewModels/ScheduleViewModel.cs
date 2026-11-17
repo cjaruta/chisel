@@ -7,17 +7,29 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Chisel.App.ViewModels;
 
+// The day grid. Refresh reloads blocks and markers from the repositories;
+// UpdateNow (every clock tick) only moves the now-line and the current/past flags.
 public partial class ScheduleViewModel : ViewModelBase
 {
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IMarkerRepository _markerRepository;
     private readonly TimeProvider _time;
     private readonly TimeDisplay _display;
+    private IReadOnlyList<ScheduleBlock> _blocks = Array.Empty<ScheduleBlock>();
+    private IReadOnlyList<Marker> _markers = Array.Empty<Marker>();
 
     [ObservableProperty]
     public partial string CurrentBlockTitle { get; set; } = "No block";
 
-    public ObservableCollection<ScheduleTimelineEntry> Timeline { get; } = new();
+    [ObservableProperty]
+    public partial double NowMinute { get; set; }
+
+    [ObservableProperty]
+    public partial string NowLabel { get; set; } = "";
+
+    public ObservableCollection<ScheduleGridBlock> GridBlocks { get; } = new();
+    public ObservableCollection<ScheduleGridMarker> GridMarkers { get; } = new();
+    public ObservableCollection<ScheduleHourLabel> HourLabels { get; } = new();
 
     public ScheduleViewModel(IScheduleRepository scheduleRepository, IMarkerRepository markerRepository, TimeProvider time, TimeDisplay? display = null)
     {
@@ -31,35 +43,63 @@ public partial class ScheduleViewModel : ViewModelBase
 
     public void Refresh()
     {
-        var schedule = _scheduleRepository.Get();
-        var markers = _markerRepository.GetAll();
-        var now = TimeOnly.FromDateTime(_time.GetLocalNow().DateTime);
+        _blocks = _scheduleRepository.Get().Blocks;
+        _markers = _markerRepository.GetAll();
 
-        CurrentBlockTitle = schedule.CurrentBlock(now)?.Title ?? "No block";
+        HourLabels.Clear();
+        for (var hour = 0; hour <= 24; hour++)
+        {
+            HourLabels.Add(new ScheduleHourLabel { StartMinute = hour * 60, Text = _display.Time(new TimeOnly(hour % 24, 0)) });
+        }
 
-        var entries = schedule.Blocks
-            // An overnight block that's still running after midnight started yesterday, so it leads the list.
-            .Select(block => (Sort: block.CrossesMidnight && now < block.End ? TimeOnly.MinValue : block.Start, Entry: new ScheduleTimelineEntry
+        GridBlocks.Clear();
+        foreach (var segment in ScheduleGridLayout.Segments(_blocks))
+        {
+            var block = _blocks[segment.BlockIndex];
+            GridBlocks.Add(new ScheduleGridBlock
             {
+                BlockIndex = segment.BlockIndex,
                 Title = block.Title,
                 TimeLabel = _display.Range(block.Start, block.End),
-                IsCurrent = block.Contains(now),
-                IsPast = !block.Contains(now) && !block.CrossesMidnight && now >= block.End
-            }))
-            .Concat(markers.Select(marker => (Sort: marker.Time, Entry: new ScheduleTimelineEntry
-            {
-                Title = marker.Label,
-                TimeLabel = _display.Time(marker.Time),
-                IsCurrent = false,
-                IsPast = marker.HasPassed(now)
-            })))
-            .OrderBy(x => x.Sort)
-            .Select(x => x.Entry);
+                StartMinute = segment.StartMinute,
+                EndMinute = segment.EndMinute,
+                Column = segment.Column,
+                ColumnCount = segment.ColumnCount,
+            });
+        }
 
-        Timeline.Clear();
-        foreach (var entry in entries)
+        GridMarkers.Clear();
+        for (var i = 0; i < _markers.Count; i++)
         {
-            Timeline.Add(entry);
+            GridMarkers.Add(new ScheduleGridMarker
+            {
+                MarkerIndex = i,
+                Label = _markers[i].Label,
+                TimeLabel = _display.Time(_markers[i].Time),
+                Kind = _markers[i].Kind,
+                StartMinute = ScheduleGridLayout.MinuteOfDay(_markers[i].Time),
+            });
+        }
+
+        UpdateNow();
+    }
+
+    public void UpdateNow()
+    {
+        var now = TimeOnly.FromDateTime(_time.GetLocalNow().DateTime);
+        NowMinute = ScheduleGridLayout.MinuteOfDay(now);
+        NowLabel = _display.Time(now);
+        CurrentBlockTitle = _blocks.FirstOrDefault(b => b.Contains(now))?.Title ?? "No block";
+
+        foreach (var item in GridBlocks)
+        {
+            item.IsCurrent = _blocks[item.BlockIndex].Contains(now);
+            item.IsPast = !item.IsCurrent && NowMinute >= item.EndMinute;
+        }
+
+        foreach (var item in GridMarkers)
+        {
+            item.IsPast = _markers[item.MarkerIndex].HasPassed(now);
         }
     }
 }

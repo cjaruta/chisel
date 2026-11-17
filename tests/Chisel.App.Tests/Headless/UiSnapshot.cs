@@ -21,7 +21,7 @@ namespace Chisel.App.Tests.Headless;
 // Call from an [AvaloniaFact] test.
 public static class UiSnapshot
 {
-    // 09:30 on 2000-01-01, so "Focus" (08:00-11:00) is the current block.
+    // 09:30 on 2000-01-01, so "Focus" (08:00-11:00) and the overlapping "Call" (09:00-10:00) are current.
     public static readonly DateTimeOffset SampleNow = new(2000, 1, 1, 9, 30, 0, TimeSpan.Zero);
 
     // now: the clock time to show; defaults to SampleNow.
@@ -94,10 +94,15 @@ public static class UiSnapshot
         {
             new ScheduleBlock("Wake up", new TimeOnly(6, 30), new TimeOnly(7, 0)),
             new ScheduleBlock("Focus", new TimeOnly(8, 0), new TimeOnly(11, 0)),
+            new ScheduleBlock("Call", new TimeOnly(9, 0), new TimeOnly(10, 0)),
             new ScheduleBlock("Workout", new TimeOnly(14, 0), new TimeOnly(15, 0)),
             new ScheduleBlock("Sleep", new TimeOnly(23, 0), new TimeOnly(6, 30)),
         }));
-        markers.ReplaceAll(new[] { new Marker("Last coffee", new TimeOnly(13, 0), MarkerKind.Checkpoint) });
+        markers.ReplaceAll(new[]
+        {
+            new Marker("Midday", new TimeOnly(12, 0), MarkerKind.Checkpoint),
+            new Marker("Last coffee", new TimeOnly(13, 0), MarkerKind.Reminder),
+        });
 
         tasks.Add(new TaskItem("Write the weekly plan"));
         var done = new TaskItem("Water the plants");

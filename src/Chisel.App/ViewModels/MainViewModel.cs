@@ -41,7 +41,7 @@ public partial class MainViewModel : ViewModelBase
     public void Refresh()
     {
         Clock.Refresh();
-        Schedule.Refresh();
+        Schedule.UpdateNow();
     }
 
     [RelayCommand]

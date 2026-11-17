@@ -9,7 +9,7 @@ public class LayoutScrollTests
 {
     [AvaloniaTheory]
     [InlineData("SidePanel")]
-    [InlineData("ScheduleList")]
+    [InlineData("ScheduleGrid")]
     public void Panel_SitsInAScrollViewerThatFitsInsideTheWindow(string panelName)
     {
         var window = UiSnapshot.ShowMainWindow(1000, 500);
