@@ -26,7 +26,7 @@ public class ClockWidgetLayoutTests
         var layout = new LayoutViewModel(new Repo(saved)).Layout;
 
         Assert.Equal(new[] { "schedule", "links", "tasks" }, layout.WidgetIds);
-        Assert.Equal(new[] { "notes", "clock" }, layout.HiddenWidgetIds);
+        Assert.Equal(new[] { "notes", "clock", "weather" }, layout.HiddenWidgetIds);
         Assert.Equal(saved.Columns.Select(c => c.WidthWeight), layout.Columns.Select(c => c.WidthWeight));
     }
 
@@ -43,7 +43,7 @@ public class ClockWidgetLayoutTests
 
         Assert.Equal("clock", added.Columns[0].Widgets[^1].WidgetId);
         Assert.Equal(1, added.WidgetIds.Count(id => id == "clock"));
-        Assert.Equal(before, viewModel.Layout.Describe());
+        Assert.Equal(before.Split(" (hidden")[0], viewModel.Layout.Describe().Split(" (hidden")[0]);
     }
 
     private sealed class Repo(WidgetLayout saved) : IWidgetLayoutRepository

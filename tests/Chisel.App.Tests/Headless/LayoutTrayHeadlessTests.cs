@@ -40,7 +40,7 @@ public class LayoutTrayHeadlessTests
         new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
 
     private static List<Border> TrayCards(Window window) =>
-        window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible && ((WidgetDefinition)b.DataContext!).Id != WidgetRegistry.Clock).ToList();
+        window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible && ((WidgetDefinition)b.DataContext!).Id != WidgetRegistry.Clock && ((WidgetDefinition)b.DataContext!).Id != WidgetRegistry.Weather).ToList();
 
     private static Border TrayCard(Window window, string id) =>
         TrayCards(window).Single(b => ((WidgetDefinition)b.DataContext!).Id == id);

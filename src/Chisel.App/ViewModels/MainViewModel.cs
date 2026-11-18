@@ -1,3 +1,4 @@
+using System;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
@@ -6,6 +7,7 @@ public partial class MainViewModel : ViewModelBase
 {
     public ClockViewModel Clock { get; }
     public AnalogClockViewModel AnalogClock { get; }
+    public WeatherViewModel Weather { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -22,10 +24,12 @@ public partial class MainViewModel : ViewModelBase
         NotesViewModel notes,
         QuickLinksViewModel quickLinks,
         SettingsViewModel settings,
-        LayoutViewModel? layout = null)
+        LayoutViewModel? layout = null,
+        WeatherViewModel? weather = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
+        Weather = weather ?? new WeatherViewModel(new Services.FakeWeatherService(), TimeProvider.System);
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;
@@ -73,6 +77,7 @@ public partial class MainViewModel : ViewModelBase
     {
         Clock.Refresh();
         Schedule.UpdateNow();
+        Weather.Refresh();
     }
 
     // Escape cancels a widget drag or resize; otherwise it cancels layout editing; otherwise it closes whatever
