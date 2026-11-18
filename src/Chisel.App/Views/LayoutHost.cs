@@ -557,13 +557,15 @@ public sealed class LayoutHost : Decorator
         }
         if (_newColumnTarget is { } newColumn)
         {
+            _floatFade = true;
+            _snapAfterFade = id;
             layout.DropWidgetInNewColumn(newColumn);
-            Snap(id);
         }
         else if (_target is { } target)
         {
+            _floatFade = true;
+            _snapAfterFade = id;
             layout.DropWidget(target.Column, target.Index);
-            Snap(id);
         }
         else
         {
@@ -698,6 +700,10 @@ public sealed class LayoutHost : Decorator
     // frame: the card being moved, or null for a widget coming from the tray.
     private void StartDragVisuals(WidgetFrame? frame, string title)
     {
+        _floatFadeVersion++;
+        _float.Classes.Set("dropFade", false);
+        _float.Classes.Set("fadingOut", false);
+        _snapAfterFade = null;
         _dragging = true;
         _origin = frame is null ? null : Layout?.Layout.Find(frame.WidgetId);
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
@@ -816,6 +822,53 @@ public sealed class LayoutHost : Decorator
         target.Classes.Set("active", active);
     }
 
+    // Set by a drop: the next EndDrag crossfades the floating snapshot away instead of removing it.
+    private bool _floatFade;
+    private int _floatFadeVersion;
+    private string? _snapAfterFade;
+
+    public static readonly TimeSpan FloatFade = TimeSpan.FromMilliseconds(150);
+
+    private void HideFloat()
+    {
+        _floatFadeVersion++;
+        _float.Classes.Set("dropFade", false);
+        _float.Classes.Set("fadingOut", false);
+        _float.IsVisible = false;
+        _float.Classes.Set("lifted", false);
+        _float.Child = null;
+    }
+
+    // The snapshot stays where it was dropped over the card (already laid out and painted underneath) and fades
+    // out over ~150 ms; the border snap starts when the fade is done.
+    private void FadeOutFloat()
+    {
+        var version = ++_floatFadeVersion;
+        _float.Classes.Set("dropFade", true);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (version != _floatFadeVersion)
+            {
+                return;
+            }
+            _float.Classes.Set("fadingOut", true);
+            var timer = new DispatcherTimer { Interval = FloatFade + TimeSpan.FromMilliseconds(20) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                if (version != _floatFadeVersion)
+                {
+                    return;
+                }
+                HideFloat();
+                var id = _snapAfterFade;
+                _snapAfterFade = null;
+                Snap(id);
+            };
+            timer.Start();
+        }, DispatcherPriority.Render);
+    }
+
     private void EndDrag()
     {
         _pressed = null;
@@ -844,9 +897,15 @@ public sealed class LayoutHost : Decorator
         // The cards are laid out in their final places before the floating snapshot goes, so there is never a
         // frame with the slot empty and the overlay already gone.
         UpdateLayout();
-        _float.IsVisible = false;
-        _float.Classes.Set("lifted", false);
-        _float.Child = null;
+        if (_floatFade)
+        {
+            _floatFade = false;
+            FadeOutFloat();
+        }
+        else if (!_float.Classes.Contains("dropFade"))
+        {
+            HideFloat();
+        }
         if (_pointer is { } pointer)
         {
             _pointer = null;

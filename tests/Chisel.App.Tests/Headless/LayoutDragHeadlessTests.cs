@@ -87,7 +87,8 @@ public class LayoutDragHeadlessTests
 
     private static void AssertNoDragVisuals(Window window)
     {
-        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
+        var floating = Named<Border>(window, "DragFloat");
+        Assert.True(!floating.IsVisible || floating.Classes.Contains("dropFade"));
         Assert.All(Host(window).Frames.SelectMany(c => c), f => Assert.DoesNotContain("dragSource", f.Classes));
         Assert.False(ViewModel(window).Layout.IsDraggingWidget);
     }
@@ -361,41 +362,51 @@ public class LayoutDragHeadlessTests
         Assert.True(floating.BoxShadow[0].OffsetY > 4);
 
         Release(window, Within(window, "tasks", 0.7));
-        Assert.DoesNotContain("lifted", floating.Classes);
         AssertNoDragVisuals(window);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Drop_AnimatesOnlyTheBorderBrush_WithoutFlashingTheCard()
+    public async Task Drop_CrossfadesTheSnapshot_ThenSnapsTheBorder_WithoutFlashingTheCard()
     {
         var window = ShowEditing();
         var frame = Frame(window, "links");
+        var floating = Named<Border>(window, "DragFloat");
         var background = frame.Background;
         Drag(window, "links", Within(window, "tasks", 0.7));
 
-        // Right after the drop the card is fully painted: visible, opaque, content shown, no gap look.
+        // At the drop the snapshot stays, fully opaque, over a card that is already laid out and painted.
+        Assert.True(floating.IsVisible);
+        Assert.Contains("dropFade", floating.Classes);
         Assert.True(frame.IsVisible);
         Assert.Equal(1, frame.Opacity);
-        var normal = Frame(window, "tasks").Content.Opacity;
-        Assert.Equal(normal, frame.Content!.Opacity);
+        Assert.InRange(frame.Content!.Opacity, 0.5, 1);
         Assert.DoesNotContain("dragSource", frame.Classes);
         Assert.Contains("dropped", frame.Classes);
         Assert.Equal(background, frame.Background);
+        Assert.DoesNotContain("snap", frame.Classes);
 
-        // The amber ease runs after the layout update, on the border brush only.
+        // Then the snapshot fades (opacity only) and the border snap waits for it to finish.
         Dispatcher.UIThread.RunJobs();
+        Assert.Contains("fadingOut", floating.Classes);
+        Assert.True(floating.Transitions!.OfType<Avalonia.Animation.DoubleTransition>().Any(t => t.Property == Avalonia.Visual.OpacityProperty && t.Duration.TotalMilliseconds == 150));
+        Assert.DoesNotContain("snap", frame.Classes);
+
+        for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
+        {
+            await Task.Delay(5);
+            Dispatcher.UIThread.RunJobs();
+        }
+        Assert.False(floating.IsVisible);
         Assert.Contains("snap", frame.Classes);
         var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => t.Property == Avalonia.Controls.Border.BorderBrushProperty);
         Assert.Equal(80, border.Duration.TotalMilliseconds);
-        Assert.Equal(normal, frame.Content.Opacity);
-        Assert.True(frame.IsVisible);
+        Assert.InRange(frame.Content.Opacity, 0.5, 1);
 
         await Task.Delay(500);
         Assert.DoesNotContain("snap", frame.Classes);
         Assert.DoesNotContain("snapFade", frame.Classes);
         Assert.DoesNotContain("dropped", frame.Classes);
-        Assert.Equal(normal, frame.Content.Opacity);
         window.Close();
     }
 
@@ -421,8 +432,6 @@ public class LayoutDragHeadlessTests
         var over = Within(window, "tasks", 0.3);
         MoveTo(window, over);
         Release(window, over);
-        // Right after the drop the float is gone only because the card is already in place.
-        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Assert.True(Frame(window, "links").Bounds.Width > 0);
         AssertDark();
         Dispatcher.UIThread.RunJobs();

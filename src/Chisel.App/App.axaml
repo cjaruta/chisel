@@ -118,8 +118,14 @@
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" Easing="CubicEaseOut" />
                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
+        </Style>
+
+        <!-- Drop: the snapshot fades out over the card that is already in place underneath -->
+        <Style Selector="Border.dragFloat.fadingOut">
+            <Setter Property="Opacity" Value="0" />
         </Style>
 
         <Style Selector="Border.dragFloat.lifted">
