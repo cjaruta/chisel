@@ -578,9 +578,9 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    // Amber border: eases in over 140 ms, lingers briefly (200 ms in all), then eases out over about 190 ms.
+    // Amber border: eases in over 200 ms, then eases out over 180 ms (380 ms in all).
     public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(200);
-    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(190);
+    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(180);
 
     // Click into place: once the drop's layout update has rendered, the card's border (only the border) eases to
     // amber and back.
@@ -597,6 +597,12 @@ public sealed class LayoutHost : Decorator
             timer.Tick += (_, _) =>
             {
                 timer.Stop();
+                // The card was removed meanwhile: leave it plain.
+                if (frame.Parent is null)
+                {
+                    frame.Classes.Set("snap", false);
+                    return;
+                }
                 frame.Classes.Set("snap", false);
                 frame.Classes.Set("snapFade", true);
                 var fade = new DispatcherTimer { Interval = SnapFade };

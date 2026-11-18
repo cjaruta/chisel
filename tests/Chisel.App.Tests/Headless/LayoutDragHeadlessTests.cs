@@ -446,12 +446,40 @@ public class LayoutDragHeadlessTests
         Assert.False(floating.IsVisible);
         Assert.Contains("snap", frame.Classes);
         var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => Prop(t) == Avalonia.Controls.Border.BorderBrushProperty);
-        Assert.Equal(140, border.Duration.TotalMilliseconds);
+        Assert.Equal(200, border.Duration.TotalMilliseconds);
+        Assert.IsType<Avalonia.Animation.Easings.CubicEaseInOut>(border.Easing);
         Assert.InRange((LayoutHost.SnapHold + LayoutHost.SnapFade).TotalMilliseconds, 350, 400);
         UiSnapshot.Render(window, "drop-glow-1200x760");
         Assert.InRange(frame.Content.Opacity, 0.5, 1);
 
         await Task.Delay(700);
+        Assert.DoesNotContain("snap", frame.Classes);
+        Assert.DoesNotContain("snapFade", frame.Classes);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task RemovingAWidget_MidSnap_DetachesItWithoutAGhostBorder()
+    {
+        var window = ShowEditing();
+        var frame = Frame(window, "links");
+        Drag(window, "links", Within(window, "tasks", 0.7));
+        for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
+        {
+            await Task.Delay(5);
+            Dispatcher.UIThread.RunJobs();
+        }
+        Assert.Contains("snap", frame.Classes);
+
+        frame.RemoveButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(frame.Parent);
+        Assert.False(frame.GapFill.IsVisible);
+        Assert.DoesNotContain("snap", frame.Classes);
+        // The snap's hold timer fires while the card is gone: it must not mark the detached card.
+        await Task.Delay(260);
+        Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain("snap", frame.Classes);
         Assert.DoesNotContain("snapFade", frame.Classes);
         window.Close();
