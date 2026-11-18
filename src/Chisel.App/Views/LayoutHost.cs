@@ -100,6 +100,11 @@ public sealed class LayoutHost : Decorator
     private IReadOnlyList<Rect> _pickColumns = [];
     private IReadOnlyList<IReadOnlyList<Rect>> _pickWidgets = [];
 
+    private static IBrush BackingBrush() =>
+        Application.Current?.TryFindResource("WindowBackgroundBrush", Application.Current.ActualThemeVariant, out var brush) == true && brush is IBrush b
+            ? b
+            : new SolidColorBrush(Color.Parse("#14161A"));
+
     public LayoutHost()
     {
         _columnHandleLayer = new ColumnHandleLayer(_columns);
@@ -116,7 +121,8 @@ public sealed class LayoutHost : Decorator
         _overlay.Children.Add(_phantom);
         _overlay.Children.Add(_insertLine);
         _overlay.Children.Add(_float);
-        Child = new Panel { Children = { _columns, _columnHandleLayer, _overlay } };
+        // An explicit dark backing, so no layout pass can ever show the default (light) fallback behind the cards.
+        Child = new Panel { Name = "LayoutBacking", Background = BackingBrush(), Children = { _columns, _columnHandleLayer, _overlay } };
     }
 
     public LayoutViewModel? Layout
@@ -817,9 +823,6 @@ public sealed class LayoutHost : Decorator
         _dragging = false;
         _target = null;
         _origin = null;
-        _float.IsVisible = false;
-        _float.Classes.Set("lifted", false);
-        _float.Child = null;
         Cursor = null;
         _newColumnTarget = null;
         _newColumnGaps = [];
@@ -838,6 +841,12 @@ public sealed class LayoutHost : Decorator
             }
         }
         MarkDragSource();
+        // The cards are laid out in their final places before the floating snapshot goes, so there is never a
+        // frame with the slot empty and the overlay already gone.
+        UpdateLayout();
+        _float.IsVisible = false;
+        _float.Classes.Set("lifted", false);
+        _float.Child = null;
         if (_pointer is { } pointer)
         {
             _pointer = null;

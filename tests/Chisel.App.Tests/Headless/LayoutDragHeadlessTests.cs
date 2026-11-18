@@ -400,6 +400,37 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
+    public void Backgrounds_StayDark_AcrossDragAndDrop()
+    {
+        var window = ShowEditing();
+        var backing = Named<Panel>(window, "LayoutBacking");
+
+        void AssertDark()
+        {
+            var brush = Assert.IsAssignableFrom<ISolidColorBrush>(backing.Background);
+            Assert.Equal(Color.Parse("#14161A"), brush.Color);
+            var windowBrush = Assert.IsAssignableFrom<ISolidColorBrush>(window.Background);
+            Assert.Equal(Color.Parse("#14161A"), windowBrush.Color);
+        }
+
+        AssertDark();
+        var from = Bar(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        AssertDark();
+        var over = Within(window, "tasks", 0.3);
+        MoveTo(window, over);
+        Release(window, over);
+        // Right after the drop the float is gone only because the card is already in place.
+        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
+        Assert.True(Frame(window, "links").Bounds.Width > 0);
+        AssertDark();
+        Dispatcher.UIThread.RunJobs();
+        AssertDark();
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Snapshot_Drop()
     {
         var window = ShowEditing();
