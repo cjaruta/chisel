@@ -32,4 +32,17 @@ public class ClockWidgetHeadlessTests
         Assert.Single(window.GetVisualDescendants().OfType<ClockFace>());
         UiSnapshot.Render(window, "clock-widget");
     }
+
+    [AvaloniaFact]
+    public void ApplyingALayoutWithTheClock_OutsideEditMode_ShowsIt()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        var main = (MainViewModel)window.DataContext!;
+        var layout = main.Layout.Layout;
+
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Single(window.GetVisualDescendants().OfType<ClockFace>());
+    }
 }

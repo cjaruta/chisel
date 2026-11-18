@@ -55,7 +55,11 @@ internal static class CaptureMode
                 script.Add((500, () =>
                 {
                     var layout = vm.Layout.Layout;
-                    vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+                    // Already on the saved dashboard? Then it is just there; otherwise show it without saving.
+                    if (layout.Find(WidgetRegistry.Clock) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+                    }
                     face = window.GetVisualDescendants().OfType<ClockFace>().FirstOrDefault();
                     Mark("clock shown");
                 }));
@@ -77,12 +81,13 @@ internal static class CaptureMode
         var end = script[^1].Ms + 2000;
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-        timer.Tick += (_, _) =>
+        void OnTick()
         {
             var ms = clock.ElapsedMilliseconds;
             while (step < script.Count && ms >= script[step].Ms)
             {
-                script[step++].Do();
+                try { script[step++].Do(); }
+                catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); timer.Stop(); exit(); return; }
             }
             if (ms > 400)
             {
@@ -105,6 +110,12 @@ internal static class CaptureMode
                 File.WriteAllLines(Path.Combine(dir, "marks.txt"), marks.Select(m => $"{m.At} {m.Name}"));
                 Task.WhenAll(saves).ContinueWith(_ => Dispatcher.UIThread.Post(() => { if (scenario == "clock" && face is not null) ClockSheet.Write(dir, marks[0].At, frameNo, window, face); else ContactSheet.Write(dir, marks, frameNo); exit(); }));
             }
+        }
+        // Anything thrown while capturing is written to error.txt and the app exits, instead of hanging.
+        timer.Tick += (_, _) =>
+        {
+            try { OnTick(); }
+            catch (Exception ex) { timer.Stop(); File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); exit(); }
         };
         window.Opened += (_, _) => { host = window.GetVisualDescendants().OfType<LayoutHost>().Single(); clock.Restart(); timer.Start(); };
     }
