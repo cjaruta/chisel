@@ -402,18 +402,49 @@
             <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
         </Style>
 
-        <Style Selector="Border.settingsPanel">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BoxShadow" Value="0 6 24 0 #80000000" />
+        <!-- Settings dialog: neutral chrome; amber marks only the selected tab -->
+        <Style Selector="Border.settingsScrim">
+            <Setter Property="Background" Value="#99000000" />
         </Style>
 
-        <!-- Settings: section headings and the palette chooser -->
+        <Style Selector="Border.settingsDialog">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource HoverLineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="BoxShadow" Value="0 12 40 0 #99000000" />
+        </Style>
+
+        <Style Selector="Border.settingsSidebar">
+            <Setter Property="Background" Value="{StaticResource WindowBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+
+        <Style Selector="Button.settingsTab">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.settingsTab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#14FFFFFF" />
+        </Style>
+        <Style Selector="Button.settingsTab.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1FF5A524" />
+            <Setter Property="Foreground" Value="{StaticResource EditAccentBrush}" />
+        </Style>
+
         <Style Selector="TextBlock.settingsSection">
             <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="LetterSpacing" Value="0.6" />
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
             <Setter Property="Margin" Value="0,6,0,0" />
         </Style>
 
@@ -431,8 +462,8 @@
         </Style>
 
         <Style Selector="ListBox.paletteList ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#2A5B8DEF" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Background" Value="#14FFFFFF" />
+            <Setter Property="BorderBrush" Value="{StaticResource DimTextBrush}" />
         </Style>
 
         <Style Selector="Border.paletteChip">

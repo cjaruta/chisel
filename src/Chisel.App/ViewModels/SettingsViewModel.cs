@@ -32,9 +32,25 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial PaletteOption SelectedPalette { get; set; }
 
-    public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab))]
+    public partial SettingsTab SelectedTab { get; set; }
+
+    public bool IsGeneralTab => SelectedTab == SettingsTab.General;
+    public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
+
+    // Widgets that have options, and the one shown on the right of the Widgets tab.
+    public IReadOnlyList<SettingsPage> WidgetPages { get; }
+
+    [ObservableProperty]
+    public partial SettingsPage? SelectedWidgetPage { get; set; }
+
+    public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null,
+        IReadOnlyList<SettingsPage>? pages = null)
     {
         _repository = repository;
+        WidgetPages = pages ?? SettingsPages.Widgets;
+        SelectedWidgetPage = WidgetPages.FirstOrDefault();
         _display = display;
         _palette = palette ?? new PaletteDisplay();
 
@@ -74,6 +90,9 @@ public partial class SettingsViewModel : ViewModelBase
             _repository.Save(settings.WithClockFormat(format));
         }
     }
+
+    [RelayCommand]
+    private void SelectTab(SettingsTab tab) => SelectedTab = tab;
 
     [RelayCommand]
     private void Toggle() => IsOpen = !IsOpen;

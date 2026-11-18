@@ -98,10 +98,10 @@ public class PaletteSettingHeadlessTests
         Named<Button>(window, "SettingsButton").Command!.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        var texts = Named<Border>(window, "SettingsPanel").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.True(texts.IndexOf("General") < texts.IndexOf("Clock format"));
-        Assert.True(texts.IndexOf("Clock format") < texts.IndexOf("Schedule"));
-        Assert.True(texts.IndexOf("Schedule") < texts.IndexOf("Color palette"));
+        var general = Named<Control>(window, "GeneralPage").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Assert.Contains("CLOCK FORMAT", general);
+        ((MainViewModel)window.DataContext!).Settings.SelectTabCommand.Execute(SettingsTab.Widgets);
+        Dispatcher.UIThread.RunJobs();
 
         var items = Named<ListBox>(window, "PaletteList").GetVisualDescendants().OfType<ListBoxItem>().ToList();
         Assert.Equal(new[] { "Default Minimal", "Default Saturated" }, items.Select(i => ((PaletteOption)i.DataContext!).Name));
@@ -116,6 +116,7 @@ public class PaletteSettingHeadlessTests
     {
         var window = Show(null);
         Named<Button>(window, "SettingsButton").Command!.Execute(null);
+        ((MainViewModel)window.DataContext!).Settings.SelectTabCommand.Execute(SettingsTab.Widgets);
         Dispatcher.UIThread.RunJobs();
         AssertDrawnIn(window, BlockPalettes.Minimal);
 
