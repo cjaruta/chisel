@@ -87,8 +87,7 @@ public class DragSnapshotColorTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.Equal(1, floating.Opacity);
-            Assert.Equal(0, frame.Content!.Opacity);
-            Assert.Equal(Avalonia.Media.Color.Parse("#14808080"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(frame.Background).Color);
+            Assert.True(frame.GapFill.IsVisible);
 
             window.MouseUp(from, MouseButton.Left);
             Dispatcher.UIThread.RunJobs();

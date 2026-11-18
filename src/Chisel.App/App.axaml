@@ -96,20 +96,6 @@
 
         <!-- Dragging a widget: a snapshot of it floats with the pointer (slightly larger, soft shadow), and its
              slot is an empty gap the other cards reflow around -->
-        <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="Background" Value="#14808080" />
-            <Setter Property="BorderBrush" Value="#40808080" />
-            <Setter Property="RenderTransform" Value="scale(0.98)" />
-        </Style>
-
-        <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-
-        <Style Selector="Border.widgetFrame.dragSource Grid.editLayer">
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-
         <Style Selector="Border.dragFloat">
             <Setter Property="BoxShadow" Value="0 4 12 0 #60000000" />
             <Setter Property="RenderTransform" Value="scale(1)" />
@@ -159,20 +145,6 @@
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut" />
                 </Transitions>
-            </Setter>
-        </Style>
-
-        <!-- Pick-up: the slot becomes the gap in the same frame the snapshot appears (no fade), so the card never
-             shows twice and no half-faded light fill shows through. Must come after the transition styles above. -->
-        <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="Transitions">
-                <Transitions />
-            </Setter>
-        </Style>
-
-        <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
-            <Setter Property="Transitions">
-                <Transitions />
             </Setter>
         </Style>
 

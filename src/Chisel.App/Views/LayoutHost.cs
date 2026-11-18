@@ -748,10 +748,6 @@ public sealed class LayoutHost : Decorator
         return new Image { Source = bitmap, Stretch = Stretch.Fill };
     }
 
-    private static IEnumerable<Avalonia.Animation.Animatable> DimmedParts(WidgetFrame frame) =>
-        new Avalonia.Animation.Animatable[] { frame, frame.Content }
-            .Concat(((Panel)frame.Child!).Children.OfType<Avalonia.Animation.Animatable>());
-
     // The widget being dragged shows as an empty gap wherever it currently sits in the columns.
     private void MarkDragSource()
     {
@@ -763,20 +759,7 @@ public sealed class LayoutHost : Decorator
             {
                 continue;
             }
-            // Transitions are looked up before the class's own "no transitions" style applies, so the old ones would
-            // still fade the card to its dimmed look (pale in between). Switch them off locally first; give them
-            // back before the class is removed so the drop and edit-mode exit behave as before.
-            foreach (var animated in DimmedParts(frame))
-            {
-                if (source)
-                {
-                    animated.Transitions = new Avalonia.Animation.Transitions();
-                }
-                else
-                {
-                    animated.ClearValue(Avalonia.Animation.Animatable.TransitionsProperty);
-                }
-            }
+            frame.GapFill.IsVisible = source;
             frame.Classes.Set("dragSource", source);
         }
     }

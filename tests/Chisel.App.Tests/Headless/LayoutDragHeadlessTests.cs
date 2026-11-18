@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -93,26 +95,49 @@ public class LayoutDragHeadlessTests
         Assert.False(ViewModel(window).Layout.IsDraggingWidget);
     }
 
+    private static AvaloniaProperty Prop(ITransition t) => (AvaloniaProperty)t.GetType().GetProperty("Property")!.GetValue(t)!;
+
+    private static string Show(object? value) =>
+        value is ISolidColorBrush solid ? $"#{solid.Color.ToUInt32():X8}" : value?.ToString() ?? "null";
+
+    // Every control in the card (template parts included) with a transition on a property that the pick-up changes.
     [AvaloniaFact]
-    public async Task PickUp_DimsTheOriginalSlotInstantly_WithNoInBetweenLook()
+    public async Task PickUp_ChangesNoPropertyThatHasATransition()
     {
         var window = ShowEditing();
-        var from = Bar(window, "links");
+        await Task.Delay(600); // edit mode has finished easing in
+        Dispatcher.UIThread.RunJobs();
         var card = Frame(window, "links");
+        var parts = new Visual[] { card }.Concat(card.GetVisualDescendants()).OfType<Animatable>().ToList();
+        var before = parts.ToDictionary(p => p, p => p.Transitions?.Select(t => (t, Show(p.GetValue(Prop(t))))).ToList());
+
+        var from = Bar(window, "links");
         Press(window, from);
         MoveTo(window, new Point(from.X + 10, from.Y + 10));
+        var inEffect = parts.ToDictionary(p => p, p => p.Transitions?.ToList());
+        await Task.Delay(600);
+        Dispatcher.UIThread.RunJobs();
 
-        for (var i = 0; i < 6; i++)
+        var offenders = new List<string>();
+        foreach (var part in parts)
         {
-            Assert.Contains("dragSource", card.Classes);
-            Assert.Equal(0, card.Content.Opacity);
-            Assert.Equal(Color.Parse("#14808080"), ((ISolidColorBrush)card.Background!).Color);
-            Assert.Equal(Color.Parse("#40808080"), ((ISolidColorBrush)card.BorderBrush!).Color);
-            await Task.Delay(50);
-            Dispatcher.UIThread.RunJobs();
+            foreach (var transition in inEffect[part] ?? [])
+            {
+                var was = before[part]?.FirstOrDefault(b => Prop(b.t) == Prop(transition)).Item2
+                          ?? Show(part.GetValue(Prop(transition)));
+                var now = Show(part.GetValue(Prop(transition)));
+                if (was != now)
+                {
+                    var name = (part as Control)?.Name;
+                    var classes = part is StyledElement s ? string.Join('.', s.Classes) : "";
+                    offenders.Add($"{part.GetType().Name} '{name}' [{classes}] {Prop(transition).Name}: {was} -> {now}, {transition.GetType().Name} {transition.GetType().GetProperty("Duration")?.GetValue(transition)}");
+                }
+            }
         }
+        Assert.True(card.GapFill.IsVisible && card.GapFill.Opacity == 1);
         Release(window, from);
         window.Close();
+        Assert.True(offenders.Count == 0, "Transitions on changed properties:\n" + string.Join("\n", offenders));
     }
 
     [AvaloniaFact]
@@ -411,7 +436,7 @@ public class LayoutDragHeadlessTests
         // Then the snapshot fades (opacity only) and the border snap waits for it to finish.
         Dispatcher.UIThread.RunJobs();
         Assert.Contains("fadingOut", floating.Classes);
-        Assert.True(floating.Transitions!.OfType<Avalonia.Animation.DoubleTransition>().Any(t => t.Property == Avalonia.Visual.OpacityProperty && t.Duration.TotalMilliseconds == 150));
+        Assert.True(floating.Transitions!.OfType<Avalonia.Animation.DoubleTransition>().Any(t => Prop(t) == Avalonia.Visual.OpacityProperty && t.Duration.TotalMilliseconds == 150));
         Assert.DoesNotContain("snap", frame.Classes);
 
         for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
@@ -421,7 +446,7 @@ public class LayoutDragHeadlessTests
         }
         Assert.False(floating.IsVisible);
         Assert.Contains("snap", frame.Classes);
-        var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => t.Property == Avalonia.Controls.Border.BorderBrushProperty);
+        var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => Prop(t) == Avalonia.Controls.Border.BorderBrushProperty);
         Assert.Equal(80, border.Duration.TotalMilliseconds);
         Assert.InRange(frame.Content.Opacity, 0.5, 1);
 
