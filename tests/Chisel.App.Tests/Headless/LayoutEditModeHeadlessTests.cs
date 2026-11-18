@@ -266,7 +266,9 @@ public class LayoutEditModeHeadlessTests
         ViewModel(window).Schedule.AddBlockCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        EnterEditMode(window);
+        // The settings dialog is modal and covers the toolbar buttons, so use the command directly.
+        ViewModel(window).CustomizeLayoutCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
 
         Assert.False(Named<Border>(window, "SettingsPanel").IsVisible);
         Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);

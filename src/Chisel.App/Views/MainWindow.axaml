@@ -88,44 +88,54 @@
             </StackPanel>
         </Border>
 
-        <!-- Settings panel: floats over the content, below the gear button -->
-        <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="card settingsPanel"
-                IsVisible="{Binding Settings.IsOpen}" ZIndex="10"
-                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,44,0,0" Width="280">
-            <StackPanel Spacing="10">
-                <TextBlock Classes="cardHeading" Text="Settings" />
+        <!-- Settings dialog: a centered 720x520 card over a dimmed page; Esc or Close dismisses it -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="settingsScrim"
+                IsVisible="{Binding Settings.IsOpen}" ZIndex="10" Margin="-20">
+            <Border Classes="settingsDialog" Width="720" Height="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="180,*">
+                    <Border Classes="settingsSidebar">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="cardHeading" Text="Settings" Margin="12,4,0,12" />
+                            <Button Name="GeneralTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsGeneralTab}"
+                                    Content="General" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.General}" />
+                            <Button Name="WidgetsTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsWidgetsTab}"
+                                    Content="Widgets" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.Widgets}" />
+                        </StackPanel>
+                    </Border>
 
-                <TextBlock Classes="settingsSection" Text="General" />
-                <TextBlock Classes="dim" Text="Clock format" />
-                <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
-                <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+                    <Grid Grid.Column="1" RowDefinitions="*,Auto" Margin="24,20">
+                        <!-- General: settings that are not about one widget -->
+                        <StackPanel Name="GeneralPage" Spacing="10" IsVisible="{Binding Settings.IsGeneralTab}">
+                            <TextBlock Classes="cardHeading" Text="General" />
+                            <TextBlock Classes="settingsSection" Text="CLOCK FORMAT" />
+                            <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
+                            <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+                        </StackPanel>
 
-                <TextBlock Classes="settingsSection" Text="Schedule" />
-                <TextBlock Classes="dim" Text="Color palette" />
-                <!-- Each palette shows a strip of its eight colors; choosing one recolors the schedule right away -->
-                <ListBox Name="PaletteList" Classes="paletteList" ItemsSource="{Binding Settings.PaletteOptions}"
-                         SelectedItem="{Binding Settings.SelectedPalette}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:PaletteOption">
-                            <StackPanel Spacing="5">
-                                <TextBlock Text="{Binding Name}" />
-                                <ItemsControl ItemsSource="{Binding Preview}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="IBrush">
-                                            <Border Classes="paletteChip" Background="{Binding}" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                        <!-- Widgets: the widgets that have options, and the selected one's page -->
+                        <Grid Name="WidgetsPage" ColumnDefinitions="150,*" IsVisible="{Binding Settings.IsWidgetsTab}">
+                            <ListBox Name="WidgetPageList" Classes="paletteList" Margin="0,0,16,0"
+                                     ItemsSource="{Binding Settings.WidgetPages}" SelectedItem="{Binding Settings.SelectedWidgetPage}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SettingsPage">
+                                        <TextBlock Text="{Binding Title}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <ScrollViewer Grid.Column="1">
+                                <ContentControl Name="WidgetPageHost"
+                                                Content="{Binding Settings.SelectedWidgetPage, Converter={x:Static conv:PageViewConverter.Instance}}" />
+                            </ScrollViewer>
+                        </Grid>
 
-                <Button Content="Close" HorizontalAlignment="Right" Command="{Binding Settings.CloseCommand}" />
-            </StackPanel>
+                        <Button Name="SettingsCloseButton" Grid.Row="1" Content="Close" HorizontalAlignment="Right"
+                                Command="{Binding Settings.CloseCommand}" />
+                    </Grid>
+                </Grid>
+            </Border>
         </Border>
     </Grid>
     </Panel>

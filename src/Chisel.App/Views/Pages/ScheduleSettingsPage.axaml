@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.ScheduleSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="COLOR PALETTE" />
+        <!-- Each palette shows a strip of its eight colors; choosing one recolors the schedule right away -->
+        <ListBox Name="PaletteList" Classes="paletteList" ItemsSource="{Binding Settings.PaletteOptions}"
+                 SelectedItem="{Binding Settings.SelectedPalette}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:PaletteOption">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Name}" />
+                        <ItemsControl ItemsSource="{Binding Preview}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="IBrush">
+                                    <Border Classes="paletteChip" Background="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </StackPanel>
+</UserControl>
