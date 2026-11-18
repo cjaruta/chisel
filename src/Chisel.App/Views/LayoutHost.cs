@@ -735,40 +735,7 @@ public sealed class LayoutHost : Decorator
         _float.UpdateLayout();
         _float.Classes.Set("lifted", true);
         Cursor = DraggingCursor;
-        var dbg = DragDebug();
-        if (dbg.Count > 0) ApplyDragDebug(dbg, frame);
-        if (!dbg.Contains("nodim")) MarkDragSource();
-    }
-
-    // TEMP drag debug: CHISEL_DRAG_DEBUG=nosnapshot,nodim,noanim,noshadow,opaque. Delete with its two call sites.
-    private static HashSet<string> DragDebug() =>
-        (Environment.GetEnvironmentVariable("CHISEL_DRAG_DEBUG") ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(s => s.ToLowerInvariant()).ToHashSet();
-
-    private void ApplyDragDebug(HashSet<string> dbg, WidgetFrame? frame)
-    {
-        if (dbg.Contains("nosnapshot")) _float.IsVisible = false;
-        if (dbg.Contains("noshadow"))
-        {
-            _float.BoxShadow = default;
-            _float.RenderTransform = null;
-        }
-        if (dbg.Contains("opaque") && _float.Child is Control child)
-        {
-            _float.Child = null;
-            _float.Child = new Border { Background = new SolidColorBrush(Color.Parse("#1F222A")), CornerRadius = new CornerRadius(12), Child = child };
-        }
-        if (dbg.Contains("noanim"))
-        {
-            _float.Transitions = new Avalonia.Animation.Transitions();
-            foreach (var f in Frames.SelectMany(c => c))
-            {
-                f.Transitions = new Avalonia.Animation.Transitions();
-                foreach (var v in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(f).OfType<Avalonia.Animation.Animatable>())
-                    v.Transitions = new Avalonia.Animation.Transitions();
-            }
-        }
+        MarkDragSource();
     }
 
     // The widget as a bitmap, taken before its slot turns into a gap.
@@ -781,13 +748,36 @@ public sealed class LayoutHost : Decorator
         return new Image { Source = bitmap, Stretch = Stretch.Fill };
     }
 
+    private static IEnumerable<Avalonia.Animation.Animatable> DimmedParts(WidgetFrame frame) =>
+        new Avalonia.Animation.Animatable[] { frame, frame.Content }
+            .Concat(((Panel)frame.Child!).Children.OfType<Avalonia.Animation.Animatable>());
+
     // The widget being dragged shows as an empty gap wherever it currently sits in the columns.
     private void MarkDragSource()
     {
         var id = _dragging ? Layout?.DraggedWidgetId : null;
         foreach (var (widgetId, frame) in _frames)
         {
-            frame.Classes.Set("dragSource", widgetId == id);
+            var source = widgetId == id;
+            if (source == frame.Classes.Contains("dragSource"))
+            {
+                continue;
+            }
+            // Transitions are looked up before the class's own "no transitions" style applies, so the old ones would
+            // still fade the card to its dimmed look (pale in between). Switch them off locally first; give them
+            // back before the class is removed so the drop and edit-mode exit behave as before.
+            foreach (var animated in DimmedParts(frame))
+            {
+                if (source)
+                {
+                    animated.Transitions = new Avalonia.Animation.Transitions();
+                }
+                else
+                {
+                    animated.ClearValue(Avalonia.Animation.Animatable.TransitionsProperty);
+                }
+            }
+            frame.Classes.Set("dragSource", source);
         }
     }
 

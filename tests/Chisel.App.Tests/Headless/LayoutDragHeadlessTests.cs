@@ -94,6 +94,28 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
+    public async Task PickUp_DimsTheOriginalSlotInstantly_WithNoInBetweenLook()
+    {
+        var window = ShowEditing();
+        var from = Bar(window, "links");
+        var card = Frame(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+
+        for (var i = 0; i < 6; i++)
+        {
+            Assert.Contains("dragSource", card.Classes);
+            Assert.Equal(0, card.Content.Opacity);
+            Assert.Equal(Color.Parse("#14808080"), ((ISolidColorBrush)card.Background!).Color);
+            Assert.Equal(Color.Parse("#40808080"), ((ISolidColorBrush)card.BorderBrush!).Color);
+            await Task.Delay(50);
+            Dispatcher.UIThread.RunJobs();
+        }
+        Release(window, from);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Widget_ShowsAMoveCursor()
     {
         var window = ShowEditing();
