@@ -551,10 +551,6 @@ public sealed class LayoutHost : Decorator
     private void Drop(LayoutViewModel layout)
     {
         var id = layout.DraggedWidgetId;
-        if (id is not null && (_newColumnTarget is not null || _target is not null) && _frames.TryGetValue(id, out var dropping))
-        {
-            dropping.Classes.Set("dropped", true);
-        }
         if (_newColumnTarget is { } newColumn)
         {
             _floatFade = true;
@@ -578,15 +574,13 @@ public sealed class LayoutHost : Decorator
     public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(230);
 
     // Click into place: once the drop's layout update has rendered, the card's border (only the border) eases to
-    // amber and back. The card is marked "dropped" first so its content shows at once instead of fading up from the
-    // empty gap the moment the floating snapshot goes away.
+    // amber and back.
     private void Snap(string? widgetId)
     {
         if (widgetId is null || !_frames.TryGetValue(widgetId, out var frame))
         {
             return;
         }
-        frame.Classes.Set("dropped", true);
         Dispatcher.UIThread.Post(() =>
         {
             frame.Classes.Set("snap", true);
@@ -601,7 +595,6 @@ public sealed class LayoutHost : Decorator
                 {
                     fade.Stop();
                     frame.Classes.Set("snapFade", false);
-                    frame.Classes.Set("dropped", false);
                 };
                 fade.Start();
             };

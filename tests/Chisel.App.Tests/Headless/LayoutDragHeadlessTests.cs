@@ -429,7 +429,6 @@ public class LayoutDragHeadlessTests
         Assert.Equal(1, frame.Opacity);
         Assert.InRange(frame.Content!.Opacity, 0.5, 1);
         Assert.DoesNotContain("dragSource", frame.Classes);
-        Assert.Contains("dropped", frame.Classes);
         Assert.Equal(background, frame.Background);
         Assert.DoesNotContain("snap", frame.Classes);
 
@@ -453,7 +452,6 @@ public class LayoutDragHeadlessTests
         await Task.Delay(500);
         Assert.DoesNotContain("snap", frame.Classes);
         Assert.DoesNotContain("snapFade", frame.Classes);
-        Assert.DoesNotContain("dropped", frame.Classes);
         window.Close();
     }
 

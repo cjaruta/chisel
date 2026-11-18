@@ -148,13 +148,6 @@
             </Setter>
         </Style>
 
-        <!-- Drop: the content shows at once (no fade up from the empty gap) while the floating snapshot goes away -->
-        <Style Selector="Border.widgetFrame.dropped DockPanel.widgetContent">
-            <Setter Property="Transitions">
-                <Transitions />
-            </Setter>
-        </Style>
-
         <!-- Drop snap: only the border brush animates, softly to amber (about 80 ms) and back (about 220 ms) -->
         <Style Selector="Border.widgetFrame.snap">
             <Setter Property="BorderBrush" Value="#80F5A524" />
