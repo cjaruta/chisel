@@ -148,12 +148,13 @@
             </Setter>
         </Style>
 
-        <!-- Drop snap: only the border brush animates, softly to amber (140 ms), lingers, then back (190 ms) -->
+        <!-- Drop snap: only the border brush animates, eases to amber (200 ms), then back (180 ms) -->
         <Style Selector="Border.widgetFrame.snap">
-            <Setter Property="BorderBrush" Value="#B0F5A524" />            <Setter Property="Transitions">
+            <Setter Property="BorderBrush" Value="#B0F5A524" />
+            <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="QuadraticEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseInOut" />
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
@@ -163,7 +164,7 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.19" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.18" Easing="CubicEaseInOut" />
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
