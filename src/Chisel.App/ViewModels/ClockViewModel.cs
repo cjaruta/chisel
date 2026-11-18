@@ -13,8 +13,6 @@ public partial class ClockViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(TimeText))]
     public partial DateTimeOffset Now { get; set; }
 
-    public TimeProvider Time => _time;
-
     public string TimeText => _display.Time(TimeOnly.FromDateTime(Now.DateTime), withSeconds: true);
 
     public ClockViewModel(TimeProvider time, TimeDisplay? display = null)

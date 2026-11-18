@@ -4,20 +4,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Chisel.App.ViewModels;
 
-// Fires once per second while running. A seam so tests can drive the clock without waiting.
-public interface ITickTimer
-{
-    event Action? Tick;
-    void Start();
-    void Stop();
-}
-
-// The analog clock widget's hands, in degrees clockwise from 12, following local time while attached.
+// The analog clock widget's hands, in degrees clockwise from 12. They follow the header clock, which the
+// window's existing 1-second refresh updates, so there is no timer of its own.
 public partial class AnalogClockViewModel : ViewModelBase
 {
-    private readonly TimeProvider _time;
-    private readonly ITickTimer _timer;
-    private bool _attached;
+    private readonly ClockViewModel _clock;
 
     [ObservableProperty]
     public partial double HourAngle { get; private set; }
@@ -28,41 +19,22 @@ public partial class AnalogClockViewModel : ViewModelBase
     [ObservableProperty]
     public partial double SecondAngle { get; private set; }
 
-    public AnalogClockViewModel(TimeProvider time, ITickTimer timer)
+    public AnalogClockViewModel(ClockViewModel clock)
     {
-        _time = time;
-        _timer = timer;
-        Update();
-    }
-
-    // Shows the current time and starts ticking. Safe to call twice.
-    public void Attach()
-    {
-        if (_attached)
+        _clock = clock;
+        _clock.PropertyChanged += (_, e) =>
         {
-            return;
-        }
-        _attached = true;
+            if (e.PropertyName == nameof(ClockViewModel.Now))
+            {
+                Update();
+            }
+        };
         Update();
-        _timer.Tick += Update;
-        _timer.Start();
-    }
-
-    // Stops ticking and lets go of the timer.
-    public void Detach()
-    {
-        if (!_attached)
-        {
-            return;
-        }
-        _attached = false;
-        _timer.Stop();
-        _timer.Tick -= Update;
     }
 
     private void Update()
     {
-        var angles = ClockMath.ClockAngles(TimeOnly.FromDateTime(_time.GetLocalNow().DateTime));
+        var angles = ClockMath.ClockAngles(TimeOnly.FromDateTime(_clock.Now.DateTime));
         HourAngle = angles.Hour;
         MinuteAngle = angles.Minute;
         SecondAngle = angles.Second;

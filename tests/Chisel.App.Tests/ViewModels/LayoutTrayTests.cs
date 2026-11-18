@@ -115,7 +115,7 @@ public class LayoutTrayTests
     public void Tray_OpensWhenAWidgetIsRemoved_AndOnEnteringEditModeWithWidgetsHidden()
     {
         var layout = Editing();
-        Assert.True(layout.IsTrayOpen); // the clock waits in the tray from the start
+        Assert.False(layout.IsTrayOpen); // only the clock is hidden: the tray stays closed
 
         layout.RemoveWidget("notes");
         Assert.True(layout.IsTrayOpen);

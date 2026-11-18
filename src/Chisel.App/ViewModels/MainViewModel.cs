@@ -5,6 +5,7 @@ namespace Chisel.App.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     public ClockViewModel Clock { get; }
+    public AnalogClockViewModel AnalogClock { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -24,6 +25,7 @@ public partial class MainViewModel : ViewModelBase
         LayoutViewModel? layout = null)
     {
         Clock = clock;
+        AnalogClock = new AnalogClockViewModel(clock);
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;

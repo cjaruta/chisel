@@ -1,3 +1,4 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -5,12 +6,12 @@ using Chisel.App.ViewModels;
 
 namespace Chisel.App.Views.Widgets;
 
-// The analog clock widget: just a face. It ticks only while it is on screen (attached to the window), and the
-// face ignores the mouse so the whole widget stays a drag handle in edit mode.
+// The analog clock widget: just a face, following MainViewModel.AnalogClock while it is on screen. The face
+// ignores the mouse so the whole widget stays a drag handle in edit mode.
 public sealed class ClockWidgetView : WidgetView
 {
     private readonly ClockFace _face = new() { IsHitTestVisible = false };
-    private AnalogClockViewModel? _clock;
+    private IDisposable[] _bindings = [];
 
     public ClockWidgetView()
     {
@@ -24,17 +25,21 @@ public sealed class ClockWidgetView : WidgetView
         {
             return;
         }
-        _clock = new AnalogClockViewModel(main.Clock.Time, new DispatcherTickTimer(main.Clock.Time));
-        _face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = _clock });
-        _face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = _clock });
-        _face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = _clock });
-        _clock.Attach();
+        _bindings =
+        [
+            _face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = main.AnalogClock }),
+            _face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = main.AnalogClock }),
+            _face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = main.AnalogClock }),
+        ];
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _clock?.Detach();
-        _clock = null;
+        foreach (var binding in _bindings)
+        {
+            binding.Dispose();
+        }
+        _bindings = [];
         base.OnDetachedFromVisualTree(e);
     }
 }
