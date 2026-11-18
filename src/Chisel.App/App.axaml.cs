@@ -40,7 +40,9 @@ public partial class App : Application
                     new NotesViewModel(_services.Notes, _services.Time, timeDisplay),
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,
-                    new LayoutViewModel(_services.WidgetLayout));
+                    new LayoutViewModel(_services.WidgetLayout),
+                    new WeatherViewModel(new Services.FakeWeatherService(), _services.Time));
+                _ = mainViewModel.Weather.LoadAsync();
 
                 desktop.MainWindow = new MainWindow
                 {

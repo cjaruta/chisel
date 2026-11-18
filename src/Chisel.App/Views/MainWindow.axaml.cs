@@ -75,6 +75,13 @@ public partial class MainWindow : Window
         {
             return;
         }
+        // Many tray cards scroll sideways instead of pushing the toolbar into the buttons on the right.
+        if (CustomizeLayoutButton.TranslatePoint(default, area) is { } gear)
+        {
+            var chrome = LayoutToolbar.Bounds.Width - TrayScroll.Bounds.Width;
+            var room = gear.X - 8 - (ClockPanel.Bounds.Right + 16) - chrome;
+            TrayScroll.MaxWidth = Math.Max(120, room);
+        }
         var centered = (area.Bounds.Width - LayoutToolbar.Bounds.Width) / 2;
         var left = Math.Max(centered, ClockPanel.Bounds.Right + 16);
         LayoutToolbar.Margin = new Thickness(left, LayoutToolbar.Margin.Top, 0, 0);
