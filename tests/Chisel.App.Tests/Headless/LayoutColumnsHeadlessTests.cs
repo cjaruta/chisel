@@ -34,7 +34,9 @@ public class LayoutColumnsHeadlessTests
     private static MainViewModel ViewModel(Window window) => (MainViewModel)window.DataContext!;
 
     private static Rect InWindow(Visual visual, Window window) =>
-        new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
+        // Measured from the center so a widget's own scale (the home slot's inset) doesn't count as movement.
+        new(visual.TranslatePoint(new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), window)!.Value
+            - new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), visual.Bounds.Size);
 
     private static MainWindow ShowEditing(double width = 1200, double height = 760)
     {

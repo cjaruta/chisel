@@ -30,7 +30,9 @@ public class LayoutDragHeadlessTests
     private static MainViewModel ViewModel(Window window) => (MainViewModel)window.DataContext!;
 
     private static Rect InWindow(Visual visual, Window window) =>
-        new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
+        // Measured from the center so a widget's own scale (the home slot's inset) doesn't count as movement.
+        new(visual.TranslatePoint(new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), window)!.Value
+            - new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), visual.Bounds.Size);
 
     private static MainWindow ShowEditing(double width = 1200, double height = 760)
     {
@@ -339,11 +341,30 @@ public class LayoutDragHeadlessTests
 
         MoveTo(window, new Point(from.X + 20, from.Y - 20));
         Assert.Contains("lifted", floating.Classes);
-        var scale = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform);
-        Assert.InRange(scale.Value.M11, 1.0001, 1.02);
+        var lifted = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform).Value;
+        Assert.InRange(Math.Sqrt(lifted.M11 * lifted.M11 + lifted.M12 * lifted.M12), 1.0001, 1.035);
+        Assert.InRange(Math.Abs(Math.Atan2(lifted.M12, lifted.M11) * 180 / Math.PI), 0.0001, 1.5);
         Assert.True(floating.BoxShadow[0].OffsetY > 4);
 
         Release(window, Within(window, "tasks", 0.7));
+        Assert.DoesNotContain("lifted", floating.Classes);
+        AssertNoDragVisuals(window);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Cancelled_Drag_LevelsTheFloat()
+    {
+        var window = ShowEditing();
+        var floating = Named<Border>(window, "DragFloat");
+        var from = Bar(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        Assert.Contains("lifted", floating.Classes);
+
+        ViewModel(window).Layout.CancelCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
         Assert.DoesNotContain("lifted", floating.Classes);
         AssertNoDragVisuals(window);
         window.Close();

@@ -728,7 +728,7 @@ public sealed class LayoutHost : Decorator
         _newColumnTarget = LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps);
         _target = _newColumnTarget is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
 
-        _phantom.IsVisible = _newColumnTarget is not null;
+        SetActive(_phantom, _newColumnTarget is not null);
         if (_newColumnTarget is { } gap)
         {
             var rect = LayoutDropTargets.PhantomColumn(gap, _pickColumns, Bounds.Width, Gap);
@@ -740,7 +740,7 @@ public sealed class LayoutHost : Decorator
 
         // A gap that would put the widget back where it was gets no line: its slot already shows as the home placeholder.
         var showLine = _target is { } hovered && !LayoutDropTargets.IsHome(hovered, _origin);
-        _insertLine.IsVisible = showLine;
+        SetActive(_insertLine, showLine);
         if (showLine && _target is { } t)
         {
             var column = _pickColumns[t.Column];
@@ -748,6 +748,22 @@ public sealed class LayoutHost : Decorator
             Canvas.SetLeft(_insertLine, column.Left);
             Canvas.SetTop(_insertLine, LayoutDropTargets.InsertionY(column, _pickWidgets[t.Column], t.Index, Gap) - 1.5);
         }
+    }
+
+    // Shows a drop target at rest first, then activates it, so the style eases it in (~120 ms).
+    private static void SetActive(Border target, bool active)
+    {
+        if (active && !target.IsVisible)
+        {
+            target.Classes.Set("active", false);
+            target.IsVisible = true;
+            target.UpdateLayout();
+        }
+        else if (!active)
+        {
+            target.IsVisible = false;
+        }
+        target.Classes.Set("active", active);
     }
 
     private void EndDrag()
@@ -763,8 +779,8 @@ public sealed class LayoutHost : Decorator
         Cursor = null;
         _newColumnTarget = null;
         _newColumnGaps = [];
-        _phantom.IsVisible = false;
-        _insertLine.IsVisible = false;
+        SetActive(_phantom, false);
+        SetActive(_insertLine, false);
         // Put the columns back as the layout has them (after a drop, the layout already has the new order).
         if (Layout is not null)
         {
