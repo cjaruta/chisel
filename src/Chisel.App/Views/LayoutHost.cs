@@ -545,6 +545,10 @@ public sealed class LayoutHost : Decorator
     private void Drop(LayoutViewModel layout)
     {
         var id = layout.DraggedWidgetId;
+        if (id is not null && (_newColumnTarget is not null || _target is not null) && _frames.TryGetValue(id, out var dropping))
+        {
+            dropping.Classes.Set("dropped", true);
+        }
         if (_newColumnTarget is { } newColumn)
         {
             layout.DropWidgetInNewColumn(newColumn);
@@ -561,33 +565,40 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    // The amber hold and the fade back to neutral: about 210 ms in all.
-    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(60);
-    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(150);
+    // Amber border: eases in over about 80 ms, holds briefly, then eases back out over about 220 ms.
+    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(120);
+    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(230);
 
-    // Click into place: the card's border flashes amber, then the style fades it back to neutral.
+    // Click into place: once the drop's layout update has rendered, the card's border (only the border) eases to
+    // amber and back. The card is marked "dropped" first so its content shows at once instead of fading up from the
+    // empty gap the moment the floating snapshot goes away.
     private void Snap(string? widgetId)
     {
         if (widgetId is null || !_frames.TryGetValue(widgetId, out var frame))
         {
             return;
         }
-        frame.Classes.Set("snap", true);
-        var timer = new DispatcherTimer { Interval = SnapHold };
-        timer.Tick += (_, _) =>
+        frame.Classes.Set("dropped", true);
+        Dispatcher.UIThread.Post(() =>
         {
-            timer.Stop();
-            frame.Classes.Set("snap", false);
-            frame.Classes.Set("snapFade", true);
-            var fade = new DispatcherTimer { Interval = SnapFade };
-            fade.Tick += (_, _) =>
+            frame.Classes.Set("snap", true);
+            var timer = new DispatcherTimer { Interval = SnapHold };
+            timer.Tick += (_, _) =>
             {
-                fade.Stop();
-                frame.Classes.Set("snapFade", false);
+                timer.Stop();
+                frame.Classes.Set("snap", false);
+                frame.Classes.Set("snapFade", true);
+                var fade = new DispatcherTimer { Interval = SnapFade };
+                fade.Tick += (_, _) =>
+                {
+                    fade.Stop();
+                    frame.Classes.Set("snapFade", false);
+                    frame.Classes.Set("dropped", false);
+                };
+                fade.Start();
             };
-            fade.Start();
-        };
-        timer.Start();
+            timer.Start();
+        }, DispatcherPriority.Render);
     }
 
     private void OnBarPressed(WidgetFrame frame, PointerPressedEventArgs e)

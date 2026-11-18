@@ -156,13 +156,20 @@
             </Setter>
         </Style>
 
-        <!-- Drop snap: a soft amber border at once, then it fades back to neutral (the border transition is left
-             out while the class is on, so it only runs when the class comes off; snapFade sets its length) -->
+        <!-- Drop: the content shows at once (no fade up from the empty gap) while the floating snapshot goes away -->
+        <Style Selector="Border.widgetFrame.dropped DockPanel.widgetContent">
+            <Setter Property="Transitions">
+                <Transitions />
+            </Setter>
+        </Style>
+
+        <!-- Drop snap: only the border brush animates, softly to amber (about 80 ms) and back (about 220 ms) -->
         <Style Selector="Border.widgetFrame.snap">
             <Setter Property="BorderBrush" Value="#80F5A524" />
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.08" Easing="CubicEaseOut" />
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
@@ -172,7 +179,7 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.22" Easing="CubicEaseOut" />
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>

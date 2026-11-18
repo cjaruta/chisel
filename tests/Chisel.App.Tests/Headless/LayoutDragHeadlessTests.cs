@@ -197,6 +197,18 @@ public class LayoutDragHeadlessTests
     private static Rect[] Positions(Window window) =>
         Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
 
+    private static void AssertSamePositions(Rect[] expected, Rect[] actual)
+    {
+        Assert.Equal(expected.Length, actual.Length);
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].X, actual[i].X, 2);
+            Assert.Equal(expected[i].Y, actual[i].Y, 2);
+            Assert.Equal(expected[i].Width, actual[i].Width, 2);
+            Assert.Equal(expected[i].Height, actual[i].Height, 2);
+        }
+    }
+
     [AvaloniaFact]
     public void CrossingAMidline_MovesTheIndicator_NotTheBoard()
     {
@@ -217,11 +229,11 @@ public class LayoutDragHeadlessTests
         MoveTo(window, belowMiddle);
         Assert.True(line.IsVisible);
         Assert.InRange(InWindow(line, window).Center.Y, tasks.Bottom - 2, tasks.Bottom + 20);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
 
         MoveTo(window, aboveMiddle);
         Assert.InRange(InWindow(line, window).Center.Y, tasks.Top - 20, tasks.Top + 2);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
 
         Release(window, aboveMiddle);
         Assert.False(line.IsVisible);
@@ -296,7 +308,7 @@ public class LayoutDragHeadlessTests
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Dispatcher.UIThread.RunJobs();
         AssertNoDragVisuals(window);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
         Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
         Release(window, over);
 
@@ -355,19 +367,35 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
-    public async Task Drop_SnapsTheBorderAmber_ThenFadesBack_WithoutFlashingTheCard()
+    public async Task Drop_AnimatesOnlyTheBorderBrush_WithoutFlashingTheCard()
     {
         var window = ShowEditing();
         var frame = Frame(window, "links");
+        var background = frame.Background;
         Drag(window, "links", Within(window, "tasks", 0.7));
 
-        Assert.Contains("snap", frame.Classes);
-        Assert.Equal(Color.Parse("#80F5A524"), Assert.IsAssignableFrom<ISolidColorBrush>(frame.BorderBrush).Color);
+        // Right after the drop the card is fully painted: visible, opaque, content shown, no gap look.
+        Assert.True(frame.IsVisible);
         Assert.Equal(1, frame.Opacity);
+        var normal = Frame(window, "tasks").Content.Opacity;
+        Assert.Equal(normal, frame.Content!.Opacity);
         Assert.DoesNotContain("dragSource", frame.Classes);
+        Assert.Contains("dropped", frame.Classes);
+        Assert.Equal(background, frame.Background);
 
-        await Task.Delay(300);
+        // The amber ease runs after the layout update, on the border brush only.
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains("snap", frame.Classes);
+        var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => t.Property == Avalonia.Controls.Border.BorderBrushProperty);
+        Assert.Equal(80, border.Duration.TotalMilliseconds);
+        Assert.Equal(normal, frame.Content.Opacity);
+        Assert.True(frame.IsVisible);
+
+        await Task.Delay(500);
         Assert.DoesNotContain("snap", frame.Classes);
+        Assert.DoesNotContain("snapFade", frame.Classes);
+        Assert.DoesNotContain("dropped", frame.Classes);
+        Assert.Equal(normal, frame.Content.Opacity);
         window.Close();
     }
 
