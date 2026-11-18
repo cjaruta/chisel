@@ -162,6 +162,20 @@
             </Setter>
         </Style>
 
+        <!-- Pick-up: the slot becomes the gap in the same frame the snapshot appears (no fade), so the card never
+             shows twice and no half-faded light fill shows through. Must come after the transition styles above. -->
+        <Style Selector="Border.widgetFrame.dragSource">
+            <Setter Property="Transitions">
+                <Transitions />
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
+            <Setter Property="Transitions">
+                <Transitions />
+            </Setter>
+        </Style>
+
         <!-- Drop: the content shows at once (no fade up from the empty gap) while the floating snapshot goes away -->
         <Style Selector="Border.widgetFrame.dropped DockPanel.widgetContent">
             <Setter Property="Transitions">
