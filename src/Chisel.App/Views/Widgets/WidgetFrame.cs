@@ -84,23 +84,8 @@ public sealed class WidgetFrame : Border
         _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton } };
         _editLayer.Classes.Add("editLayer");
 
-        // The empty slot while the widget is being dragged: an opaque cover that simply appears (it has no
-        // transitions), so nothing underneath ever shows an in-between look. Drawn a little past the card's edge
-        // to cover the border and the edit-mode inset.
-        GapFill = new Border
-        {
-            IsVisible = false,
-            IsHitTestVisible = false,
-            Margin = new Thickness(-4),
-            CornerRadius = new CornerRadius(12),
-            BorderThickness = new Thickness(1),
-            Background = new SolidColorBrush(Color.Parse("#1E2025")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#343639")),
-        };
-        Child = new Panel { Children = { Content, _editLayer, GapFill } };
+        Child = new Panel { Children = { Content, _editLayer } };
     }
-
-    public Border GapFill { get; }
 
     public WidgetDefinition Widget { get; }
     public string WidgetId => Widget.Id;

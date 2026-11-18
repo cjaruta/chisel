@@ -29,21 +29,6 @@ public class TactilePolishHeadlessTests
         window.MouseUp(p, MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
     }
-
-    [AvaloniaFact]
-    public void Transitions_UseTheRefinedDurations()
-    {
-        var window = UiSnapshot.ShowMainWindow();
-        var frame = Frames(window).First();
-
-        Assert.Equal(TimeSpan.FromMilliseconds(220), DurationOf(frame, Avalonia.Controls.Border.BackgroundProperty));
-        Assert.Equal(TimeSpan.FromMilliseconds(220), DurationOf(frame, Avalonia.Visual.RenderTransformProperty));
-        // Leaving edit mode: the border settles over 250-300 ms.
-        var settle = DurationOf(frame, Avalonia.Controls.Border.BorderBrushProperty);
-        Assert.InRange(settle.TotalMilliseconds, 250, 300);
-        Assert.InRange((LayoutHost.SnapHold + LayoutHost.SnapFade).TotalMilliseconds, 350, 400);
-    }
-
     [AvaloniaFact]
     public void RemoveBadges_ShareTheSameMarginOnEveryWidget()
     {

@@ -90,7 +90,7 @@ public class LayoutDragHeadlessTests
     private static void AssertNoDragVisuals(Window window)
     {
         var floating = Named<Border>(window, "DragFloat");
-        Assert.True(!floating.IsVisible || floating.Classes.Contains("dropFade"));
+        Assert.False(floating.IsVisible);
         Assert.All(Host(window).Frames.SelectMany(c => c), f => Assert.DoesNotContain("dragSource", f.Classes));
         Assert.False(ViewModel(window).Layout.IsDraggingWidget);
     }
@@ -134,7 +134,7 @@ public class LayoutDragHeadlessTests
                 }
             }
         }
-        Assert.True(card.GapFill.IsVisible && card.GapFill.Opacity == 1);
+        Assert.Contains("dragSource", card.Classes);
         Release(window, from);
         window.Close();
         Assert.True(offenders.Count == 0, "Transitions on changed properties:\n" + string.Join("\n", offenders));
@@ -414,74 +414,37 @@ public class LayoutDragHeadlessTests
     }
 
     [AvaloniaFact]
-    public async Task Drop_CrossfadesTheSnapshot_ThenSnapsTheBorder_WithoutFlashingTheCard()
+    public void Drop_ClearsTheSlotAtOnce_AndStartsTheBorderAnimationOnTheAttachedCard()
     {
         var window = ShowEditing();
         var frame = Frame(window, "links");
-        var floating = Named<Border>(window, "DragFloat");
-        var background = frame.Background;
+        var host = Host(window);
         Drag(window, "links", Within(window, "tasks", 0.7));
 
-        // At the drop the snapshot stays, fully opaque, over a card that is already laid out and painted.
-        Assert.True(floating.IsVisible);
-        Assert.Contains("dropFade", floating.Classes);
-        Assert.True(frame.IsVisible);
-        Assert.Equal(1, frame.Opacity);
-        Assert.InRange(frame.Content!.Opacity, 0.5, 1);
+        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Assert.DoesNotContain("dragSource", frame.Classes);
-        Assert.Equal(background, frame.Background);
-        Assert.DoesNotContain("snap", frame.Classes);
-
-        // Then the snapshot fades (opacity only) and the border snap waits for it to finish.
-        Dispatcher.UIThread.RunJobs();
-        Assert.Contains("fadingOut", floating.Classes);
-        Assert.True(floating.Transitions!.OfType<Avalonia.Animation.DoubleTransition>().Any(t => Prop(t) == Avalonia.Visual.OpacityProperty && t.Duration.TotalMilliseconds == 150));
-        Assert.DoesNotContain("snap", frame.Classes);
-
-        for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
-        {
-            await Task.Delay(5);
-            Dispatcher.UIThread.RunJobs();
-        }
-        Assert.False(floating.IsVisible);
-        Assert.Contains("snap", frame.Classes);
-        var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => Prop(t) == Avalonia.Controls.Border.BorderBrushProperty);
-        Assert.Equal(200, border.Duration.TotalMilliseconds);
-        Assert.IsType<Avalonia.Animation.Easings.CubicEaseInOut>(border.Easing);
-        Assert.InRange((LayoutHost.SnapHold + LayoutHost.SnapFade).TotalMilliseconds, 350, 400);
-        UiSnapshot.Render(window, "drop-glow-1200x760");
-        Assert.InRange(frame.Content.Opacity, 0.5, 1);
-
-        await Task.Delay(700);
-        Assert.DoesNotContain("snap", frame.Classes);
-        Assert.DoesNotContain("snapFade", frame.Classes);
+        Assert.True(frame.Child!.IsVisible);
+        Assert.Same(frame, host.DropBorderFrame);
+        Assert.True(frame.GetVisualAncestors().OfType<LayoutHost>().Any());
+        Assert.NotNull(host.DropBorderRun);
+        Assert.False(host.DropBorderRun!.IsCompleted);
+        Assert.Equal(350, LayoutHost.DropBorderIn.TotalMilliseconds);
+        Assert.Equal(350, LayoutHost.DropBorderOut.TotalMilliseconds);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task RemovingAWidget_MidSnap_DetachesItWithoutAGhostBorder()
+    public void RemovingAWidget_RightAfterADrop_DetachesIt()
     {
         var window = ShowEditing();
         var frame = Frame(window, "links");
         Drag(window, "links", Within(window, "tasks", 0.7));
-        for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
-        {
-            await Task.Delay(5);
-            Dispatcher.UIThread.RunJobs();
-        }
-        Assert.Contains("snap", frame.Classes);
 
         frame.RemoveButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(frame.Parent);
-        Assert.False(frame.GapFill.IsVisible);
-        Assert.DoesNotContain("snap", frame.Classes);
-        // The snap's hold timer fires while the card is gone: it must not mark the detached card.
-        await Task.Delay(260);
-        Dispatcher.UIThread.RunJobs();
-        Assert.DoesNotContain("snap", frame.Classes);
-        Assert.DoesNotContain("snapFade", frame.Classes);
+        Assert.DoesNotContain("dragSource", frame.Classes);
         window.Close();
     }
 
