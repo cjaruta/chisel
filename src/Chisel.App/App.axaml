@@ -109,65 +109,20 @@
             </Setter>
         </Style>
 
-        <!-- Drop: the snapshot fades out over the card that is already in place underneath -->
-        <Style Selector="Border.dragFloat.fadingOut">
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-
         <Style Selector="Border.dragFloat.lifted">
             <Setter Property="BoxShadow" Value="0 18 44 2 #A0000000" />
             <Setter Property="RenderTransform" Value="scale(1.035)" />
         </Style>
 
-        <!-- Home slot: fades and insets as the widget detaches; the same easing settles the card when edit mode
-             ends (border, shadow, scale and content opacity all fade together) -->
-        <Style Selector="Border.widgetFrame">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.28" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.28" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <!-- The slot a dragged widget came from: one plain rounded box of the card's size, neutral outline, no
+             shadow, no content. No transitions anywhere on the card: nothing eases, so nothing can be left behind. -->
+        <Style Selector="Border.widgetFrame.dragSource">
+            <Setter Property="BoxShadow" Value="none" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
         </Style>
 
-        <Style Selector="Border.widgetFrame > Panel">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-
-        <Style Selector="Border.widgetFrame DockPanel.widgetContent">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-
-        <!-- Drop snap: only the border brush animates, eases to amber (200 ms), then back (180 ms) -->
-        <Style Selector="Border.widgetFrame.snap">
-            <Setter Property="BorderBrush" Value="#B0F5A524" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseInOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-
-        <Style Selector="Border.widgetFrame.snapFade">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.18" Easing="CubicEaseInOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Border.widgetFrame.dragSource > Panel">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
 
         <!-- Phantom column shown in a new-column zone while dragging, and the line marking the gap in a column -->

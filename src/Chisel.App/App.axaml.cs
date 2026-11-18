@@ -47,7 +47,12 @@ public partial class App : Application
                     DataContext = mainViewModel,
                 };
 
-                desktop.Exit += (_, _) => _services?.Dispose();
+                if (Dev.CaptureMode.Scenario(desktop.Args) is { } scenario)
+                {
+                    Dev.CaptureMode.Run((MainWindow)desktop.MainWindow, scenario, () => desktop.Shutdown());
+                }
+
+                desktop.Exit +=(_, _) => _services?.Dispose();
             }
         }
 

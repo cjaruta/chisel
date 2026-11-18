@@ -156,7 +156,7 @@ public class LayoutTrayHeadlessTests
         Release(window, above);
 
         Assert.Equal("schedule | notes,tasks,links", Order(window));
-        Assert.Contains("dropFade", Named<Border>(window, "DragFloat").Classes);
+        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Assert.Empty(TrayCards(window));
         window.Close();
     }

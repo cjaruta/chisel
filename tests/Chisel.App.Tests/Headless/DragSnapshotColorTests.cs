@@ -87,7 +87,7 @@ public class DragSnapshotColorTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.Equal(1, floating.Opacity);
-            Assert.True(frame.GapFill.IsVisible);
+            Assert.Contains("dragSource", frame.Classes);
 
             window.MouseUp(from, MouseButton.Left);
             Dispatcher.UIThread.RunJobs();
