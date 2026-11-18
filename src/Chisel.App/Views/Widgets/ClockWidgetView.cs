@@ -15,6 +15,9 @@ public sealed class ClockWidgetView : WidgetView
 
     public ClockWidgetView()
     {
+        // The heading sits 12px above this view's top (header margin and its spare height). Pad the bottom by the
+        // same amount so the face has equal space above and below.
+        Padding = new Thickness(0, 0, 0, 12);
         Content = _face;
     }
 

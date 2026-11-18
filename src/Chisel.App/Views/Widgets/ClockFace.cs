@@ -28,9 +28,12 @@ public sealed class ClockFace : Control
     private IBrush Brush(string key, IBrush fallback) =>
         this.TryFindResource(key, ActualThemeVariant, out var found) && found is IBrush brush ? brush : fallback;
 
+    // Radius of the drawn circle: the smaller of width and height, less the padding.
+    public double FaceRadius => Math.Min(Bounds.Width, Bounds.Height) / 2 - Padding;
+
     public override void Render(DrawingContext context)
     {
-        var radius = Math.Min(Bounds.Width, Bounds.Height) / 2 - Padding;
+        var radius = FaceRadius;
         if (radius <= 4)
         {
             return;
