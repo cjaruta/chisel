@@ -9,6 +9,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Chisel.App.Controls;
 using Chisel.App.ViewModels;
 using Chisel.App.Views.Widgets;
@@ -543,18 +544,38 @@ public sealed class LayoutHost : Decorator
     // Drops the dragged widget on the current target, or puts it back when there is none.
     private void Drop(LayoutViewModel layout)
     {
+        var id = layout.DraggedWidgetId;
         if (_newColumnTarget is { } newColumn)
         {
             layout.DropWidgetInNewColumn(newColumn);
+            Snap(id);
         }
         else if (_target is { } target)
         {
             layout.DropWidget(target.Column, target.Index);
+            Snap(id);
         }
         else
         {
             layout.CancelWidgetDrag();
         }
+    }
+
+    // Click into place: the card's border flashes amber, then the style fades it back to neutral.
+    private void Snap(string? widgetId)
+    {
+        if (widgetId is null || !_frames.TryGetValue(widgetId, out var frame))
+        {
+            return;
+        }
+        frame.Classes.Set("snap", true);
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            frame.Classes.Set("snap", false);
+        };
+        timer.Start();
     }
 
     private void OnBarPressed(WidgetFrame frame, PointerPressedEventArgs e)

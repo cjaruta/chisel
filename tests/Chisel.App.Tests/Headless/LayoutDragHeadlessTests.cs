@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -343,12 +344,40 @@ public class LayoutDragHeadlessTests
         Assert.Contains("lifted", floating.Classes);
         var lifted = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform).Value;
         Assert.InRange(Math.Sqrt(lifted.M11 * lifted.M11 + lifted.M12 * lifted.M12), 1.0001, 1.035);
-        Assert.InRange(Math.Abs(Math.Atan2(lifted.M12, lifted.M11) * 180 / Math.PI), 0.0001, 1.5);
+        Assert.Equal(0, lifted.M12, 6);
+        Assert.Equal(0, lifted.M21, 6);
         Assert.True(floating.BoxShadow[0].OffsetY > 4);
 
         Release(window, Within(window, "tasks", 0.7));
         Assert.DoesNotContain("lifted", floating.Classes);
         AssertNoDragVisuals(window);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Drop_SnapsTheBorderAmber_ThenFadesBack_WithoutFlashingTheCard()
+    {
+        var window = ShowEditing();
+        var frame = Frame(window, "links");
+        Drag(window, "links", Within(window, "tasks", 0.7));
+
+        Assert.Contains("snap", frame.Classes);
+        Assert.Equal(Color.Parse("#CCF5A524"), Assert.IsAssignableFrom<ISolidColorBrush>(frame.BorderBrush).Color);
+        Assert.Equal(1, frame.Opacity);
+        Assert.DoesNotContain("dragSource", frame.Classes);
+
+        await Task.Delay(300);
+        Assert.DoesNotContain("snap", frame.Classes);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Snapshot_Drop()
+    {
+        var window = ShowEditing();
+        Drag(window, "links", Within(window, "tasks", 0.7));
+        Dispatcher.UIThread.RunJobs();
+        UiSnapshot.Render(window, "layout-drop-1200x760");
         window.Close();
     }
 
