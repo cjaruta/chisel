@@ -296,6 +296,15 @@ public sealed class LayoutHost : Decorator
             _columnHandleLayer.Children.Add(handle);
         }
         MarkDragSource();
+
+        // A card that left the dashboard must not carry a half-finished look (gap cover, snap border) into the tray
+        // or back, which would show as a second box inside the card.
+        foreach (var frame in _frames.Values.Where(f => f.Parent is null))
+        {
+            frame.GapFill.IsVisible = false;
+            frame.Classes.Set("snap", false);
+            frame.Classes.Set("snapFade", false);
+        }
     }
 
     // A slim vertical pill in the gap right of a column, with a hit area as wide as the gap.
@@ -569,9 +578,9 @@ public sealed class LayoutHost : Decorator
         }
     }
 
-    // Amber border: eases in over about 80 ms, holds briefly, then eases back out over about 220 ms.
-    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(120);
-    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(230);
+    // Amber border: eases in over 140 ms, lingers briefly (200 ms in all), then eases out over about 190 ms.
+    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(200);
+    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(190);
 
     // Click into place: once the drop's layout update has rendered, the card's border (only the border) eases to
     // amber and back.
