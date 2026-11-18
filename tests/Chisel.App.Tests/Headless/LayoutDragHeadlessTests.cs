@@ -224,6 +224,45 @@ public class LayoutDragHeadlessTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData("tasks", 0.8)] // gap above the widget's own slot
+    [InlineData("links", 0.2)] // gap below it
+    public void GapsNextToTheWidgetsOwnSlot_ShowNoIndicator(string neighbour, double fraction)
+    {
+        var window = ShowEditing();
+        var line = Named<Border>(window, "DropIndicator");
+        var from = Bar(window, "notes");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+
+        MoveTo(window, Within(window, neighbour, fraction));
+        Assert.False(line.IsVisible);
+
+        MoveTo(window, Within(window, "tasks", 0.2));
+        Assert.True(line.IsVisible);
+        Release(window, Within(window, "tasks", 0.2));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DroppingOnTheHomePlaceholder_KeepsTheLayout()
+    {
+        var window = ShowEditing();
+        var from = Bar(window, "notes");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+        var home = Within(window, "notes", 0.5);
+        MoveTo(window, home);
+
+        Assert.Contains("dragSource", Frame(window, "notes").Classes);
+        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
+        Release(window, home);
+
+        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        AssertNoDragVisuals(window);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void Dropping_PutsTheWidgetAtTheIndicatedSlot()
     {

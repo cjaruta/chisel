@@ -28,6 +28,11 @@ public static class LayoutDropTargets
         return null;
     }
 
+    // Whether dropping into gap `target` would put a widget back where it already is: the gap right above or
+    // right below its own slot. `origin` is null for a widget coming from the tray, which has no home.
+    public static bool IsHome((int Column, int Index) target, (int Column, int Index)? origin) =>
+        origin is { } o && target.Column == o.Column && (target.Index == o.Index || target.Index == o.Index + 1);
+
     // The x of each gap a new column could go into: left of the first column, between each pair, right of the
     // last (index 0 to Count). The edge gaps sit half a gap outside the columns.
     public static double[] NewColumnCenters(IReadOnlyList<Rect> columns, double gap)

@@ -91,6 +91,8 @@ public sealed class LayoutHost : Decorator
     private Point _grabOffset;
     private bool _dragging;
     private (int Column, int Index)? _target;
+    // Where the dragged widget started (null for a tray widget).
+    private (int Column, int Index)? _origin;
     private IPointer? _pointer;
 
     // Where the columns and cards were at pick-up: targets are worked out from these, however the cards reflow.
@@ -647,6 +649,7 @@ public sealed class LayoutHost : Decorator
     private void StartDragVisuals(WidgetFrame? frame, string title)
     {
         _dragging = true;
+        _origin = frame is null ? null : Layout?.Layout.Find(frame.WidgetId);
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
         _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
         FindNewColumnGaps(frame?.WidgetId);
@@ -732,8 +735,10 @@ public sealed class LayoutHost : Decorator
             Canvas.SetTop(_phantom, rect.Y);
         }
 
-        _insertLine.IsVisible = _target is not null;
-        if (_target is { } t)
+        // A gap that would put the widget back where it was gets no line: its slot already shows as the home placeholder.
+        var showLine = _target is { } hovered && !LayoutDropTargets.IsHome(hovered, _origin);
+        _insertLine.IsVisible = showLine;
+        if (showLine && _target is { } t)
         {
             var column = _pickColumns[t.Column];
             _insertLine.Width = column.Width;
@@ -748,6 +753,7 @@ public sealed class LayoutHost : Decorator
         _trayWidget = null;
         _dragging = false;
         _target = null;
+        _origin = null;
         _float.IsVisible = false;
         _float.Child = null;
         Cursor = null;
