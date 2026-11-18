@@ -26,6 +26,10 @@ public sealed class WidgetFrame : Border
 
     private readonly Grid _editLayer;
 
+    // The header's own leading column for the remove badge: zero wide, opened in edit mode so the title never sits under it.
+    private readonly ColumnDefinition _badgeColumn;
+    private const double BadgeColumnWidth = 24;
+
     public WidgetFrame(WidgetDefinition widget, WidgetView view)
     {
         Widget = widget;
@@ -37,12 +41,14 @@ public sealed class WidgetFrame : Border
         var heading = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
         heading.Classes.Add("cardHeading");
         heading.Classes.Add("widgetHeading");
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("0,*,Auto") };
+        _badgeColumn = header.ColumnDefinitions[0];
         header.Classes.Add("widgetHeader");
+        Grid.SetColumn(heading, 1);
         header.Children.Add(heading);
         if (view.HeaderActions is { } actions)
         {
-            Grid.SetColumn(actions, 1);
+            Grid.SetColumn(actions, 2);
             header.Children.Add(actions);
         }
         DockPanel.SetDock(header, Dock.Top);
@@ -126,6 +132,7 @@ public sealed class WidgetFrame : Border
             var editing = change.GetNewValue<bool>();
             Classes.Set("editing", editing);
             _editLayer.IsVisible = editing;
+            _badgeColumn.Width = new GridLength(editing ? BadgeColumnWidth : 0);
 
             // Inert without the theme's disabled look: no hit testing, no tabbing in, and no focus left inside.
             Content.IsHitTestVisible = !editing;

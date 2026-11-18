@@ -446,10 +446,12 @@ public class LayoutDragHeadlessTests
         Assert.False(floating.IsVisible);
         Assert.Contains("snap", frame.Classes);
         var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => Prop(t) == Avalonia.Controls.Border.BorderBrushProperty);
-        Assert.Equal(80, border.Duration.TotalMilliseconds);
+        Assert.Equal(140, border.Duration.TotalMilliseconds);
+        Assert.InRange((LayoutHost.SnapHold + LayoutHost.SnapFade).TotalMilliseconds, 350, 400);
+        UiSnapshot.Render(window, "drop-glow-1200x760");
         Assert.InRange(frame.Content.Opacity, 0.5, 1);
 
-        await Task.Delay(500);
+        await Task.Delay(700);
         Assert.DoesNotContain("snap", frame.Classes);
         Assert.DoesNotContain("snapFade", frame.Classes);
         window.Close();

@@ -56,6 +56,22 @@ public class LayoutEditModeHeadlessTests
     }
 
     [AvaloniaFact]
+    public void Headers_KeepTheTitleClearOfTheRemoveBadge()
+    {
+        var window = Show();
+        EnterEditMode(window);
+        foreach (var frame in Frames(window))
+        {
+            var heading = frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
+            var badge = InWindow(frame.RemoveButton, window);
+            var title = InWindow(heading, window);
+            Assert.True(title.Left >= badge.Right, $"{frame.WidgetId}: title starts at {title.Left}, badge ends at {badge.Right}");
+        }
+        UiSnapshot.Render(window, "headers-edit-1200x760");
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void CustomizeButton_SitsNextToTheGearWithItsTooltip()
     {
         var window = Show();

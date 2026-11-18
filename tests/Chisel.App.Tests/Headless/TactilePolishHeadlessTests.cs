@@ -41,8 +41,8 @@ public class TactilePolishHeadlessTests
         // Leaving edit mode: the border settles over 250-300 ms.
         var settle = DurationOf(frame, Avalonia.Controls.Border.BorderBrushProperty);
         Assert.InRange(settle.TotalMilliseconds, 250, 300);
-        Assert.True(LayoutHost.SnapHold.TotalMilliseconds >= 80);
-        Assert.True(LayoutHost.SnapFade.TotalMilliseconds >= 220);
+        Assert.True(LayoutHost.SnapHold.TotalMilliseconds >= 140);
+        Assert.True(LayoutHost.SnapFade.TotalMilliseconds >= 190);
     }
 
     [AvaloniaFact]
