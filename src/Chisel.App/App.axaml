@@ -96,34 +96,78 @@
 
         <!-- Dragging a widget: a snapshot of it floats with the pointer (slightly larger, soft shadow), and its
              slot is an empty gap the other cards reflow around -->
-        <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="Background" Value="#14808080" />
-            <Setter Property="BorderBrush" Value="#40808080" />
-        </Style>
-
-        <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-
-        <Style Selector="Border.widgetFrame.dragSource Grid.editLayer">
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-
         <Style Selector="Border.dragFloat">
             <Setter Property="BoxShadow" Value="0 4 12 0 #60000000" />
             <Setter Property="RenderTransform" Value="scale(1)" />
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Transitions">
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" Easing="CubicEaseOut" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
         </Style>
 
+        <!-- Drop: the snapshot fades out over the card that is already in place underneath -->
+        <Style Selector="Border.dragFloat.fadingOut">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+
         <Style Selector="Border.dragFloat.lifted">
-            <Setter Property="BoxShadow" Value="0 14 36 0 #B0000000" />
-            <Setter Property="RenderTransform" Value="scale(1.02)" />
+            <Setter Property="BoxShadow" Value="0 18 44 2 #A0000000" />
+            <Setter Property="RenderTransform" Value="scale(1.035)" />
+        </Style>
+
+        <!-- Home slot: fades and insets as the widget detaches; the same easing settles the card when edit mode
+             ends (border, shadow, scale and content opacity all fade together) -->
+        <Style Selector="Border.widgetFrame">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame > Panel">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame DockPanel.widgetContent">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Drop snap: only the border brush animates, softly to amber (about 80 ms) and back (about 220 ms) -->
+        <Style Selector="Border.widgetFrame.snap">
+            <Setter Property="BorderBrush" Value="#80F5A524" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.08" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame.snapFade">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
         </Style>
 
         <!-- Phantom column shown in a new-column zone while dragging, and the line marking the gap in a column -->
@@ -132,12 +176,33 @@
             <Setter Property="BorderBrush" Value="#80F5A524" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.97)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
         </Style>
 
         <Style Selector="Border.dropIndicator">
             <Setter Property="Background" Value="{StaticResource EditAccentBrush}" />
             <Setter Property="CornerRadius" Value="2" />
             <Setter Property="BoxShadow" Value="0 0 8 0 #99F5A524" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scaleX(0.9)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.newColumnPhantom.active, Border.dropIndicator.active">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="none" />
         </Style>
 
         <Style Selector="Border.newColumnLabel">
@@ -211,7 +276,7 @@
             <Setter Property="Height" Value="16" />
             <Setter Property="MinHeight" Value="0" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0" />
+            <Setter Property="Margin" Value="8,8,0,0" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="VerticalAlignment" Value="Top" />
             <Setter Property="CornerRadius" Value="8" />

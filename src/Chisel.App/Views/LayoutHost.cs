@@ -9,6 +9,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Chisel.App.Controls;
 using Chisel.App.ViewModels;
 using Chisel.App.Views.Widgets;
@@ -99,6 +100,11 @@ public sealed class LayoutHost : Decorator
     private IReadOnlyList<Rect> _pickColumns = [];
     private IReadOnlyList<IReadOnlyList<Rect>> _pickWidgets = [];
 
+    private static IBrush BackingBrush() =>
+        Application.Current?.TryFindResource("WindowBackgroundBrush", Application.Current.ActualThemeVariant, out var brush) == true && brush is IBrush b
+            ? b
+            : new SolidColorBrush(Color.Parse("#14161A"));
+
     public LayoutHost()
     {
         _columnHandleLayer = new ColumnHandleLayer(_columns);
@@ -115,7 +121,8 @@ public sealed class LayoutHost : Decorator
         _overlay.Children.Add(_phantom);
         _overlay.Children.Add(_insertLine);
         _overlay.Children.Add(_float);
-        Child = new Panel { Children = { _columns, _columnHandleLayer, _overlay } };
+        // An explicit dark backing, so no layout pass can ever show the default (light) fallback behind the cards.
+        Child = new Panel { Name = "LayoutBacking", Background = BackingBrush(), Children = { _columns, _columnHandleLayer, _overlay } };
     }
 
     public LayoutViewModel? Layout
@@ -543,18 +550,56 @@ public sealed class LayoutHost : Decorator
     // Drops the dragged widget on the current target, or puts it back when there is none.
     private void Drop(LayoutViewModel layout)
     {
+        var id = layout.DraggedWidgetId;
         if (_newColumnTarget is { } newColumn)
         {
+            _floatFade = true;
+            _snapAfterFade = id;
             layout.DropWidgetInNewColumn(newColumn);
         }
         else if (_target is { } target)
         {
+            _floatFade = true;
+            _snapAfterFade = id;
             layout.DropWidget(target.Column, target.Index);
         }
         else
         {
             layout.CancelWidgetDrag();
         }
+    }
+
+    // Amber border: eases in over about 80 ms, holds briefly, then eases back out over about 220 ms.
+    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(120);
+    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(230);
+
+    // Click into place: once the drop's layout update has rendered, the card's border (only the border) eases to
+    // amber and back.
+    private void Snap(string? widgetId)
+    {
+        if (widgetId is null || !_frames.TryGetValue(widgetId, out var frame))
+        {
+            return;
+        }
+        Dispatcher.UIThread.Post(() =>
+        {
+            frame.Classes.Set("snap", true);
+            var timer = new DispatcherTimer { Interval = SnapHold };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                frame.Classes.Set("snap", false);
+                frame.Classes.Set("snapFade", true);
+                var fade = new DispatcherTimer { Interval = SnapFade };
+                fade.Tick += (_, _) =>
+                {
+                    fade.Stop();
+                    frame.Classes.Set("snapFade", false);
+                };
+                fade.Start();
+            };
+            timer.Start();
+        }, DispatcherPriority.Render);
     }
 
     private void OnBarPressed(WidgetFrame frame, PointerPressedEventArgs e)
@@ -648,6 +693,10 @@ public sealed class LayoutHost : Decorator
     // frame: the card being moved, or null for a widget coming from the tray.
     private void StartDragVisuals(WidgetFrame? frame, string title)
     {
+        _floatFadeVersion++;
+        _float.Classes.Set("dropFade", false);
+        _float.Classes.Set("fadingOut", false);
+        _snapAfterFade = null;
         _dragging = true;
         _origin = frame is null ? null : Layout?.Layout.Find(frame.WidgetId);
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
@@ -698,7 +747,13 @@ public sealed class LayoutHost : Decorator
         var id = _dragging ? Layout?.DraggedWidgetId : null;
         foreach (var (widgetId, frame) in _frames)
         {
-            frame.Classes.Set("dragSource", widgetId == id);
+            var source = widgetId == id;
+            if (source == frame.Classes.Contains("dragSource"))
+            {
+                continue;
+            }
+            frame.GapFill.IsVisible = source;
+            frame.Classes.Set("dragSource", source);
         }
     }
 
@@ -728,7 +783,7 @@ public sealed class LayoutHost : Decorator
         _newColumnTarget = LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps);
         _target = _newColumnTarget is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
 
-        _phantom.IsVisible = _newColumnTarget is not null;
+        SetActive(_phantom, _newColumnTarget is not null);
         if (_newColumnTarget is { } gap)
         {
             var rect = LayoutDropTargets.PhantomColumn(gap, _pickColumns, Bounds.Width, Gap);
@@ -740,7 +795,7 @@ public sealed class LayoutHost : Decorator
 
         // A gap that would put the widget back where it was gets no line: its slot already shows as the home placeholder.
         var showLine = _target is { } hovered && !LayoutDropTargets.IsHome(hovered, _origin);
-        _insertLine.IsVisible = showLine;
+        SetActive(_insertLine, showLine);
         if (showLine && _target is { } t)
         {
             var column = _pickColumns[t.Column];
@@ -750,6 +805,69 @@ public sealed class LayoutHost : Decorator
         }
     }
 
+    // Shows a drop target at rest first, then activates it, so the style eases it in (~120 ms).
+    private static void SetActive(Border target, bool active)
+    {
+        if (active && !target.IsVisible)
+        {
+            target.Classes.Set("active", false);
+            target.IsVisible = true;
+            target.UpdateLayout();
+        }
+        else if (!active)
+        {
+            target.IsVisible = false;
+        }
+        target.Classes.Set("active", active);
+    }
+
+    // Set by a drop: the next EndDrag crossfades the floating snapshot away instead of removing it.
+    private bool _floatFade;
+    private int _floatFadeVersion;
+    private string? _snapAfterFade;
+
+    public static readonly TimeSpan FloatFade = TimeSpan.FromMilliseconds(150);
+
+    private void HideFloat()
+    {
+        _floatFadeVersion++;
+        _float.Classes.Set("dropFade", false);
+        _float.Classes.Set("fadingOut", false);
+        _float.IsVisible = false;
+        _float.Classes.Set("lifted", false);
+        _float.Child = null;
+    }
+
+    // The snapshot stays where it was dropped over the card (already laid out and painted underneath) and fades
+    // out over ~150 ms; the border snap starts when the fade is done.
+    private void FadeOutFloat()
+    {
+        var version = ++_floatFadeVersion;
+        _float.Classes.Set("dropFade", true);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (version != _floatFadeVersion)
+            {
+                return;
+            }
+            _float.Classes.Set("fadingOut", true);
+            var timer = new DispatcherTimer { Interval = FloatFade + TimeSpan.FromMilliseconds(20) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                if (version != _floatFadeVersion)
+                {
+                    return;
+                }
+                HideFloat();
+                var id = _snapAfterFade;
+                _snapAfterFade = null;
+                Snap(id);
+            };
+            timer.Start();
+        }, DispatcherPriority.Render);
+    }
+
     private void EndDrag()
     {
         _pressed = null;
@@ -757,14 +875,11 @@ public sealed class LayoutHost : Decorator
         _dragging = false;
         _target = null;
         _origin = null;
-        _float.IsVisible = false;
-        _float.Classes.Set("lifted", false);
-        _float.Child = null;
         Cursor = null;
         _newColumnTarget = null;
         _newColumnGaps = [];
-        _phantom.IsVisible = false;
-        _insertLine.IsVisible = false;
+        SetActive(_phantom, false);
+        SetActive(_insertLine, false);
         // Put the columns back as the layout has them (after a drop, the layout already has the new order).
         if (Layout is not null)
         {
@@ -778,6 +893,18 @@ public sealed class LayoutHost : Decorator
             }
         }
         MarkDragSource();
+        // The cards are laid out in their final places before the floating snapshot goes, so there is never a
+        // frame with the slot empty and the overlay already gone.
+        UpdateLayout();
+        if (_floatFade)
+        {
+            _floatFade = false;
+            FadeOutFloat();
+        }
+        else if (!_float.Classes.Contains("dropFade"))
+        {
+            HideFloat();
+        }
         if (_pointer is { } pointer)
         {
             _pointer = null;

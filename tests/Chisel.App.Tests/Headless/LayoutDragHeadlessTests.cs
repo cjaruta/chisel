@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -30,7 +33,9 @@ public class LayoutDragHeadlessTests
     private static MainViewModel ViewModel(Window window) => (MainViewModel)window.DataContext!;
 
     private static Rect InWindow(Visual visual, Window window) =>
-        new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
+        // Measured from the center so a widget's own scale (the home slot's inset) doesn't count as movement.
+        new(visual.TranslatePoint(new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), window)!.Value
+            - new Point(visual.Bounds.Width / 2, visual.Bounds.Height / 2), visual.Bounds.Size);
 
     private static MainWindow ShowEditing(double width = 1200, double height = 760)
     {
@@ -84,9 +89,55 @@ public class LayoutDragHeadlessTests
 
     private static void AssertNoDragVisuals(Window window)
     {
-        Assert.False(Named<Border>(window, "DragFloat").IsVisible);
+        var floating = Named<Border>(window, "DragFloat");
+        Assert.True(!floating.IsVisible || floating.Classes.Contains("dropFade"));
         Assert.All(Host(window).Frames.SelectMany(c => c), f => Assert.DoesNotContain("dragSource", f.Classes));
         Assert.False(ViewModel(window).Layout.IsDraggingWidget);
+    }
+
+    private static AvaloniaProperty Prop(ITransition t) => (AvaloniaProperty)t.GetType().GetProperty("Property")!.GetValue(t)!;
+
+    private static string Show(object? value) =>
+        value is ISolidColorBrush solid ? $"#{solid.Color.ToUInt32():X8}" : value?.ToString() ?? "null";
+
+    // Every control in the card (template parts included) with a transition on a property that the pick-up changes.
+    [AvaloniaFact]
+    public async Task PickUp_ChangesNoPropertyThatHasATransition()
+    {
+        var window = ShowEditing();
+        await Task.Delay(600); // edit mode has finished easing in
+        Dispatcher.UIThread.RunJobs();
+        var card = Frame(window, "links");
+        var parts = new Visual[] { card }.Concat(card.GetVisualDescendants()).OfType<Animatable>().ToList();
+        var before = parts.ToDictionary(p => p, p => p.Transitions?.Select(t => (t, Show(p.GetValue(Prop(t))))).ToList());
+
+        var from = Bar(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+        var inEffect = parts.ToDictionary(p => p, p => p.Transitions?.ToList());
+        await Task.Delay(600);
+        Dispatcher.UIThread.RunJobs();
+
+        var offenders = new List<string>();
+        foreach (var part in parts)
+        {
+            foreach (var transition in inEffect[part] ?? [])
+            {
+                var was = before[part]?.FirstOrDefault(b => Prop(b.t) == Prop(transition)).Item2
+                          ?? Show(part.GetValue(Prop(transition)));
+                var now = Show(part.GetValue(Prop(transition)));
+                if (was != now)
+                {
+                    var name = (part as Control)?.Name;
+                    var classes = part is StyledElement s ? string.Join('.', s.Classes) : "";
+                    offenders.Add($"{part.GetType().Name} '{name}' [{classes}] {Prop(transition).Name}: {was} -> {now}, {transition.GetType().Name} {transition.GetType().GetProperty("Duration")?.GetValue(transition)}");
+                }
+            }
+        }
+        Assert.True(card.GapFill.IsVisible && card.GapFill.Opacity == 1);
+        Release(window, from);
+        window.Close();
+        Assert.True(offenders.Count == 0, "Transitions on changed properties:\n" + string.Join("\n", offenders));
     }
 
     [AvaloniaFact]
@@ -194,6 +245,18 @@ public class LayoutDragHeadlessTests
     private static Rect[] Positions(Window window) =>
         Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
 
+    private static void AssertSamePositions(Rect[] expected, Rect[] actual)
+    {
+        Assert.Equal(expected.Length, actual.Length);
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].X, actual[i].X, 2);
+            Assert.Equal(expected[i].Y, actual[i].Y, 2);
+            Assert.Equal(expected[i].Width, actual[i].Width, 2);
+            Assert.Equal(expected[i].Height, actual[i].Height, 2);
+        }
+    }
+
     [AvaloniaFact]
     public void CrossingAMidline_MovesTheIndicator_NotTheBoard()
     {
@@ -214,11 +277,11 @@ public class LayoutDragHeadlessTests
         MoveTo(window, belowMiddle);
         Assert.True(line.IsVisible);
         Assert.InRange(InWindow(line, window).Center.Y, tasks.Bottom - 2, tasks.Bottom + 20);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
 
         MoveTo(window, aboveMiddle);
         Assert.InRange(InWindow(line, window).Center.Y, tasks.Top - 20, tasks.Top + 2);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
 
         Release(window, aboveMiddle);
         Assert.False(line.IsVisible);
@@ -293,7 +356,7 @@ public class LayoutDragHeadlessTests
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Dispatcher.UIThread.RunJobs();
         AssertNoDragVisuals(window);
-        Assert.Equal(before, Positions(window));
+        AssertSamePositions(before, Positions(window));
         Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
         Release(window, over);
 
@@ -339,11 +402,111 @@ public class LayoutDragHeadlessTests
 
         MoveTo(window, new Point(from.X + 20, from.Y - 20));
         Assert.Contains("lifted", floating.Classes);
-        var scale = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform);
-        Assert.InRange(scale.Value.M11, 1.0001, 1.02);
+        var lifted = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform).Value;
+        Assert.InRange(Math.Sqrt(lifted.M11 * lifted.M11 + lifted.M12 * lifted.M12), 1.0001, 1.035);
+        Assert.Equal(0, lifted.M12, 6);
+        Assert.Equal(0, lifted.M21, 6);
         Assert.True(floating.BoxShadow[0].OffsetY > 4);
 
         Release(window, Within(window, "tasks", 0.7));
+        AssertNoDragVisuals(window);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Drop_CrossfadesTheSnapshot_ThenSnapsTheBorder_WithoutFlashingTheCard()
+    {
+        var window = ShowEditing();
+        var frame = Frame(window, "links");
+        var floating = Named<Border>(window, "DragFloat");
+        var background = frame.Background;
+        Drag(window, "links", Within(window, "tasks", 0.7));
+
+        // At the drop the snapshot stays, fully opaque, over a card that is already laid out and painted.
+        Assert.True(floating.IsVisible);
+        Assert.Contains("dropFade", floating.Classes);
+        Assert.True(frame.IsVisible);
+        Assert.Equal(1, frame.Opacity);
+        Assert.InRange(frame.Content!.Opacity, 0.5, 1);
+        Assert.DoesNotContain("dragSource", frame.Classes);
+        Assert.Equal(background, frame.Background);
+        Assert.DoesNotContain("snap", frame.Classes);
+
+        // Then the snapshot fades (opacity only) and the border snap waits for it to finish.
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains("fadingOut", floating.Classes);
+        Assert.True(floating.Transitions!.OfType<Avalonia.Animation.DoubleTransition>().Any(t => Prop(t) == Avalonia.Visual.OpacityProperty && t.Duration.TotalMilliseconds == 150));
+        Assert.DoesNotContain("snap", frame.Classes);
+
+        for (var i = 0; i < 100 && !frame.Classes.Contains("snap"); i++)
+        {
+            await Task.Delay(5);
+            Dispatcher.UIThread.RunJobs();
+        }
+        Assert.False(floating.IsVisible);
+        Assert.Contains("snap", frame.Classes);
+        var border = frame.Transitions!.OfType<Avalonia.Animation.BrushTransition>().Single(t => Prop(t) == Avalonia.Controls.Border.BorderBrushProperty);
+        Assert.Equal(80, border.Duration.TotalMilliseconds);
+        Assert.InRange(frame.Content.Opacity, 0.5, 1);
+
+        await Task.Delay(500);
+        Assert.DoesNotContain("snap", frame.Classes);
+        Assert.DoesNotContain("snapFade", frame.Classes);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Backgrounds_StayDark_AcrossDragAndDrop()
+    {
+        var window = ShowEditing();
+        var backing = Named<Panel>(window, "LayoutBacking");
+
+        void AssertDark()
+        {
+            var brush = Assert.IsAssignableFrom<ISolidColorBrush>(backing.Background);
+            Assert.Equal(Color.Parse("#14161A"), brush.Color);
+            var windowBrush = Assert.IsAssignableFrom<ISolidColorBrush>(window.Background);
+            Assert.Equal(Color.Parse("#14161A"), windowBrush.Color);
+        }
+
+        AssertDark();
+        var from = Bar(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        AssertDark();
+        var over = Within(window, "tasks", 0.3);
+        MoveTo(window, over);
+        Release(window, over);
+        Assert.True(Frame(window, "links").Bounds.Width > 0);
+        AssertDark();
+        Dispatcher.UIThread.RunJobs();
+        AssertDark();
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Snapshot_Drop()
+    {
+        var window = ShowEditing();
+        Drag(window, "links", Within(window, "tasks", 0.7));
+        Dispatcher.UIThread.RunJobs();
+        UiSnapshot.Render(window, "layout-drop-1200x760");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Cancelled_Drag_LevelsTheFloat()
+    {
+        var window = ShowEditing();
+        var floating = Named<Border>(window, "DragFloat");
+        var from = Bar(window, "links");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        Assert.Contains("lifted", floating.Classes);
+
+        ViewModel(window).Layout.CancelCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
         Assert.DoesNotContain("lifted", floating.Classes);
         AssertNoDragVisuals(window);
         window.Close();
