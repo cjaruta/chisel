@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Chisel.App.ViewModels;
@@ -324,6 +325,27 @@ public class LayoutDragHeadlessTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("schedule | links,tasks,notes", Order(window));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PickedUpWidget_IsLifted_AndSettlesOnDrop()
+    {
+        var window = ShowEditing();
+        var floating = Named<Border>(window, "DragFloat");
+        var from = Bar(window, "links");
+        Press(window, from);
+        Assert.DoesNotContain("lifted", floating.Classes);
+
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        Assert.Contains("lifted", floating.Classes);
+        var scale = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform);
+        Assert.InRange(scale.Value.M11, 1.0001, 1.02);
+        Assert.True(floating.BoxShadow[0].OffsetY > 4);
+
+        Release(window, Within(window, "tasks", 0.7));
+        Assert.DoesNotContain("lifted", floating.Classes);
+        AssertNoDragVisuals(window);
         window.Close();
     }
 

@@ -673,8 +673,11 @@ public sealed class LayoutHost : Decorator
         _grabOffset = new Point(Math.Min(_grabOffset.X, _float.Width - 24), Math.Min(_grabOffset.Y, _float.Height - 8));
         // Slightly larger, scaled around the grab point so that point stays under the pointer.
         _float.RenderTransformOrigin = new RelativePoint(_grabOffset, RelativeUnit.Absolute);
-        _float.RenderTransform = new ScaleTransform(1.03, 1.03);
+        // Shown at rest first, then lifted: the style transitions scale and shadow over ~150 ms.
+        _float.Classes.Set("lifted", false);
         _float.IsVisible = true;
+        _float.UpdateLayout();
+        _float.Classes.Set("lifted", true);
         Cursor = DraggingCursor;
         MarkDragSource();
     }
@@ -755,6 +758,7 @@ public sealed class LayoutHost : Decorator
         _target = null;
         _origin = null;
         _float.IsVisible = false;
+        _float.Classes.Set("lifted", false);
         _float.Child = null;
         Cursor = null;
         _newColumnTarget = null;
