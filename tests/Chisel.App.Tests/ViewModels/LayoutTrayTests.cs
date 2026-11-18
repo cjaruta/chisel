@@ -25,9 +25,12 @@ public class LayoutTrayTests
 
     private static string Order(WidgetLayout layout) =>
         string.Join(" | ", layout.Columns.Select(c => string.Join(",", c.Widgets.Select(w => w.WidgetId))))
-        + (layout.HiddenWidgetIds.Count > 0 ? $" (hidden: {string.Join(",", layout.HiddenWidgetIds)})" : "");
+        + (Hidden(layout).Any() ? $" (hidden: {string.Join(",", Hidden(layout))})" : "");
 
-    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).ToArray();
+    // The clock waits in the tray from the start; these tests are about the four original widgets.
+    private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock);
+
+    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock).ToArray();
 
     private LayoutViewModel Editing()
     {
@@ -41,8 +44,9 @@ public class LayoutTrayTests
     {
         Assert.All(WidgetRegistry.All, w => Assert.False(string.IsNullOrWhiteSpace(w.Icon), w.Id));
         var defaults = WidgetRegistry.DefaultLayout.Columns.SelectMany(c => c.Widgets).ToDictionary(p => p.WidgetId, p => p.HeightWeight);
-        Assert.All(WidgetRegistry.All, w => Assert.Equal(w.DefaultHeight, defaults[w.Id]));
-        Assert.Equal(WidgetRegistry.All.Select(w => w.Id).OrderBy(x => x), defaults.Keys.OrderBy(x => x));
+        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock).ToList();
+        Assert.All(placed, w => Assert.Equal(w.DefaultHeight, defaults[w.Id]));
+        Assert.Equal(placed.Select(w => w.Id).OrderBy(x => x), defaults.Keys.OrderBy(x => x));
     }
 
     [Fact]
@@ -103,7 +107,7 @@ public class LayoutTrayTests
         layout.RemoveWidget("schedule");
 
         Assert.Equal(new[] { "schedule", "links" }, Tray(layout));
-        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title));
+        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock"));
         Assert.True(layout.HasHiddenWidgets);
     }
 
@@ -111,7 +115,7 @@ public class LayoutTrayTests
     public void Tray_OpensWhenAWidgetIsRemoved_AndOnEnteringEditModeWithWidgetsHidden()
     {
         var layout = Editing();
-        Assert.False(layout.IsTrayOpen);
+        Assert.True(layout.IsTrayOpen); // the clock waits in the tray from the start
 
         layout.RemoveWidget("notes");
         Assert.True(layout.IsTrayOpen);
@@ -210,7 +214,7 @@ public class LayoutTrayTests
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds);
+        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock));
         var restarted = new LayoutViewModel(_repository);
         Assert.Equal("schedule | tasks,links (hidden: notes)", Order(restarted.Layout));
         Assert.Equal(new[] { "notes" }, Tray(restarted));
@@ -240,6 +244,5 @@ public class LayoutTrayTests
 
         Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
         Assert.Empty(Tray(layout));
-        Assert.False(layout.HasHiddenWidgets);
     }
 }

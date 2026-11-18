@@ -88,7 +88,7 @@ public class LayoutRemovalGhostTests
     {
         var window = ShowEditing();
         Click(window, Frame(window, "notes").RemoveButton);
-        var card = window.GetVisualDescendants().OfType<Border>().Single(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible);
+        var card = window.GetVisualDescendants().OfType<Border>().Single(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible && ((WidgetDefinition)b.DataContext!).Id == "notes");
         Click(window, card);
         AssertClean(window, "none", "");
         Assert.Equal(4, Host(window).GetVisualDescendants().OfType<WidgetFrame>().Count());

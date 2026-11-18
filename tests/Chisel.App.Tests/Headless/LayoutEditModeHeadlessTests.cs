@@ -156,9 +156,11 @@ public class LayoutEditModeHeadlessTests
     {
         var window = Show();
         EnterEditMode(window);
+        ((MainViewModel)window.DataContext!).Layout.ToggleTrayCommand.Execute(null); // the clock opens the tray; this test is about the buttons
+        Dispatcher.UIThread.RunJobs();
 
         var toolbar = Named<Border>(window, "LayoutToolbar");
-        var buttons = toolbar.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Content as string).ToList();
+        var buttons = toolbar.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Content as string).Where(c => c is not null).ToList();
 
         Assert.Equal(new[] { "Reset layout", "Cancel", "Done" }, buttons);
         var bounds = InWindow(toolbar, window);
