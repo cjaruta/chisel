@@ -7,12 +7,12 @@ namespace Chisel.Core.Layout;
 // A known widget missing from the layout is either hidden (the user removed it: it is in HiddenWidgetIds and
 // stays off the dashboard) or new (neither placed nor hidden, e.g. a widget added in a later version): a new
 // widget is added at the bottom of the first column with its default height. A layout with nothing placed
-// becomes the default.
+// becomes the default. A widget the default layout lists as hidden is never placed on its own: it waits in the tray.
 public static class WidgetLayoutNormalizer
 {
     public static WidgetLayout Normalize(WidgetLayout layout, WidgetLayout defaults)
     {
-        var known = defaults.WidgetIds.ToList();
+        var known = defaults.WidgetIds.Concat(defaults.HiddenWidgetIds).ToList();
         var seen = new HashSet<string>();
 
         var widths = new List<double>();
@@ -42,7 +42,7 @@ public static class WidgetLayoutNormalizer
             return defaults;
         }
 
-        var hidden = known.Where(id => !seen.Contains(id) && layout.HiddenWidgetIds.Contains(id)).ToList();
+        var hidden = known.Where(id => !seen.Contains(id) && (layout.HiddenWidgetIds.Contains(id) || defaults.HiddenWidgetIds.Contains(id))).ToList();
         var brandNew = known.Where(id => !seen.Contains(id) && !hidden.Contains(id)).ToList();
         foreach (var id in brandNew)
         {

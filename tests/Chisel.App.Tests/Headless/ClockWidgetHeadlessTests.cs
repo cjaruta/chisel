@@ -1,0 +1,77 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Chisel.App.ViewModels;
+using Chisel.App.Views.Widgets;
+
+namespace Chisel.App.Tests.Headless;
+
+public class ClockWidgetHeadlessTests
+{
+    [AvaloniaFact]
+    public void TheClock_IsInTheTray_CanBeAdded_AndDrawsAFaceWithThreeHands()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        var main = (MainViewModel)window.DataContext!;
+        main.CustomizeLayoutCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(main.Layout.TrayWidgets, w => w.Id == WidgetRegistry.Clock);
+        Assert.Empty(window.GetVisualDescendants().OfType<ClockFace>());
+
+        main.Layout.AddWidgetFromTray(WidgetRegistry.Clock);
+        Dispatcher.UIThread.RunJobs();
+
+        var face = window.GetVisualDescendants().OfType<ClockFace>().Single();
+        Assert.Equal(3, face.HandCount);
+        Assert.Equal((285d, 180d, 0d), (face.HourAngle, face.MinuteAngle, face.SecondAngle));
+        Assert.False(face.IsHitTestVisible);
+        main.Layout.DoneCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Single(window.GetVisualDescendants().OfType<ClockFace>());
+        UiSnapshot.Render(window, "clock-widget");
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1200, 760)] // tall widget
+    [InlineData(520, 760)] // narrow column
+    public void TheFace_IsCenteredBelowTheHeading_AndNeverOverlapsIt(int width, int height)
+    {
+        var window = UiSnapshot.ShowMainWindow(width, height);
+        var main = (MainViewModel)window.DataContext!;
+        var layout = main.Layout.Layout;
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+        Dispatcher.UIThread.RunJobs();
+
+        var face = window.GetVisualDescendants().OfType<ClockFace>().Single();
+        var frame = face.GetVisualAncestors().OfType<WidgetFrame>().Single();
+        var heading = frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
+        var area = frame.Content;
+
+        double Top(Visual v) => v.TranslatePoint(new Point(0, 0), window)!.Value.Y;
+        var headingBottom = Top(heading) + heading.Bounds.Height;
+        var circleTop = Top(face) + face.Bounds.Height / 2 - face.FaceRadius;
+        var circleBottom = circleTop + 2 * face.FaceRadius;
+        var areaBottom = Top(area) + area.Bounds.Height;
+        var topGap = circleTop - headingBottom;
+        var bottomGap = areaBottom - circleBottom;
+        if (width == 1200) UiSnapshot.Render(window, "clock-centered");
+        Assert.True(topGap >= 0, $"face overlaps the heading ({topGap})");
+        Assert.InRange(Math.Abs(topGap - bottomGap), 0, 1);
+    }
+
+    [AvaloniaFact]
+    public void ApplyingALayoutWithTheClock_OutsideEditMode_ShowsIt()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        var main = (MainViewModel)window.DataContext!;
+        var layout = main.Layout.Layout;
+
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Single(window.GetVisualDescendants().OfType<ClockFace>());
+    }
+}

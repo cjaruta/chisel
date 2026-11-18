@@ -113,7 +113,8 @@ public partial class LayoutViewModel : ViewModelBase
     private void EnterEdit()
     {
         Snapshot = Layout;
-        IsTrayOpen = HasHiddenWidgets;
+        // Opens only when the user hid one of the original widgets, not for the clock waiting there by default.
+        IsTrayOpen = Layout.HiddenWidgetIds.Any(id => id != WidgetRegistry.Clock);
         IsEditing = true;
     }
 

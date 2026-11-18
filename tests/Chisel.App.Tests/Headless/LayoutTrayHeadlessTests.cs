@@ -40,7 +40,7 @@ public class LayoutTrayHeadlessTests
         new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
 
     private static List<Border> TrayCards(Window window) =>
-        window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible).ToList();
+        window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible && ((WidgetDefinition)b.DataContext!).Id != WidgetRegistry.Clock).ToList();
 
     private static Border TrayCard(Window window, string id) =>
         TrayCards(window).Single(b => ((WidgetDefinition)b.DataContext!).Id == id);
@@ -103,8 +103,8 @@ public class LayoutTrayHeadlessTests
             Assert.True(f.RemoveButton.IsEffectivelyVisible);
             Assert.Equal("Remove from dashboard", ToolTip.GetTip(f.RemoveButton));
         });
-        // Nothing is hidden yet, so the tray keeps out of the way.
-        Assert.False(Named<Control>(window, "LayoutTray").IsEffectivelyVisible);
+        // Only the clock waits in the tray; none of the four original widgets are hidden yet.
+        Assert.Empty(TrayCards(window));
         window.Close();
     }
 
@@ -213,7 +213,7 @@ public class LayoutTrayHeadlessTests
         ClickControl(window, TrayCard(window, "links"));
 
         Assert.Equal("schedule,links | tasks,notes", Order(window));
-        Assert.False(Named<Control>(window, "LayoutTray").IsEffectivelyVisible);
+        Assert.Empty(TrayCards(window));
         window.Close();
     }
 

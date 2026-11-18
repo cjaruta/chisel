@@ -11,10 +11,11 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Chisel.App.ViewModels;
 using Chisel.App.Views;
+using Chisel.App.Views.Widgets;
 
 namespace Chisel.App.Dev;
 
-// Dev only: `dotnet run --project src/Chisel.App -- --capture drag|remove|add`. Drives the real window through a
+// Dev only: `dotnet run --project src/Chisel.App -- --capture drag|remove|add|clock`. Drives the real window through a
 // scripted edit, saves a render of it every ~16 ms into artifacts/ui/capture/<scenario>/, then exits.
 internal static class CaptureMode
 {
@@ -39,12 +40,31 @@ internal static class CaptureMode
         var step = 0;
         var marks = new List<(int At, string Name)>();
         var log = new List<string>();
+        ClockFace? face = null;
 
         void Mark(string name) { marks.Add((frameNo, name)); }
         var script = new List<(int Ms, Action Do)>();
-        script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
+        if (scenario != "clock")
+        {
+            script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
+        }
         switch (scenario)
         {
+            case "clock":
+                // Shows the clock without edit mode or saving, then just runs so the second hand can be watched.
+                script.Add((500, () =>
+                {
+                    var layout = vm.Layout.Layout;
+                    // Already on the saved dashboard? Then it is just there; otherwise show it without saving.
+                    if (layout.Find(WidgetRegistry.Clock) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+                    }
+                    face = window.GetVisualDescendants().OfType<ClockFace>().FirstOrDefault();
+                    Mark("clock shown");
+                }));
+                script.Add((3500, () => Mark("clock running")));
+                break;
             case "drag":
                 script.Add((1500, () => { host.ScriptPickUp("links"); Mark("pick up links"); }));
                 script.Add((2600, () => { host.ScriptMove(host.CenterOf("tasks", 0.7)); Mark("move"); }));
@@ -61,19 +81,21 @@ internal static class CaptureMode
         var end = script[^1].Ms + 2000;
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-        timer.Tick += (_, _) =>
+        void OnTick()
         {
             var ms = clock.ElapsedMilliseconds;
             while (step < script.Count && ms >= script[step].Ms)
             {
-                script[step++].Do();
+                try { script[step++].Do(); }
+                catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); timer.Stop(); exit(); return; }
             }
             if (ms > 400)
             {
                 var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
                 if (size.Width > 0)
                 {
-                    log.Add($"{frameNo} {ms} {host.DebugBorder("links")}");
+                    face ??= window.GetVisualDescendants().OfType<ClockFace>().FirstOrDefault();
+                    log.Add(scenario == "clock" ? $"{frameNo} {ms} {face?.SecondAngle}" : $"{frameNo} {ms} {host.DebugBorder("links")}");
                     var bmp = new RenderTargetBitmap(size);
                     bmp.Render(window);
                     var path = Path.Combine(dir, $"{frameNo:D4}_{ms:D5}ms.png");
@@ -86,8 +108,14 @@ internal static class CaptureMode
                 timer.Stop();
                 File.WriteAllLines(Path.Combine(dir, "border.log"), log);
                 File.WriteAllLines(Path.Combine(dir, "marks.txt"), marks.Select(m => $"{m.At} {m.Name}"));
-                Task.WhenAll(saves).ContinueWith(_ => Dispatcher.UIThread.Post(() => { ContactSheet.Write(dir, marks, frameNo); exit(); }));
+                Task.WhenAll(saves).ContinueWith(_ => Dispatcher.UIThread.Post(() => { if (scenario == "clock" && face is not null) ClockSheet.Write(dir, marks[0].At, frameNo, window, face); else ContactSheet.Write(dir, marks, frameNo); exit(); }));
             }
+        }
+        // Anything thrown while capturing is written to error.txt and the app exits, instead of hanging.
+        timer.Tick += (_, _) =>
+        {
+            try { OnTick(); }
+            catch (Exception ex) { timer.Stop(); File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); exit(); }
         };
         window.Opened += (_, _) => { host = window.GetVisualDescendants().OfType<LayoutHost>().Single(); clock.Restart(); timer.Start(); };
     }
@@ -122,5 +150,29 @@ internal static class ContactSheet
             }
             target.Save(Path.Combine(dir, $"sheet_{name.Replace(' ', '_')}.png"));
         }
+    }
+}
+
+// The clock scenario: the clock card cropped from 6 frames spread evenly over the run, to see the second hand step.
+internal static class ClockSheet
+{
+    public static void Write(string dir, int first, int total, Window window, ClockFace face)
+    {
+        var origin = face.TranslatePoint(new Point(0, 0), window) ?? default;
+        var side = Math.Min(face.Bounds.Width, face.Bounds.Height);
+        var crop = new Rect(origin.X + (face.Bounds.Width - side) / 2, origin.Y + (face.Bounds.Height - side) / 2, side, side);
+        var target = new RenderTargetBitmap(new PixelSize(1200, 800));
+        using (var ctx = target.CreateDrawingContext())
+        {
+            for (var i = 0; i < 6; i++)
+            {
+                var n = first + i * (total - first) / 6;
+                var file = Directory.GetFiles(dir, $"{n:D4}_*.png").FirstOrDefault();
+                if (file is null) continue;
+                using var bmp = new Bitmap(file);
+                ctx.DrawImage(bmp, crop, new Rect(i % 3 * 400, i / 3 * 400, 400, 400));
+            }
+        }
+        target.Save(Path.Combine(dir, "sheet_clock.png"));
     }
 }

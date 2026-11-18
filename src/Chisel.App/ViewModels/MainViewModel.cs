@@ -5,6 +5,7 @@ namespace Chisel.App.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     public ClockViewModel Clock { get; }
+    public AnalogClockViewModel AnalogClock { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -24,6 +25,7 @@ public partial class MainViewModel : ViewModelBase
         LayoutViewModel? layout = null)
     {
         Clock = clock;
+        AnalogClock = new AnalogClockViewModel(clock);
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;
@@ -55,6 +57,16 @@ public partial class MainViewModel : ViewModelBase
         Schedule.CloseEditorsCommand.Execute(null);
         Schedule.HideHover();
         Layout.EnterEditCommand.Execute(null);
+    }
+
+    // Called often (about every 200 ms); refreshes only when the local second has changed, so a second is
+    // neither skipped nor doubled.
+    public void Tick()
+    {
+        if (Clock.NeedsRefresh)
+        {
+            Refresh();
+        }
     }
 
     public void Refresh()

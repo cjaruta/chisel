@@ -14,7 +14,7 @@ namespace Chisel.App.Views;
 
 public partial class MainWindow : Window
 {
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly string? _windowPlacementPath;
 
     public MainWindow() : this(AppPaths.GetWindowPlacementPath())
@@ -32,7 +32,7 @@ public partial class MainWindow : Window
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
         SizeChanged += (_, _) => PlaceLayoutToolbar();
 
-        _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Refresh();
+        _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
         Loaded += (_, _) =>
         {
             _timer.Start();

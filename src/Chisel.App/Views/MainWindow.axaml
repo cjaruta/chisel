@@ -64,14 +64,14 @@
                     </Button>
                     <ItemsControl Name="TrayCards" ItemsSource="{Binding Layout.TrayWidgets}" IsVisible="{Binding Layout.IsTrayOpen}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:WidgetDefinition">
                                 <Border Classes="trayCard" ToolTip.Tip="Drag onto the dashboard, or click to add"
                                         PointerPressed="OnTrayCardPressed" PointerMoved="OnTrayCardMoved"
                                         PointerReleased="OnTrayCardReleased" PointerCaptureLost="OnTrayCardCaptureLost">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
                                         <Path Classes="trayIcon" Data="{Binding Icon, Converter={x:Static conv:GeometryConverter.Instance}}" />
                                         <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
                                         <TextBlock Classes="trayPlus" Text="+" VerticalAlignment="Center" />
