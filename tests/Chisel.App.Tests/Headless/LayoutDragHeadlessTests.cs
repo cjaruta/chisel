@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Chisel.App.ViewModels;
@@ -224,6 +225,45 @@ public class LayoutDragHeadlessTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData("tasks", 0.8)] // gap above the widget's own slot
+    [InlineData("links", 0.2)] // gap below it
+    public void GapsNextToTheWidgetsOwnSlot_ShowNoIndicator(string neighbour, double fraction)
+    {
+        var window = ShowEditing();
+        var line = Named<Border>(window, "DropIndicator");
+        var from = Bar(window, "notes");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+
+        MoveTo(window, Within(window, neighbour, fraction));
+        Assert.False(line.IsVisible);
+
+        MoveTo(window, Within(window, "tasks", 0.2));
+        Assert.True(line.IsVisible);
+        Release(window, Within(window, "tasks", 0.2));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DroppingOnTheHomePlaceholder_KeepsTheLayout()
+    {
+        var window = ShowEditing();
+        var from = Bar(window, "notes");
+        Press(window, from);
+        MoveTo(window, new Point(from.X + 10, from.Y + 10));
+        var home = Within(window, "notes", 0.5);
+        MoveTo(window, home);
+
+        Assert.Contains("dragSource", Frame(window, "notes").Classes);
+        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
+        Release(window, home);
+
+        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        AssertNoDragVisuals(window);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void Dropping_PutsTheWidgetAtTheIndicatedSlot()
     {
@@ -285,6 +325,27 @@ public class LayoutDragHeadlessTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("schedule | links,tasks,notes", Order(window));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PickedUpWidget_IsLifted_AndSettlesOnDrop()
+    {
+        var window = ShowEditing();
+        var floating = Named<Border>(window, "DragFloat");
+        var from = Bar(window, "links");
+        Press(window, from);
+        Assert.DoesNotContain("lifted", floating.Classes);
+
+        MoveTo(window, new Point(from.X + 20, from.Y - 20));
+        Assert.Contains("lifted", floating.Classes);
+        var scale = Assert.IsAssignableFrom<ITransform>(floating.RenderTransform);
+        Assert.InRange(scale.Value.M11, 1.0001, 1.02);
+        Assert.True(floating.BoxShadow[0].OffsetY > 4);
+
+        Release(window, Within(window, "tasks", 0.7));
+        Assert.DoesNotContain("lifted", floating.Classes);
+        AssertNoDragVisuals(window);
         window.Close();
     }
 

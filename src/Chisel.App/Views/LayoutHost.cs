@@ -91,6 +91,8 @@ public sealed class LayoutHost : Decorator
     private Point _grabOffset;
     private bool _dragging;
     private (int Column, int Index)? _target;
+    // Where the dragged widget started (null for a tray widget).
+    private (int Column, int Index)? _origin;
     private IPointer? _pointer;
 
     // Where the columns and cards were at pick-up: targets are worked out from these, however the cards reflow.
@@ -647,6 +649,7 @@ public sealed class LayoutHost : Decorator
     private void StartDragVisuals(WidgetFrame? frame, string title)
     {
         _dragging = true;
+        _origin = frame is null ? null : Layout?.Layout.Find(frame.WidgetId);
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
         _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
         FindNewColumnGaps(frame?.WidgetId);
@@ -670,8 +673,11 @@ public sealed class LayoutHost : Decorator
         _grabOffset = new Point(Math.Min(_grabOffset.X, _float.Width - 24), Math.Min(_grabOffset.Y, _float.Height - 8));
         // Slightly larger, scaled around the grab point so that point stays under the pointer.
         _float.RenderTransformOrigin = new RelativePoint(_grabOffset, RelativeUnit.Absolute);
-        _float.RenderTransform = new ScaleTransform(1.03, 1.03);
+        // Shown at rest first, then lifted: the style transitions scale and shadow over ~150 ms.
+        _float.Classes.Set("lifted", false);
         _float.IsVisible = true;
+        _float.UpdateLayout();
+        _float.Classes.Set("lifted", true);
         Cursor = DraggingCursor;
         MarkDragSource();
     }
@@ -732,8 +738,10 @@ public sealed class LayoutHost : Decorator
             Canvas.SetTop(_phantom, rect.Y);
         }
 
-        _insertLine.IsVisible = _target is not null;
-        if (_target is { } t)
+        // A gap that would put the widget back where it was gets no line: its slot already shows as the home placeholder.
+        var showLine = _target is { } hovered && !LayoutDropTargets.IsHome(hovered, _origin);
+        _insertLine.IsVisible = showLine;
+        if (showLine && _target is { } t)
         {
             var column = _pickColumns[t.Column];
             _insertLine.Width = column.Width;
@@ -748,7 +756,9 @@ public sealed class LayoutHost : Decorator
         _trayWidget = null;
         _dragging = false;
         _target = null;
+        _origin = null;
         _float.IsVisible = false;
+        _float.Classes.Set("lifted", false);
         _float.Child = null;
         Cursor = null;
         _newColumnTarget = null;
@@ -785,6 +795,31 @@ public sealed class LayoutHost : Decorator
     // i-th column. It is arranged after the columns, so their final positions are known.
     private sealed class ColumnHandleLayer(Panel columns) : Panel
     {
+        private readonly List<Rect> _arranged = new();
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            columns.LayoutUpdated += OnColumnsLayoutUpdated;
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            columns.LayoutUpdated -= OnColumnsLayoutUpdated;
+            base.OnDetachedFromVisualTree(e);
+        }
+
+        // The columns can move (weights changed, a widget moved) without this layer being invalidated, so
+        // re-arrange the handles whenever a column's bounds differ from where they were last placed.
+        private void OnColumnsLayoutUpdated(object? sender, EventArgs e)
+        {
+            var bounds = columns.Children.OfType<ScrollViewer>().Select(s => s.Bounds).ToList();
+            if (!bounds.SequenceEqual(_arranged))
+            {
+                InvalidateArrange();
+            }
+        }
+
         protected override Size MeasureOverride(Size availableSize)
         {
             foreach (var child in Children)
@@ -797,6 +832,8 @@ public sealed class LayoutHost : Decorator
         protected override Size ArrangeOverride(Size finalSize)
         {
             var scrollers = columns.Children.OfType<ScrollViewer>().ToList();
+            _arranged.Clear();
+            _arranged.AddRange(scrollers.Select(s => s.Bounds));
             for (var i = 0; i < Children.Count && i + 1 < scrollers.Count; i++)
             {
                 var column = scrollers[i].Bounds;

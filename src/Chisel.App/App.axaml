@@ -97,8 +97,8 @@
         <!-- Dragging a widget: a snapshot of it floats with the pointer (slightly larger, soft shadow), and its
              slot is an empty gap the other cards reflow around -->
         <Style Selector="Border.widgetFrame.dragSource">
-            <Setter Property="Background" Value="#10F5A524" />
-            <Setter Property="BorderBrush" Value="#55F5A524" />
+            <Setter Property="Background" Value="#14808080" />
+            <Setter Property="BorderBrush" Value="#40808080" />
         </Style>
 
         <Style Selector="Border.widgetFrame.dragSource DockPanel.widgetContent">
@@ -110,8 +110,20 @@
         </Style>
 
         <Style Selector="Border.dragFloat">
-            <Setter Property="BoxShadow" Value="0 14 36 0 #B0000000" />
+            <Setter Property="BoxShadow" Value="0 4 12 0 #60000000" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
             <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.dragFloat.lifted">
+            <Setter Property="BoxShadow" Value="0 14 36 0 #B0000000" />
+            <Setter Property="RenderTransform" Value="scale(1.02)" />
         </Style>
 
         <!-- Phantom column shown in a new-column zone while dragging, and the line marking the gap in a column -->
