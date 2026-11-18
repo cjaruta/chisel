@@ -735,7 +735,40 @@ public sealed class LayoutHost : Decorator
         _float.UpdateLayout();
         _float.Classes.Set("lifted", true);
         Cursor = DraggingCursor;
-        MarkDragSource();
+        var dbg = DragDebug();
+        if (dbg.Count > 0) ApplyDragDebug(dbg, frame);
+        if (!dbg.Contains("nodim")) MarkDragSource();
+    }
+
+    // TEMP drag debug: CHISEL_DRAG_DEBUG=nosnapshot,nodim,noanim,noshadow,opaque. Delete with its two call sites.
+    private static HashSet<string> DragDebug() =>
+        (Environment.GetEnvironmentVariable("CHISEL_DRAG_DEBUG") ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => s.ToLowerInvariant()).ToHashSet();
+
+    private void ApplyDragDebug(HashSet<string> dbg, WidgetFrame? frame)
+    {
+        if (dbg.Contains("nosnapshot")) _float.IsVisible = false;
+        if (dbg.Contains("noshadow"))
+        {
+            _float.BoxShadow = default;
+            _float.RenderTransform = null;
+        }
+        if (dbg.Contains("opaque") && _float.Child is Control child)
+        {
+            _float.Child = null;
+            _float.Child = new Border { Background = new SolidColorBrush(Color.Parse("#1F222A")), CornerRadius = new CornerRadius(12), Child = child };
+        }
+        if (dbg.Contains("noanim"))
+        {
+            _float.Transitions = new Avalonia.Animation.Transitions();
+            foreach (var f in Frames.SelectMany(c => c))
+            {
+                f.Transitions = new Avalonia.Animation.Transitions();
+                foreach (var v in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(f).OfType<Avalonia.Animation.Animatable>())
+                    v.Transitions = new Avalonia.Animation.Transitions();
+            }
+        }
     }
 
     // The widget as a bitmap, taken before its slot turns into a gap.
