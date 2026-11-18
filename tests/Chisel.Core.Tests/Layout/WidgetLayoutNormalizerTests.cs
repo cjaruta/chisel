@@ -167,3 +167,42 @@ public class WidgetLayoutNormalizerTests
         Assert.Equal("1[schedule:1] | 1[tasks:1] | 1[notes:1] | 1[links:1, extra:1]", normalized.Describe());
     }
 }
+
+public class WidgetLayoutNormalizerHiddenByDefaultTests
+{
+    private static readonly WidgetLayout Defaults = new(new[]
+    {
+        new LayoutColumn(1.3, new[] { new WidgetPlacement("schedule") }),
+        new LayoutColumn(1, new[] { new WidgetPlacement("tasks") }),
+    }, new[] { "clock" });
+
+    [Fact]
+    public void SavedLayoutWithoutTheWidget_KeepsItHidden()
+    {
+        var saved = new WidgetLayout(new[]
+        {
+            new LayoutColumn(1, new[] { new WidgetPlacement("schedule", 1) }),
+            new LayoutColumn(1, new[] { new WidgetPlacement("tasks", 1) }),
+        });
+
+        var result = WidgetLayoutNormalizer.Normalize(saved, Defaults);
+
+        Assert.Equal(new[] { "clock" }, result.HiddenWidgetIds);
+        Assert.Equal(new[] { "schedule", "tasks" }, result.WidgetIds);
+    }
+
+    [Fact]
+    public void SavedLayoutWithTheWidgetPlaced_KeepsItPlaced()
+    {
+        var saved = new WidgetLayout(new[]
+        {
+            new LayoutColumn(1, new[] { new WidgetPlacement("schedule", 1), new WidgetPlacement("clock", 1) }),
+            new LayoutColumn(1, new[] { new WidgetPlacement("tasks", 1) }),
+        });
+
+        var result = WidgetLayoutNormalizer.Normalize(saved, Defaults);
+
+        Assert.Empty(result.HiddenWidgetIds);
+        Assert.Contains("clock", result.WidgetIds);
+    }
+}
