@@ -127,25 +127,53 @@
             <Setter Property="RenderTransform" Value="scale(1.035)" />
         </Style>
 
-        <!-- Home slot: fades and insets as the widget detaches -->
+        <!-- Home slot: fades and insets as the widget detaches; the same easing settles the card when edit mode
+             ends (border, shadow, scale and content opacity all fade together) -->
         <Style Selector="Border.widgetFrame">
             <Setter Property="Transitions">
                 <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.28" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
         </Style>
 
-        <!-- Drop snap: the border is amber at once, then fades back to the neutral border (the border transition
-             is left out while the class is on, so it only runs when the class comes off) -->
-        <Style Selector="Border.widgetFrame.snap">
-            <Setter Property="BorderBrush" Value="#CCF5A524" />
+        <Style Selector="Border.widgetFrame > Panel">
             <Setter Property="Transitions">
                 <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame DockPanel.widgetContent">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Drop snap: a soft amber border at once, then it fades back to neutral (the border transition is left
+             out while the class is on, so it only runs when the class comes off; snapFade sets its length) -->
+        <Style Selector="Border.widgetFrame.snap">
+            <Setter Property="BorderBrush" Value="#80F5A524" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widgetFrame.snapFade">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
                 </Transitions>
             </Setter>
         </Style>
@@ -256,7 +284,7 @@
             <Setter Property="Height" Value="16" />
             <Setter Property="MinHeight" Value="0" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0" />
+            <Setter Property="Margin" Value="8,8,0,0" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="VerticalAlignment" Value="Top" />
             <Setter Property="CornerRadius" Value="8" />

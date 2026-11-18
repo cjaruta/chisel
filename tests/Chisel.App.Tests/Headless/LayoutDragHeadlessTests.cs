@@ -362,7 +362,7 @@ public class LayoutDragHeadlessTests
         Drag(window, "links", Within(window, "tasks", 0.7));
 
         Assert.Contains("snap", frame.Classes);
-        Assert.Equal(Color.Parse("#CCF5A524"), Assert.IsAssignableFrom<ISolidColorBrush>(frame.BorderBrush).Color);
+        Assert.Equal(Color.Parse("#80F5A524"), Assert.IsAssignableFrom<ISolidColorBrush>(frame.BorderBrush).Color);
         Assert.Equal(1, frame.Opacity);
         Assert.DoesNotContain("dragSource", frame.Classes);
 

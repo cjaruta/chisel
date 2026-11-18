@@ -561,6 +561,10 @@ public sealed class LayoutHost : Decorator
         }
     }
 
+    // The amber hold and the fade back to neutral: about 210 ms in all.
+    public static readonly TimeSpan SnapHold = TimeSpan.FromMilliseconds(60);
+    public static readonly TimeSpan SnapFade = TimeSpan.FromMilliseconds(150);
+
     // Click into place: the card's border flashes amber, then the style fades it back to neutral.
     private void Snap(string? widgetId)
     {
@@ -569,11 +573,19 @@ public sealed class LayoutHost : Decorator
             return;
         }
         frame.Classes.Set("snap", true);
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+        var timer = new DispatcherTimer { Interval = SnapHold };
         timer.Tick += (_, _) =>
         {
             timer.Stop();
             frame.Classes.Set("snap", false);
+            frame.Classes.Set("snapFade", true);
+            var fade = new DispatcherTimer { Interval = SnapFade };
+            fade.Tick += (_, _) =>
+            {
+                fade.Stop();
+                frame.Classes.Set("snapFade", false);
+            };
+            fade.Start();
         };
         timer.Start();
     }
