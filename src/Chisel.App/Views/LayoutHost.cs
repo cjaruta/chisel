@@ -569,7 +569,7 @@ public sealed class LayoutHost : Decorator
             return;
         }
         frame.Classes.Set("snap", true);
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
         timer.Tick += (_, _) =>
         {
             timer.Stop();
