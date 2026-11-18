@@ -13,6 +13,9 @@ public partial class ClockViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(TimeText))]
     public partial DateTimeOffset Now { get; set; }
 
+    // True once the local whole second has moved on since the last Refresh.
+    public bool NeedsRefresh => _time.GetLocalNow().DateTime.Ticks / TimeSpan.TicksPerSecond != Now.DateTime.Ticks / TimeSpan.TicksPerSecond;
+
     public string TimeText => _display.Time(TimeOnly.FromDateTime(Now.DateTime), withSeconds: true);
 
     public ClockViewModel(TimeProvider time, TimeDisplay? display = null)

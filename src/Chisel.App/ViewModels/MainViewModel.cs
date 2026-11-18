@@ -59,6 +59,16 @@ public partial class MainViewModel : ViewModelBase
         Layout.EnterEditCommand.Execute(null);
     }
 
+    // Called often (about every 200 ms); refreshes only when the local second has changed, so a second is
+    // neither skipped nor doubled.
+    public void Tick()
+    {
+        if (Clock.NeedsRefresh)
+        {
+            Refresh();
+        }
+    }
+
     public void Refresh()
     {
         Clock.Refresh();
