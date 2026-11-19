@@ -63,6 +63,7 @@ public partial class MainViewModel : ViewModelBase
         Layout = layout ?? new LayoutViewModel();
         PictureFrames = new PictureFramesViewModel(Layout, time, import: pictureImport, catalog: pictureCatalog);
         PictureSettings = pictureSettings ?? new PictureSettingsViewModel(null, Layout, null);
+        Layout.AdjustGate = id => PictureFrames.For(id).CanAdjust;
         Volume.ScrollEnabled = MediaSettings.ScrollVolume;
         MediaSettings.PropertyChanged += (_, e) =>
         {

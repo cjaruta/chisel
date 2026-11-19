@@ -34,14 +34,21 @@ internal sealed class FakeResizer : IImageResizer
     public byte[]? Resize(byte[] data, int width, int height) => TinyFiles.Png(width, height);
 }
 
-internal sealed class FakeDownloader : IImageDownloader
+public sealed class FakeDownloader : IImageDownloader
 {
     public Dictionary<string, DownloadResult> Answers { get; } = [];
     public List<string> Asked { get; } = [];
 
+    // An answer that arrives only when the task completes (a download still on its way).
+    public Dictionary<string, Task<DownloadResult>> Held { get; } = [];
+
     public Task<DownloadResult> DownloadAsync(string url, CancellationToken cancellation = default)
     {
         Asked.Add(url);
+        if (Held.TryGetValue(url, out var held))
+        {
+            return held;
+        }
         return Task.FromResult(Answers.TryGetValue(url, out var answer) ? answer : new DownloadResult(null, DownloadError.Failed, "Couldn't download that picture."));
     }
 }

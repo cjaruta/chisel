@@ -268,6 +268,10 @@ public sealed class WidgetFrame : Border
     public string ActiveId => _members[_active].Definition.Id;
     public bool IsGroup => _members.Count > 1;
 
+    // The title of the widget shown in the body, and whether it is a picture frame.
+    public string ActiveTitle => _members[_active].Definition.Title;
+    public bool ShowsPictureFrame => IsPictureActive;
+
     // Whether the panes are what the card shows now (the saved mode is split and there is room).
     public bool IsSplitShown => _splitShown;
 

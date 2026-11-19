@@ -200,6 +200,23 @@ public sealed class PictureFramesViewModel : ViewModelBase
         }
     }
 
+    // The window's call: a drop that must never take the app down; whatever goes wrong becomes a message.
+    public async Task DropSafelyAsync(PictureDropPlacement placement, IReadOnlyList<PictureSource> sources)
+    {
+        try
+        {
+            await DropAsync(placement, sources);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            foreach (var id in placement.FrameIds)
+            {
+                For(id).Pending = 0;
+            }
+            Notice = "Couldn't add that picture.";
+        }
+    }
+
     // Called about every 200 ms by MainViewModel.Tick.
     public void Tick()
     {

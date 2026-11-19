@@ -428,9 +428,12 @@ public partial class LayoutViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? AdjustingFrameId { get; private set; }
 
+    // Asked before adjusting starts: false for a picture that cannot be adjusted (an animated GIF).
+    public Func<string, bool>? AdjustGate { get; set; }
+
     public bool BeginAdjust(string frameId)
     {
-        if (!IsEditing || Layout.Find(frameId) is null)
+        if (!IsEditing || Layout.Find(frameId) is null || AdjustGate?.Invoke(frameId) == false)
         {
             return false;
         }
