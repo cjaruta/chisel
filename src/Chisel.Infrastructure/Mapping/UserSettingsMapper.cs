@@ -25,4 +25,4 @@ public static class UserSettingsMapper
 
     public static UserSettings ToDomain(this UserSettingsEntity entity) =>
         new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume, entity.MediaScrollVolume, entity.ThemeMode, entity.AccentColor, entity.MediaAlbumGradient, entity.MediaAnimateGradient);
-}
+}
