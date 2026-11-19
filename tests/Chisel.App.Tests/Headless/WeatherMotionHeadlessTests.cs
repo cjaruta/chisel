@@ -32,6 +32,7 @@ public class WeatherMotionHeadlessTests
         var (window, main, layer) = Open(WeatherState.Ready);
         Assert.True(layer.IsAnimating);
         Assert.Equal(MotionKind.Rain, layer.Kind);
+        Assert.True(WeatherMotionClock.IsTicking);
         UiSnapshot.Render(window, "weather-motion-rain");
 
         main.CustomizeLayoutCommand.Execute(null);

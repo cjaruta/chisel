@@ -22,6 +22,7 @@ public sealed class WeatherMotionLayer
     private Window? _window;
     private CompositionCustomVisual? _visual;
     private string? _sceneKey;
+    private double _lastTick;
 
     private WeatherMotionLayer(UserControl host) => _host = host;
 
@@ -87,9 +88,20 @@ public sealed class WeatherMotionLayer
         _host.PropertyChanged -= OnHostChanged;
         _host.SizeChanged -= OnSizeChanged;
         _visual?.SendHandlerMessage(new WeatherMotionHandler.Run(false));
+        WeatherMotionClock.Remove(this);
         _visual = null;
         _sceneKey = null;
         IsAnimating = false;
+    }
+
+    // Called by WeatherMotionClock; asks for a redraw when this scene's own rate is due.
+    internal void Tick(double now)
+    {
+        if (now - _lastTick >= 1.0 / WeatherMotion.Fps(Kind) - 0.01)
+        {
+            _lastTick = now;
+            _visual?.SendHandlerMessage(WeatherMotionHandler.TickMessage);
+        }
     }
 
     private void OnChanged(object? sender, PropertyChangedEventArgs e) => Update();
@@ -141,6 +153,14 @@ public sealed class WeatherMotionLayer
         {
             IsAnimating = run;
             _visual?.SendHandlerMessage(new WeatherMotionHandler.Run(run));
+            if (run)
+            {
+                WeatherMotionClock.Add(this);
+            }
+            else
+            {
+                WeatherMotionClock.Remove(this);
+            }
         }
     }
 }

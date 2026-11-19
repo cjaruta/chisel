@@ -80,14 +80,15 @@ internal static class CaptureMode
                 // weather store, so no real data is read or written. Frames are saved densely around a forced layout
                 // rebuild; CPU and GC are logged over a window with motion (A) and one without (B, weather Loading).
                 var cpu = new List<string>();
-                (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms) mark0 = default;
+                (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms, long Callbacks, long Renders, double RenderMs) mark0 = default;
                 void Start() => mark0 = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime, GC.GetTotalAllocatedBytes(false),
-                    GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2), clock.ElapsedMilliseconds);
+                    GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2), clock.ElapsedMilliseconds,
+                    Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Callbacks, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.RenderMilliseconds);
                 void Stop(string name)
                 {
                     var wall = (clock.ElapsedMilliseconds - mark0.Ms) / 1000.0;
                     var used = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime - mark0.Cpu).TotalSeconds;
-                    cpu.Add($"{name}: cpu {used:F3}s over {wall:F2}s = {100 * used / wall:F1}% of one core; allocated {(GC.GetTotalAllocatedBytes(false) - mark0.Bytes) / wall / 1024:F1} KB/s; GCs gen0 {GC.CollectionCount(0) - mark0.G0} gen1 {GC.CollectionCount(1) - mark0.G1} gen2 {GC.CollectionCount(2) - mark0.G2}");
+                    cpu.Add($"{name}: cpu {used:F3}s over {wall:F2}s = {100 * used / wall:F1}% of one core; allocated {(GC.GetTotalAllocatedBytes(false) - mark0.Bytes) / wall / 1024:F1} KB/s; GCs gen0 {GC.CollectionCount(0) - mark0.G0} gen1 {GC.CollectionCount(1) - mark0.G1} gen2 {GC.CollectionCount(2) - mark0.G2}; motion handlers running {Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Running}, frame callbacks {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Callbacks - mark0.Callbacks) / wall:F0}/s, draws {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders - mark0.Renders) / wall:F1}/s taking {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.RenderMilliseconds - mark0.RenderMs) / Math.Max(1, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders - mark0.Renders):F3} ms each");
                     File.WriteAllLines(Path.Combine(dir, "cpu.txt"), cpu);
                 }
                 script.Add((100, () => Mark("start")));
