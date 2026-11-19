@@ -68,7 +68,9 @@ public sealed class PictureImporter(IPictureRepository repository, IPictureFileS
         }
 
         var decision = PictureStoragePolicy.Decide(keepOriginals, info.Width, info.Height, info.MimeType == ImageFormats.Gif && info.IsAnimated);
-        if (decision.Resize && resizer.Resize(bytes, decision.Width, decision.Height) is { } smaller && ImageSniffer.Sniff(smaller) is { } smallInfo)
+        // A copy that is not smaller than the original is not worth keeping: the setting must never make a file bigger.
+        if (decision.Resize && resizer.Resize(bytes, decision.Width, decision.Height) is { } smaller && smaller.Length < bytes.Length
+            && ImageSniffer.Sniff(smaller) is { } smallInfo)
         {
             bytes = smaller;
             info = smallInfo;

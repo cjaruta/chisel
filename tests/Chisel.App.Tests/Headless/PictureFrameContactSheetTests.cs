@@ -181,6 +181,12 @@ public class PictureFrameContactSheetTests
         var directory = Path.GetDirectoryName(UiSnapshot.Render(UiSnapshot.ShowMainWindow(), "picture-reset"))!;
         frame.Save(Path.Combine(directory, "picture-frame-contact-sheet.png"));
         sheet.Close();
+        // Every captured tile is a full-window bitmap: let them go now.
+        foreach (var (_, image) in tiles)
+        {
+            image.Dispose();
+        }
+        Settle();
         // Leave the app in its default theme for the next test.
         UiSnapshot.ShowMainWindow().Close();
     }

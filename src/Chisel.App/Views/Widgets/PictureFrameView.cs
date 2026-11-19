@@ -179,6 +179,18 @@ public sealed class PictureFrameView : WidgetView, IDisposable
         HideGif();
         _version++;
         StopTimer();
+        // Off the dashboard or on its way to another card: nothing stays decoded (it is decoded again when shown).
+        ReleaseBitmaps();
+    }
+
+    private void ReleaseBitmaps()
+    {
+        _canvas.SetCurrent(null, default);
+        foreach (var layer in _cache.Values)
+        {
+            layer.Dispose();
+        }
+        _cache.Clear();
     }
 
     public void Dispose()
@@ -191,12 +203,7 @@ public sealed class PictureFrameView : WidgetView, IDisposable
         var id = InstanceId;
         Unbind();
         _disposed = true;
-        _canvas.SetCurrent(null, default);
-        foreach (var layer in _cache.Values)
-        {
-            layer.Dispose();
-        }
-        _cache.Clear();
+        ReleaseBitmaps();
         if (main is not null && id is not null)
         {
             main.PictureFrames.Forget(id);

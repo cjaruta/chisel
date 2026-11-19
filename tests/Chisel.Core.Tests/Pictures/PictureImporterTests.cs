@@ -104,7 +104,7 @@ public class PictureImporterTests
     public void WithKeepOriginalsOff_ABigStillPicture_IsStoredAsADisplaySizeCopy()
     {
         var importer = Importer();
-        var prepared = importer.Prepare(Png(6000, 4000), "big.png", null, keepOriginals: false).Picture!;
+        var prepared = importer.Prepare([.. Png(6000, 4000), .. new byte[5000]], "big.png", null, keepOriginals: false).Picture!;
 
         Assert.Equal((2048, 1365), _resizer.Asked);
         Assert.Equal((2048, 1365), (prepared.Info.Width, prepared.Info.Height));
@@ -123,5 +123,22 @@ public class PictureImporterTests
         Assert.Equal(gif, prepared.Bytes);
         Assert.True(prepared.Info.IsAnimated);
         Assert.Null(_resizer.Asked);
+    }
+
+    private sealed class BiggerResizer : IImageResizer
+    {
+        public byte[]? Resize(byte[] data, int width, int height) => [.. Png(width, height), .. new byte[data.Length + 100]];
+    }
+
+    [Fact]
+    public void ACopyThatIsNotSmaller_IsNotUsed_SoTheSettingNeverMakesAFileBigger()
+    {
+        var importer = new PictureImporter(_repository, _store, new BiggerResizer(), new FakeTimeProvider());
+        var original = Png(6000, 4000);
+
+        var prepared = importer.Prepare(original, "big.png", null, keepOriginals: false).Picture!;
+
+        Assert.Equal(original, prepared.Bytes);
+        Assert.Equal((6000, 4000), (prepared.Info.Width, prepared.Info.Height));
     }
 }

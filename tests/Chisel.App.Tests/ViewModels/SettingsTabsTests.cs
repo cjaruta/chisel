@@ -39,12 +39,12 @@ public class SettingsTabsTests
     }
 
     [Fact]
-    public void DefaultPages_ListScheduleWeatherThenMedia()
+    public void DefaultPages_ListScheduleWeatherMediaThenPictureFrame()
     {
         var settings = Create();
 
-        Assert.Equal(new[] { "schedule", "weather", "media" }, settings.WidgetPages.Select(p => p.Id));
-        Assert.Equal(new[] { "Schedule", "Weather", "Media" }, settings.WidgetPages.Select(p => p.Title));
+        Assert.Equal(new[] { "schedule", "weather", "media", "pictureframe" }, settings.WidgetPages.Select(p => p.Id));
+        Assert.Equal(new[] { "Schedule", "Weather", "Media", "Picture frame" }, settings.WidgetPages.Select(p => p.Title));
         Assert.Same(settings.WidgetPages[0], settings.SelectedWidgetPage);
     }
 

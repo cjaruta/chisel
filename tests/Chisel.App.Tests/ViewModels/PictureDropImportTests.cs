@@ -213,7 +213,7 @@ public class PictureDropImportTests : IDisposable
         _settings.Settings = _settings.Settings.WithPictureKeepOriginals(false);
         var placement = DropIntoGap(1);
 
-        await _frames.DropAsync(placement, [new BytesSource(TinyFiles.Png(6000, 4000), "big.png")]);
+        await _frames.DropAsync(placement, [new BytesSource([.. TinyFiles.Png(6000, 4000), .. new byte[5000]], "big.png")]);
 
         var asset = _pictures.Repository.Stored.Single();
         Assert.Equal((2048, 1365), (asset.Width, asset.Height));
