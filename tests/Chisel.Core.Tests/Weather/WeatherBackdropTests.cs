@@ -90,6 +90,30 @@ public class WeatherBackdropTests
         }
     }
 
+    // Particles at their maximum opacity (stacked twice, as when two overlap) must not break text contrast.
+    [Fact]
+    public void TextKeepsContrast_WhenMotionParticlesAreAtMaximumOpacity()
+    {
+        uint Over(uint particle, double alpha, uint background)
+        {
+            uint Mix(int shift) => (uint)Math.Round((((particle >> shift) & 255) * alpha) + (((background >> shift) & 255) * (1 - alpha)));
+            return (Mix(16) << 16) | (Mix(8) << 8) | Mix(0);
+        }
+
+        foreach (var (key, gradient) in WeatherBackdrop.Gradients)
+        {
+            var style = WeatherMotion.Style(key);
+            foreach (var stop in new[] { gradient.Top, gradient.Bottom })
+            {
+                var composite = Over(style.Color, style.MaxOpacity, Over(style.Color, style.MaxOpacity, stop));
+                foreach (var text in TextColors)
+                {
+                    Assert.True(Contrast(composite, text) >= 4.5, $"{key} {stop:X6}: {Contrast(composite, text):0.00}");
+                }
+            }
+        }
+    }
+
     [Fact]
     public void Forecast_ReadsIsDay_AndAnOldSnapshotWithoutItReadsAsDay()
     {
