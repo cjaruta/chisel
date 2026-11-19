@@ -259,8 +259,14 @@ namespace Chisel.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ActiveTab")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("ColumnIndex")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("GroupMembers")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("HeightWeight")
                         .ValueGeneratedOnAdd()

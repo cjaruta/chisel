@@ -19,6 +19,8 @@ public static class WidgetLayoutMapper
                 Position = position,
                 HeightWeight = widget.HeightWeight,
                 ShowHeader = widget.ShowHeader,
+                GroupMembers = widget.IsGroup ? FormatMembers(widget.Members!) : null,
+                ActiveTab = widget.IsGroup ? widget.ActiveIndex : 0,
             }))
             .ToList();
         return (columns, placements);
@@ -38,7 +40,31 @@ public static class WidgetLayoutMapper
             .OrderBy(g => g.Key)
             .Select(g => new LayoutColumn(
                 widths.GetValueOrDefault(g.Key, 1),
-                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight, p.ShowHeader)).ToList())),
+                g.OrderBy(p => p.Position).Select(ToPlacement).ToList())),
             hiddenIds);
     }
+
+    private static WidgetPlacement ToPlacement(WidgetPlacementEntity p)
+    {
+        var members = ParseMembers(p.GroupMembers);
+        return members.Count > 1
+            ? new WidgetPlacement(p.WidgetId, p.HeightWeight, null, members, p.ActiveTab)
+            : new WidgetPlacement(p.WidgetId, p.HeightWeight, p.ShowHeader);
+    }
+
+    private static string FormatMembers(IEnumerable<GroupMember> members) =>
+        string.Join(";", members.Select(m => $"{m.WidgetId}:{(m.ShowHeader is { } shown ? (shown ? 't' : 'f') : 'n')}"));
+
+    private static List<GroupMember> ParseMembers(string? text) =>
+        string.IsNullOrEmpty(text)
+            ? []
+            : text.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part =>
+                {
+                    var colon = part.LastIndexOf(':');
+                    var id = colon < 0 ? part : part[..colon];
+                    var flag = colon < 0 || colon == part.Length - 1 ? 'n' : part[colon + 1];
+                    return new GroupMember(id, flag switch { 't' => true, 'f' => false, _ => null });
+                })
+                .ToList();
 }
