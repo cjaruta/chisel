@@ -34,7 +34,7 @@ public partial class App : Application
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format and palette before anything is shown.
                 var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay);
-                var weather = new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather);
+                var weather = new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),

@@ -82,6 +82,20 @@ public class WeatherWidgetHeadlessTests
     }
 
     [AvaloniaFact]
+    public void HourlyStrip_ShowsTwelveHourLabels_WhenTwelveHourIsSet()
+    {
+        var (window, main) = WindowWithWeather(0.6);
+        main.Settings.UseTwelveHour = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var labels = Named<StackPanel>(window, "WeatherHourly")!.Children
+            .Select(cell => ((TextBlock)((StackPanel)cell).Children[0]).Text).ToList();
+        Assert.Equal("10 AM", labels[0]);
+        Assert.Equal("11 AM", labels[1]);
+        UiSnapshot.Render(window, "weather-hour-format");
+    }
+
+    [AvaloniaFact]
     public void Large_ShowsFeelsLikeHighLowAndFooter()
     {
         var (window, _) = WindowWithWeather(1000);
