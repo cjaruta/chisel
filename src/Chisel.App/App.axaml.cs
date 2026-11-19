@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
 using Chisel.App.Views;
+using Chisel.Infrastructure.Weather;
 
 namespace Chisel.App;
 
@@ -33,6 +34,7 @@ public partial class App : Application
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format and palette before anything is shown.
                 var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay);
+                var weather = new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather);
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
@@ -41,8 +43,10 @@ public partial class App : Application
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,
                     new LayoutViewModel(_services.WidgetLayout),
-                    new WeatherViewModel(new Services.FakeWeatherService(), _services.Time));
-                _ = mainViewModel.Weather.LoadAsync();
+                    weather,
+                    new WeatherSettingsViewModel(_services.Weather, new OpenMeteoGeocoder(), weather));
+                weather.ShowCached();
+                mainViewModel.Refresh();
 
                 desktop.MainWindow = new MainWindow
                 {

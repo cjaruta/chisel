@@ -28,7 +28,8 @@ public static class UiSnapshot
     // palette: the saved schedule palette id; defaults to Default Minimal.
     // layoutRepository: where the widget layout is kept, so a test can reopen the window with it; none by default.
     public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
-        IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null)
+        IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null,
+        Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -52,6 +53,8 @@ public static class UiSnapshot
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay);
 
+        var store = weatherStore ?? new WeatherRepository(context);
+        var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store);
         var viewModel = new MainViewModel(
             new ClockViewModel(time, timeDisplay),
             new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),
@@ -59,7 +62,9 @@ public static class UiSnapshot
             new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
             settings,
-            new LayoutViewModel(layoutRepository));
+            new LayoutViewModel(layoutRepository),
+            weather,
+            new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

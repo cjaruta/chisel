@@ -107,7 +107,7 @@ public class WeatherWidgetHeadlessTests
     {
         var window = UiSnapshot.ShowMainWindow();
         var main = (MainViewModel)window.DataContext!;
-        main.Weather.Show(WeatherState.Offline, Sample, DateTimeOffset.UtcNow.AddSeconds(-425));
+        main.Weather.Show(WeatherState.Offline, Sample, UiSnapshot.SampleNow.AddSeconds(-425));
         var layout = main.Layout.Layout;
         main.Layout.Apply(layout.AddWidget(WidgetRegistry.Weather, 0, layout.Columns[0].Widgets.Count, 1));
         Dispatcher.UIThread.RunJobs();

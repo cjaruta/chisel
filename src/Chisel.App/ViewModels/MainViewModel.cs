@@ -8,6 +8,7 @@ public partial class MainViewModel : ViewModelBase
     public ClockViewModel Clock { get; }
     public AnalogClockViewModel AnalogClock { get; }
     public WeatherViewModel Weather { get; }
+    public WeatherSettingsViewModel WeatherSettings { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -25,11 +26,13 @@ public partial class MainViewModel : ViewModelBase
         QuickLinksViewModel quickLinks,
         SettingsViewModel settings,
         LayoutViewModel? layout = null,
-        WeatherViewModel? weather = null)
+        WeatherViewModel? weather = null,
+        WeatherSettingsViewModel? weatherSettings = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
         Weather = weather ?? new WeatherViewModel(new Services.FakeWeatherService(), TimeProvider.System);
+        WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;
@@ -77,6 +80,8 @@ public partial class MainViewModel : ViewModelBase
     {
         Clock.Refresh();
         Schedule.UpdateNow();
+        // The weather is only fetched while its widget is on the dashboard.
+        Weather.IsActive = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Weather);
         Weather.Refresh();
     }
 

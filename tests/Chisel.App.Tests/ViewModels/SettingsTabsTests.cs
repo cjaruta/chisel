@@ -39,14 +39,13 @@ public class SettingsTabsTests
     }
 
     [Fact]
-    public void DefaultPages_ListOnlySchedule()
+    public void DefaultPages_ListScheduleThenWeather()
     {
         var settings = Create();
 
-        var page = Assert.Single(settings.WidgetPages);
-        Assert.Equal("schedule", page.Id);
-        Assert.Equal("Schedule", page.Title);
-        Assert.Same(page, settings.SelectedWidgetPage);
+        Assert.Equal(new[] { "schedule", "weather" }, settings.WidgetPages.Select(p => p.Id));
+        Assert.Equal(new[] { "Schedule", "Weather" }, settings.WidgetPages.Select(p => p.Title));
+        Assert.Same(settings.WidgetPages[0], settings.SelectedWidgetPage);
     }
 
     [Fact]
