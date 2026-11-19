@@ -265,7 +265,7 @@ public class LayoutDragHeadlessTests
         var aboveMiddle = Within(window, "tasks", 0.03);
         var tasks = InWindow(Frame(window, "tasks"), window);
         var before = Positions(window);
-        var line = Named<Border>(window, "DropIndicator");
+        var line = Named<Border>(window, "DropPreview");
         Assert.False(line.IsVisible);
 
         var from = Bar(window, "links");
@@ -294,7 +294,7 @@ public class LayoutDragHeadlessTests
     public void GapsNextToTheWidgetsOwnSlot_ShowNoIndicator(string neighbour, double fraction)
     {
         var window = ShowEditing();
-        var line = Named<Border>(window, "DropIndicator");
+        var line = Named<Border>(window, "DropPreview");
         var from = Bar(window, "notes");
         Press(window, from);
         MoveTo(window, new Point(from.X + 10, from.Y + 10));
@@ -319,7 +319,7 @@ public class LayoutDragHeadlessTests
         MoveTo(window, home);
 
         Assert.Contains("dragSource", Frame(window, "notes").Classes);
-        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
+        Assert.False(Named<Border>(window, "DropPreview").IsVisible);
         Release(window, home);
 
         Assert.Equal("schedule | tasks,notes,links", Order(window));
@@ -351,13 +351,13 @@ public class LayoutDragHeadlessTests
         var before = Positions(window);
         var over = Within(window, "tasks", 0.03);
         MoveTo(window, over);
-        Assert.True(Named<Border>(window, "DropIndicator").IsVisible);
+        Assert.True(Named<Border>(window, "DropPreview").IsVisible);
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Dispatcher.UIThread.RunJobs();
         AssertNoDragVisuals(window);
         AssertSamePositions(before, Positions(window));
-        Assert.False(Named<Border>(window, "DropIndicator").IsVisible);
+        Assert.False(Named<Border>(window, "DropPreview").IsVisible);
         Release(window, over);
 
         Assert.Equal("schedule | tasks,notes,links", Order(window));

@@ -151,7 +151,7 @@ public class LayoutTrayHeadlessTests
         MoveTo(window, above);
 
         Assert.Equal("schedule | tasks,links", Order(window));
-        Assert.True(Named<Border>(window, "DropIndicator").IsVisible);
+        Assert.True(Named<Border>(window, "DropPreview").IsVisible);
         Assert.True(Named<Border>(window, "DragFloat").IsVisible);
         Release(window, above);
 

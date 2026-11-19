@@ -3,17 +3,22 @@ using System.Globalization;
 namespace Chisel.Core.Layout;
 
 // One member of a widget group. ShowHeader is the header choice the widget had before it joined the group
-// (null = its own default), kept so it comes back when the widget leaves.
-public sealed record GroupMember(string WidgetId, bool? ShowHeader = null);
+// (null = its own default), kept so it comes back when the widget leaves. WidthWeight is its share of the card's
+// width in split view, relative to the other panes.
+public sealed record GroupMember(string WidgetId, bool? ShowHeader = null, double WidthWeight = 1);
+
+// The outcome of SetViewMode: the layout (the same object when nothing changed) and, when refused, why.
+public sealed record ViewModeResult(WidgetLayout Layout, string? Refusal);
 
 // One card in a column. HeightWeight is its share of the column's height, relative to its neighbours.
 // ShowHeader is the user's choice for the widget's title bar; null means use the widget's own default.
 // A card is either one widget, or (Members has two or more) a group: tabs in the header, one active widget in the
 // body. WidgetId is then the card's own id: it is always one of the members, and stays put when tabs are reordered.
 // ShowHeader means nothing for a group (it always shows its header); each member remembers its own choice.
+// ViewMode is how a group shows its widgets (tabs, or side by side); the active tab is kept while it is split.
 public sealed record WidgetPlacement(
     string WidgetId, double HeightWeight = 1, bool? ShowHeader = null,
-    IReadOnlyList<GroupMember>? Members = null, int ActiveIndex = 0)
+    IReadOnlyList<GroupMember>? Members = null, int ActiveIndex = 0, GroupViewMode ViewMode = GroupViewMode.Tabs)
 {
     public bool IsGroup => Members is { Count: > 1 };
 
@@ -271,7 +276,9 @@ public sealed class WidgetLayout
     // Merges the dragged widget's card into the target's: its widgets become the last tabs, the target's active tab
     // stays active, and the target card keeps its place and height. The column the dragged card left is rescaled
     // (and kept even if empty; see RemoveEmptyColumns). Each widget remembers the header choice it had.
-    public WidgetLayout Combine(string draggedId, string targetId)
+    // A split target stays split when the result still fits (2 or 3 widgets, and cardWidth is enough for every
+    // pane's minimum, from minWidth); otherwise the group goes back to tabs. New panes start with the average weight.
+    public WidgetLayout Combine(string draggedId, string targetId, double cardWidth = 0, Func<string, double>? minWidth = null)
     {
         if (!CanCombine(draggedId, targetId))
         {
@@ -282,8 +289,14 @@ public sealed class WidgetLayout
         var dragged = Columns[from.Column].Widgets[from.Index];
         var target = Columns[to.Column].Widgets[to.Index];
 
-        var members = MembersOf(target).Concat(MembersOf(dragged)).ToList();
-        var group = target with { Members = members, ActiveIndex = target.IsGroup ? target.ActiveIndex : 0, ShowHeader = null };
+        var existing = MembersOf(target).ToList();
+        var average = existing.Average(m => m.WidthWeight);
+        var members = existing.Concat(MembersOf(dragged).Select(m => m with { WidthWeight = average })).ToList();
+        var mode = target.ViewMode == GroupViewMode.Split && minWidth is not null
+            && GroupSplit.Check(members.Select(m => minWidth(m.WidgetId)).ToList(), cardWidth).Allowed
+            ? GroupViewMode.Split
+            : GroupViewMode.Tabs;
+        var group = target with { Members = members, ActiveIndex = target.IsGroup ? target.ActiveIndex : 0, ShowHeader = null, ViewMode = mode };
 
         var columns = Columns.Select(c => c.Widgets.ToList()).ToList();
         columns[to.Column][to.Index] = group;
@@ -326,6 +339,8 @@ public sealed class WidgetLayout
             var active = members.FindIndex(m => m.WidgetId == activeId);
             rest = group with
             {
+                // Still 2 or 3 panes: stays split (it fit with more panes, so it fits with fewer). Otherwise tabs.
+                ViewMode = group.ViewMode == GroupViewMode.Split && members.Count <= GroupSplit.MaximumPanes ? GroupViewMode.Split : GroupViewMode.Tabs,
                 WidgetId = members.Any(m => m.WidgetId == group.WidgetId) ? group.WidgetId : members[0].WidgetId,
                 Members = members,
                 ActiveIndex = active >= 0 ? active : Math.Min(at, members.Count - 1),
@@ -335,6 +350,55 @@ public sealed class WidgetLayout
         widgets[index] = rest;
         widgets.Insert(index + 1, new WidgetPlacement(leaving.WidgetId, heightWeight, leaving.ShowHeader));
         return With(Columns.Select((c, i) => i == column ? NormalizeHeights(c with { Widgets = widgets }) : c));
+    }
+
+    // Switches a group between tabs and split. Split is refused (with the reason) unless the group has 2 or 3 widgets
+    // and cardWidth fits every pane's minimum width (minWidth gives a widget's); tabs is always allowed. The active tab
+    // is untouched. A refusal or no change returns this same layout.
+    public ViewModeResult SetViewMode(string widgetId, GroupViewMode mode, double cardWidth, Func<string, double> minWidth)
+    {
+        var (column, index) = Find(widgetId) ?? throw new ArgumentException($"'{widgetId}' is not on the dashboard.", nameof(widgetId));
+        var card = Columns[column].Widgets[index];
+        if (mode == GroupViewMode.Split)
+        {
+            var check = GroupSplit.Check(card.MemberIds.Select(minWidth).ToList(), cardWidth);
+            if (!check.Allowed)
+            {
+                return new ViewModeResult(this, check.Reason);
+            }
+        }
+        if (!card.IsGroup || card.ViewMode == mode)
+        {
+            return new ViewModeResult(this, null);
+        }
+        return new ViewModeResult(Replace(column, index, card with { ViewMode = mode }), null);
+    }
+
+    // Makes a pane wider (positive delta) or narrower (negative) by moving width weight between it and the pane right
+    // of it. delta and the two minimums are fractions of the panes' total width (the UI divides pixels by the width the
+    // panes share); each pane stops at its own minimum. Returns this same layout when nothing changes.
+    public WidgetLayout ResizePanes(string memberId, double delta, double minimumFractionLeft, double minimumFractionRight)
+    {
+        var (column, index) = Find(memberId) ?? throw new ArgumentException($"'{memberId}' is not on the dashboard.", nameof(memberId));
+        var card = Columns[column].Widgets[index];
+        var members = card.Members?.ToList();
+        var at = members?.FindIndex(m => m.WidgetId == memberId) ?? -1;
+        if (members is null || at < 0 || at + 1 >= members.Count)
+        {
+            throw new ArgumentException($"'{memberId}' has no pane to its right to resize against.", nameof(memberId));
+        }
+
+        var total = members.Sum(m => m.WidthWeight);
+        var most = members[at + 1].WidthWeight - minimumFractionRight * total;
+        var least = minimumFractionLeft * total - members[at].WidthWeight;
+        var change = least > most ? 0 : Math.Clamp(delta * total, Math.Min(least, 0), Math.Max(most, 0));
+        if (Math.Abs(change) < 1e-12)
+        {
+            return this;
+        }
+        members[at] = members[at] with { WidthWeight = members[at].WidthWeight + change };
+        members[at + 1] = members[at + 1] with { WidthWeight = members[at + 1].WidthWeight - change };
+        return Replace(column, index, card with { Members = members });
     }
 
     // Moves a tab to a new place in its group (clamped); the active tab stays on the same widget.
@@ -474,7 +538,7 @@ public sealed class WidgetLayout
     // A compact text form for tests and logs, like "1.3[schedule:1] | 1[tasks:1, notes:1.2] (hidden: links)".
     public string Describe() =>
         string.Join(" | ", Columns.Select(c =>
-            $"{Number(c.WidthWeight)}[{string.Join(", ", c.Widgets.Select(w => $"{(w.IsGroup ? string.Join("+", w.MemberIds) + "@" + w.ActiveIndex : w.WidgetId)}:{Number(w.HeightWeight)}"))}]"))
+            $"{Number(c.WidthWeight)}[{string.Join(", ", c.Widgets.Select(w => $"{(w.IsGroup ? string.Join("+", w.MemberIds) + "@" + w.ActiveIndex + (w.ViewMode == GroupViewMode.Split ? "|split" : "") : w.WidgetId)}:{Number(w.HeightWeight)}"))}]"))
         + (HiddenWidgetIds.Count > 0 ? $" (hidden: {string.Join(", ", HiddenWidgetIds)})" : "");
 
     private static string Number(double value) => value.ToString(CultureInfo.InvariantCulture);

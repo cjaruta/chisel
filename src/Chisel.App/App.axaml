@@ -104,13 +104,15 @@
             <Setter Property="IsVisible" Value="False" />
         </Style>
 
-        <!-- Phantom column shown in a new-column zone while dragging, and the line marking the gap in a column -->
-        <Style Selector="Border.newColumnPhantom">
+        <!-- The one drop preview shown while dragging: a translucent accent rectangle over the zone the widget would
+             land in, with a short caption. Eases in over ~120 ms. -->
+        <Style Selector="Border.dropPreview">
             <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource AccentBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Opacity" Value="0" />
-            <Setter Property="RenderTransform" Value="scale(0.97)" />
+            <Setter Property="RenderTransform" Value="scale(0.98)" />
             <Setter Property="Transitions">
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
@@ -119,31 +121,18 @@
             </Setter>
         </Style>
 
-        <Style Selector="Border.dropIndicator">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="CornerRadius" Value="2" />
-            <Setter Property="Opacity" Value="0" />
-            <Setter Property="RenderTransform" Value="scaleX(0.9)" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-
-        <Style Selector="Border.newColumnPhantom.active, Border.dropIndicator.active">
+        <Style Selector="Border.dropPreview.active">
             <Setter Property="Opacity" Value="1" />
             <Setter Property="RenderTransform" Value="none" />
         </Style>
 
-        <Style Selector="Border.newColumnLabel">
+        <Style Selector="Border.dropPreviewCaption">
             <Setter Property="Background" Value="{StaticResource AccentBrush}" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="10,3" />
         </Style>
 
-        <Style Selector="Border.newColumnLabel TextBlock">
+        <Style Selector="Border.dropPreviewCaption TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
@@ -415,9 +404,71 @@
             <Setter Property="Opacity" Value="0.55" />
         </Style>
 
-        <!-- The card a dragged widget would merge into -->
-        <Style Selector="Border.widgetFrame.mergeTarget">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        <!-- Split view: the card itself is see-through and each pane is its own rounded card. Edit mode puts the
+             hairline and shadow on the panes. -->
+        <Style Selector="Border.widgetFrame.splitFrame">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.widgetFrame.splitFrame.editing">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BoxShadow" Value="none" />
+        </Style>
+        <Style Selector="Border.splitPane">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.widgetFrame.editing Border.splitPane">
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="BoxShadow" Value="{StaticResource EditingCardShadow}" />
+            <Setter Property="ClipToBounds" Value="False" />
+        </Style>
+
+        <!-- The tabs / split toggle: a small quiet icon button (theme tokens only) -->
+        <Style Selector="Button.viewModeToggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.viewModeToggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.viewModeToggle Path">
+            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="StrokeThickness" Value="1.4" />
+            <Setter Property="StrokeJoin" Value="Round" />
+            <Setter Property="Stretch" Value="None" />
+        </Style>
+        <Style Selector="Button.viewModeToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.viewModeToggle:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+        </Style>
+        <Style Selector="Button.viewModeToggle:pointerover Path, Button.viewModeToggle:focus-visible Path">
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.viewModeToggle:disabled Path">
+            <Setter Property="Stroke" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+
+        <!-- The divider between panes: a thin pill in the gap, brighter on hover, focus and while dragging -->
+        <Style Selector="Border.paneSplitterGrip">
+            <Setter Property="Width" Value="3" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="Border.paneSplitter:pointerover Border.paneSplitterGrip, Border.paneSplitter:focus Border.paneSplitterGrip, Border.paneSplitter.dragging Border.paneSplitterGrip">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
         </Style>
 
         <!-- Top-aligned so a list's input row stays right under the list, as before, when the card is taller -->

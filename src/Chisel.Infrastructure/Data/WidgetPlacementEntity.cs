@@ -15,6 +15,10 @@ public class WidgetPlacementEntity
 
     // For a tabbed group: its members in tab order as "id:h;id:h" (h is t, f, or n for no choice),
     // and the active tab. Null for a card that is one widget.
+    // Each member may carry a third part, its width weight in split view ("id:h:w"); older rows have two parts.
     public string? GroupMembers { get; set; }
     public int ActiveTab { get; set; }
+
+    // How a group shows its widgets; Tabs (0) for plain cards and for groups saved before split view.
+    public Chisel.Core.Layout.GroupViewMode ViewMode { get; set; }
 }

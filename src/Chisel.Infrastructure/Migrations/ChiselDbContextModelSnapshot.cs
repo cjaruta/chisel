@@ -279,6 +279,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<bool?>("ShowHeader")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ViewMode")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("WidgetId")
                         .IsRequired()
                         .HasColumnType("TEXT");

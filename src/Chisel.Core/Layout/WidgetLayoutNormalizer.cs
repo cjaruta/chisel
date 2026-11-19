@@ -67,7 +67,7 @@ public static class WidgetLayoutNormalizer
         if (!placement.IsGroup)
         {
             return known.Contains(placement.WidgetId) && seen.Add(placement.WidgetId)
-                ? placement with { HeightWeight = weight, Members = null, ActiveIndex = 0 }
+                ? placement with { HeightWeight = weight, Members = null, ActiveIndex = 0, ViewMode = GroupViewMode.Tabs }
                 : null;
         }
 
@@ -77,7 +77,7 @@ public static class WidgetLayoutNormalizer
         {
             if (members.Count < LayoutLimits.MaximumGroupMembers && known.Contains(member.WidgetId) && seen.Add(member.WidgetId))
             {
-                members.Add(member);
+                members.Add(member with { WidthWeight = Weight(member.WidthWeight) });
             }
         }
         if (members.Count == 0)
@@ -94,6 +94,7 @@ public static class WidgetLayoutNormalizer
             WidgetId = members.Any(m => m.WidgetId == placement.WidgetId) ? placement.WidgetId : members[0].WidgetId,
             HeightWeight = weight,
             ShowHeader = null,
+            ViewMode = members.Count <= GroupSplit.MaximumPanes ? placement.ViewMode : GroupViewMode.Tabs,
             Members = members,
             ActiveIndex = active >= 0 ? active : Math.Clamp(placement.ActiveIndex, 0, members.Count - 1),
         };
