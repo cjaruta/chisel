@@ -28,8 +28,8 @@ public class VolumeTests
         Assert.Equal(expected, VolumeMath.Percent(level));
 
     [Theory]
-    [InlineData(119, true)]
-    [InlineData(120, false)]
+    [InlineData(109, true)]
+    [InlineData(110, false)]
     public void Layout_PutsVolumeBesideTheButtonsWhenShort(double height, bool beside) =>
         Assert.Equal(beside, MediaLayout.For(400, height).VolumeBesideButtons);
 }

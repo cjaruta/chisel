@@ -14,9 +14,10 @@ public static class UserSettingsMapper
         ClockFormat = (int)settings.ClockFormat,
         SchedulePalette = settings.SchedulePalette,
         TemperatureUnit = (int)settings.TemperatureUnit,
-        MediaVisualizer = settings.MediaVisualizer
+        MediaVisualizer = settings.MediaVisualizer,
+        MediaVolume = settings.MediaVolume
     };
 
     public static UserSettings ToDomain(this UserSettingsEntity entity) =>
-        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer);
+        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume);
 }

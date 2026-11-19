@@ -13,5 +13,6 @@ public class UserSettingsEntity
     // Id of the schedule color palette.
     public int TemperatureUnit { get; set; }
     public bool MediaVisualizer { get; set; } = true;
+    public bool MediaVolume { get; set; } = true;
     public string SchedulePalette { get; set; } = UserSettings.DefaultSchedulePalette;
 }

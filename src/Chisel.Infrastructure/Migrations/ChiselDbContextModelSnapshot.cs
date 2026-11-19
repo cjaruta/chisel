@@ -176,6 +176,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<bool>("MediaVisualizer")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("MediaVolume")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");

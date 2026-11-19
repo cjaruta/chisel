@@ -99,4 +99,13 @@ public class UserSettingsTests
         Assert.True(settings.MediaVisualizer);
         Assert.Equal((false, ClockFormat.TwelveHour, "saturated"), (changed.MediaVisualizer, changed.ClockFormat, changed.SchedulePalette));
     }
+
+    [Fact]
+    public void MediaVolume_DefaultsToOn_AndSurvivesTheOtherWithMethods()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithMediaVolume(false);
+
+        Assert.True(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).MediaVolume);
+        Assert.False(settings.WithSchedulePalette("saturated").WithMediaVisualizer(false).MediaVolume);
+    }
 }
