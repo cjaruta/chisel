@@ -17,6 +17,7 @@ public partial class App : Application
     private AppServices? _services;
     private Chisel.Core.Media.IMediaService? _mediaService;
     private Chisel.Core.Media.ISpectrumSource? _spectrum;
+    private Chisel.Core.Media.IVolumeService? _volume;
 
     public override void Initialize()
     {
@@ -33,6 +34,8 @@ public partial class App : Application
             _mediaService = scenario is "media" or "media-visualizer" ? new FakeMediaService { Current = Dev.CaptureMode.SampleMedia() } : new WindowsMediaService();
             // The visualizer capture feeds a synthetic signal; a normal run listens to the system output; other captures stay silent.
             _spectrum = scenario == "media-visualizer" ? new SyntheticSpectrumSource() : scenario is null ? new WasapiSpectrumSource() : null;
+            // Captures never touch the real system volume.
+            _volume = scenario is null ? new WindowsVolumeService() : new FakeVolumeService();
             var isolated = scenario is "weather-motion" or "media-visualizer";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
             var startup = AppStartup.Run(() => new AppServices(databasePath), AppPaths.GetErrorLogPath());
@@ -64,7 +67,8 @@ public partial class App : Application
                     new WeatherSettingsViewModel(weatherStore, isolated ? new NoGeocoder() : new OpenMeteoGeocoder(), weather, userSettings: _services.UserSettings),
                     _mediaService,
                     _spectrum,
-                    new MediaSettingsViewModel(_services.UserSettings));
+                    new MediaSettingsViewModel(_services.UserSettings),
+                    _volume);
                 weather.ShowCached();
                 mainViewModel.Refresh();
 
@@ -82,6 +86,7 @@ public partial class App : Application
                 {
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
+                    (_volume as IDisposable)?.Dispose();
                     _services?.Dispose();
                     if (isolated)
                     {

@@ -7,5 +7,7 @@
         <TextBlock Classes="settingsSection" Text="VISUALIZER" />
         <CheckBox Name="MediaVisualizerToggle" Content="Show audio bars while music is playing"
                   IsChecked="{Binding MediaSettings.ShowVisualizer}" />
+        <CheckBox Name="MediaVolumeToggle" Content="Show volume control"
+                  IsChecked="{Binding MediaSettings.ShowVolume}" />
     </StackPanel>
 </UserControl>

@@ -45,11 +45,11 @@ public static class MediaFormat
     }
 }
 
-public readonly record struct MediaLayoutPlan(double ArtSize, bool ShowAlbum, bool ShowSource);
+public readonly record struct MediaLayoutPlan(double ArtSize, bool ShowAlbum, bool ShowSource, bool VolumeBesideButtons);
 
 // What fits in the card body (width and height in pixels, padding already removed).
 public static class MediaLayout
 {
     public static MediaLayoutPlan For(double width, double height) =>
-        new(width < 200 ? 0 : Math.Min(height, 96), height >= 130, height >= 150);
+        new(width < 200 ? 0 : Math.Min(height, 96), height >= 130, height >= 150, height < 110);
 }

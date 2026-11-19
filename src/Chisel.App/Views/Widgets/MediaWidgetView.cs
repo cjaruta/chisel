@@ -22,6 +22,10 @@ public sealed class MediaWidgetView : WidgetView
     private const string NextIcon = "M16,5 H18 V19 H16 Z M5,5 V19 L15,12 Z";
     private const string PlayIcon = "M7,4 L19,12 L7,20 Z";
     private const string PauseIcon = "M7,5 H10 V19 H7 Z M14,5 H17 V19 H14 Z";
+    private const string SpeakerBody = "M3,9 H7 L12,5 V19 L7,15 H3 Z";
+    private const string WaveNear = " M14.5,9.5 Q16.5,12 14.5,14.5 L15.8,15.8 Q18.8,12 15.8,8.2 Z";
+    private const string WaveFar = " M18,6.5 Q22.5,12 18,17.5 L19.3,18.8 Q25,12 19.3,5.2 Z";
+    private const string MutedCross = " M15,9.5 L16,8.5 L18.5,11 L21,8.5 L22,9.5 L19.5,12 L22,14.5 L21,15.5 L18.5,13 L16,15.5 L15,14.5 L17.5,12 Z";
     private const string NoteIcon = "M9,18 V6 L19,4 V16 M9,18 A2.5,2.5 0 1 1 4,18 A2.5,2.5 0 1 1 9,18 M19,16 A2.5,2.5 0 1 1 14,16 A2.5,2.5 0 1 1 19,16";
 
     private MediaViewModel? _media;
@@ -37,6 +41,12 @@ public sealed class MediaWidgetView : WidgetView
     private readonly Button _previous, _playPause, _next;
     private readonly Path _playPauseIcon;
     private readonly SpectrumBars _bars;
+    private readonly Grid _buttons;
+    private readonly Grid _volumeRow;
+    private readonly Button _mute;
+    private readonly Path _muteIcon;
+    private readonly VolumeSlider _volumeSlider;
+    private VolumeViewModel? _volume;
     private byte[]? _shownBytes;
     private Bitmap? _bitmap;
 
@@ -94,9 +104,22 @@ public sealed class MediaWidgetView : WidgetView
         buttonRow.Children.Add(_next);
         _bars = new SpectrumBars { Name = "MediaBars", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(_bars, 1);
-        var buttons = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12 };
+        var buttons = _buttons = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12 };
         buttons.Children.Add(buttonRow);
         buttons.Children.Add(_bars);
+
+        _muteIcon = new Path { Data = Geometry.Parse(SpeakerBody), Stretch = Stretch.Uniform };
+        _muteIcon.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
+        _mute = new Button { Name = "MediaMute", Content = _muteIcon };
+        _mute.Classes.Add("mediaButton");
+        _volumeSlider = new VolumeSlider { Name = "MediaVolumeSlider", VerticalAlignment = VerticalAlignment.Center };
+        _volumeSlider.Dragged += level => _volume?.DragTo(level);
+        _volumeSlider.DragCompleted += () => _volume?.CompleteDrag();
+        _mute.Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => _volume?.ToggleMute());
+        Grid.SetColumn(_volumeSlider, 1);
+        _volumeRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 4, Margin = new Thickness(-4, 0, 0, 0) };
+        _volumeRow.Children.Add(_mute);
+        _volumeRow.Children.Add(_volumeSlider);
 
         var details = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
         details.Children.Add(_title);
@@ -105,6 +128,7 @@ public sealed class MediaWidgetView : WidgetView
         details.Children.Add(_source);
         details.Children.Add(progress);
         details.Children.Add(buttons);
+        details.Children.Add(_volumeRow);
 
         _player = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         Grid.SetColumn(details, 1);
@@ -126,6 +150,9 @@ public sealed class MediaWidgetView : WidgetView
             _bars.Enabled = main.MediaSettings.ShowVisualizer;
             _settings = main.MediaSettings;
             _settings.PropertyChanged += OnSettingsChanged;
+            _volume = main.Volume;
+            _volume.PropertyChanged += OnVolumeChanged;
+            ShowVolume();
         }
         Refresh();
     }
@@ -142,6 +169,11 @@ public sealed class MediaWidgetView : WidgetView
         {
             _settings.PropertyChanged -= OnSettingsChanged;
             _settings = null;
+        }
+        if (_volume is not null)
+        {
+            _volume.PropertyChanged -= OnVolumeChanged;
+            _volume = null;
         }
         _bars.Playing = false;
         _bars.Source = null;
@@ -173,6 +205,35 @@ public sealed class MediaWidgetView : WidgetView
         {
             _bars.Enabled = _settings.ShowVisualizer;
         }
+        else if (_settings is not null && e.PropertyName == nameof(MediaSettingsViewModel.ShowVolume))
+        {
+            ShowVolume();
+            FitToRoom();
+        }
+    }
+
+    private void OnVolumeChanged(object? sender, PropertyChangedEventArgs e) => ShowVolume();
+
+    // Brings the volume row in line with the view model: icon, thumb (unless it is being dragged), tooltips, enabled and visible.
+    private void ShowVolume()
+    {
+        if (_volume is null || _settings is null)
+        {
+            return;
+        }
+        _volumeRow.IsVisible = _settings.ShowVolume;
+        _volumeRow.IsEnabled = _volume.IsAvailable;
+        _volumeRow.Opacity = _volume.IsAvailable ? 1 : 0.35;
+        _volumeSlider.Value = _volume.IsMuted ? 0 : _volume.Level;
+        _muteIcon.Data = Geometry.Parse(_volume.Icon switch
+        {
+            VolumeIcon.Muted => SpeakerBody + MutedCross,
+            VolumeIcon.Low => SpeakerBody + WaveNear,
+            VolumeIcon.Medium => SpeakerBody + WaveFar,
+            _ => SpeakerBody + WaveNear + WaveFar,
+        });
+        ToolTip.SetTip(_mute, _volume.Tip);
+        ToolTip.SetTip(_volumeSlider, _volume.Tip);
     }
 
     private TextBlock Text(string text, double size, bool dim = false, string? name = null, FontWeight weight = FontWeight.Normal)
@@ -243,6 +304,21 @@ public sealed class MediaWidgetView : WidgetView
         _artBox.Width = _artBox.Height = Math.Max(plan.ArtSize, 0);
         _album.IsVisible = plan.ShowAlbum && _media.Album != "";
         _source.IsVisible = plan.ShowSource && _media.Source != "";
+        // Short cards: the volume shares the buttons' row (and the audio bars give way); otherwise it has a row of its own.
+        var beside = Bounds.Height > 0 && plan.VolumeBesideButtons && _settings?.ShowVolume != false;
+        if (beside && _volumeRow.Parent != _buttons)
+        {
+            ((Panel)_volumeRow.Parent!).Children.Remove(_volumeRow);
+            Grid.SetColumn(_volumeRow, 1);
+            _buttons.Children.Add(_volumeRow);
+        }
+        else if (!beside && _volumeRow.Parent == _buttons)
+        {
+            _buttons.Children.Remove(_volumeRow);
+            Grid.SetColumn(_volumeRow, 0);
+            ((Panel)_player.Children[1]).Children.Add(_volumeRow);
+        }
+        _bars.IsVisible = !(beside && _volumeRow.IsVisible);
     }
 
     // Decodes the cover (or clears it), disposing the one it replaces. Bad image bytes just mean no cover.

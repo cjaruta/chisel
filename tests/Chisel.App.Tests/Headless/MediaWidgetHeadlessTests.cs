@@ -151,6 +151,63 @@ public class MediaWidgetHeadlessTests
         }
     }
 
+    [AvaloniaFact]
+    public void AtTheSmallestSize_TheVolumeRowFits_WithoutCoveringTheButtons()
+    {
+        var (window, _, _) = WindowWithMedia(FakeMediaService.Sample() with { AlbumArt = Chisel.App.Dev.SampleArt.Png() }, weight: 0.01);
+
+        var view = window.GetVisualDescendants().OfType<MediaWidgetView>().Single();
+        var inside = new Rect(view.Bounds.Size);
+        Rect Box(string name)
+        {
+            var control = Named<Control>(window, name)!;
+            return new Rect(control.TranslatePoint(default, view)!.Value, control.Bounds.Size);
+        }
+        foreach (var name in new[] { "MediaMute", "MediaVolumeSlider" })
+        {
+            var box = Box(name);
+            Assert.True(box.Width > 10 && inside.Contains(box.TopLeft) && inside.Contains(box.BottomRight), $"{name} {box} is outside {inside}");
+            foreach (var other in new[] { "MediaPrevious", "MediaPlayPause", "MediaNext", "MediaProgressTrack" })
+            {
+                Assert.False(box.Intersects(Box(other)), $"{name} overlaps {other}");
+            }
+        }
+    }
+
+    [AvaloniaFact]
+    public void TheShowVolumeSetting_HidesTheRow()
+    {
+        var (window, main, _) = WindowWithMedia(FakeMediaService.Sample(), weight: 1.4);
+        Assert.True(Named<Button>(window, "MediaMute")!.IsEffectivelyVisible);
+
+        main.MediaSettings.ShowVolume = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Named<Button>(window, "MediaMute")!.IsEffectivelyVisible);
+        Assert.False(Named<Control>(window, "MediaVolumeSlider")!.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public void TheMuteButton_TogglesTheSystemMute_AndNoDeviceDisablesTheRow()
+    {
+        var volume = new FakeVolumeService();
+        var window = UiSnapshot.ShowMainWindow(media: new FakeMediaService { Current = FakeMediaService.Sample() }, volume: volume);
+        var main = (MainViewModel)window.DataContext!;
+        main.Layout.Apply(main.Layout.Layout.AddWidget(WidgetRegistry.Media, 0, 0, 1.4));
+        Dispatcher.UIThread.RunJobs();
+        var mute = Named<Button>(window, "MediaMute")!;
+        Assert.True(mute.IsEffectivelyEnabled);
+
+        mute.Command!.Execute(null);
+        Assert.True(volume.IsMuted);
+
+        volume.IsAvailable = false;
+        volume.RaiseChanged();
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(mute.IsEffectivelyEnabled);
+        Assert.False(Named<Control>(window, "MediaVolumeSlider")!.IsEffectivelyEnabled);
+    }
+
     // Looked at by eye: artifacts/ui/media-widget.png (playing, with art, in a tall card above a small one).
     [AvaloniaFact]
     public void Render_WritesAPng()

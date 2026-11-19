@@ -40,4 +40,18 @@ public class MediaSettingsTests
         Assert.False(repository.Saved!.MediaVisualizer);
         Assert.Equal(TemperatureUnit.Fahrenheit, repository.Saved.TemperatureUnit);
     }
+
+    [Fact]
+    public void Volume_IsOnByDefault_LoadsTheStoredChoice_AndSavesAtOnce()
+    {
+        Assert.True(new MediaSettingsViewModel(null).ShowVolume);
+        var repository = new FakeSettingsRepository(Defaults.WithMediaVolume(false).WithMediaVisualizer(false));
+        var settings = new MediaSettingsViewModel(repository);
+        Assert.False(settings.ShowVolume);
+
+        settings.ShowVolume = true;
+
+        Assert.True(repository.Saved!.MediaVolume);
+        Assert.False(repository.Saved.MediaVisualizer);
+    }
 }

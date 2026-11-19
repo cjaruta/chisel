@@ -30,7 +30,8 @@ public static class UiSnapshot
     public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
         IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null,
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
-        Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null)
+        Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
+        Chisel.Core.Media.IVolumeService? volume = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -68,7 +69,8 @@ public static class UiSnapshot
             new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather, userSettings: userSettings),
             media,
             spectrum,
-            new MediaSettingsViewModel(userSettings));
+            new MediaSettingsViewModel(userSettings),
+            volume);
 
         var window = new MainWindow(windowPlacementPath: null)
         {
