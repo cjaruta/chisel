@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Chisel.Core.Settings;
 using Chisel.Core.Weather;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -25,6 +26,12 @@ public partial class WeatherViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial WeatherState State { get; private set; } = WeatherState.Loading;
+
+    // Data stays in Celsius; the unit only changes the text. Changing it raises PropertyChanged so the widget redraws.
+    [ObservableProperty]
+    public partial TemperatureUnit Unit { get; set; }
+
+    public string Format(double celsius) => WeatherLayout.FormatTemperature(celsius, Unit);
 
     [ObservableProperty]
     public partial WeatherSnapshot? Snapshot { get; private set; }

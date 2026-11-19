@@ -183,6 +183,9 @@ namespace Chisel.Infrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasDefaultValue("minimal");
 
+                    b.Property<int>("TemperatureUnit")
+                        .HasColumnType("INTEGER");
+
                     b.Property<TimeOnly>("WakeTime")
                         .HasColumnType("TEXT");
 

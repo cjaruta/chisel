@@ -76,4 +76,16 @@ public class UserSettingsTests
 
         Assert.Equal("saturated", settings.WithClockFormat(ClockFormat.TwelveHour).SchedulePalette);
     }
+
+    [Fact]
+    public void TemperatureUnit_DefaultsToCelsius_AndWithTemperatureUnitChangesOnlyIt()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), ClockFormat.TwelveHour, "saturated");
+
+        var changed = settings.WithTemperatureUnit(TemperatureUnit.Fahrenheit);
+
+        Assert.Equal(TemperatureUnit.Celsius, settings.TemperatureUnit);
+        Assert.Equal((TemperatureUnit.Fahrenheit, ClockFormat.TwelveHour, "saturated"),
+            (changed.TemperatureUnit, changed.ClockFormat, changed.SchedulePalette));
+    }
 }

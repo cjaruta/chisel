@@ -1,3 +1,5 @@
+using Chisel.Core.Settings;
+
 namespace Chisel.Core.Weather;
 
 public enum WeatherCondition { Clear, PartlyCloudy, Cloudy, Rain, Snow, Storm, Fog }
@@ -35,9 +37,14 @@ public static class WeatherLayout
     public static int HourlyCount(double contentWidth) =>
         Math.Clamp((int)(contentWidth / HourlyEntryWidth), 0, MaxHourlyEntries);
 
-    public static string FormatTemperature(double celsius)
+    public static int CelsiusToFahrenheit(double celsius) =>
+        (int)Math.Round(celsius * 9 / 5 + 32, MidpointRounding.AwayFromZero);
+
+    public static string FormatTemperature(double celsius, TemperatureUnit unit)
     {
-        var rounded = (int)Math.Round(celsius, MidpointRounding.AwayFromZero);
+        var rounded = unit == TemperatureUnit.Fahrenheit
+            ? CelsiusToFahrenheit(celsius)
+            : (int)Math.Round(celsius, MidpointRounding.AwayFromZero);
         return $"{rounded}°";
     }
 }

@@ -19,6 +19,9 @@
             </AutoCompleteBox.ItemTemplate>
         </AutoCompleteBox>
         <Button Name="WeatherClearButton" Content="Clear location" HorizontalAlignment="Left" Command="{Binding WeatherSettings.ClearCommand}" />
+        <TextBlock Classes="settingsSection" Text="TEMPERATURE UNIT" Margin="0,10,0,0" />
+        <RadioButton Name="WeatherCelsius" GroupName="TemperatureUnit" Content="Celsius (21°C)" IsChecked="{Binding WeatherSettings.UseCelsius}" />
+        <RadioButton Name="WeatherFahrenheit" GroupName="TemperatureUnit" Content="Fahrenheit (70°F)" IsChecked="{Binding WeatherSettings.UseFahrenheit}" />
         <TextBlock Name="WeatherCredit" Text="{Binding WeatherSettings.Credit}" Opacity="0.6" FontSize="11" />
     </StackPanel>
 </UserControl>

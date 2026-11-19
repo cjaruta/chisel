@@ -75,4 +75,29 @@ public class WeatherSettingsHeadlessTests
         Assert.Equal("No location set", Named<TextBlock>(window, "WeatherChosen").Text);
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void WeatherPage_TemperatureToggle_ChangesTheWidgetText()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        var main = (MainViewModel)window.DataContext!;
+        var layout = main.Layout.Layout;
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Weather, 0, layout.Columns[0].Widgets.Count, 1));
+        Dispatcher.UIThread.RunJobs();
+        main.Weather.Show(WeatherState.Ready, new WeatherSnapshot(20, 18, WeatherCondition.Clear, 24, 12, []));
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("20°", Named<TextBlock>(window, "WeatherTemp").Text);
+
+        main.Settings.IsOpen = true;
+        main.Settings.SelectTabCommand.Execute(SettingsTab.Widgets);
+        main.Settings.SelectedWidgetPage = main.Settings.WidgetPages.Single(p => p.Id == "weather");
+        Dispatcher.UIThread.RunJobs();
+        Named<RadioButton>(window, "WeatherFahrenheit").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("68°", Named<TextBlock>(window, "WeatherTemp").Text);
+        Assert.True(Named<RadioButton>(window, "WeatherCelsius").IsChecked == false);
+        UiSnapshot.Render(window, "settings-weather-unit");
+        window.Close();
+    }
 }

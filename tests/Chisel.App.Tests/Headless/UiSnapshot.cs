@@ -64,7 +64,7 @@ public static class UiSnapshot
             settings,
             new LayoutViewModel(layoutRepository),
             weather,
-            new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather));
+            new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather, userSettings: userSettings));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

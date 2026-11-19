@@ -85,16 +85,16 @@ public sealed class WeatherWidgetView : WidgetView
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         head.Children.Add(new ConditionIcon { Condition = snapshot.Condition, Width = 44, Height = 44, Name = "WeatherIcon" });
         var headText = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        headText.Children.Add(Text(WeatherLayout.FormatTemperature(snapshot.TemperatureC), 40, name: "WeatherTemp", weight: FontWeight.Light));
+        headText.Children.Add(Text(_weather.Format(snapshot.TemperatureC), 40, name: "WeatherTemp", weight: FontWeight.Light));
         headText.Children.Add(Text(ConditionName(snapshot.Condition), 14, dim: true, name: "WeatherCondition"));
         head.Children.Add(headText);
         panel.Children.Add(head);
 
         if (tier >= WeatherSizeTier.Large)
         {
-            panel.Children.Add(Text($"Feels like {WeatherLayout.FormatTemperature(snapshot.FeelsLikeC)}", 13, name: "WeatherFeelsLike"));
+            panel.Children.Add(Text($"Feels like {_weather.Format(snapshot.FeelsLikeC)}", 13, name: "WeatherFeelsLike"));
             panel.Children.Add(Text(
-                $"High {WeatherLayout.FormatTemperature(snapshot.HighC)}  ·  Low {WeatherLayout.FormatTemperature(snapshot.LowC)}", 13, name: "WeatherHighLow"));
+                $"High {_weather.Format(snapshot.HighC)}  ·  Low {_weather.Format(snapshot.LowC)}", 13, name: "WeatherHighLow"));
         }
 
         if (tier >= WeatherSizeTier.Medium)
@@ -105,7 +105,7 @@ public sealed class WeatherWidgetView : WidgetView
                 var cell = new StackPanel { Width = WeatherLayout.HourlyEntryWidth, Spacing = 3 };
                 cell.Children.Add(Text(hour.Time.ToString("HH:mm"), 11, dim: true));
                 cell.Children.Add(new ConditionIcon { Condition = hour.Condition, Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Left });
-                cell.Children.Add(Text(WeatherLayout.FormatTemperature(hour.TemperatureC), 13));
+                cell.Children.Add(Text(_weather.Format(hour.TemperatureC), 13));
                 strip.Children.Add(cell);
             }
             panel.Children.Add(strip);

@@ -1,3 +1,4 @@
+using Chisel.Core.Settings;
 using Chisel.Core.Schedule;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -74,6 +75,26 @@ public class MigrationTests
         using var readContext = new ChiselDbContext(options);
         var saved = Assert.Single(readContext.UserSettings);
         Assert.Equal(Chisel.Core.Settings.UserSettings.DefaultSchedulePalette, saved.SchedulePalette);
+        Assert.Equal(1, saved.ClockFormat);
+    }
+
+    [Fact]
+    public void AddTemperatureUnit_LoadsExistingSettingsAsCelsius()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261119003331_AddWeather");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO UserSettings (Id, Name, WakeTime, BedTime, ClockFormat, SchedulePalette) VALUES ('6f1c2f4e-0000-0000-0000-000000000003', 'Test User', '06:30:00', '23:00:00', 1, 'minimal')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var saved = Assert.Single(readContext.UserSettings);
+        Assert.Equal(TemperatureUnit.Celsius, new Chisel.Infrastructure.Repositories.UserSettingsRepository(readContext).Get()!.TemperatureUnit);
         Assert.Equal(1, saved.ClockFormat);
     }
 
