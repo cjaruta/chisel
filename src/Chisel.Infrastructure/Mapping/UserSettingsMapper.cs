@@ -17,10 +17,12 @@ public static class UserSettingsMapper
         MediaVisualizer = settings.MediaVisualizer,
         MediaVolume = settings.MediaVolume,
         MediaScrollVolume = settings.MediaScrollVolume,
+        MediaAlbumGradient = settings.MediaAlbumGradient,
+        MediaAnimateGradient = settings.MediaAnimateGradient,
         ThemeMode = settings.ThemeMode,
         AccentColor = settings.AccentColor
     };
 
     public static UserSettings ToDomain(this UserSettingsEntity entity) =>
-        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume, entity.MediaScrollVolume, entity.ThemeMode, entity.AccentColor);
+        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume, entity.MediaScrollVolume, entity.ThemeMode, entity.AccentColor, entity.MediaAlbumGradient, entity.MediaAnimateGradient);
 }

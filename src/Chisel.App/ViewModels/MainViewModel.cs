@@ -10,6 +10,7 @@ public partial class MainViewModel : ViewModelBase
     public WeatherViewModel Weather { get; }
     public WeatherSettingsViewModel WeatherSettings { get; }
     public MediaViewModel Media { get; }
+    public MediaBackgroundViewModel MediaBackground { get; }
     public MediaSettingsViewModel MediaSettings { get; }
     public VolumeViewModel Volume { get; }
     // Where the media widget's audio bars come from; null means flat bars.
@@ -36,7 +37,8 @@ public partial class MainViewModel : ViewModelBase
         Chisel.Core.Media.IMediaService? media = null,
         Chisel.Core.Media.ISpectrumSource? spectrum = null,
         MediaSettingsViewModel? mediaSettings = null,
-        Chisel.Core.Media.IVolumeService? volume = null)
+        Chisel.Core.Media.IVolumeService? volume = null,
+        Services.IArtSampler? artSampler = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -46,6 +48,7 @@ public partial class MainViewModel : ViewModelBase
         MediaSettings = mediaSettings ?? new MediaSettingsViewModel(null);
         Volume = new VolumeViewModel(volume ?? new Services.FakeVolumeService(), TimeProvider.System);
         Media = new MediaViewModel(media ?? new Services.FakeMediaService(), TimeProvider.System);
+        MediaBackground = new MediaBackgroundViewModel(Media, MediaSettings, settings.Theme, artSampler ?? new Services.AvaloniaArtSampler());
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;

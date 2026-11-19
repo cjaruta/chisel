@@ -176,6 +176,12 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<int>("ClockFormat")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("MediaAlbumGradient")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("MediaAnimateGradient")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("MediaScrollVolume")
                         .HasColumnType("INTEGER");
 
