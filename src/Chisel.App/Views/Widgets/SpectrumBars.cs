@@ -172,6 +172,9 @@ public sealed class SpectrumBars : Control
         }
     }
 
+    // Re-checks whether it is on screen; for when an ancestor was hidden or shown (that raises no event here).
+    public void RefreshVisibility() => Update();
+
     private void Update()
     {
         var want = _source is not null && _enabled && _playing && _attached && IsEffectivelyVisible

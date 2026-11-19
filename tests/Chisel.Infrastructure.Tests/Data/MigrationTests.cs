@@ -227,6 +227,29 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddWidgetGroups_LoadsAnExistingLayoutAsPlainCards()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261119072456_AddMediaAlbumGradient");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO LayoutColumns (Position, WidthWeight) VALUES (0, 1.3), (1, 1.0);" +
+                "INSERT INTO WidgetPlacements (Id, WidgetId, ColumnIndex, Position, HeightWeight, ShowHeader) VALUES " +
+                "('6f1c2f4e-0000-0000-0000-000000000051', 'schedule', 0, 0, 1.0, 0), " +
+                "('6f1c2f4e-0000-0000-0000-000000000052', 'tasks', 1, 0, 1.05, NULL);");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var layout = new Chisel.Infrastructure.Repositories.WidgetLayoutRepository(readContext).Get()!;
+        Assert.All(layout.Columns.SelectMany(c => c.Widgets), w => Assert.False(w.IsGroup));
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05]", layout.Describe());
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();

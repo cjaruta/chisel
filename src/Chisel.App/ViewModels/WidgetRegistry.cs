@@ -14,7 +14,7 @@ namespace Chisel.App.ViewModels;
 // title bar unless the user chose otherwise (see WidgetPlacement.ShowHeader).
 public sealed record WidgetDefinition(
     string Id, string Title, string Icon, double DefaultHeight, double MinHeight, bool ScrollsContent, Type ViewType,
-    bool DefaultShowHeader = true);
+    bool DefaultShowHeader = true, double MinWidth = LayoutLimits.MinimumColumnWidth);
 
 // Every widget, and the arrangement used when nothing is saved.
 public static class WidgetRegistry

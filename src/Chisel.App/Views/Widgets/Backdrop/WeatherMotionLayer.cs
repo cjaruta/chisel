@@ -116,7 +116,8 @@ public sealed class WeatherMotionLayer
 
     private void OnHostChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property == Visual.IsVisibleProperty)
+        // IsEffectivelyVisible also changes when an ancestor is hidden (another tab of a group is showing).
+        if (e.Property == Visual.IsVisibleProperty || e.Property.Name == nameof(Visual.IsEffectivelyVisible))
         {
             Update();
         }

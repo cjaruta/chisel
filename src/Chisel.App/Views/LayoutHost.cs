@@ -105,6 +105,23 @@ public sealed partial class LayoutHost : Decorator
     // Where the columns and cards were at pick-up: targets are worked out from these, however the cards reflow.
     private IReadOnlyList<Rect> _pickColumns = [];
     private IReadOnlyList<IReadOnlyList<Rect>> _pickWidgets = [];
+    private IReadOnlyList<IReadOnlyList<WidgetFrame>> _pickFrames = [];
+
+    // The card the dragged widget would merge into (highlighted while the pointer is over it).
+    private WidgetFrame? _mergeTarget;
+
+    private void SetMergeTarget(WidgetFrame? frame)
+    {
+        if (!ReferenceEquals(_mergeTarget, frame))
+        {
+            _mergeTarget?.Classes.Set("mergeTarget", false);
+            _mergeTarget = frame;
+            _mergeTarget?.Classes.Set("mergeTarget", true);
+        }
+    }
+
+    // The card being merged into, while a drag hovers it (for tests).
+    public WidgetFrame? MergeTarget => _mergeTarget;
 
     private IBrush BackingBrush() => Theming.ThemeService.Brush(this, "WindowBackgroundBrush");
 
@@ -215,8 +232,11 @@ public sealed partial class LayoutHost : Decorator
     }
 
 
+    // Which cards are in which columns, and which widgets are on each group (not which tab is active: that
+    // only changes what a card shows).
     private static string Structure(IReadOnlyList<LayoutColumnSlot> columns) =>
-        string.Join("|", columns.Select(c => string.Join(",", c.Widgets.Select(w => w.Id))));
+        string.Join("|", columns.Select(c => string.Join(",", c.Widgets.Select(w =>
+            w.IsGroup ? $"{w.Id}({string.Join("+", w.Members.Select(m => m.Id))})" : w.Id))));
 
     private string Structure() => Layout is null ? "" : Structure(Layout.Columns);
 
@@ -232,8 +252,10 @@ public sealed partial class LayoutHost : Decorator
             WeightedStackPanel.SetWeight(scrollers[c], column.WidthWeight);
             foreach (var slot in column.Widgets)
             {
-                WeightedStackPanel.SetWeight(_frames[slot.Id], slot.HeightWeight);
-                _frames[slot.Id].ShowHeader = slot.ShowHeader;
+                var frame = _frames[slot.Id];
+                WeightedStackPanel.SetWeight(frame, slot.HeightWeight);
+                frame.ShowHeader = slot.ShowHeader;
+                SetMembers(frame, slot);
             }
         }
     }
@@ -260,6 +282,13 @@ public sealed partial class LayoutHost : Decorator
         }
         _builtStructure = Structure(slots);
 
+        // A card that is no longer on the dashboard lets go of its bodies, so the cards that are can take them.
+        var placed = slots.SelectMany(c => c.Widgets).Select(w => w.Id).ToHashSet();
+        foreach (var (id, gone) in _frames.Where(f => !placed.Contains(f.Key)))
+        {
+            gone.Release();
+        }
+
         for (var c = 0; c < slots.Count; c++)
         {
             var column = slots[c];
@@ -271,6 +300,7 @@ public sealed partial class LayoutHost : Decorator
                 var slot = column.Widgets[i];
                 var frame = Frame(slot.Widget);
                 frame.ShowHeader = slot.ShowHeader;
+                SetMembers(frame, slot);
                 WeightedStackPanel.SetWeight(frame, slot.HeightWeight);
                 panel.Children.Add(frame);
                 if (i + 1 < column.Widgets.Count)
@@ -461,16 +491,35 @@ public sealed partial class LayoutHost : Decorator
         _resizeColumn = null;
     }
 
+    // Each widget's view is made once and kept (with its state) however the cards are grouped.
+    private readonly Dictionary<string, WidgetView> _views = new();
+
+    private WidgetView ViewOf(WidgetDefinition widget)
+    {
+        if (!_views.TryGetValue(widget.Id, out var view))
+        {
+            view = (WidgetView)Activator.CreateInstance(widget.ViewType)!;
+            _views[widget.Id] = view;
+        }
+        return view;
+    }
+
+    private void SetMembers(WidgetFrame frame, WidgetSlot slot) =>
+        frame.SetMembers(slot.Members.Select(m => (m, ViewOf(m))).ToList(), slot.ActiveIndex);
+
     private WidgetFrame Frame(WidgetDefinition widget)
     {
         if (!_frames.TryGetValue(widget.Id, out var frame))
         {
-            var view = (WidgetView)Activator.CreateInstance(widget.ViewType)!;
-            frame = new WidgetFrame(widget, view) { IsEditing = _isEditing };
+            frame = new WidgetFrame(widget, ViewOf(widget)) { IsEditing = _isEditing };
+            var created = frame;
             frame.EditBar.Cursor = GrabCursor;
-            frame.EditBar.PointerPressed += (_, e) => OnBarPressed(frame, e);
-            frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(frame.WidgetId);
-            frame.HeaderButton.Click += (_, _) => Layout?.ToggleHeader(frame.WidgetId);
+            frame.EditBar.PointerPressed += (_, e) => OnBarPressed(created, e);
+            frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(created.WidgetId);
+            frame.HeaderButton.Click += (_, _) => Layout?.ToggleHeader(created.WidgetId);
+            frame.TabSelected += id => Layout?.SelectTab(id);
+            frame.TabUnmerged += id => Layout?.Unmerge(id);
+            frame.TabReordered += (id, index) => Layout?.ReorderTab(id, index);
             frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
             _frames[widget.Id] = frame;
         }
@@ -561,6 +610,11 @@ public sealed partial class LayoutHost : Decorator
         {
             _droppedId = id;
             layout.DropWidgetInNewColumn(newColumn);
+        }
+        else if (_mergeTarget is { } merge)
+        {
+            _droppedId = merge.WidgetId;
+            layout.DropOnWidget(merge.WidgetId);
         }
         else if (_target is { } target)
         {
@@ -705,6 +759,7 @@ public sealed partial class LayoutHost : Decorator
         _dragging = true;
         _origin = frame is null ? null : Layout?.Layout.Find(frame.WidgetId);
         _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
+        _pickFrames = Frames;
         _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
         FindNewColumnGaps(frame?.WidgetId);
 
@@ -785,7 +840,12 @@ public sealed partial class LayoutHost : Decorator
         Canvas.SetTop(_float, point.Y - _grabOffset.Y);
 
         _newColumnTarget = LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps);
-        _target = _newColumnTarget is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
+        // Over the middle of another card: merge into it. Near its top or bottom edge: insert there.
+        var merge = _newColumnTarget is null && Layout is { } layout
+            ? LayoutDropTargets.FindMerge(point, _pickWidgets, at => layout.CanMergeInto(_pickFrames[at.Column][at.Index].WidgetId))
+            : null;
+        SetMergeTarget(merge is { } m ? _pickFrames[m.Column][m.Index] : null);
+        _target = _newColumnTarget is null && merge is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
 
         SetActive(_phantom, _newColumnTarget is not null);
         if (_newColumnTarget is { } gap)
@@ -838,6 +898,7 @@ public sealed partial class LayoutHost : Decorator
         _trayWidget = null;
         _dragging = false;
         _target = null;
+        SetMergeTarget(null);
         _origin = null;
         Cursor = null;
         _newColumnTarget = null;

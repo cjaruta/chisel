@@ -20,8 +20,8 @@ public static class WidgetLayoutNormalizer
         foreach (var column in layout.Columns)
         {
             var widgets = column.Widgets
-                .Where(w => known.Contains(w.WidgetId) && seen.Add(w.WidgetId))
-                .Select(w => w with { HeightWeight = Weight(w.HeightWeight) })
+                .Select(w => Clean(w, known, seen))
+                .OfType<WidgetPlacement>()
                 .ToList();
             if (widgets.Count == 0)
             {
@@ -56,6 +56,47 @@ public static class WidgetLayoutNormalizer
             result[0] = WidgetLayout.NormalizeHeights(result[0]);
         }
         return new WidgetLayout(result, hidden);
+    }
+
+    // One saved card made safe: unknown and repeated widgets go, a group keeps at most LayoutLimits.MaximumGroupMembers
+    // members (the rest are treated as not placed), one left becomes a plain card with its own header choice back,
+    // and the active tab stays in range. Null when nothing is left.
+    private static WidgetPlacement? Clean(WidgetPlacement placement, List<string> known, HashSet<string> seen)
+    {
+        var weight = Weight(placement.HeightWeight);
+        if (!placement.IsGroup)
+        {
+            return known.Contains(placement.WidgetId) && seen.Add(placement.WidgetId)
+                ? placement with { HeightWeight = weight, Members = null, ActiveIndex = 0 }
+                : null;
+        }
+
+        var activeId = placement.ActiveId;
+        var members = new List<GroupMember>();
+        foreach (var member in placement.Members!)
+        {
+            if (members.Count < LayoutLimits.MaximumGroupMembers && known.Contains(member.WidgetId) && seen.Add(member.WidgetId))
+            {
+                members.Add(member);
+            }
+        }
+        if (members.Count == 0)
+        {
+            return null;
+        }
+        if (members.Count == 1)
+        {
+            return new WidgetPlacement(members[0].WidgetId, weight, members[0].ShowHeader);
+        }
+        var active = members.FindIndex(m => m.WidgetId == activeId);
+        return placement with
+        {
+            WidgetId = members.Any(m => m.WidgetId == placement.WidgetId) ? placement.WidgetId : members[0].WidgetId,
+            HeightWeight = weight,
+            ShowHeader = null,
+            Members = members,
+            ActiveIndex = active >= 0 ? active : Math.Clamp(placement.ActiveIndex, 0, members.Count - 1),
+        };
     }
 
     // NaN or infinite weights become 1; small or negative ones are raised to the minimum.

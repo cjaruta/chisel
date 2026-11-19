@@ -37,7 +37,7 @@ public sealed class WeatherWidgetView : WidgetView
             _weather = main.Weather;
             _weather.PropertyChanged += OnWeatherChanged;
         }
-        Rebuild();
+        Refresh();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -53,10 +53,35 @@ public sealed class WeatherWidgetView : WidgetView
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        Rebuild();
+        Refresh();
     }
 
-    private void OnWeatherChanged(object? sender, PropertyChangedEventArgs e) => Rebuild();
+    private void OnWeatherChanged(object? sender, PropertyChangedEventArgs e) => Refresh();
+
+    // A hidden tab (another widget of its group is showing) draws nothing: it is rebuilt when it is shown again.
+    private bool _stale;
+
+    private void Refresh()
+    {
+        if (IsEffectivelyVisible)
+        {
+            _stale = false;
+            Rebuild();
+        }
+        else
+        {
+            _stale = true;
+        }
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (_stale && change.Property.Name == nameof(IsEffectivelyVisible) && IsEffectivelyVisible)
+        {
+            Refresh();
+        }
+    }
 
     private IBrush Brush(string key) => Theming.ThemeService.Brush(this, key);
 

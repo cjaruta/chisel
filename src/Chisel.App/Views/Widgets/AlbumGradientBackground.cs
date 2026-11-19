@@ -272,6 +272,9 @@ public sealed class AlbumGradientBackground : Control
     }
 
     // The timer runs only while there is something to move: the drift while animating, or a cross-fade in progress.
+    // Re-checks whether it is on screen; for when an ancestor was hidden or shown (that raises no event here).
+    public void RefreshVisibility() => Update();
+
     private void Update()
     {
         var onScreen = _attached && IsEffectivelyVisible && _window?.WindowState != WindowState.Minimized;
