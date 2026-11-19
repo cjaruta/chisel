@@ -9,5 +9,7 @@
                   IsChecked="{Binding MediaSettings.ShowVisualizer}" />
         <CheckBox Name="MediaVolumeToggle" Content="Show volume control"
                   IsChecked="{Binding MediaSettings.ShowVolume}" />
+        <CheckBox Name="MediaScrollVolumeToggle" Content="Scroll to change volume"
+                  IsChecked="{Binding MediaSettings.ScrollVolume}" />
     </StackPanel>
 </UserControl>

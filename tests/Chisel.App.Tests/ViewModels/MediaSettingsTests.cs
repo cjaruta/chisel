@@ -54,4 +54,17 @@ public class MediaSettingsTests
         Assert.True(repository.Saved!.MediaVolume);
         Assert.False(repository.Saved.MediaVisualizer);
     }
+
+    [Fact]
+    public void ScrollVolume_IsOffByDefault_LoadsTheStoredChoice_AndSavesAtOnce()
+    {
+        Assert.False(new MediaSettingsViewModel(null).ScrollVolume);
+        var repository = new FakeSettingsRepository(Defaults);
+        var settings = new MediaSettingsViewModel(repository);
+
+        settings.ScrollVolume = true;
+
+        Assert.True(repository.Saved!.MediaScrollVolume);
+        Assert.True(new MediaSettingsViewModel(repository).ScrollVolume);
+    }
 }

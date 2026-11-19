@@ -174,4 +174,31 @@ public class MediaViewModelTests
         vm.IsActive = true;
         Assert.Equal("Later", vm.Title);
     }
+
+    [Fact]
+    public async Task Shortcut_TogglesTheSession_EvenWhenTheWidgetIsNotOnTheDashboard()
+    {
+        var service = new FakeMediaService { Current = FakeMediaService.Sample() };
+        var vm = new MediaViewModel(service, TimeProvider.System);
+        Assert.False(vm.IsActive);
+
+        Assert.True(vm.CanToggleFromShortcut);
+        await vm.ToggleFromShortcut();
+
+        Assert.Equal(["Toggle"], service.Calls);
+    }
+
+    [Fact]
+    public async Task Shortcut_DoesNothing_WithoutASession_OrWithoutPlayOrPause()
+    {
+        var service = new FakeMediaService();
+        var vm = new MediaViewModel(service, TimeProvider.System);
+        Assert.False(vm.CanToggleFromShortcut);
+
+        service.Current = FakeMediaService.Sample() with { Controls = MediaControls.Next };
+        Assert.False(vm.CanToggleFromShortcut);
+        await vm.ToggleFromShortcut();
+
+        Assert.Empty(service.Calls);
+    }
 }

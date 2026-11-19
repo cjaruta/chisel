@@ -127,5 +127,16 @@ public class UserSettingsRepositoryTests : IDisposable
         Assert.False(new UserSettingsRepository(readContext).Get()!.MediaVolume);
     }
 
+    [Fact]
+    public void Save_ThenGet_PersistsTheMediaScrollVolumeChoice()
+    {
+        using var context = _fixture.CreateContext();
+        new UserSettingsRepository(context).Save(
+            new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithMediaScrollVolume(true));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.True(new UserSettingsRepository(readContext).Get()!.MediaScrollVolume);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

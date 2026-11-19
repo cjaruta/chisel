@@ -108,4 +108,13 @@ public class UserSettingsTests
         Assert.True(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).MediaVolume);
         Assert.False(settings.WithSchedulePalette("saturated").WithMediaVisualizer(false).MediaVolume);
     }
+
+    [Fact]
+    public void MediaScrollVolume_DefaultsToOff_AndSurvivesTheOtherWithMethods()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithMediaScrollVolume(true);
+
+        Assert.False(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).MediaScrollVolume);
+        Assert.True(settings.WithSchedulePalette("saturated").WithMediaVolume(false).MediaScrollVolume);
+    }
 }

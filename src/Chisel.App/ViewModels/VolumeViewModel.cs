@@ -10,6 +10,7 @@ public sealed class VolumeViewModel : ViewModelBase
 {
     private static readonly TimeSpan MinWriteGap = TimeSpan.FromMilliseconds(33);
     private const double DefaultAudible = 0.3;
+    private const double WheelStep = 0.02;
 
     private readonly IVolumeService _service;
     private readonly TimeProvider _time;
@@ -65,6 +66,26 @@ public sealed class VolumeViewModel : ViewModelBase
             Write(level, _time.GetUtcNow());
         }
         _dragging = false;
+    }
+
+    // Mouse-wheel volume: enabled by the "Scroll to change volume" setting, blocked while widgets are being edited.
+    public bool ScrollEnabled { get; set; }
+    public bool ScrollBlocked { get; set; }
+
+    // Raised with the new level after a wheel change, so the widget can flash the percentage.
+    public event EventHandler<double>? ScrollFeedback;
+
+    // One wheel notch is 2 percent; fractional deltas (touchpads, smooth wheels) add up in the shown level.
+    // Returns true when the wheel was used, so the caller marks the event handled. Held-back writes land on CompleteDrag.
+    public bool ScrollBy(double notches)
+    {
+        if (!ScrollEnabled || ScrollBlocked || !_available || notches == 0 || double.IsNaN(notches))
+        {
+            return false;
+        }
+        DragTo(_level + notches * WheelStep);
+        ScrollFeedback?.Invoke(this, _level);
+        return true;
     }
 
     // Mute, or unmute back to the level it had. From silence (level 0) it goes back to the last audible level.

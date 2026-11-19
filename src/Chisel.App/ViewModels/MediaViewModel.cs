@@ -126,6 +126,12 @@ public sealed partial class MediaViewModel : ViewModelBase
         PreviousCommand.NotifyCanExecuteChanged();
     }
 
+    // The Space shortcut works on whatever session the system has, whether or not the widget is on the dashboard.
+    public bool CanToggleFromShortcut =>
+        _service.Current is { } info && (info.Controls.HasFlag(MediaControls.Play) || info.Controls.HasFlag(MediaControls.Pause));
+
+    public Task ToggleFromShortcut() => CanToggleFromShortcut ? Run(_service.TogglePlayPauseAsync) : Task.CompletedTask;
+
     [RelayCommand(CanExecute = nameof(CanPlayPause))]
     private Task PlayPause() => Run(IsPlaying ? _service.PauseAsync : _service.PlayAsync);
 

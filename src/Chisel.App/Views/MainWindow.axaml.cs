@@ -2,12 +2,14 @@ using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
+using Chisel.Core.Media;
 using Chisel.App.Views.Widgets;
 
 namespace Chisel.App.Views;
@@ -16,6 +18,7 @@ public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly string? _windowPlacementPath;
+    private bool _spaceDown;
 
     public MainWindow() : this(AppPaths.GetWindowPlacementPath())
     {
@@ -32,6 +35,10 @@ public partial class MainWindow : Window
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
         SizeChanged += (_, _) => PlaceLayoutToolbar();
 
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(KeyUpEvent, OnPreviewKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
+        Deactivated += (_, _) => _spaceDown = false;
+
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
         Loaded += (_, _) =>
         {
@@ -43,6 +50,44 @@ public partial class MainWindow : Window
         Unloaded += (_, _) => _timer.Stop();
         Closing += (_, _) => SavePlacement();
     }
+
+    // Space plays or pauses the current media session, from the tunnel phase so it is decided in one place before any
+    // control sees the key. MediaShortcuts holds the rules; this only gathers the facts. Holding the key does not repeat.
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Space || e.KeyModifiers != KeyModifiers.None || DataContext is not MainViewModel main)
+        {
+            return;
+        }
+        var repeat = _spaceDown;
+        _spaceDown = true;
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+        var context = new SpaceKeyContext(
+            IsRepeat: repeat,
+            OverlayOpen: main.Settings.IsOpen || main.Schedule.BlockEditor.IsOpen || main.Schedule.MarkerEditor.IsOpen
+                || (focused is Visual popupFocus && TopLevel.GetTopLevel(popupFocus) != this),
+            FocusUsesSpace: focused is Visual visual && visual.GetSelfAndVisualAncestors().Any(UsesSpace),
+            IsEditing: main.Layout.IsEditing,
+            CanPlayPause: main.Media.CanToggleFromShortcut);
+        if (MediaShortcuts.ShouldTogglePlayPause(context))
+        {
+            e.Handled = true;
+            _ = main.Media.ToggleFromShortcut();
+        }
+    }
+
+    private void OnPreviewKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space)
+        {
+            _spaceDown = false;
+        }
+    }
+
+    // Text inputs and controls that react to Space themselves keep it.
+    private static bool UsesSpace(Visual visual) =>
+        visual is TextBox or AutoCompleteBox or Button or ToggleButton or ComboBox or Slider or ListBox or ListBoxItem
+            or TabItem or MenuItem or TreeViewItem or NumericUpDown or Widgets.VolumeSlider;
 
     // Tray cards hand their pointer to the layout host, which shares the title bars' drag and drop.
     private void OnTrayCardPressed(object? sender, PointerPressedEventArgs e)

@@ -140,4 +140,98 @@ public class VolumeViewModelTests
         Assert.True(vm.IsAvailable);
         Assert.Equal(0.4, vm.Level);
     }
+
+    private static (VolumeViewModel Vm, FakeVolumeService Service, FakeTimeProvider Time) MakeScrolling(bool available = true)
+    {
+        var made = Make(available);
+        made.Vm.ScrollEnabled = true;
+        return made;
+    }
+
+    [Fact]
+    public void Scroll_StepsTwoPercentPerNotch_UpAndDown()
+    {
+        var (vm, service, time) = MakeScrolling();
+
+        Assert.True(vm.ScrollBy(1));
+        Assert.Equal(0.52, vm.Level, 6);
+        Assert.Equal(0.52, service.Level, 6);
+
+        time.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.True(vm.ScrollBy(-3));
+        Assert.Equal(0.46, vm.Level, 6);
+        Assert.Equal(0.46, service.Level, 6);
+    }
+
+    [Fact]
+    public void Scroll_AddsUpFractionalWheelDeltas()
+    {
+        var (vm, service, time) = MakeScrolling();
+
+        for (var i = 0; i < 8; i++)
+        {
+            Assert.True(vm.ScrollBy(0.125));
+            time.Advance(TimeSpan.FromMilliseconds(50));
+        }
+
+        Assert.Equal(0.52, vm.Level, 6);
+        Assert.Equal(0.52, service.Level, 6);
+    }
+
+    [Theory]
+    [InlineData(0.99, 5, 1.0)]
+    [InlineData(0.01, -5, 0.0)]
+    public void Scroll_StopsAtTheEnds(double start, double notches, double expected)
+    {
+        var (vm, service, _) = MakeScrolling();
+        service.ExternalChange(start, false);
+
+        vm.ScrollBy(notches);
+
+        Assert.Equal(expected, vm.Level, 6);
+        Assert.Equal(expected, service.Level, 6);
+    }
+
+    [Fact]
+    public void Scroll_HeldBackWrites_LandOnCompleteDrag()
+    {
+        var (vm, service, _) = MakeScrolling();
+
+        vm.ScrollBy(1);
+        vm.ScrollBy(1);
+        Assert.Equal(0.52, service.Level, 6);
+
+        vm.CompleteDrag();
+
+        Assert.Equal(0.54, service.Level, 6);
+    }
+
+    [Fact]
+    public void Scroll_ReportsTheNewLevelForTheFeedbackLabel()
+    {
+        var (vm, _, _) = MakeScrolling();
+        double? shown = null;
+        vm.ScrollFeedback += (_, level) => shown = level;
+
+        vm.ScrollBy(2);
+
+        Assert.Equal(0.54, shown!.Value, 6);
+    }
+
+    [Fact]
+    public void Scroll_IsIgnored_WhenTheSettingIsOff_WhenEditing_OrWithoutADevice()
+    {
+        var (off, offService, _) = Make();
+        Assert.False(off.ScrollBy(1));
+        Assert.Empty(offService.Writes);
+
+        var (editing, editingService, _) = MakeScrolling();
+        editing.ScrollBlocked = true;
+        Assert.False(editing.ScrollBy(1));
+        Assert.Empty(editingService.Writes);
+
+        var (none, noneService, _) = MakeScrolling(available: false);
+        Assert.False(none.ScrollBy(1));
+        Assert.Empty(noneService.Writes);
+    }
 }
