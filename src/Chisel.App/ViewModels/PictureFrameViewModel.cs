@@ -93,7 +93,7 @@ public sealed class PictureFrameViewModel
     // The right half goes forward, the left back. A drag, edit mode and a lone picture do nothing.
     public bool HandleClick(double x, double width, double dragX, double dragY)
     {
-        if (_owner.IsEditing || !Slideshow.IsClick(dragX, dragY))
+        if (_owner.IsEditing || IsAdjusting || !Slideshow.IsClick(dragX, dragY))
         {
             return false;
         }
@@ -107,6 +107,44 @@ public sealed class PictureFrameViewModel
             return false;
         }
         return Step(key == Key.Right ? 1 : -1);
+    }
+
+    // ----- adjusting the shown picture (edit mode): drag to pan, wheel to zoom, Reset, Done. Saved per picture.
+
+    public bool IsAdjusting => _owner.AdjustingFrameId == FrameId;
+
+    // Whether the picture shown can be adjusted: a still picture, and a layout being edited.
+    public bool CanAdjust =>
+        _owner.IsEditing && Current is { } picture && _owner.AssetOf(picture.AssetId) is { IsGif: false };
+
+    public bool BeginAdjust() => CanAdjust && _owner.BeginAdjust(FrameId);
+
+    // Drags the picture by (dragX, dragY) pixels in a view of the given size.
+    public void AdjustPan(double viewWidth, double viewHeight, double dragX, double dragY)
+    {
+        if (!IsAdjusting || Current is not { } picture || _owner.AssetOf(picture.AssetId) is not { } asset)
+        {
+            return;
+        }
+        var (x, y) = CropMath.Pan(asset.Width, asset.Height, viewWidth, viewHeight, picture.FocalX, picture.FocalY, picture.Zoom, dragX, dragY);
+        _owner.SetCrop(FrameId, CurrentIndex, x, y, picture.Zoom);
+    }
+
+    // Zooms by wheel steps (positive in): each step is 10 percent.
+    public void AdjustZoom(double steps)
+    {
+        if (IsAdjusting && Current is { } picture)
+        {
+            _owner.SetCrop(FrameId, CurrentIndex, picture.FocalX, picture.FocalY, picture.Zoom * Math.Pow(1.1, steps));
+        }
+    }
+
+    public void ResetCrop()
+    {
+        if (IsAdjusting)
+        {
+            _owner.SetCrop(FrameId, CurrentIndex, 0.5, 0.5, 1);
+        }
     }
 
     // Called about every 200 ms by the window's tick.

@@ -1,13 +1,16 @@
 using System;
 using System.IO;
+using System.Linq;
 using Chisel.Core.Layout;
 using Chisel.Core.Links;
 using Chisel.Core.Notes;
+using Chisel.Core.Pictures;
 using Chisel.Core.Schedule;
 using Chisel.Core.Settings;
 using Chisel.Core.Tasks;
 using Chisel.Core.Weather;
 using Chisel.Infrastructure.Data;
+using Chisel.Infrastructure.Pictures;
 using Chisel.Infrastructure.Repositories;
 using Chisel.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
@@ -26,8 +29,12 @@ public sealed class AppServices : IDisposable
     public IUserSettingsRepository UserSettings { get; }
     public IWidgetLayoutRepository WidgetLayout { get; }
     public IWeatherStore Weather { get; }
+    public PictureCatalog Pictures { get; }
+    public PictureImporter PictureImporter { get; }
+    public IImageDownloader PictureDownloader { get; }
 
-    public AppServices(string dbPath, TimeProvider? time = null)
+    // picturesFolder: where picture files go; by default a "pictures" folder next to the database.
+    public AppServices(string dbPath, TimeProvider? time = null, string? picturesFolder = null)
     {
         Time = time ?? TimeProvider.System;
 
@@ -55,6 +62,27 @@ public sealed class AppServices : IDisposable
         UserSettings = new UserSettingsRepository(DbContext);
         WidgetLayout = new WidgetLayoutRepository(DbContext);
         Weather = new WeatherRepository(DbContext);
+
+        var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
+        var files = new PictureFileStore(folder);
+        var pictureRepository = new PictureRepository(DbContext);
+        Pictures = new PictureCatalog(pictureRepository, files);
+        PictureImporter = new PictureImporter(pictureRepository, files, new Services.AvaloniaImageResizer(), Time);
+        PictureDownloader = HttpImageDownloader.CreateDefault();
+        SweepPictures(folder);
+    }
+
+    // At startup: pictures an interrupted edit left behind (no frame uses them) are deleted. Never stops the app starting.
+    private void SweepPictures(string folder)
+    {
+        try
+        {
+            Pictures.Sweep(Directory.Exists(folder) ? Directory.EnumerateFiles(folder).Select(Path.GetFileName).OfType<string>().ToList() : []);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DbUpdateException)
+        {
+            // The next start tries again.
+        }
     }
 
     public void Dispose() => DbContext.Dispose();

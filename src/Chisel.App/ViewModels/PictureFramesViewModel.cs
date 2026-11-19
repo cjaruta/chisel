@@ -17,14 +17,17 @@ public sealed class PictureFramesViewModel : ViewModelBase
     private readonly TimeProvider _time;
     private readonly Dictionary<string, PictureFrameViewModel> _frames = new();
     private readonly PictureImportService? _import;
+    private readonly PictureCatalog? _catalog;
+    private readonly Dictionary<Guid, PictureAsset?> _assets = new();
     private DateTimeOffset _noticeAt;
 
     // How long a message stays up.
     public static readonly TimeSpan NoticeTime = TimeSpan.FromSeconds(6);
 
     // shuffleSeed: the same seed gives the same shuffle (tests); by default each start shuffles differently.
-    public PictureFramesViewModel(LayoutViewModel layout, TimeProvider? time = null, int? shuffleSeed = null, PictureImportService? import = null)
+    public PictureFramesViewModel(LayoutViewModel layout, TimeProvider? time = null, int? shuffleSeed = null, PictureImportService? import = null, PictureCatalog? catalog = null)
     {
+        _catalog = catalog;
         _layout = layout;
         _import = import;
         _time = time ?? TimeProvider.System;
@@ -33,6 +36,26 @@ public sealed class PictureFramesViewModel : ViewModelBase
     }
 
     public int ShuffleSeed { get; }
+
+    public PictureCatalog? Catalog => _catalog;
+
+    // The stored picture an id names (looked up once, then remembered), or null when it is gone.
+    public PictureAsset? AssetOf(Guid id)
+    {
+        if (!_assets.TryGetValue(id, out var asset))
+        {
+            asset = _catalog?.Get(id);
+            _assets[id] = asset;
+        }
+        return asset;
+    }
+
+    public string? AdjustingFrameId => _layout.AdjustingFrameId;
+
+    internal bool BeginAdjust(string frameId) => _layout.BeginAdjust(frameId);
+
+    internal void SetCrop(string frameId, int index, double focalX, double focalY, double zoom) =>
+        _layout.UpdatePictures(p => p.SetCrop(frameId, index, focalX, focalY, zoom));
 
     public DateTimeOffset Now => _time.GetUtcNow();
 

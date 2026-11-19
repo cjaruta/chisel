@@ -44,7 +44,7 @@ public class LayoutInstanceTests : IDisposable
         Assert.Equal("clock", WidgetRegistry.Get("clock")!.Id);
         Assert.Null(WidgetRegistry.Get("clock:k1"));
         Assert.Null(WidgetRegistry.Get("nothing:k1"));
-        Assert.All(WidgetRegistry.All, w => Assert.False(w.AllowMultiple));
+        Assert.All(WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.PictureFrame), w => Assert.False(w.AllowMultiple));
     }
 
     [Fact]

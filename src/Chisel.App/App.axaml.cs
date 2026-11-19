@@ -57,6 +57,7 @@ public partial class App : Application
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
+                var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures);
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
@@ -64,13 +65,15 @@ public partial class App : Application
                     new NotesViewModel(_services.Notes, _services.Time, timeDisplay),
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,
-                    new LayoutViewModel(_services.WidgetLayout),
+                    layout,
                     weather,
                     new WeatherSettingsViewModel(weatherStore, isolated ? new NoGeocoder() : new OpenMeteoGeocoder(), weather, userSettings: _services.UserSettings),
                     _mediaService,
                     _spectrum,
                     new MediaSettingsViewModel(_services.UserSettings),
-                    _volume);
+                    _volume,
+                    pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings),
+                    pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures));
                 weather.ShowCached();
                 mainViewModel.Refresh();
 

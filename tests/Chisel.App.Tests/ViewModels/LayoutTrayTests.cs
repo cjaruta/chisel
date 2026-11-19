@@ -30,7 +30,7 @@ public class LayoutTrayTests
     // The clock waits in the tray from the start; these tests are about the four original widgets.
     private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media);
 
-    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media).ToArray();
+    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.PictureFrame).ToArray();
 
     private LayoutViewModel Editing()
     {
@@ -44,7 +44,7 @@ public class LayoutTrayTests
     {
         Assert.All(WidgetRegistry.All, w => Assert.False(string.IsNullOrWhiteSpace(w.Icon), w.Id));
         var defaults = WidgetRegistry.DefaultLayout.Columns.SelectMany(c => c.Widgets).ToDictionary(p => p.WidgetId, p => p.HeightWeight);
-        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media).ToList();
+        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media && w.Id != WidgetRegistry.PictureFrame).ToList();
         Assert.All(placed, w => Assert.Equal(w.DefaultHeight, defaults[w.Id]));
         Assert.Equal(placed.Select(w => w.Id).OrderBy(x => x), defaults.Keys.OrderBy(x => x));
     }
@@ -107,7 +107,7 @@ public class LayoutTrayTests
         layout.RemoveWidget("schedule");
 
         Assert.Equal(new[] { "schedule", "links" }, Tray(layout));
-        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media"));
+        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame"));
         Assert.True(layout.HasHiddenWidgets);
     }
 

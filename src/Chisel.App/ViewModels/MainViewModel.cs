@@ -20,6 +20,8 @@ public partial class MainViewModel : ViewModelBase
     public NotesViewModel Notes { get; }
     public QuickLinksViewModel QuickLinks { get; }
     public SettingsViewModel Settings { get; }
+    public PictureFramesViewModel PictureFrames { get; }
+    public PictureSettingsViewModel PictureSettings { get; }
 
     // Which widgets are shown where; the window's layout host is built from it.
     public LayoutViewModel Layout { get; }
@@ -38,7 +40,10 @@ public partial class MainViewModel : ViewModelBase
         Chisel.Core.Media.ISpectrumSource? spectrum = null,
         MediaSettingsViewModel? mediaSettings = null,
         Chisel.Core.Media.IVolumeService? volume = null,
-        Services.IArtSampler? artSampler = null)
+        Services.IArtSampler? artSampler = null,
+        Services.PictureImportService? pictureImport = null,
+        PictureSettingsViewModel? pictureSettings = null,
+        TimeProvider? time = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -55,6 +60,8 @@ public partial class MainViewModel : ViewModelBase
         QuickLinks = quickLinks;
         Settings = settings;
         Layout = layout ?? new LayoutViewModel();
+        PictureFrames = new PictureFramesViewModel(Layout, time, import: pictureImport);
+        PictureSettings = pictureSettings ?? new PictureSettingsViewModel(null, Layout, null);
         Volume.ScrollEnabled = MediaSettings.ScrollVolume;
         MediaSettings.PropertyChanged += (_, e) =>
         {
@@ -100,6 +107,7 @@ public partial class MainViewModel : ViewModelBase
     public void Tick()
     {
         Media.Tick();
+        PictureFrames.Tick();
         if (Clock.NeedsRefresh)
         {
             Refresh();

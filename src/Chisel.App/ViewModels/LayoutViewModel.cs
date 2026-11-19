@@ -379,6 +379,7 @@ public partial class LayoutViewModel : ViewModelBase
         CancelPaneResize();
         Snapshot = null;
         _picturesSnapshot = null;
+        AdjustingFrameId = null;
         IsEditing = false;
     }
 
@@ -422,6 +423,22 @@ public partial class LayoutViewModel : ViewModelBase
             _repository?.Save(Layout);
         }
     }
+
+    // The picture frame whose current picture is being adjusted (panned and zoomed); null when none. Edit mode only.
+    [ObservableProperty]
+    public partial string? AdjustingFrameId { get; private set; }
+
+    public bool BeginAdjust(string frameId)
+    {
+        if (!IsEditing || Layout.Find(frameId) is null)
+        {
+            return false;
+        }
+        AdjustingFrameId = frameId;
+        return true;
+    }
+
+    public void EndAdjust() => AdjustingFrameId = null;
 
     // Whether the drag in progress carries pictures from outside the app (it adds frames, or fills one).
     [ObservableProperty]

@@ -23,7 +23,7 @@ public class PictureFrameViewModelTests
         _layout.Apply(_layout.Layout.AddWidget(Frame, 0, 0, 1));
         _ids = Enumerable.Range(1, 4).Select(i => _pictures.Add(i).Id).ToArray();
         _layout.UpdatePictures(p => p.AddPictures(Frame, _ids));
-        _frames = new PictureFramesViewModel(_layout, _time, shuffleSeed: 42);
+        _frames = new PictureFramesViewModel(_layout, _time, shuffleSeed: 42, catalog: _pictures.Catalog);
     }
 
     private PictureFrameViewModel Show(FrameOptions? options = null)
@@ -310,5 +310,99 @@ public class PictureFrameViewModelTests
         Wait(1);
 
         Assert.Equal(1, frame.CurrentIndex);
+    }
+
+    // ----- adjusting a picture (edit mode)
+
+    private PictureFrameViewModel Adjusting()
+    {
+        var frame = Show();
+        _layout.EnterEditCommand.Execute(null);
+        Assert.True(frame.BeginAdjust());
+        return frame;
+    }
+
+    [Fact]
+    public void Adjusting_NeedsEditMode_AndAStillPicture()
+    {
+        var frame = Show();
+        Assert.False(frame.BeginAdjust());
+
+        var gif = PictureAsset.Create(new string('e', 64), "a.gif", ImageFormats.Gif, 10, 10, 10, null, DateTimeOffset.UnixEpoch);
+        _pictures.Repository.AddAsset(gif);
+        _layout.UpdatePictures(p => p.AddPictures("pictureframe:gif", new[] { gif.Id }));
+        _layout.Apply(_layout.Layout.AddWidget("pictureframe:gif", 0, 0, 1));
+        _layout.EnterEditCommand.Execute(null);
+        Assert.False(_frames.For("pictureframe:gif").BeginAdjust());
+        Assert.True(frame.BeginAdjust());
+        Assert.True(frame.IsAdjusting);
+    }
+
+    [Fact]
+    public void Adjusting_EndsWithDoneOrCancel_AndStopsClicksFromChangingPicture()
+    {
+        var frame = Adjusting();
+        Assert.False(frame.HandleClick(300, 400, 0, 0));
+        Assert.False(frame.HandleKey(Key.Right));
+
+        _layout.CancelCommand.Execute(null);
+        Assert.False(frame.IsAdjusting);
+
+        _layout.EnterEditCommand.Execute(null);
+        frame.BeginAdjust();
+        _layout.DoneCommand.Execute(null);
+        Assert.False(frame.IsAdjusting);
+    }
+
+    [Fact]
+    public void Dragging_MovesTheFocalPoint_AndWheelZoomsBetweenOneAndEight()
+    {
+        // The picture is 1 wide and 10 tall, shown in a 100 x 100 view: it can only pan up and down.
+        var frame = Adjusting();
+
+        frame.AdjustPan(100, 100, 0, 5);
+        Assert.Equal(0.5, frame.Current!.FocalX, 3);
+        Assert.NotEqual(0.5, frame.Current!.FocalY);
+
+        frame.AdjustZoom(3);
+        Assert.True(frame.Current!.Zoom > 1.3);
+        frame.AdjustZoom(-50);
+        Assert.Equal(1, frame.Current!.Zoom, 3);
+        frame.AdjustZoom(500);
+        Assert.Equal(FramePicture.MaxZoom, frame.Current!.Zoom, 3);
+    }
+
+    [Fact]
+    public void Reset_PutsTheCropBack_AndTheCropIsPerPicture()
+    {
+        var frame = Adjusting();
+        frame.AdjustZoom(10);
+        var zoomed = frame.Current!.Zoom;
+        Assert.True(zoomed > 1);
+
+        frame.Step(1);
+        Assert.Equal(1, frame.Current!.Zoom);
+        frame.Step(-1);
+        Assert.Equal(zoomed, frame.Current!.Zoom, 6);
+
+        frame.ResetCrop();
+        Assert.Equal((0.5, 0.5, 1.0), (frame.Current!.FocalX, frame.Current.FocalY, frame.Current.Zoom));
+    }
+
+    [Fact]
+    public void ACropMadeInEditMode_IsDroppedByCancel_AndKeptByDone()
+    {
+        var frame = Adjusting();
+        frame.AdjustZoom(10);
+        _layout.CancelCommand.Execute(null);
+        Assert.Equal(1, frame.Current!.Zoom);
+
+        _layout.EnterEditCommand.Execute(null);
+        frame.BeginAdjust();
+        frame.AdjustZoom(10);
+        var zoom = frame.Current!.Zoom;
+        _layout.DoneCommand.Execute(null);
+
+        Assert.Equal(zoom, _pictures.Repository.Frames.Get(Frame).Pictures[0].Zoom, 6);
     }
 }

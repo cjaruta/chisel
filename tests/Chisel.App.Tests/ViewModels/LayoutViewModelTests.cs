@@ -30,8 +30,8 @@ public class LayoutViewModelTests
     [Fact]
     public void Registry_HasTheWidgetsWithStableIdsTitlesAndViews()
     {
-        Assert.Equal(new[] { "schedule", "tasks", "notes", "links", "clock", "weather", "media" }, WidgetRegistry.All.Select(w => w.Id));
-        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links", "Clock", "Weather", "Media" }, WidgetRegistry.All.Select(w => w.Title));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "links", "clock", "weather", "media", "pictureframe" }, WidgetRegistry.All.Select(w => w.Id));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links", "Clock", "Weather", "Media", "Picture frame" }, WidgetRegistry.All.Select(w => w.Title));
         Assert.All(WidgetRegistry.All, w =>
         {
             Assert.True(w.MinHeight > 0);
@@ -44,7 +44,7 @@ public class LayoutViewModelTests
     [Fact]
     public void Registry_OnlyTheScheduleScrollsItself()
     {
-        Assert.Equal(new[] { "schedule", "clock", "weather", "media" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
+        Assert.Equal(new[] { "schedule", "clock", "weather", "media", "pictureframe" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
     }
 
     [Fact]
