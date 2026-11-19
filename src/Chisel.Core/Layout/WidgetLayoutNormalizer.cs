@@ -1,7 +1,7 @@
 namespace Chisel.Core.Layout;
 
 // Makes a loaded layout safe to show. The default layout says which widgets exist (and their default heights):
-// widgets not in it are dropped (and repeats of one widget), empty columns go, columns past
+// widgets not in it are dropped (and repeats of one widget id; a single-instance type's id is its type id, so it can be there once), empty columns go, columns past
 // LayoutLimits.MaximumColumns fold into the last one, and weights are kept sensible.
 //
 // A known widget missing from the layout is either hidden (the user removed it: it is in HiddenWidgetIds and
@@ -10,9 +10,13 @@ namespace Chisel.Core.Layout;
 // becomes the default. A widget the default layout lists as hidden is never placed on its own: it waits in the tray.
 public static class WidgetLayoutNormalizer
 {
-    public static WidgetLayout Normalize(WidgetLayout layout, WidgetLayout defaults)
+    // types says which widget types exist and which allow several instances (see InstanceIds); without it every widget in
+    // the default layout is a single-instance type. An instance id of a multi-instance type is valid without being in
+    // the default layout, and is never hidden: it is on the dashboard or gone.
+    public static WidgetLayout Normalize(WidgetLayout layout, WidgetLayout defaults, WidgetTypes? types = null)
     {
         var known = defaults.WidgetIds.Concat(defaults.HiddenWidgetIds).ToList();
+        types ??= new WidgetTypes(known, []);
         var seen = new HashSet<string>();
 
         var widths = new List<double>();
@@ -20,7 +24,7 @@ public static class WidgetLayoutNormalizer
         foreach (var column in layout.Columns)
         {
             var widgets = column.Widgets
-                .Select(w => Clean(w, known, seen))
+                .Select(w => Clean(w, types, seen))
                 .OfType<WidgetPlacement>()
                 .ToList();
             if (widgets.Count == 0)
@@ -61,12 +65,12 @@ public static class WidgetLayoutNormalizer
     // One saved card made safe: unknown and repeated widgets go, a group keeps at most LayoutLimits.MaximumGroupMembers
     // members (the rest are treated as not placed), one left becomes a plain card with its own header choice back,
     // and the active tab stays in range. Null when nothing is left.
-    private static WidgetPlacement? Clean(WidgetPlacement placement, List<string> known, HashSet<string> seen)
+    private static WidgetPlacement? Clean(WidgetPlacement placement, WidgetTypes types, HashSet<string> seen)
     {
         var weight = Weight(placement.HeightWeight);
         if (!placement.IsGroup)
         {
-            return known.Contains(placement.WidgetId) && seen.Add(placement.WidgetId)
+            return types.IsValidId(placement.WidgetId) && seen.Add(placement.WidgetId)
                 ? placement with { HeightWeight = weight, Members = null, ActiveIndex = 0, ViewMode = GroupViewMode.Tabs }
                 : null;
         }
@@ -75,7 +79,7 @@ public static class WidgetLayoutNormalizer
         var members = new List<GroupMember>();
         foreach (var member in placement.Members!)
         {
-            if (members.Count < LayoutLimits.MaximumGroupMembers && known.Contains(member.WidgetId) && seen.Add(member.WidgetId))
+            if (members.Count < LayoutLimits.MaximumGroupMembers && types.IsValidId(member.WidgetId) && seen.Add(member.WidgetId))
             {
                 members.Add(member with { WidthWeight = Weight(member.WidthWeight) });
             }

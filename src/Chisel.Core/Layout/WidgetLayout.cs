@@ -460,8 +460,8 @@ public sealed class WidgetLayout
         };
     }
 
-    // Takes a widget off the dashboard: it joins the hidden widgets (its data is untouched), its column is
-    // rescaled, and a column it leaves empty collapses. The last widget on the dashboard cannot be removed.
+    // Takes a widget off the dashboard: it joins the hidden widgets (its data is untouched; an instance of a
+    // multi-instance widget is deleted instead), its column is rescaled, and a column it leaves empty collapses. The last widget on the dashboard cannot be removed.
     public WidgetLayout RemoveWidget(string widgetId)
     {
         var (column, index) = Find(widgetId)
@@ -473,7 +473,9 @@ public sealed class WidgetLayout
 
         var left = Columns[column] with { Widgets = Columns[column].Widgets.Where((_, i) => i != index).ToList() };
         var columns = Columns.Select((c, i) => i == column ? NormalizeHeights(left) : c).Where(c => c.Widgets.Count > 0);
-        return new WidgetLayout(columns, HiddenWidgetIds.Concat(Columns[column].Widgets[index].MemberIds));
+        // An instance of a multi-instance widget is deleted, not hidden: there is nothing to put back from the tray.
+        var gone = Columns[column].Widgets[index].MemberIds;
+        return new WidgetLayout(columns, HiddenWidgetIds.Concat(gone.Where(id => !InstanceIds.IsInstance(id))));
     }
 
     // Whether a card can be removed: not when it is the only one left on the dashboard (a group is one card).
@@ -523,7 +525,8 @@ public sealed class WidgetLayout
         {
             throw new ArgumentException($"'{widgetId}' is already on the dashboard.", nameof(widgetId));
         }
-        if (!HiddenWidgetIds.Contains(widgetId))
+        // A new instance of a multi-instance widget is not in the hidden list: it is simply new.
+        if (!InstanceIds.IsInstance(widgetId) && !HiddenWidgetIds.Contains(widgetId))
         {
             throw new ArgumentException($"'{widgetId}' is not a hidden widget of this layout.", nameof(widgetId));
         }
