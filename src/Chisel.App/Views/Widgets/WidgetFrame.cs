@@ -209,6 +209,9 @@ public sealed class WidgetFrame : Border
     // Every widget's view on this card, in tab order.
     public IReadOnlyList<WidgetView> Views => _members.Select(m => m.View).ToList();
     public IReadOnlyList<string> MemberIds => _members.Select(m => m.Definition.Id).ToList();
+
+    // The members' titles, in tab order (an instance's title is numbered when its type has several on the dashboard).
+    public IReadOnlyList<string> MemberTitles => _members.Select(m => m.Definition.Title).ToList();
     public string ActiveId => _members[_active].Definition.Id;
     public bool IsGroup => _members.Count > 1;
 
@@ -263,7 +266,7 @@ public sealed class WidgetFrame : Border
         activeIndex = Math.Clamp(activeIndex, 0, Math.Max(0, members.Count - 1));
         weights = weights is { Count: > 0 } && weights.Count == members.Count ? weights : members.Select(_ => 1.0).ToList();
         var same = !_released && members.Count == _members.Count
-            && members.Select((m, i) => ReferenceEquals(m.View, _members[i].View)).All(x => x);
+            && members.Select((m, i) => ReferenceEquals(m.View, _members[i].View) && m.Definition.Title == _members[i].Definition.Title).All(x => x);
         if (same)
         {
             var modeChanged = mode != _mode;

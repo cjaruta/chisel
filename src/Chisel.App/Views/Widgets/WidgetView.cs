@@ -19,6 +19,10 @@ public class WidgetView : UserControl
         set => SetValue(BodyActionsProperty, value);
     }
 
+    // The id of the widget this view draws: the type id of a single-instance widget, or "<type>:<key>" for one instance
+    // of a widget that allows several. Whatever a view stores of its own is keyed by it. Set by the layout host.
+    public string? InstanceId { get; set; }
+
     // Whether the card's title bar is shown (set by the frame). Views that adapt to it override OnHeaderShownChanged.
     public bool HeaderShown { get; private set; } = true;
 

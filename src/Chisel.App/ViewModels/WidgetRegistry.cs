@@ -13,9 +13,15 @@ namespace Chisel.App.ViewModels;
 // placed (in the default layout, or when added back from the tray). DefaultShowHeader: whether the card shows its
 // title bar unless the user chose otherwise (see WidgetPlacement.ShowHeader). MinWidth is the least width the widget
 // is laid out for: a tabbed group needs the largest of its members, a split group the sum of its panes plus gaps.
+// AllowMultiple: the layout can hold several instances of this type (see InstanceIds). The registry holds the type
+// (Id = the type id); an instance resolved from an instance id carries that id instead.
 public sealed record WidgetDefinition(
     string Id, string Title, string Icon, double DefaultHeight, double MinHeight, bool ScrollsContent, Type ViewType,
-    bool DefaultShowHeader = true, double MinWidth = LayoutLimits.MinimumColumnWidth);
+    bool DefaultShowHeader = true, double MinWidth = LayoutLimits.MinimumColumnWidth, bool AllowMultiple = false)
+{
+    // The widget type this belongs to: its own id, or for an instance ("frame:k1") the part before the colon.
+    public string TypeId => InstanceIds.TypeOf(Id);
+}
 
 // Every widget, and the arrangement used when nothing is saved.
 public static class WidgetRegistry
@@ -58,7 +64,46 @@ public static class WidgetRegistry
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes), Placement(Links) }),
     }, hiddenWidgetIds: new[] { Clock, Weather, Media });
 
-    public static WidgetDefinition? Get(string id) => All.FirstOrDefault(w => w.Id == id);
+    // Types added for the lifetime of a test (see Extend). Never used by the app.
+    private static readonly List<WidgetDefinition> Added = new();
+
+    // Every widget type: the registered ones, then any a test added.
+    public static IReadOnlyList<WidgetDefinition> AllTypes => Added.Count == 0 ? All : All.Concat(Added).ToList();
+
+    // Which types exist and which allow several instances, for the layout normalizer.
+    public static WidgetTypes Types =>
+        new(AllTypes.Where(w => !w.AllowMultiple).Select(w => w.Id), AllTypes.Where(w => w.AllowMultiple).Select(w => w.Id));
+
+    // Adds widget types until the returned object is disposed. For tests that need a multi-instance widget.
+    public static IDisposable Extend(params WidgetDefinition[] definitions)
+    {
+        Added.AddRange(definitions);
+        return new Removal(definitions);
+    }
+
+    private sealed class Removal(WidgetDefinition[] definitions) : IDisposable
+    {
+        public void Dispose()
+        {
+            foreach (var definition in definitions)
+            {
+                Added.Remove(definition);
+            }
+        }
+    }
+
+    // The widget for an id: a type's own id gives the type; "<type>:<key>" gives an instance of a type that allows
+    // several (the same definition with the instance id). Null for an unknown type, a malformed id, or a key on a
+    // single-instance type.
+    public static WidgetDefinition? Get(string id)
+    {
+        if (InstanceIds.TryParse(id) is not { } parsed)
+        {
+            return null;
+        }
+        var type = AllTypes.FirstOrDefault(w => w.Id == parsed.TypeId);
+        return parsed.Key is null ? type : type is { AllowMultiple: true } ? type with { Id = id } : null;
+    }
 
     private static WidgetPlacement Placement(string id) => new(id, All.First(w => w.Id == id).DefaultHeight);
 }

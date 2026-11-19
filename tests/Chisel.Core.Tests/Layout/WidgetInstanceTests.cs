@@ -103,7 +103,7 @@ public class WidgetInstanceTests
     }
 
     [Fact]
-    public void RemoveWidget_OfAGroupedInstance_LeavesTheOthers()
+    public void RemoveWidget_OfAGroupCard_DeletesItsInstances_AndHidesItsSingleInstanceWidgets()
     {
         var group = new WidgetPlacement("m:x", 1, null, new[] { new GroupMember("m:x"), new GroupMember("m:y"), new GroupMember("a") });
         var layout = Layout(group, new WidgetPlacement("b")).RemoveWidget("m:x");

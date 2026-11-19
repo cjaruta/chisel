@@ -48,10 +48,12 @@ public partial class LayoutViewModel : ViewModelBase
     public partial WidgetLayout Layout { get; private set; }
 
     // The widgets that are not on the dashboard, in registry order: what the tray lists.
+    // A widget that allows several instances is always offered ("Add" makes a new one); any other only while hidden.
     public IReadOnlyList<WidgetDefinition> TrayWidgets =>
-        WidgetRegistry.All.Where(w => Layout.HiddenWidgetIds.Contains(w.Id)).ToList();
+        WidgetRegistry.AllTypes.Where(w => w.AllowMultiple || Layout.HiddenWidgetIds.Contains(w.Id)).ToList();
 
-    public bool HasHiddenWidgets => Layout.HiddenWidgetIds.Count > 0;
+    // Whether the tray has anything to offer.
+    public bool HasHiddenWidgets => TrayWidgets.Count > 0;
 
     // False when only one widget is left: it cannot be removed.
     public bool CanRemoveWidgets => Layout.CanRemoveWidget;
@@ -71,7 +73,8 @@ public partial class LayoutViewModel : ViewModelBase
             return;
         }
         Layout = Layout.RemoveWidget(widgetId);
-        IsTrayOpen = true;
+        // An instance is deleted, so there is nothing new in the tray to look at.
+        IsTrayOpen = IsTrayOpen || !InstanceIds.IsInstance(widgetId);
     }
 
     // Shows or hides a widget's title (working copy only; Done saves it, Cancel and Reset put it back).
@@ -210,30 +213,56 @@ public partial class LayoutViewModel : ViewModelBase
         return Finish(Layout.Combine(id, targetId, cardWidth, MinWidthOf));
     }
 
-    // The quick path from the tray: the widget goes to the bottom of the first column.
+    // The quick path from the tray: the widget goes to the bottom of the first column. For a type that allows
+    // several instances, widgetId is the type id and a new instance is made.
     public void AddWidgetFromTray(string widgetId)
     {
-        if (!IsEditing || !Layout.HiddenWidgetIds.Contains(widgetId))
+        if (!IsEditing)
+        {
+            return;
+        }
+        if (NewInstanceOf(widgetId) is { } instance)
+        {
+            widgetId = instance;
+        }
+        else if (!Layout.HiddenWidgetIds.Contains(widgetId))
         {
             return;
         }
         Layout = Layout.AddWidget(widgetId, 0, Layout.Columns[0].Widgets.Count, DefaultHeight(widgetId));
     }
 
+    // A fresh instance id when the id is a type that allows several instances; null for any other widget.
+    private string? NewInstanceOf(string typeId) =>
+        !InstanceIds.IsInstance(typeId) && WidgetRegistry.Get(typeId) is { AllowMultiple: true }
+            ? InstanceIds.NewInstanceId(typeId, Layout.WidgetIds.Concat(Snapshot?.WidgetIds ?? []))
+            : null;
+
     private static double DefaultHeight(string widgetId) => WidgetRegistry.Get(widgetId)?.DefaultHeight ?? 1;
 
     public IReadOnlyList<LayoutColumnSlot> Columns => Slots(Layout);
 
-    public static IReadOnlyList<LayoutColumnSlot> Slots(WidgetLayout layout) => layout.Columns
-        .Select(c => new LayoutColumnSlot(c.WidthWeight, c.Widgets.Select(Slot).ToList()))
-        .ToList();
+    public static IReadOnlyList<LayoutColumnSlot> Slots(WidgetLayout layout)
+    {
+        // Titles are numbered when a type has several instances on the dashboard ("Frame", "Frame 2").
+        var titles = WidgetTitles.For(layout.WidgetIds, id => WidgetRegistry.Get(id)?.Title ?? id);
+        WidgetDefinition Widget(string id)
+        {
+            var definition = WidgetRegistry.Get(id)!;
+            return definition.Title == titles[id] ? definition : definition with { Title = titles[id] };
+        }
 
-    private static WidgetSlot Slot(WidgetPlacement w) => w.IsGroup
-        ? new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight, true,
-            w.MemberIds.Select(id => WidgetRegistry.Get(id)!).ToList(), w.ActiveIndex,
-            w.ViewMode, w.Members!.Select(m => m.WidthWeight).ToList())
-        : new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight,
-            WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader));
+        WidgetSlot Slot(WidgetPlacement w) => w.IsGroup
+            ? new WidgetSlot(Widget(w.WidgetId), w.HeightWeight, true,
+                w.MemberIds.Select(Widget).ToList(), w.ActiveIndex,
+                w.ViewMode, w.Members!.Select(m => m.WidthWeight).ToList())
+            : new WidgetSlot(Widget(w.WidgetId), w.HeightWeight,
+                WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader));
+
+        return layout.Columns
+            .Select(c => new LayoutColumnSlot(c.WidthWeight, c.Widgets.Select(Slot).ToList()))
+            .ToList();
+    }
 
     // repository: where the layout is saved; null keeps it in memory only.
     public LayoutViewModel(IWidgetLayoutRepository? repository = null)
@@ -247,7 +276,7 @@ public partial class LayoutViewModel : ViewModelBase
         }
         else
         {
-            Layout = WidgetLayoutNormalizer.Normalize(saved, WidgetRegistry.DefaultLayout);
+            Layout = WidgetLayoutNormalizer.Normalize(saved, WidgetRegistry.DefaultLayout, WidgetRegistry.Types);
             // A widget the saved layout never had (neither placed nor hidden) was just placed: save that once,
             // so from now on it is remembered like the others.
             var known = saved.WidgetIds.Concat(saved.HiddenWidgetIds).ToHashSet();
@@ -259,7 +288,7 @@ public partial class LayoutViewModel : ViewModelBase
     }
 
     // Shows a new layout, normalized; the host rebuilds right away. Not saved here.
-    public void Apply(WidgetLayout layout) => Layout = WidgetLayoutNormalizer.Normalize(layout, WidgetRegistry.DefaultLayout);
+    public void Apply(WidgetLayout layout) => Layout = WidgetLayoutNormalizer.Normalize(layout, WidgetRegistry.DefaultLayout, WidgetRegistry.Types);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EnterEditCommand), nameof(DoneCommand), nameof(CancelCommand), nameof(ResetCommand))]
@@ -323,10 +352,16 @@ public partial class LayoutViewModel : ViewModelBase
     // Picks a hidden widget up from the tray. Only in edit mode.
     public void BeginTrayDrag(string widgetId)
     {
-        if (IsEditing && Layout.HiddenWidgetIds.Contains(widgetId))
+        if (!IsEditing)
+        {
+            return;
+        }
+        // A type that allows several instances drags a new instance, made when the drag begins and added only on drop.
+        var instance = NewInstanceOf(widgetId);
+        if (instance is not null || Layout.HiddenWidgetIds.Contains(widgetId))
         {
             IsDraggingFromTray = true;
-            DraggedWidgetId = widgetId;
+            DraggedWidgetId = instance ?? widgetId;
         }
     }
 
