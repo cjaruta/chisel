@@ -27,6 +27,12 @@ public class ChiselDbContext : DbContext
 
     public DbSet<HiddenWidgetEntity> HiddenWidgets => Set<HiddenWidgetEntity>();
 
+    public DbSet<PictureAssetEntity> PictureAssets => Set<PictureAssetEntity>();
+
+    public DbSet<FramePictureEntity> FramePictures => Set<FramePictureEntity>();
+
+    public DbSet<FrameOptionsEntity> FrameOptions => Set<FrameOptionsEntity>();
+
     public DbSet<WeatherLocationEntity> WeatherLocations => Set<WeatherLocationEntity>();
 
     public DbSet<WeatherCacheEntity> WeatherCaches => Set<WeatherCacheEntity>();
@@ -56,6 +62,15 @@ public class ChiselDbContext : DbContext
 
         // One row per widget taken off the dashboard.
         modelBuilder.Entity<HiddenWidgetEntity>().HasKey(h => h.WidgetId);
+
+        // The same bytes are stored once (one asset per hash); a frame has one options row and a numbered list of pictures.
+        modelBuilder.Entity<PictureAssetEntity>().HasIndex(a => a.Hash).IsUnique();
+        modelBuilder.Entity<FramePictureEntity>().HasIndex(p => p.FrameId);
+        modelBuilder.Entity<FrameOptionsEntity>().HasKey(o => o.FrameId);
+
+        // Settings saved before picture frames keep original files and make one slideshow of several pictures.
+        modelBuilder.Entity<UserSettingsEntity>().Property(s => s.PictureKeepOriginals).HasDefaultValue(true);
+        modelBuilder.Entity<UserSettingsEntity>().Property(s => s.PictureMultiDrop).HasDefaultValue(0);
 
         // Single-row tables: the saved weather place and its last snapshot.
         modelBuilder.Entity<WeatherLocationEntity>().Property(w => w.Id).ValueGeneratedNever();
