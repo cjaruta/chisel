@@ -1,3 +1,4 @@
+using Chisel.Core.Settings;
 using Chisel.Core.Weather;
 using Xunit;
 
@@ -31,5 +32,24 @@ public class WeatherFormatTests
     [InlineData(-3.5, "-4°")]
     [InlineData(-12, "-12°")]
     public void Temperature_IsRoundedCelsiusWithADegreeSign(double value, string expected) =>
-        Assert.Equal(expected, WeatherLayout.FormatTemperature(value));
+        Assert.Equal(expected, WeatherLayout.FormatTemperature(value, TemperatureUnit.Celsius));
+
+    [Theory]
+    [InlineData(0, 32)]
+    [InlineData(-40, -40)]
+    [InlineData(100, 212)]
+    [InlineData(0.25, 32)]   // 32.45 rounds down
+    [InlineData(0.3, 33)]    // 32.54 rounds up
+    [InlineData(-0.3, 31)]   // 31.46 rounds down
+    [InlineData(-0.4, 31)]   // 31.28 rounds down
+    [InlineData(-17.5, 1)]   // exactly 0.5 rounds away from zero
+    public void CelsiusToFahrenheit_IsRounded(double celsius, int expected) =>
+        Assert.Equal(expected, WeatherLayout.CelsiusToFahrenheit(celsius));
+
+    [Theory]
+    [InlineData(21.4, "71°")]
+    [InlineData(0, "32°")]
+    [InlineData(-40, "-40°")]
+    public void Temperature_InFahrenheit_IsConvertedAndRounded(double celsius, string expected) =>
+        Assert.Equal(expected, WeatherLayout.FormatTemperature(celsius, TemperatureUnit.Fahrenheit));
 }

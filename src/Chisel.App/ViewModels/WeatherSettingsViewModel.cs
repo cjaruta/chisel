@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Chisel.Core.Settings;
 using Chisel.Core.Weather;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +17,7 @@ public partial class WeatherSettingsViewModel : ViewModelBase
     private readonly IWeatherGeocoder _geocoder;
     private readonly WeatherViewModel _weather;
     private readonly TimeProvider _time;
+    private readonly IUserSettingsRepository? _userSettings;
     private CancellationTokenSource? _pending;
 
     private const int MinQueryLength = 3;
@@ -27,18 +29,46 @@ public partial class WeatherSettingsViewModel : ViewModelBase
     public partial string Query { get; set; } = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UseCelsius))]
+    public partial bool UseFahrenheit { get; set; }
+
+    public bool UseCelsius
+    {
+        get => !UseFahrenheit;
+        set => UseFahrenheit = !value;
+    }
+
+    [ObservableProperty]
     public partial GeocodingResult? SelectedResult { get; set; }
 
     [ObservableProperty]
     public partial string ChosenText { get; private set; } = "";
 
-    public WeatherSettingsViewModel(IWeatherStore store, IWeatherGeocoder geocoder, WeatherViewModel weather, TimeProvider? time = null)
+    public WeatherSettingsViewModel(IWeatherStore store, IWeatherGeocoder geocoder, WeatherViewModel weather, TimeProvider? time = null,
+        IUserSettingsRepository? userSettings = null)
     {
         _store = store;
         _geocoder = geocoder;
         _weather = weather;
         _time = time ?? TimeProvider.System;
+        _userSettings = userSettings;
+        var unit = userSettings?.Get()?.TemperatureUnit ?? TemperatureUnit.Celsius;
+        _weather.Unit = unit;
+        UseFahrenheit = unit == TemperatureUnit.Fahrenheit;
         ShowChosen();
+    }
+
+    // Saves at once and redraws the widget from the data it already has, so nothing is fetched again.
+    partial void OnUseFahrenheitChanged(bool value)
+    {
+        var unit = value ? TemperatureUnit.Fahrenheit : TemperatureUnit.Celsius;
+        _weather.Unit = unit;
+
+        var settings = _userSettings?.Get();
+        if (settings is not null && settings.TemperatureUnit != unit)
+        {
+            _userSettings!.Save(settings.WithTemperatureUnit(unit));
+        }
     }
 
     partial void OnSelectedResultChanged(GeocodingResult? value)

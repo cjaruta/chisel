@@ -44,7 +44,7 @@ public partial class App : Application
                     settings,
                     new LayoutViewModel(_services.WidgetLayout),
                     weather,
-                    new WeatherSettingsViewModel(_services.Weather, new OpenMeteoGeocoder(), weather));
+                    new WeatherSettingsViewModel(_services.Weather, new OpenMeteoGeocoder(), weather, userSettings: _services.UserSettings));
                 weather.ShowCached();
                 mainViewModel.Refresh();
 

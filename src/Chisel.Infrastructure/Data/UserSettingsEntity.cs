@@ -11,5 +11,6 @@ public class UserSettingsEntity
     public int ClockFormat { get; set; }
 
     // Id of the schedule color palette.
+    public int TemperatureUnit { get; set; }
     public string SchedulePalette { get; set; } = UserSettings.DefaultSchedulePalette;
 }

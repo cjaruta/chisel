@@ -6,7 +6,7 @@ public class UserSettings
     public const string DefaultSchedulePalette = "minimal";
 
     public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour,
-        string? schedulePalette = null)
+        string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -22,6 +22,7 @@ public class UserSettings
         WakeTime = wakeTime;
         BedTime = bedTime;
         ClockFormat = clockFormat;
+        TemperatureUnit = temperatureUnit;
         SchedulePalette = string.IsNullOrWhiteSpace(schedulePalette) ? DefaultSchedulePalette : schedulePalette.Trim();
     }
 
@@ -30,8 +31,11 @@ public class UserSettings
     public TimeOnly BedTime { get; }
     public ClockFormat ClockFormat { get; }
     public string SchedulePalette { get; }
+    public TemperatureUnit TemperatureUnit { get; }
 
-    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette);
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit);
 
-    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette);
+    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit);
+
+    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit);
 }

@@ -94,5 +94,16 @@ public class UserSettingsRepositoryTests : IDisposable
         Assert.Equal(UserSettings.DefaultSchedulePalette, new UserSettingsRepository(readContext).Get()!.SchedulePalette);
     }
 
+    [Fact]
+    public void Save_ThenGet_PersistsTheTemperatureUnit()
+    {
+        using var context = _fixture.CreateContext();
+        new UserSettingsRepository(context).Save(
+            new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithTemperatureUnit(TemperatureUnit.Fahrenheit));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(TemperatureUnit.Fahrenheit, new UserSettingsRepository(readContext).Get()!.TemperatureUnit);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }
