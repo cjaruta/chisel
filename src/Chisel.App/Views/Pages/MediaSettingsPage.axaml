@@ -11,5 +11,11 @@
                   IsChecked="{Binding MediaSettings.ShowVolume}" />
         <CheckBox Name="MediaScrollVolumeToggle" Content="Scroll to change volume"
                   IsChecked="{Binding MediaSettings.ScrollVolume}" />
+        <TextBlock Classes="settingsSection" Text="BACKGROUND" />
+        <CheckBox Name="MediaAlbumGradientToggle" Content="Album color background"
+                  IsChecked="{Binding MediaSettings.AlbumGradient}" />
+        <CheckBox Name="MediaAnimateGradientToggle" Content="Animate background"
+                  IsEnabled="{Binding MediaSettings.AlbumGradient}"
+                  IsChecked="{Binding MediaSettings.AnimateGradient}" />
     </StackPanel>
 </UserControl>

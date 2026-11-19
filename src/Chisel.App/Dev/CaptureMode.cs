@@ -33,6 +33,9 @@ internal static class CaptureMode
     public static Chisel.Core.Media.MediaSessionInfo SampleMedia() =>
         Chisel.App.Services.FakeMediaService.Sample() with { AlbumArt = SampleArt.Png() };
 
+    // The fake media service of a media capture, so a scene can change what is playing.
+    public static Chisel.App.Services.FakeMediaService? CaptureMedia { get; set; }
+
     public static string? Scenario(string[]? args)
     {
         var i = Array.IndexOf(args ?? [], "--capture");
@@ -58,7 +61,7 @@ internal static class CaptureMode
 
         void Mark(string name) { marks.Add((frameNo, name)); }
         var script = new List<(int Ms, Action Do)>();
-        if (scenario is not ("clock" or "weather-motion" or "media" or "media-visualizer"))
+        if (scenario is not ("clock" or "weather-motion" or "media" or "media-visualizer" or "media-gradient"))
         {
             script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
         }
@@ -122,6 +125,63 @@ internal static class CaptureMode
                 script.Add((8000, () => { VStop("A bars on"); vm.MediaSettings.ShowVisualizer = false; }));
                 script.Add((8500, VStart));
                 script.Add((10500, () => VStop("B bars off")));
+                break;
+            }
+            case "media-gradient":
+            {
+                // The media widget playing fake tracks with generated covers (a temp database, nothing from the system). Covers
+                // change on a schedule: the palette time is logged for each, and frames around the first change show the cross-fade.
+                // CPU and GC are logged over a window with the gradient drifting (A), one with the drift off (B) and one with the
+                // gradient off (C), after a warmup so JIT is not counted.
+                var gcpu = new List<string>();
+                var gpalette = new List<string>();
+                (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms) gMark = default;
+                void GStart() => gMark = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime, GC.GetTotalAllocatedBytes(false),
+                    GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2), clock.ElapsedMilliseconds);
+                void GStop(string name)
+                {
+                    var wall = (clock.ElapsedMilliseconds - gMark.Ms) / 1000.0;
+                    var used = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime - gMark.Cpu).TotalSeconds;
+                    gcpu.Add($"{name}: cpu {used:F3}s over {wall:F2}s = {100 * used / wall:F1}% of one core; allocated {(GC.GetTotalAllocatedBytes(false) - gMark.Bytes) / wall / 1024:F1} KB/s; GCs gen0 {GC.CollectionCount(0) - gMark.G0} gen1 {GC.CollectionCount(1) - gMark.G1} gen2 {GC.CollectionCount(2) - gMark.G2}");
+                    File.WriteAllLines(Path.Combine(dir, "cpu.txt"), gcpu);
+                }
+                void Cover(string kind)
+                {
+                    var art = kind == "none" ? null : SampleArt.Cover(kind);
+                    var changed = clock.ElapsedMilliseconds;
+                    CaptureMedia!.Current = Chisel.App.Services.FakeMediaService.Sample() with { AlbumArt = art };
+                    var background = vm.MediaBackground;
+                    var task = background.Settled;
+                    // Logged when the palette has been applied: time from the track change to the colors being set.
+                    task.ContinueWith(_ => Dispatcher.UIThread.Post(() =>
+                    {
+                        gpalette.Add($"{kind}: palette applied {background.LastPaletteMilliseconds:F1} ms after the track change (cover bytes {art?.Length ?? 0}); observed at {clock.ElapsedMilliseconds - changed} ms");
+                        File.WriteAllLines(Path.Combine(dir, "palette.txt"), gpalette);
+                    }));
+                }
+                script.Add((100, () =>
+                {
+                    var layout = vm.Layout.Layout;
+                    if (layout.Find(WidgetRegistry.Media) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Media, 0, layout.Columns[0].Widgets.Count, 1.4));
+                    }
+                    Cover("warm");
+                    Mark("media shown");
+                }));
+                script.Add((3000, () => { Cover("cool"); Mark("cool cover"); }));
+                script.Add((4200, () => Cover("contrast")));
+                script.Add((5000, () => Cover("mono")));
+                script.Add((5800, () => Cover("none")));
+                script.Add((6600, () => Cover("warm")));
+                script.Add((7000, () => Cover("cool")));
+                script.Add((7400, () => Cover("warm")));
+                script.Add((8000, GStart));
+                script.Add((11000, () => { GStop("A gradient drifting"); vm.MediaSettings.AnimateGradient = false; }));
+                script.Add((11500, GStart));
+                script.Add((14500, () => { GStop("B gradient static"); vm.MediaSettings.AlbumGradient = false; }));
+                script.Add((15000, GStart));
+                script.Add((18000, () => GStop("C gradient off")));
                 break;
             }
             case "weather-motion":
@@ -188,7 +248,7 @@ internal static class CaptureMode
                 try { script[step++].Do(); }
                 catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); timer.Stop(); exit(); return; }
             }
-            if (ms > 400 && (scenario is not ("weather-motion" or "media-visualizer") || (scenario == "weather-motion" ? ms is > 4600 and < 5700 : ms is > 3000 and < 3300)))
+            if (ms > 400 && (scenario is not ("weather-motion" or "media-visualizer" or "media-gradient") || (scenario == "weather-motion" ? ms is > 4600 and < 5700 : scenario == "media-gradient" ? ms is > 2950 and < 3650 : ms is > 3000 and < 3300)))
             {
                 var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
                 if (size.Width > 0)

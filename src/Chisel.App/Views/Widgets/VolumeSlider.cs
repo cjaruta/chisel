@@ -15,7 +15,7 @@ public sealed class VolumeSlider : Control
 
     private double _value;
     private bool _dragging;
-    private IBrush? _track, _fill;
+    private IBrush? _track, _fill, _trackOverride;
 
     public VolumeSlider()
     {
@@ -24,6 +24,17 @@ public sealed class VolumeSlider : Control
         Cursor = new Cursor(StandardCursorType.Hand);
         this.GetResourceObservable("GridLineBrush").Subscribe(new Watch(b => { _track = b as IBrush; InvalidateVisual(); }));
         this.GetResourceObservable("AccentBrush").Subscribe(new Watch(b => { _fill = b as IBrush; InvalidateVisual(); }));
+    }
+
+    // A brush for the track instead of the theme's (the media widget sets one that shows over its gradient); null goes back to the theme.
+    public IBrush? TrackOverride
+    {
+        get => _trackOverride;
+        set
+        {
+            _trackOverride = value;
+            InvalidateVisual();
+        }
     }
 
     public double Value
@@ -49,7 +60,7 @@ public sealed class VolumeSlider : Control
     {
         var middle = Bounds.Height / 2;
         var track = new Rect(ThumbRadius, middle - TrackHeight / 2, Usable, TrackHeight);
-        context.DrawRectangle(_track, null, track, 1.5, 1.5);
+        context.DrawRectangle(_trackOverride ?? _track, null, track, 1.5, 1.5);
         var x = ThumbRadius + _value * Usable;
         context.DrawRectangle(_fill, null, new Rect(ThumbRadius, track.Y, x - ThumbRadius, TrackHeight), 1.5, 1.5);
         context.DrawEllipse(_fill, null, new Point(x, middle), ThumbRadius, ThumbRadius);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using Path = Avalonia.Controls.Shapes.Path;
@@ -12,7 +13,9 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Controls.Shapes;
 using Chisel.App.ViewModels;
+using Chisel.App.Theming;
 using Chisel.Core.Media;
+using Chisel.Core.Theme;
 
 namespace Chisel.App.Views.Widgets;
 
@@ -57,6 +60,11 @@ public sealed class MediaWidgetView : WidgetView
     private WidgetFrame? _frame;
     private byte[]? _shownBytes;
     private Bitmap? _bitmap;
+    private readonly AlbumGradientBackground _gradient = new() { Name = "MediaGradient", IsVisible = false, Margin = new Thickness(-16, -12), CornerRadius = new CornerRadius(0, 0, 12, 12) };
+    private readonly List<(TextBlock Block, bool Dim)> _texts = [];
+    private readonly List<Path> _icons = [];
+    private MainViewModel? _main;
+    private MediaBackgroundViewModel? _background;
 
     public MediaWidgetView()
     {
@@ -106,6 +114,7 @@ public sealed class MediaWidgetView : WidgetView
         _playPause = new Button { Name = "MediaPlayPause", Content = _playPauseIcon };
         _playPause.Classes.Add("mediaButton");
         _playPauseIcon.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
+        _icons.Add(_playPauseIcon);
         var buttonRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(-4, 0, 0, 0) };
         buttonRow.Children.Add(_previous);
         buttonRow.Children.Add(_playPause);
@@ -118,6 +127,7 @@ public sealed class MediaWidgetView : WidgetView
 
         _muteIcon = new Path { Data = Geometry.Parse(SpeakerBody), Stretch = Stretch.Uniform };
         _muteIcon.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
+        _icons.Add(_muteIcon);
         _mute = new Button { Name = "MediaMute", Content = _muteIcon };
         _mute.Classes.Add("mediaButton");
         _volumeSlider = new VolumeSlider { Name = "MediaVolumeSlider", VerticalAlignment = VerticalAlignment.Center };
@@ -155,7 +165,7 @@ public sealed class MediaWidgetView : WidgetView
             _wheelTimer.Stop();
             _volume?.CompleteDrag();
         };
-        Content = new Grid { Children = { _body, _feedback } };
+        Content = new Grid { Children = { _gradient, _body, _feedback } };
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -176,6 +186,10 @@ public sealed class MediaWidgetView : WidgetView
             _volume.PropertyChanged += OnVolumeChanged;
             _volume.ScrollFeedback += OnScrollFeedback;
             ShowVolume();
+            _main = main;
+            _background = main.MediaBackground;
+            _background.PropertyChanged += OnBackgroundChanged;
+            main.Layout.PropertyChanged += OnLayoutChanged;
         }
         // The wheel works anywhere over the card, header included, so it listens on the frame around this view.
         _frame = this.FindAncestorOfType<WidgetFrame>();
@@ -184,6 +198,79 @@ public sealed class MediaWidgetView : WidgetView
             _frame.PointerWheelChanged += OnWheel;
         }
         Refresh();
+        ApplyBackground(fade: false);
+    }
+
+    // The gradient fills this view, which sits below the header; with no header it fills the whole card.
+    protected override void OnHeaderShownChanged() =>
+        _gradient.CornerRadius = HeaderShown ? new CornerRadius(0, 0, 12, 12) : new CornerRadius(12);
+
+    private void OnBackgroundChanged(object? sender, PropertyChangedEventArgs e) =>
+        ApplyBackground(fade: e.PropertyName == nameof(MediaBackgroundViewModel.Version));
+
+    private void OnLayoutChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
+        {
+            ApplyBackground(fade: false);
+        }
+    }
+
+    // Brings the gradient in line with the view model: shown or not, its colors (cross-fading when the cover changed and the
+    // widget is animating), whether it drifts, and the text and icon colors that keep it readable.
+    private void ApplyBackground(bool fade)
+    {
+        if (_background is not { } background || _main is not { } main)
+        {
+            return;
+        }
+        var on = background.IsOn;
+        _gradient.IsVisible = on;
+        if (on)
+        {
+            var canFade = fade && _settings?.AnimateGradient != false && IsEffectivelyVisible;
+            _gradient.SetColors(background.Colors, canFade);
+            _gradient.Animate = background.ShouldAnimate && !main.Layout.IsEditing;
+        }
+        else
+        {
+            _gradient.Animate = false;
+            _gradient.Clear();
+        }
+        ApplyForeground(on ? background.Mode : null);
+    }
+
+    // On the gradient the text and icons use the theme mode's text colors (the ones the gradient is adjusted to keep readable);
+    // off, they go back to the normal card colors.
+    private void ApplyForeground(ThemeDefinition? mode)
+    {
+        if (mode is not null)
+        {
+            var primary = mode.Text.ToBrush();
+            var secondary = AlbumGradient.SecondaryText(mode).ToBrush();
+            foreach (var (block, dim) in _texts)
+            {
+                block.Foreground = dim ? secondary : primary;
+            }
+            foreach (var icon in _icons)
+            {
+                icon.Fill = primary;
+            }
+            var wash = new Avalonia.Media.Immutable.ImmutableSolidColorBrush(mode.Text.ToColor(0x40));
+            _track.Background = wash;
+            _volumeSlider.TrackOverride = wash;
+            return;
+        }
+        foreach (var (block, dim) in _texts)
+        {
+            block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(dim ? "DimTextBrush" : "CurrentBlockOutlineBrush"));
+        }
+        foreach (var icon in _icons)
+        {
+            icon.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
+        }
+        _track.Bind(Border.BackgroundProperty, this.GetResourceObservable("GridLineBrush"));
+        _volumeSlider.TrackOverride = null;
     }
 
     private void OnWheel(object? sender, PointerWheelEventArgs e)
@@ -241,6 +328,18 @@ public sealed class MediaWidgetView : WidgetView
             _frame.PointerWheelChanged -= OnWheel;
             _frame = null;
         }
+        if (_background is not null)
+        {
+            _background.PropertyChanged -= OnBackgroundChanged;
+            _background = null;
+        }
+        if (_main is not null)
+        {
+            _main.Layout.PropertyChanged -= OnLayoutChanged;
+            _main = null;
+        }
+        _gradient.Animate = false;
+        _gradient.Clear();
         HideFeedback();
         _bars.Playing = false;
         _bars.Source = null;
@@ -307,6 +406,7 @@ public sealed class MediaWidgetView : WidgetView
     {
         var block = new TextBlock { Text = text, FontSize = size, FontWeight = weight, Name = name, TextTrimming = TextTrimming.CharacterEllipsis };
         block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(dim ? "DimTextBrush" : "CurrentBlockOutlineBrush"));
+        _texts.Add((block, dim));
         return block;
     }
 
@@ -314,6 +414,7 @@ public sealed class MediaWidgetView : WidgetView
     {
         var path = new Path { Data = Geometry.Parse(icon), Stretch = Stretch.Uniform };
         path.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
+        _icons.Add(path);
         var button = new Button { Name = name, Content = path };
         button.Classes.Add("mediaButton");
         ToolTip.SetTip(button, tip);

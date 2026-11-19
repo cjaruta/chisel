@@ -37,20 +37,20 @@ public sealed class AlbumGradientBackground : Control
     private sealed class Layer : IDisposable
     {
         public readonly RenderTargetBitmap[] Frames = new RenderTargetBitmap[Steps];
-        public readonly Rgb[] Colors;
+        public readonly Rgb[] Stops;
 
         public Layer(IReadOnlyList<Rgb> colors)
         {
-            Colors = Normalize(colors);
+            Stops = Normalize(colors);
             var area = new Rect(0, 0, FrameWidth, FrameHeight);
             for (var i = 0; i < Steps; i++)
             {
                 var e = 0.5 - 0.5 * Math.Cos(2 * Math.PI * i / Steps);
                 ImmutableGradientStop[] stops =
                 [
-                    new(0, Colors[0].ToColor()),
-                    new(0.5 + MiddleSwing * (2 * e - 1), Colors[1].ToColor()),
-                    new(1, Colors[2].ToColor()),
+                    new(0, Stops[0].ToColor()),
+                    new(0.5 + MiddleSwing * (2 * e - 1), Stops[1].ToColor()),
+                    new(1, Stops[2].ToColor()),
                 ];
                 var brush = new ImmutableLinearGradientBrush(stops,
                     startPoint: new RelativePoint(Reach * e, 0, RelativeUnit.Relative),
@@ -120,6 +120,19 @@ public sealed class AlbumGradientBackground : Control
 
     public bool IsFading => _from is not null;
 
+    // The three stops being shown (or fading in).
+    public IReadOnlyList<Rgb> Colors => _to?.Stops ?? [];
+
+    // Drops the rendered bitmaps (when the widget leaves the window); SetColors builds them again.
+    public void Clear()
+    {
+        _to?.Dispose();
+        _from?.Dispose();
+        _to = _from = null;
+        _fade = 1;
+        Update();
+    }
+
     // The step of the drift loop being drawn (0 to 47).
     public int Phase => _step;
 
@@ -127,7 +140,7 @@ public sealed class AlbumGradientBackground : Control
     public void SetColors(IReadOnlyList<Rgb> colors, bool fade)
     {
         var colorsNow = Layer.Normalize(colors);
-        if (_to is not null && _to.Colors.SequenceEqual(colorsNow))
+        if (_to is not null && _to.Stops.SequenceEqual(colorsNow))
         {
             return;
         }

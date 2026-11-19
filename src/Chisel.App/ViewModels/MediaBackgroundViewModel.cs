@@ -70,6 +70,7 @@ public sealed class MediaBackgroundViewModel : ViewModelBase
     {
         _mode = mode;
         _accent = accent;
+        OnPropertyChanged(nameof(Mode));
         Apply();
     }
 
