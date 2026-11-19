@@ -29,6 +29,10 @@ internal static class CaptureMode
                 Enumerable.Range(0, 8).Select(i => new Chisel.Core.Weather.HourlyWeather(new TimeOnly(10 + i, 0), Chisel.Core.Weather.WeatherCondition.Rain, 14 - i)).ToList()));
     }
 
+    // The media scenario's data: sample metadata and a made-up cover, no system media session involved.
+    public static Chisel.Core.Media.MediaSessionInfo SampleMedia() =>
+        Chisel.App.Services.FakeMediaService.Sample() with { AlbumArt = SampleArt.Png() };
+
     public static string? Scenario(string[]? args)
     {
         var i = Array.IndexOf(args ?? [], "--capture");
@@ -54,7 +58,7 @@ internal static class CaptureMode
 
         void Mark(string name) { marks.Add((frameNo, name)); }
         var script = new List<(int Ms, Action Do)>();
-        if (scenario is not ("clock" or "weather-motion"))
+        if (scenario is not ("clock" or "weather-motion" or "media"))
         {
             script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
         }
@@ -74,6 +78,19 @@ internal static class CaptureMode
                     Mark("clock shown");
                 }));
                 script.Add((3500, () => Mark("clock running")));
+                break;
+            case "media":
+                // Shows the media widget with sample metadata (nothing needs to be playing); nothing is saved.
+                script.Add((500, () =>
+                {
+                    var layout = vm.Layout.Layout;
+                    if (layout.Find(WidgetRegistry.Media) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Media, 0, layout.Columns[0].Widgets.Count, 1.4));
+                    }
+                    Mark("media shown");
+                }));
+                script.Add((1500, () => Mark("media playing")));
                 break;
             case "weather-motion":
                 // Rain scene on the weather widget from a fake service; App runs this scenario on a temp database and an in-memory

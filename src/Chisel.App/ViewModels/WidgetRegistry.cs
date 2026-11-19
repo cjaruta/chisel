@@ -25,6 +25,7 @@ public static class WidgetRegistry
     public const string Links = "links";
     public const string Clock = "clock";
     public const string Weather = "weather";
+    public const string Media = "media";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -44,6 +45,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ClockWidgetView), DefaultShowHeader: false),
         new WidgetDefinition(Weather, "Weather", Icon: "M7,18 H17 A4,4 0 0 0 17,10 A6,6 0 0 0 6,12 A3,3 0 0 0 7,18",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(WeatherWidgetView), DefaultShowHeader: false),
+        new WidgetDefinition(Media, "Media", Icon: "M9,18 V6 L19,4 V16 M9,18 A2.5,2.5 0 1 1 4,18 A2.5,2.5 0 1 1 9,18 M19,16 A2.5,2.5 0 1 1 14,16 A2.5,2.5 0 1 1 19,16",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(MediaWidgetView), DefaultShowHeader: false),
     };
 
     // Schedule on the left at full height; Tasks, Notes and Quick links stacked on the right.
@@ -52,7 +55,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes), Placement(Links) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media });
 
     public static WidgetDefinition? Get(string id) => All.FirstOrDefault(w => w.Id == id);
 
