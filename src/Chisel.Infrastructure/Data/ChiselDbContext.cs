@@ -27,6 +27,10 @@ public class ChiselDbContext : DbContext
 
     public DbSet<HiddenWidgetEntity> HiddenWidgets => Set<HiddenWidgetEntity>();
 
+    public DbSet<WeatherLocationEntity> WeatherLocations => Set<WeatherLocationEntity>();
+
+    public DbSet<WeatherCacheEntity> WeatherCaches => Set<WeatherCacheEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Rows saved before blocks had colors get the neutral default.
@@ -52,6 +56,10 @@ public class ChiselDbContext : DbContext
 
         // One row per widget taken off the dashboard.
         modelBuilder.Entity<HiddenWidgetEntity>().HasKey(h => h.WidgetId);
+
+        // Single-row tables: the saved weather place and its last snapshot.
+        modelBuilder.Entity<WeatherLocationEntity>().Property(w => w.Id).ValueGeneratedNever();
+        modelBuilder.Entity<WeatherCacheEntity>().Property(w => w.Id).ValueGeneratedNever();
     }
 }
 

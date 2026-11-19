@@ -191,6 +191,43 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("UserSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.WeatherCacheEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WeatherCaches");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.WeatherLocationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WeatherLocations");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.WidgetPlacementEntity", b =>
                 {
                     b.Property<Guid>("Id")
