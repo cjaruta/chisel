@@ -259,4 +259,4 @@ public class MigrationTests
 
         Assert.False(context.Database.HasPendingModelChanges());
     }
-}
+}
