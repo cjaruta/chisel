@@ -18,5 +18,6 @@ public static class SettingsPages
     public static IReadOnlyList<SettingsPage> Widgets { get; } = new[]
     {
         new SettingsPage("schedule", "Schedule", typeof(Views.Pages.ScheduleSettingsPage)),
+        new SettingsPage("weather", "Weather", typeof(Views.Pages.WeatherSettingsPage)),
     };
 }

@@ -113,7 +113,8 @@ public sealed class WeatherWidgetView : WidgetView
 
         if (tier >= WeatherSizeTier.Large)
         {
-            panel.Children.Add(Text(_weather.UpdatedText, 11, dim: true, name: "WeatherFooter"));
+            panel.Children.Add(Text(_weather.UpdatedText, 11, dim: true, name: "WeatherUpdatedLine"));
+            panel.Children.Add(Text(WeatherLayout.Credit, 11, dim: true, name: "WeatherFooter"));
         }
         Content = panel;
     }

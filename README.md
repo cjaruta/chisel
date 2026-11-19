@@ -15,6 +15,7 @@ v0.1 is feature-complete: a window with a live clock, today's schedule with the 
 - Entity Framework Core with SQLite
 - xUnit for testing
 - GitHub Actions for CI
+- Weather data by [Open-Meteo](https://open-meteo.com/), licensed under CC BY 4.0
 ## Project structure
  
 ```

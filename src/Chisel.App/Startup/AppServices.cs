@@ -6,6 +6,7 @@ using Chisel.Core.Notes;
 using Chisel.Core.Schedule;
 using Chisel.Core.Settings;
 using Chisel.Core.Tasks;
+using Chisel.Core.Weather;
 using Chisel.Infrastructure.Data;
 using Chisel.Infrastructure.Repositories;
 using Chisel.Infrastructure.Startup;
@@ -24,6 +25,7 @@ public sealed class AppServices : IDisposable
     public IScheduleRepository Schedule { get; }
     public IUserSettingsRepository UserSettings { get; }
     public IWidgetLayoutRepository WidgetLayout { get; }
+    public IWeatherStore Weather { get; }
 
     public AppServices(string dbPath, TimeProvider? time = null)
     {
@@ -52,6 +54,7 @@ public sealed class AppServices : IDisposable
         Schedule = new ScheduleRepository(DbContext);
         UserSettings = new UserSettingsRepository(DbContext);
         WidgetLayout = new WidgetLayoutRepository(DbContext);
+        Weather = new WeatherRepository(DbContext);
     }
 
     public void Dispose() => DbContext.Dispose();

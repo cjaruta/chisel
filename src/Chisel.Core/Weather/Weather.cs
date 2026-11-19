@@ -21,6 +21,7 @@ public enum WeatherSizeTier { Small, Medium, Large }
 
 public static class WeatherLayout
 {
+    public const string Credit = "Weather data by Open-Meteo";
     public const double MediumMinHeight = 170;
     public const double LargeMinHeight = 280;
     public const double HourlyEntryWidth = 48;
