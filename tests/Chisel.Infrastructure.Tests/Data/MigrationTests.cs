@@ -250,6 +250,29 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddGroupViewMode_LoadsAnExistingGroupAsTabs()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261119183409_AddWidgetGroups");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO LayoutColumns (Position, WidthWeight) VALUES (0, 1.0);" +
+                "INSERT INTO WidgetPlacements (Id, WidgetId, ColumnIndex, Position, HeightWeight, ShowHeader, GroupMembers, ActiveTab) VALUES " +
+                "('6f1c2f4e-0000-0000-0000-000000000061', 'notes', 0, 0, 1.0, NULL, 'notes:n;tasks:t', 1);");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var group = new Chisel.Infrastructure.Repositories.WidgetLayoutRepository(readContext).Get()!.Columns[0].Widgets[0];
+        Assert.Equal(Chisel.Core.Layout.GroupViewMode.Tabs, group.ViewMode);
+        Assert.Equal(new[] { "notes", "tasks" }, group.MemberIds);
+        Assert.Equal(1, group.ActiveIndex);
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();
@@ -259,4 +282,4 @@ public class MigrationTests
 
         Assert.False(context.Database.HasPendingModelChanges());
     }
-}
+}

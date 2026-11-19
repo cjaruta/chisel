@@ -1,4 +1,5 @@
 using Chisel.Core.Layout;
+using Microsoft.EntityFrameworkCore;
 using Chisel.Infrastructure.Repositories;
 using Chisel.Infrastructure.Tests.Data;
 using Xunit;
@@ -37,6 +38,43 @@ public class WidgetGroupRepositoryTests : IDisposable
         Assert.False(loaded.Columns[0].Widgets[1].IsGroup);
         Assert.False(loaded.Columns[0].Widgets[1].ShowHeader);
         Assert.Equal(new[] { "media" }, loaded.HiddenWidgetIds);
+    }
+
+    [Fact]
+    public void Save_ThenGet_RoundTripsTheViewModeAndPaneWidths()
+    {
+        var split = new WidgetLayout(new[]
+        {
+            new LayoutColumn(1, new[]
+            {
+                new WidgetPlacement("notes", 1, null,
+                    new[] { new GroupMember("notes", true, 1.25), new GroupMember("tasks", null, 0.75) }, 1, GroupViewMode.Split),
+            }),
+        });
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(split);
+
+        using var readContext = _fixture.CreateContext();
+        var group = new WidgetLayoutRepository(readContext).Get()!.Columns[0].Widgets[0];
+
+        Assert.Equal(GroupViewMode.Split, group.ViewMode);
+        Assert.Equal(new[] { 1.25, 0.75 }, group.Members!.Select(m => m.WidthWeight).ToArray());
+        Assert.Equal(new bool?[] { true, null }, group.Members!.Select(m => m.ShowHeader).ToArray());
+        Assert.Equal(1, group.ActiveIndex);
+    }
+
+    [Fact]
+    public void Get_LoadsAGroupSavedBeforeSplitViewAsTabsWithEqualWidths()
+    {
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(Grouped);
+        context.Database.ExecuteSqlRaw("UPDATE WidgetPlacements SET GroupMembers = 'notes:t;tasks:n;weather:f' WHERE GroupMembers IS NOT NULL");
+
+        using var readContext = _fixture.CreateContext();
+        var group = new WidgetLayoutRepository(readContext).Get()!.Columns[0].Widgets[0];
+
+        Assert.Equal(GroupViewMode.Tabs, group.ViewMode);
+        Assert.All(group.Members!, m => Assert.Equal(1, m.WidthWeight));
     }
 
     [Fact]
