@@ -200,6 +200,8 @@ public sealed partial class LayoutHost : Decorator
                 if (!IsEditing)
                 {
                     EndDrag();
+                    // Edit mode is over: a deleted instance can no longer be brought back by Cancel.
+                    ReleaseDeletedInstances();
                 }
                 break;
             case nameof(LayoutViewModel.CanRemoveWidgets):
@@ -330,6 +332,7 @@ public sealed partial class LayoutHost : Decorator
             _columnHandleLayer.Children.Add(handle);
         }
         MarkDragSource();
+        ReleaseDeletedInstances();
     }
 
     // A slim vertical pill in the gap right of a column, with a hit area as wide as the gap.
@@ -498,9 +501,32 @@ public sealed partial class LayoutHost : Decorator
         if (!_views.TryGetValue(widget.Id, out var view))
         {
             view = (WidgetView)Activator.CreateInstance(widget.ViewType)!;
+            view.InstanceId = widget.Id;
             _views[widget.Id] = view;
         }
         return view;
+    }
+
+    // Lets go of the card and view of every instance (of a widget that allows several) that was deleted. An instance
+    // removed during editing is kept until editing ends, so Cancel can bring it back with its view; widgets that
+    // allow one instance are never released (they come back from the tray).
+    private void ReleaseDeletedInstances()
+    {
+        if (Layout is null)
+        {
+            return;
+        }
+        var kept = Layout.Layout.WidgetIds.Concat(Layout.Snapshot?.WidgetIds ?? []).ToHashSet();
+        foreach (var id in _frames.Keys.Where(id => InstanceIds.IsInstance(id) && !kept.Contains(id)).ToList())
+        {
+            _frames[id].Release();
+            _frames.Remove(id);
+        }
+        foreach (var id in _views.Keys.Where(id => InstanceIds.IsInstance(id) && !kept.Contains(id)).ToList())
+        {
+            (_views[id] as IDisposable)?.Dispose();
+            _views.Remove(id);
+        }
     }
 
     private void SetMembers(WidgetFrame frame, WidgetSlot slot) =>
@@ -736,7 +762,7 @@ public sealed partial class LayoutHost : Decorator
                 _pressed = null;
                 return;
             }
-            StartDragVisuals(frame, frame.Widget.Title);
+            StartDragVisuals(frame, CardTitle(frame));
         }
 
         if (layout.IsDraggingWidget)
@@ -885,7 +911,7 @@ public sealed partial class LayoutHost : Decorator
 
     // Names a card for the drop caption: its title, or its members' titles for a group.
     private static string CardTitle(WidgetFrame frame) =>
-        string.Join(" + ", frame.MemberIds.Select(id => WidgetRegistry.Get(id)?.Title ?? id));
+        string.Join(" + ", frame.MemberTitles);
 
     // Shows the one preview for the current zone, and records where a drop would go.
     private void ApplyZone()

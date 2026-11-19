@@ -58,7 +58,8 @@ public static class WidgetLayoutMapper
         string.Join(";", members.Select(m =>
             $"{m.WidgetId}:{(m.ShowHeader is { } shown ? (shown ? 't' : 'f') : 'n')}:{m.WidthWeight.ToString("R", CultureInfo.InvariantCulture)}"));
 
-    // "id:flag" (older rows) or "id:flag:weight". A missing or unreadable weight is 1.
+    // "id:flag" (older rows) or "id:flag:weight". The id may hold a colon (an instance id such as "frame:k1"), so the
+    // flag and weight are read from the right. Older rows never had an id with a colon. A missing or unreadable weight is 1.
     private static List<GroupMember> ParseMembers(string? text) =>
         string.IsNullOrEmpty(text)
             ? []
@@ -66,9 +67,12 @@ public static class WidgetLayoutMapper
                 .Select(part =>
                 {
                     var fields = part.Split(':');
-                    var flag = fields.Length > 1 && fields[1].Length > 0 ? fields[1][0] : 'n';
-                    var weight = fields.Length > 2 && double.TryParse(fields[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var w) ? w : 1;
-                    return new GroupMember(fields[0], flag switch { 't' => true, 'f' => false, _ => null }, weight);
+                    var hasWeight = fields.Length > 2;
+                    var weight = hasWeight && double.TryParse(fields[^1], NumberStyles.Float, CultureInfo.InvariantCulture, out var w) ? w : 1;
+                    var flagIndex = hasWeight ? fields.Length - 2 : fields.Length - 1;
+                    var flag = flagIndex > 0 && fields[flagIndex].Length > 0 ? fields[flagIndex][0] : 'n';
+                    var id = string.Join(':', fields.Take(Math.Max(flagIndex, 1)));
+                    return new GroupMember(id, flag switch { 't' => true, 'f' => false, _ => null }, weight);
                 })
                 .ToList();
 }
