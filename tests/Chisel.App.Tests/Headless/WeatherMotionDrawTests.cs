@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using Avalonia;
 using Avalonia.Headless.XUnit;
@@ -40,6 +42,34 @@ public class WeatherMotionDrawTests
         {
             Assert.NotEqual(blank, Png(Particles(key, 2.5)));
         }
+    }
+
+    // After the first frame (which builds the scene's cached brushes and shapes), drawing must not allocate.
+    [AvaloniaFact]
+    public void Draw_AllocatesNothingInSteadyState()
+    {
+        const int frames = 30;
+        var offenders = new List<string>();
+        foreach (var key in WeatherBackdrop.Gradients.Keys)
+        {
+            var bitmap = new RenderTargetBitmap(new PixelSize((int)WidgetSize.Width, (int)WidgetSize.Height));
+            using var context = bitmap.CreateDrawingContext();
+            for (var i = 0; i < 3; i++)
+            {
+                WeatherMotionDrawing.Draw(context, key, WidgetSize, i * 0.04);
+            }
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < frames; i++)
+            {
+                WeatherMotionDrawing.Draw(context, key, WidgetSize, 1 + i * 0.04);
+            }
+            var perFrame = (GC.GetAllocatedBytesForCurrentThread() - before) / frames;
+            if (perFrame > 64)
+            {
+                offenders.Add($"{key}: {perFrame} B/frame");
+            }
+        }
+        Assert.True(offenders.Count == 0, string.Join("; ", offenders));
     }
 
     // artifacts/ui/motion/<scene key>.png: the gradient with the motion at each of SheetTimes, one tile per time.

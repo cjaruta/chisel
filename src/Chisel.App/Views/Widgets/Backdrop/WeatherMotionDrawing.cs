@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Chisel.Core.Weather;
 
@@ -14,12 +15,15 @@ public static class WeatherMotionDrawing
 {
     // Opacity is baked into a few pre-built brushes (steps up to the scene's MaxOpacity) instead of pushing opacity per particle.
     private const int Levels = 4;
+    private const int BlobPixels = 128;
 
     public sealed class Scene
     {
         public MotionStyle Style { get; }
         internal readonly IImmutableBrush[] Solid = new IImmutableBrush[Levels];
-        internal readonly IImmutableBrush[] Soft = new IImmutableBrush[Levels];
+        // Soft shapes (clouds, fog, sun glow, star halos) are one radial blob per opacity level, drawn once to a bitmap and
+        // stretched to each shape. Drawing a gradient brush allocates a shader per call; blitting a bitmap does not.
+        internal readonly Bitmap[] Blob = new Bitmap[Levels];
         // Pens by depth then opacity level: Pen[depth * Levels + level].
         internal readonly ImmutablePen[] Pen = new ImmutablePen[3 * Levels];
 
@@ -31,8 +35,17 @@ public static class WeatherMotionDrawing
                 var alpha = (byte)Math.Round(255 * style.MaxOpacity * (i + 1) / Levels);
                 var color = Color.FromArgb(alpha, (byte)(style.Color >> 16), (byte)(style.Color >> 8), (byte)style.Color);
                 Solid[i] = new ImmutableSolidColorBrush(color);
-                Soft[i] = new ImmutableRadialGradientBrush(
-                    new[] { new ImmutableGradientStop(0, color), new ImmutableGradientStop(0.5, Color.FromArgb((byte)(alpha * 0.6), color.R, color.G, color.B)), new ImmutableGradientStop(1, Color.FromArgb(0, color.R, color.G, color.B)) }, radius: 0.5);
+                if (style.Kind != MotionKind.Rain && style.Kind != MotionKind.HeavyRain && style.Kind != MotionKind.Snow)
+                {
+                    var soft = new ImmutableRadialGradientBrush(
+                        new[] { new ImmutableGradientStop(0, color), new ImmutableGradientStop(0.5, Color.FromArgb((byte)(alpha * 0.6), color.R, color.G, color.B)), new ImmutableGradientStop(1, Color.FromArgb(0, color.R, color.G, color.B)) }, radius: 0.5);
+                    var blob = new RenderTargetBitmap(new PixelSize(BlobPixels, BlobPixels));
+                    using (var context = blob.CreateDrawingContext())
+                    {
+                        context.DrawEllipse(soft, null, new Point(BlobPixels / 2.0, BlobPixels / 2.0), BlobPixels / 2.0, BlobPixels / 2.0);
+                    }
+                    Blob[i] = blob;
+                }
                 for (var depth = 0; depth < 3; depth++)
                 {
                     Pen[depth * Levels + i] = new ImmutablePen(new ImmutableSolidColorBrush(color), StrokeWidth(style.Kind, depth), lineCap: PenLineCap.Round);
@@ -61,6 +74,9 @@ public static class WeatherMotionDrawing
         void Line(ImmutablePen pen, Point from, Point to);
 
         void Ellipse(IImmutableBrush brush, Point center, double radiusX, double radiusY);
+
+        // Stretches a soft blob so it covers the ellipse's bounding box.
+        void Blob(Bitmap blob, Point center, double radiusX, double radiusY);
     }
 
     private readonly struct ContextSurface(DrawingContext context) : ISurface
@@ -69,6 +85,9 @@ public static class WeatherMotionDrawing
 
         public void Ellipse(IImmutableBrush brush, Point center, double radiusX, double radiusY) =>
             context.DrawEllipse(brush, null, center, radiusX, radiusY);
+
+        public void Blob(Bitmap blob, Point center, double radiusX, double radiusY) =>
+            context.DrawImage(blob, new Rect(blob.Size), new Rect(center.X - radiusX, center.Y - radiusY, 2 * radiusX, 2 * radiusY));
     }
 
     internal readonly struct ImmediateSurface(ImmediateDrawingContext context) : ISurface
@@ -77,6 +96,9 @@ public static class WeatherMotionDrawing
 
         public void Ellipse(IImmutableBrush brush, Point center, double radiusX, double radiusY) =>
             context.DrawEllipse(brush, null, center, radiusX, radiusY);
+
+        public void Blob(Bitmap blob, Point center, double radiusX, double radiusY) =>
+            context.DrawBitmap(blob, new Rect(blob.Size), new Rect(center.X - radiusX, center.Y - radiusY, 2 * radiusX, 2 * radiusY));
     }
 
     // Offscreen: draws the scene at (0,0) in a surface of the given size, clipped to it.
@@ -113,24 +135,24 @@ public static class WeatherMotionDrawing
                     context.Ellipse(scene.Solid[level], center, p.Size, p.Size);
                     if (p.Depth == 1)
                     {
-                        context.Ellipse(scene.Soft[Math.Max(0, level - 1)], center, p.Size * 6, p.Size * 6);
+                        context.Blob(scene.Blob[Math.Max(0, level - 1)], center, p.Size * 6, p.Size * 6);
                     }
                     break;
                 case MotionKind.Clouds:
                     for (var k = 0; k < WeatherMotion.PuffCount(i); k++)
                     {
                         var (dx, dy, radius) = WeatherMotion.Puff(i, k);
-                        context.Ellipse(scene.Soft[level], new Point(p.X + dx * p.Size, p.Y + dy * p.Size), radius * p.Size, radius * p.Size);
+                        context.Blob(scene.Blob[level], new Point(p.X + dx * p.Size, p.Y + dy * p.Size), radius * p.Size, radius * p.Size);
                     }
                     break;
                 case MotionKind.Fog:
-                    context.Ellipse(scene.Soft[level], center, p.Size, p.Size * 0.14);
+                    context.Blob(scene.Blob[level], center, p.Size, p.Size * 0.14);
                     break;
                 case MotionKind.SunGlow:
                     if (p.Depth == 0)
                     {
-                        context.Ellipse(scene.Soft[level], center, p.Size, p.Size);
-                        context.Ellipse(scene.Soft[level], center, p.Size * 0.5, p.Size * 0.5);
+                        context.Blob(scene.Blob[level], center, p.Size, p.Size);
+                        context.Blob(scene.Blob[level], center, p.Size * 0.5, p.Size * 0.5);
                     }
                     else
                     {
