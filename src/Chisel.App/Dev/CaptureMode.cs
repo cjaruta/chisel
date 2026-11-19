@@ -58,7 +58,7 @@ internal static class CaptureMode
 
         void Mark(string name) { marks.Add((frameNo, name)); }
         var script = new List<(int Ms, Action Do)>();
-        if (scenario is not ("clock" or "weather-motion" or "media"))
+        if (scenario is not ("clock" or "weather-motion" or "media" or "media-visualizer"))
         {
             script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
         }
@@ -92,6 +92,38 @@ internal static class CaptureMode
                 }));
                 script.Add((1500, () => Mark("media playing")));
                 break;
+            case "media-visualizer":
+            {
+                // The media widget playing sample metadata with a synthetic signal through the real spectrum processor and bars
+                // (App runs this on a temp database; nothing is captured from the system). CPU and GC are logged over a window
+                // with the bars on (A) and one with them off (B), after a warmup so JIT is not counted.
+                var vcpu = new List<string>();
+                (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms) vMark = default;
+                void VStart() => vMark = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime, GC.GetTotalAllocatedBytes(false),
+                    GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2), clock.ElapsedMilliseconds);
+                void VStop(string name)
+                {
+                    var wall = (clock.ElapsedMilliseconds - vMark.Ms) / 1000.0;
+                    var used = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime - vMark.Cpu).TotalSeconds;
+                    vcpu.Add($"{name}: cpu {used:F3}s over {wall:F2}s = {100 * used / wall:F1}% of one core; allocated {(GC.GetTotalAllocatedBytes(false) - vMark.Bytes) / wall / 1024:F1} KB/s; GCs gen0 {GC.CollectionCount(0) - vMark.G0} gen1 {GC.CollectionCount(1) - vMark.G1} gen2 {GC.CollectionCount(2) - vMark.G2}");
+                    File.WriteAllLines(Path.Combine(dir, "cpu.txt"), vcpu);
+                }
+                script.Add((100, () =>
+                {
+                    var layout = vm.Layout.Layout;
+                    if (layout.Find(WidgetRegistry.Media) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Media, 0, layout.Columns[0].Widgets.Count, 1.4));
+                    }
+                    Mark("media shown");
+                }));
+                script.Add((3000, () => Mark("bars moving")));
+                script.Add((6000, VStart));
+                script.Add((8000, () => { VStop("A bars on"); vm.MediaSettings.ShowVisualizer = false; }));
+                script.Add((8500, VStart));
+                script.Add((10500, () => VStop("B bars off")));
+                break;
+            }
             case "weather-motion":
                 // Rain scene on the weather widget from a fake service; App runs this scenario on a temp database and an in-memory
                 // weather store, so no real data is read or written. Frames are saved densely around a forced layout
@@ -156,7 +188,7 @@ internal static class CaptureMode
                 try { script[step++].Do(); }
                 catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); timer.Stop(); exit(); return; }
             }
-            if (ms > 400 && (scenario != "weather-motion" || ms is > 4600 and < 5700))
+            if (ms > 400 && (scenario is not ("weather-motion" or "media-visualizer") || (scenario == "weather-motion" ? ms is > 4600 and < 5700 : ms is > 3000 and < 3300)))
             {
                 var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
                 if (size.Width > 0)

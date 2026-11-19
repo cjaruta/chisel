@@ -19,5 +19,6 @@ public static class SettingsPages
     {
         new SettingsPage("schedule", "Schedule", typeof(Views.Pages.ScheduleSettingsPage)),
         new SettingsPage("weather", "Weather", typeof(Views.Pages.WeatherSettingsPage)),
+        new SettingsPage("media", "Media", typeof(Views.Pages.MediaSettingsPage)),
     };
 }
