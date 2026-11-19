@@ -23,6 +23,7 @@ public sealed class WeatherWidgetView : WidgetView
         Padding = new Thickness(16, 0, 16, 12);
         ClipToBounds = true;
         IsHitTestVisible = false;
+        Backdrop.WeatherBackdropLayer.Install(this);
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

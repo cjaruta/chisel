@@ -28,7 +28,7 @@ public sealed class OpenMeteoWeatherService : IWeatherService
         var longitude = location.Longitude.ToString("0.##", CultureInfo.InvariantCulture);
         var url = "https://api.open-meteo.com/v1/forecast"
             + $"?latitude={latitude}&longitude={longitude}"
-            + "&current=temperature_2m,apparent_temperature,weather_code"
+            + "&current=temperature_2m,apparent_temperature,weather_code,is_day"
             + "&hourly=temperature_2m,weather_code"
             + "&daily=temperature_2m_max,temperature_2m_min"
             + "&timezone=auto&forecast_days=2&temperature_unit=celsius";
