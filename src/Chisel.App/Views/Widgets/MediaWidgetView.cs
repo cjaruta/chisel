@@ -4,7 +4,10 @@ using System.IO;
 using Path = Avalonia.Controls.Shapes.Path;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Controls.Shapes;
@@ -47,6 +50,11 @@ public sealed class MediaWidgetView : WidgetView
     private readonly Path _muteIcon;
     private readonly VolumeSlider _volumeSlider;
     private VolumeViewModel? _volume;
+    private readonly ContentControl _body = new();
+    private readonly TextBlock _feedback;
+    private readonly DispatcherTimer _feedbackTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _wheelTimer = new() { Interval = TimeSpan.FromMilliseconds(80) };
+    private WidgetFrame? _frame;
     private byte[]? _shownBytes;
     private Bitmap? _bitmap;
 
@@ -134,6 +142,20 @@ public sealed class MediaWidgetView : WidgetView
         Grid.SetColumn(details, 1);
         _player.Children.Add(_artBox);
         _player.Children.Add(details);
+
+        // A small quiet percentage in the corner for wheel changes while the volume row is hidden; it overlays, so nothing shifts.
+        _feedback = Text("", 11, dim: true, name: "MediaVolumeFeedback");
+        _feedback.HorizontalAlignment = HorizontalAlignment.Right;
+        _feedback.VerticalAlignment = VerticalAlignment.Bottom;
+        _feedback.IsHitTestVisible = false;
+        _feedback.IsVisible = false;
+        _feedbackTimer.Tick += (_, _) => HideFeedback();
+        _wheelTimer.Tick += (_, _) =>
+        {
+            _wheelTimer.Stop();
+            _volume?.CompleteDrag();
+        };
+        Content = new Grid { Children = { _body, _feedback } };
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -152,9 +174,45 @@ public sealed class MediaWidgetView : WidgetView
             _settings.PropertyChanged += OnSettingsChanged;
             _volume = main.Volume;
             _volume.PropertyChanged += OnVolumeChanged;
+            _volume.ScrollFeedback += OnScrollFeedback;
             ShowVolume();
         }
+        // The wheel works anywhere over the card, header included, so it listens on the frame around this view.
+        _frame = this.FindAncestorOfType<WidgetFrame>();
+        if (_frame is not null)
+        {
+            _frame.PointerWheelChanged += OnWheel;
+        }
         Refresh();
+    }
+
+    private void OnWheel(object? sender, PointerWheelEventArgs e)
+    {
+        if (_volume?.ScrollBy(e.Delta.Y) == true)
+        {
+            e.Handled = true;
+            _wheelTimer.Stop();
+            _wheelTimer.Start();
+        }
+    }
+
+    // With the volume row showing, the slider is the feedback; without it, a percentage shows for about a second.
+    private void OnScrollFeedback(object? sender, double level)
+    {
+        if (_settings?.ShowVolume != false)
+        {
+            return;
+        }
+        _feedback.Text = VolumeMath.Percent(level);
+        _feedback.IsVisible = true;
+        _feedbackTimer.Stop();
+        _feedbackTimer.Start();
+    }
+
+    private void HideFeedback()
+    {
+        _feedbackTimer.Stop();
+        _feedback.IsVisible = false;
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -173,8 +231,17 @@ public sealed class MediaWidgetView : WidgetView
         if (_volume is not null)
         {
             _volume.PropertyChanged -= OnVolumeChanged;
+            _volume.ScrollFeedback -= OnScrollFeedback;
+            _wheelTimer.Stop();
+            _volume.CompleteDrag();
             _volume = null;
         }
+        if (_frame is not null)
+        {
+            _frame.PointerWheelChanged -= OnWheel;
+            _frame = null;
+        }
+        HideFeedback();
         _bars.Playing = false;
         _bars.Source = null;
         ShowArt(null);
@@ -258,7 +325,7 @@ public sealed class MediaWidgetView : WidgetView
     {
         if (_media is not { HasSession: true } media)
         {
-            Content = _nothing;
+            _body.Content = _nothing;
             _bars.Playing = false;
             ShowArt(null);
             return;
@@ -273,7 +340,7 @@ public sealed class MediaWidgetView : WidgetView
         ShowArt(media.ArtBytes);
         ShowProgress();
         FitToRoom();
-        Content = _player;
+        _body.Content = _player;
         _bars.Playing = media.IsPlaying;
     }
 
