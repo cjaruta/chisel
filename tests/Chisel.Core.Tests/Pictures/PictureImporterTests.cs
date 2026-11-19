@@ -6,28 +6,6 @@ namespace Chisel.Core.Tests.Pictures;
 
 public class PictureImporterTests
 {
-    private sealed class FakeRepository : IPictureRepository
-    {
-        public List<PictureAsset> Stored { get; } = [];
-        public PictureFrameSet LoadFrames() => PictureFrameSet.Empty;
-        public void SaveFrames(PictureFrameSet set) { }
-        public IReadOnlyList<PictureAsset> Assets() => Stored;
-        public PictureAsset? Find(string hash) => Stored.FirstOrDefault(a => a.Hash == hash);
-        public PictureAsset? Get(Guid id) => Stored.FirstOrDefault(a => a.Id == id);
-        public void AddAsset(PictureAsset asset) => Stored.Add(asset);
-        public void DeleteAssets(IEnumerable<Guid> ids) => Stored.RemoveAll(a => ids.Contains(a.Id));
-    }
-
-    private sealed class FakeStore : IPictureFileStore
-    {
-        public Dictionary<string, byte[]> Files { get; } = [];
-        public int Writes { get; private set; }
-        public string PathOf(string storedName) => "pictures/" + storedName;
-        public bool Exists(string storedName) => Files.ContainsKey(storedName);
-        public void Write(string storedName, byte[] bytes) { Files[storedName] = bytes; Writes++; }
-        public void Delete(string storedName) => Files.Remove(storedName);
-    }
-
     private sealed class FakeResizer : IImageResizer
     {
         public (int Width, int Height)? Asked { get; private set; }
