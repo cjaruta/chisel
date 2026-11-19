@@ -54,7 +54,7 @@ public static class UiSnapshot
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay);
 
         var store = weatherStore ?? new WeatherRepository(context);
-        var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store);
+        var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store, timeDisplay);
         var viewModel = new MainViewModel(
             new ClockViewModel(time, timeDisplay),
             new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),

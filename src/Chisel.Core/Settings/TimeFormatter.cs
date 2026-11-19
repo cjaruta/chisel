@@ -27,6 +27,12 @@ public static class TimeFormatter
             : $"{hour}:{time.Minute:00} {suffix}";
     }
 
+    // Compact label for a whole hour: "15:00" in 24-hour, "3 PM" in 12-hour.
+    public static string FormatHour(TimeOnly time, ClockFormat format) =>
+        format == ClockFormat.TwentyFourHour
+            ? Format(time, format)
+            : $"{(time.Hour % 12 == 0 ? 12 : time.Hour % 12)} {(time.Hour < 12 ? "AM" : "PM")}";
+
     public static string FormatRange(TimeOnly start, TimeOnly end, ClockFormat format) =>
         $"{Format(start, format)}-{Format(end, format)}";
 

@@ -103,7 +103,7 @@ public sealed class WeatherWidgetView : WidgetView
             foreach (var hour in snapshot.Hourly.Take(WeatherLayout.HourlyCount(width)))
             {
                 var cell = new StackPanel { Width = WeatherLayout.HourlyEntryWidth, Spacing = 3 };
-                cell.Children.Add(Text(hour.Time.ToString("HH:mm"), 11, dim: true));
+                cell.Children.Add(Text(_weather.HourLabel(hour.Time), 11, dim: true));
                 cell.Children.Add(new ConditionIcon { Condition = hour.Condition, Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Left });
                 cell.Children.Add(Text(_weather.Format(hour.TemperatureC), 13));
                 strip.Children.Add(cell);

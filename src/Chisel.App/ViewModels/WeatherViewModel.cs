@@ -19,6 +19,7 @@ public partial class WeatherViewModel : ViewModelBase
     private readonly IWeatherService _service;
     private readonly TimeProvider _time;
     private readonly IWeatherStore? _store;
+    private readonly TimeDisplay _display;
     private DateTimeOffset? _updatedAt;
     private DateTimeOffset? _nextFetchAt;
     private bool _fetching;
@@ -30,6 +31,9 @@ public partial class WeatherViewModel : ViewModelBase
     // Data stays in Celsius; the unit only changes the text. Changing it raises PropertyChanged so the widget redraws.
     [ObservableProperty]
     public partial TemperatureUnit Unit { get; set; }
+
+    // Hourly strip labels follow the shared clock format; changing it redraws the widget without fetching.
+    public string HourLabel(TimeOnly time) => _display.Hour(time);
 
     public string Format(double celsius) => WeatherLayout.FormatTemperature(celsius, Unit);
 
@@ -57,8 +61,10 @@ public partial class WeatherViewModel : ViewModelBase
         }
     }
 
-    public WeatherViewModel(IWeatherService service, TimeProvider time, IWeatherStore? store = null)
+    public WeatherViewModel(IWeatherService service, TimeProvider time, IWeatherStore? store = null, TimeDisplay? display = null)
     {
+        _display = display ?? new TimeDisplay();
+        _display.PropertyChanged += (_, _) => OnPropertyChanged(nameof(HourLabel));
         _service = service;
         _time = time;
         _store = store;

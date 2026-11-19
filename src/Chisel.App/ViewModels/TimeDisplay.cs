@@ -13,5 +13,7 @@ public partial class TimeDisplay : ViewModelBase
 
     public string Time(TimeOnly time, bool withSeconds = false) => TimeFormatter.Format(time, Format, withSeconds);
 
+    public string Hour(TimeOnly time) => TimeFormatter.FormatHour(time, Format);
+
     public string Range(TimeOnly start, TimeOnly end) => TimeFormatter.FormatRange(start, end, Format);
 }
