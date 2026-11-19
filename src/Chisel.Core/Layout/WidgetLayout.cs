@@ -3,7 +3,14 @@ using System.Globalization;
 namespace Chisel.Core.Layout;
 
 // One widget in a column. HeightWeight is its share of the column's height, relative to its neighbours.
-public sealed record WidgetPlacement(string WidgetId, double HeightWeight = 1);
+// ShowHeader is the user's choice for the widget's title bar; null means use the widget's own default.
+public sealed record WidgetPlacement(string WidgetId, double HeightWeight = 1, bool? ShowHeader = null);
+
+public static class WidgetHeaders
+{
+    // Whether a widget shows its header: the user's choice if there is one, otherwise the widget's default.
+    public static bool EffectiveShowHeader(WidgetPlacement placement, bool widgetDefault) => placement.ShowHeader ?? widgetDefault;
+}
 
 // One column of the window. WidthWeight is its share of the window's width, relative to the other columns.
 public sealed record LayoutColumn(double WidthWeight, IReadOnlyList<WidgetPlacement> Widgets);
@@ -205,6 +212,19 @@ public sealed class WidgetLayout
             i == columnIndex ? c with { WidthWeight = left.WidthWeight + change }
             : i == columnIndex + 1 ? c with { WidthWeight = right.WidthWeight - change }
             : c));
+    }
+
+    // Sets (or, with null, clears) one widget's header choice. Everything else is unchanged.
+    public WidgetLayout SetShowHeader(string widgetId, bool? showHeader)
+    {
+        if (Find(widgetId) is null)
+        {
+            throw new ArgumentException($"'{widgetId}' is not on the dashboard.", nameof(widgetId));
+        }
+        return With(Columns.Select(c => c with
+        {
+            Widgets = c.Widgets.Select(w => w.WidgetId == widgetId ? w with { ShowHeader = showHeader } : w).ToList(),
+        }));
     }
 
     // Rescales a column's height weights so they average 1, keeping their proportions

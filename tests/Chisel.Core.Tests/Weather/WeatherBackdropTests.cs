@@ -17,7 +17,7 @@ public class WeatherBackdropTests
     """;
 
     // The widget's text colors: primary (App.axaml CurrentBlockOutlineColor) and the weather widget's own secondary grey.
-    private static readonly uint[] TextColors = [0xF2F4F8, WeatherBackdrop.SecondaryText];
+    private static readonly uint[] TextColors = [WeatherBackdrop.PrimaryText, WeatherBackdrop.SecondaryText];
 
     private static double Luminance(uint rgb)
     {

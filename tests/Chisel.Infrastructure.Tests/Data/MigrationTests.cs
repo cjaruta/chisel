@@ -184,6 +184,28 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddWidgetHeaderVisibility_LoadsAnExistingLayoutWithNoHeaderChoices()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261119003331_AddWeather");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO LayoutColumns (Position, WidthWeight) VALUES (0, 1.3), (1, 1.0);" +
+                "INSERT INTO WidgetPlacements (Id, WidgetId, ColumnIndex, Position, HeightWeight) VALUES " +
+                "('6f1c2f4e-0000-0000-0000-000000000041', 'schedule', 0, 0, 1.0), " +
+                "('6f1c2f4e-0000-0000-0000-000000000042', 'tasks', 1, 0, 1.05);");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var layout = new Chisel.Infrastructure.Repositories.WidgetLayoutRepository(readContext).Get()!;
+        Assert.All(layout.Columns.SelectMany(c => c.Widgets), w => Assert.Null(w.ShowHeader));
+    }
+
+    [Fact]
     public void Model_AfterMigrations_HasNoPendingChanges()
     {
         var (connection, options) = CreateOptions();
