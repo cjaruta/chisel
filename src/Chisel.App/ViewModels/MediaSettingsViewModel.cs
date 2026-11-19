@@ -14,9 +14,13 @@ public partial class MediaSettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool ShowVolume { get; set; } = true;
 
+    [ObservableProperty]
+    public partial bool ScrollVolume { get; set; }
+
     public MediaSettingsViewModel(IUserSettingsRepository? repository)
     {
         _repository = repository;
+        ScrollVolume = repository?.Get()?.MediaScrollVolume ?? false;
         ShowVisualizer = repository?.Get()?.MediaVisualizer ?? true;
         ShowVolume = repository?.Get()?.MediaVolume ?? true;
     }
@@ -27,6 +31,15 @@ public partial class MediaSettingsViewModel : ViewModelBase
         if (settings is not null && settings.MediaVisualizer != value)
         {
             _repository!.Save(settings.WithMediaVisualizer(value));
+        }
+    }
+
+    partial void OnScrollVolumeChanged(bool value)
+    {
+        var settings = _repository?.Get();
+        if (settings is not null && settings.MediaScrollVolume != value)
+        {
+            _repository!.Save(settings.WithMediaScrollVolume(value));
         }
     }
 

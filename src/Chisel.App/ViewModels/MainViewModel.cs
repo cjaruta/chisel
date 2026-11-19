@@ -52,10 +52,19 @@ public partial class MainViewModel : ViewModelBase
         QuickLinks = quickLinks;
         Settings = settings;
         Layout = layout ?? new LayoutViewModel();
+        Volume.ScrollEnabled = MediaSettings.ScrollVolume;
+        MediaSettings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MediaSettingsViewModel.ScrollVolume))
+            {
+                Volume.ScrollEnabled = MediaSettings.ScrollVolume;
+            }
+        };
         Layout.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
             {
+                Volume.ScrollBlocked = Layout.IsEditing;
                 OnPropertyChanged(nameof(CanOpenSettings));
             }
             else if (e.PropertyName == nameof(LayoutViewModel.Layout))
