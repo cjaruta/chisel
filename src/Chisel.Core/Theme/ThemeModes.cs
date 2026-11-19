@@ -39,6 +39,13 @@ public static class ThemeModes
             "#1B2028", "#252B35", "#313845", "#3A4250", "#8D99AC", "#4A5463", "#EEF1F5", "#A9B4C3", "#6C7787"),
     ];
 
+    // Swatches offered next to the picker; the first is the default accent.
+    public static readonly IReadOnlyList<(string Name, string Hex)> AccentPresets =
+    [
+        ("Amber", DefaultAccent), ("Coral", "#F2605C"), ("Rose", "#EC5B94"), ("Violet", "#A66FD9"), ("Indigo", "#6574E0"),
+        ("Blue", "#4C9AF0"), ("Teal", "#2BB5A6"), ("Green", "#5DBB63"), ("Lime", "#B5D43D"), ("Slate", "#8794A8"),
+    ];
+
     // Unknown or missing ids give Default.
     public static ThemeDefinition ById(string? id) => All.FirstOrDefault(m => m.Id == id) ?? Default;
 

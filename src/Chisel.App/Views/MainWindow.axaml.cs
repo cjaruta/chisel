@@ -39,6 +39,8 @@ public partial class MainWindow : Window
         AddHandler(KeyUpEvent, OnPreviewKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
         Deactivated += (_, _) => _spaceDown = false;
 
+        DataContextChanged += (_, _) => (DataContext as MainViewModel)?.Settings.Theme?.Track(this);
+
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
         Loaded += (_, _) =>
         {

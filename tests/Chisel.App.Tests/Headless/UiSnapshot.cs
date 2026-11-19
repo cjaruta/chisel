@@ -31,7 +31,7 @@ public static class UiSnapshot
         IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null,
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
-        Chisel.Core.Media.IVolumeService? volume = null)
+        Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -50,10 +50,10 @@ public static class UiSnapshot
             schedule.Save(new DaySchedule(blocks));
         }
         var userSettings = new UserSettingsRepository(context);
-        userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette));
+        userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette, themeMode: themeMode, accentColor: accent));
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
-        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay);
+        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService());
 
         var store = weatherStore ?? new WeatherRepository(context);
         var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store, timeDisplay);

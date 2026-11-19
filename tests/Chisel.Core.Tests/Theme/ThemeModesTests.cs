@@ -27,6 +27,14 @@ public class ThemeModesTests
     }
 
     [Fact]
+    public void AccentPresets_StartWithTheDefaultAndAreValidAndDistinct()
+    {
+        Assert.Equal(ThemeModes.DefaultAccent, ThemeModes.AccentPresets[0].Hex);
+        Assert.All(ThemeModes.AccentPresets, p => Assert.True(Rgb.TryParse(p.Hex, out _)));
+        Assert.Equal(ThemeModes.AccentPresets.Count, ThemeModes.AccentPresets.Select(p => p.Hex).Distinct().Count());
+    }
+
+    [Fact]
     public void UltraDark_UsesTrueBlackWindow() => Assert.Equal("#000000", ThemeModes.ById("ultra-dark").Window.ToHex());
 
     [Theory]

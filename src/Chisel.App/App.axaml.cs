@@ -49,8 +49,9 @@ public partial class App : Application
             {
                 var timeDisplay = new TimeDisplay();
                 var paletteDisplay = new PaletteDisplay();
-                // Settings first: it loads the saved clock format and palette before anything is shown.
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay);
+                // Settings first: it loads the saved clock format, palette and theme (applying the theme) before anything is shown.
+                var theme = new Theming.ThemeService();
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
