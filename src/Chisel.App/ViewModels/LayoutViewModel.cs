@@ -6,12 +6,25 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
 
-// One widget in a column of the shown layout.
-public sealed record WidgetSlot(WidgetDefinition Widget, double HeightWeight, bool ShowHeader)
+// One card in a column of the shown layout: a widget, or a tabbed group (GroupMembers, in tab order, and the
+// active tab). Widget is the card's own widget (see WidgetPlacement.WidgetId); a group always shows its header.
+public sealed record WidgetSlot(
+    WidgetDefinition Widget, double HeightWeight, bool ShowHeader,
+    IReadOnlyList<WidgetDefinition>? GroupMembers = null, int ActiveIndex = 0)
 {
     public string Id => Widget.Id;
     public string Title => Widget.Title;
-    public double MinHeight => Widget.MinHeight;
+    public bool IsGroup => GroupMembers is { Count: > 1 };
+
+    // The widgets on the card, in tab order.
+    public IReadOnlyList<WidgetDefinition> Members => IsGroup ? GroupMembers! : new[] { Widget };
+
+    // The widget whose body is shown.
+    public WidgetDefinition ActiveWidget => Members[System.Math.Clamp(ActiveIndex, 0, Members.Count - 1)];
+
+    // A group fits every member: the largest minimum of each (see WidgetGroupSize).
+    public double MinHeight => WidgetGroupSize.Minimum(Members.Select(m => (m.MinWidth, m.MinHeight))).Height;
+    public double MinWidth => WidgetGroupSize.Minimum(Members.Select(m => (m.MinWidth, m.MinHeight))).Width;
 }
 
 // One column of the shown layout.
@@ -64,8 +77,68 @@ public partial class LayoutViewModel : ViewModelBase
         {
             return;
         }
-        var current = WidgetHeaders.EffectiveShowHeader(Layout.Columns[at.Column].Widgets[at.Index], WidgetRegistry.Get(widgetId)!.DefaultShowHeader);
+        var placement = Layout.Columns[at.Column].Widgets[at.Index];
+        if (placement.IsGroup)
+        {
+            return;
+        }
+        var current = WidgetHeaders.EffectiveShowHeader(placement, WidgetRegistry.Get(widgetId)!.DefaultShowHeader);
         Layout = Layout.SetShowHeader(widgetId, !current);
+    }
+
+    // Makes a tab the card's active widget. Outside edit mode it is saved at once (the choice is part of the
+    // layout, so it is there at the next start); in edit mode it is part of the working copy, like everything else.
+    public void SelectTab(string widgetId)
+    {
+        if (Layout.Find(widgetId) is null)
+        {
+            return;
+        }
+        var next = Layout.SetActive(widgetId);
+        if (ReferenceEquals(next, Layout))
+        {
+            return;
+        }
+        Layout = next;
+        if (!IsEditing)
+        {
+            _repository?.Save(Layout);
+        }
+    }
+
+    // Moves a widget out of its group, onto its own card right below it. Edit mode only.
+    public void Unmerge(string widgetId)
+    {
+        if (IsEditing && Layout.Find(widgetId) is not null)
+        {
+            Layout = Layout.Split(widgetId, DefaultHeight(widgetId));
+        }
+    }
+
+    // Moves a tab to a new place in its group. Edit mode only.
+    public void ReorderTab(string widgetId, int index)
+    {
+        if (IsEditing && Layout.Find(widgetId) is not null)
+        {
+            Layout = Layout.ReorderMember(widgetId, index);
+        }
+    }
+
+    // Whether the dragged widget can be merged into the target's card: a widget from the dashboard (not the tray),
+    // not onto itself, and within the group limits.
+    public bool CanMergeInto(string targetId) =>
+        DraggedWidgetId is { } id && !IsDraggingFromTray && Layout.CanCombine(id, targetId);
+
+    // Drops the dragged widget onto another card: it becomes the last tab there and the target's tab stays active.
+    // Ends the drag either way; returns whether it merged.
+    public bool DropOnWidget(string targetId)
+    {
+        if (DraggedWidgetId is not { } id || !CanMergeInto(targetId))
+        {
+            CancelWidgetDrag();
+            return false;
+        }
+        return Finish(Layout.Combine(id, targetId));
     }
 
     // The quick path from the tray: the widget goes to the bottom of the first column.
@@ -83,10 +156,14 @@ public partial class LayoutViewModel : ViewModelBase
     public IReadOnlyList<LayoutColumnSlot> Columns => Slots(Layout);
 
     public static IReadOnlyList<LayoutColumnSlot> Slots(WidgetLayout layout) => layout.Columns
-        .Select(c => new LayoutColumnSlot(c.WidthWeight,
-            c.Widgets.Select(w => new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight,
-                WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader))).ToList()))
+        .Select(c => new LayoutColumnSlot(c.WidthWeight, c.Widgets.Select(Slot).ToList()))
         .ToList();
+
+    private static WidgetSlot Slot(WidgetPlacement w) => w.IsGroup
+        ? new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight, true,
+            w.MemberIds.Select(id => WidgetRegistry.Get(id)!).ToList(), w.ActiveIndex)
+        : new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight,
+            WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader));
 
     // repository: where the layout is saved; null keeps it in memory only.
     public LayoutViewModel(IWidgetLayoutRepository? repository = null)

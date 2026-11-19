@@ -28,6 +28,32 @@ public static class LayoutDropTargets
         return null;
     }
 
+    // The strip, in pixels, at the top and at the bottom of a card that still counts as the gap above or below it:
+    // the pointer there inserts the dragged widget, anywhere between it merges into the card (header included).
+    public const double InsertBand = 12;
+
+    // The card the pointer would merge a dragged widget into: the one whose rectangle holds the pointer, outside
+    // its top and bottom insert bands. `accepts` says whether a card (column, index) can take the widget.
+    public static (int Column, int Index)? FindMerge(Point pointer, IReadOnlyList<IReadOnlyList<Rect>> widgets,
+        Func<(int Column, int Index), bool> accepts)
+    {
+        for (var c = 0; c < widgets.Count; c++)
+        {
+            for (var i = 0; i < widgets[c].Count; i++)
+            {
+                var card = widgets[c][i];
+                var band = Math.Min(InsertBand, card.Height / 4);
+                var inside = pointer.X >= card.Left && pointer.X <= card.Right
+                    && pointer.Y >= card.Top + band && pointer.Y <= card.Bottom - band;
+                if (inside && accepts((c, i)))
+                {
+                    return (c, i);
+                }
+            }
+        }
+        return null;
+    }
+
     // Whether dropping into gap `target` would put a widget back where it already is: the gap right above or
     // right below its own slot. `origin` is null for a widget coming from the tray, which has no home.
     public static bool IsHome((int Column, int Index) target, (int Column, int Index)? origin) =>

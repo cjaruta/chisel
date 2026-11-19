@@ -168,6 +168,17 @@ public sealed class MediaWidgetView : WidgetView
         Content = new Grid { Children = { _gradient, _body, _feedback } };
     }
 
+    // An ancestor (the group's body) hiding or showing this view raises no event on the bars or the gradient, so tell them.
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty)
+        {
+            _bars.RefreshVisibility();
+            _gradient.RefreshVisibility();
+        }
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -275,7 +286,8 @@ public sealed class MediaWidgetView : WidgetView
 
     private void OnWheel(object? sender, PointerWheelEventArgs e)
     {
-        if (_volume?.ScrollBy(e.Delta.Y) == true)
+        // The wheel is heard on the whole card: as another tab of a group this view must not take it.
+        if (IsEffectivelyVisible && _volume?.ScrollBy(e.Delta.Y) == true)
         {
             e.Handled = true;
             _wheelTimer.Stop();

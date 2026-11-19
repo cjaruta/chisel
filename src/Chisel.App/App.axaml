@@ -108,7 +108,6 @@
         <Style Selector="Border.newColumnPhantom">
             <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource AccentBorderBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Opacity" Value="0" />
             <Setter Property="RenderTransform" Value="scale(0.97)" />
@@ -328,6 +327,97 @@
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
             <Setter Property="CornerRadius" Value="10,10,0,0" />
+        </Style>
+
+        <!-- Tabs in the shared header of a group: equal shares of the width, titles cut with an ellipsis.
+             Active: accent text and an accent underline. Inactive: secondary text. -->
+        <Style Selector="Button.groupTab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.groupTab /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="Button.groupTab:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.groupTab:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.groupTab:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.groupTab.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.groupTab.active:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.groupTab.active:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+        <Style Selector="Grid.groupTabs">
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- The small button on a tab in edit mode that moves its widget back out of the group -->
+        <Style Selector="Button.tabUnmerge">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,4,2" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="{StaticResource EditBadgeBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.tabUnmerge Path">
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+            <Setter Property="StrokeThickness" Value="1.4" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+        </Style>
+        <Style Selector="Button.tabUnmerge:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+
+        <!-- Reordering tabs in edit mode: the dragged tab fades, the tab it would swap with shows a wash -->
+        <Style Selector="Grid.groupTabCell.tabDragging">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        <Style Selector="Grid.groupTabCell.tabDropTarget">
+            <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+        </Style>
+
+        <!-- A group in edit mode keeps its tabs bright: only the body is dimmed -->
+        <Style Selector="Border.widgetFrame.editing.groupFrame :is(Panel).widgetContent">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.widgetFrame.editing.groupFrame Panel.widgetBody">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+
+        <!-- The card a dragged widget would merge into -->
+        <Style Selector="Border.widgetFrame.mergeTarget">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
         </Style>
 
         <!-- Top-aligned so a list's input row stays right under the list, as before, when the card is taller -->
@@ -713,7 +803,6 @@
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="2" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Cursor" Value="Hand" />
