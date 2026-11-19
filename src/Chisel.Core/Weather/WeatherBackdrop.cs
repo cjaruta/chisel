@@ -21,19 +21,19 @@ public static class WeatherBackdrop
 
     public static readonly IReadOnlyDictionary<string, BackdropGradient> Gradients = new Dictionary<string, BackdropGradient>
     {
-        ["clear-day"] = new(0x1A283A, 0x151E2B),
+        ["clear-day"] = new(0x0E2846, 0x09223F),
         ["clear-night"] = new(0x141C30, 0x0E1422),
-        ["partly-cloudy-day"] = new(0x202833, 0x192029),
+        ["partly-cloudy-day"] = new(0x1C2837, 0x162331),
         ["partly-cloudy-night"] = new(0x181E2E, 0x11161F),
-        ["cloudy-day"] = new(0x22262A, 0x1B1E22),
+        ["cloudy-day"] = new(0x222830, 0x1C222B),
         ["cloudy-night"] = new(0x1D2024, 0x14161A),
-        ["rain-day"] = new(0x1E2530, 0x161B23),
+        ["rain-day"] = new(0x1D2839, 0x172232),
         ["rain-night"] = new(0x181E27, 0x11151B),
-        ["snow-day"] = new(0x23282F, 0x1C2128),
+        ["snow-day"] = new(0x1F2931, 0x19232B),
         ["snow-night"] = new(0x1E242B, 0x161A20),
-        ["storm-day"] = new(0x1B1F26, 0x13161B),
+        ["storm-day"] = new(0x232736, 0x1C2130),
         ["storm-night"] = new(0x15181D, 0x0E1013),
-        ["fog-day"] = new(0x25282D, 0x1E2125),
+        ["fog-day"] = new(0x23282B, 0x1C2326),
         ["fog-night"] = new(0x202327, 0x17191C),
     };
 }
