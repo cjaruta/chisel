@@ -20,7 +20,8 @@ public static class WeatherMotionDrawing
         public MotionStyle Style { get; }
         internal readonly IImmutableBrush[] Solid = new IImmutableBrush[Levels];
         internal readonly IImmutableBrush[] Soft = new IImmutableBrush[Levels];
-        internal readonly ImmutablePen[] Pen = new ImmutablePen[Levels];
+        // Pens by depth then opacity level: Pen[depth * Levels + level].
+        internal readonly ImmutablePen[] Pen = new ImmutablePen[3 * Levels];
 
         internal Scene(MotionStyle style)
         {
@@ -31,11 +32,23 @@ public static class WeatherMotionDrawing
                 var color = Color.FromArgb(alpha, (byte)(style.Color >> 16), (byte)(style.Color >> 8), (byte)style.Color);
                 Solid[i] = new ImmutableSolidColorBrush(color);
                 Soft[i] = new ImmutableRadialGradientBrush(
-                    new[] { new ImmutableGradientStop(0, color), new ImmutableGradientStop(1, Color.FromArgb(0, color.R, color.G, color.B)) }, radius: 0.5);
-                Pen[i] = new ImmutablePen(new ImmutableSolidColorBrush(color), 1.2, lineCap: PenLineCap.Round);
+                    new[] { new ImmutableGradientStop(0, color), new ImmutableGradientStop(0.5, Color.FromArgb((byte)(alpha * 0.6), color.R, color.G, color.B)), new ImmutableGradientStop(1, Color.FromArgb(0, color.R, color.G, color.B)) }, radius: 0.5);
+                for (var depth = 0; depth < 3; depth++)
+                {
+                    Pen[depth * Levels + i] = new ImmutablePen(new ImmutableSolidColorBrush(color), StrokeWidth(style.Kind, depth), lineCap: PenLineCap.Round);
+                }
             }
         }
     }
+
+    // Far streaks are thinner than near ones; sun rays are wide and soft.
+    private static double StrokeWidth(MotionKind kind, int depth) => kind switch
+    {
+        MotionKind.Rain => 0.8 + 0.45 * depth,
+        MotionKind.HeavyRain => 0.9 + 0.55 * depth,
+        MotionKind.SunGlow => 5 + 9 * (2 - depth),
+        _ => 1,
+    };
 
     private static readonly ConcurrentDictionary<string, Scene> Scenes = new();
 
@@ -90,20 +103,43 @@ public static class WeatherMotionDrawing
             {
                 case MotionKind.Rain:
                 case MotionKind.HeavyRain:
-                    context.Line(scene.Pen[level], center, new Point(p.X, p.Y + p.Size));
+                    context.Line(scene.Pen[p.Depth * Levels + level], center,
+                        new Point(p.X + Math.Sin(p.Angle) * p.Size, p.Y + Math.Cos(p.Angle) * p.Size));
                     break;
                 case MotionKind.Snow:
-                case MotionKind.Stars:
                     context.Ellipse(scene.Solid[level], center, p.Size, p.Size);
                     break;
+                case MotionKind.Stars:
+                    context.Ellipse(scene.Solid[level], center, p.Size, p.Size);
+                    if (p.Depth == 1)
+                    {
+                        context.Ellipse(scene.Soft[Math.Max(0, level - 1)], center, p.Size * 6, p.Size * 6);
+                    }
+                    break;
                 case MotionKind.Clouds:
-                    context.Ellipse(scene.Soft[level], center, p.Size, p.Size * 0.35);
+                    for (var k = 0; k < WeatherMotion.PuffCount(i); k++)
+                    {
+                        var (dx, dy, radius) = WeatherMotion.Puff(i, k);
+                        context.Ellipse(scene.Soft[level], new Point(p.X + dx * p.Size, p.Y + dy * p.Size), radius * p.Size, radius * p.Size);
+                    }
                     break;
                 case MotionKind.Fog:
-                    context.Ellipse(scene.Soft[level], center, p.Size, p.Size * 0.12);
+                    context.Ellipse(scene.Soft[level], center, p.Size, p.Size * 0.14);
                     break;
                 case MotionKind.SunGlow:
-                    context.Ellipse(scene.Soft[level], center, p.Size, p.Size);
+                    if (p.Depth == 0)
+                    {
+                        context.Ellipse(scene.Soft[level], center, p.Size, p.Size);
+                        context.Ellipse(scene.Soft[level], center, p.Size * 0.5, p.Size * 0.5);
+                    }
+                    else
+                    {
+                        // A ray is three stacked strokes (wide and faint to narrow), so its edges are soft.
+                        var end = new Point(p.X + Math.Sin(p.Angle) * p.Size, p.Y + Math.Cos(p.Angle) * p.Size);
+                        context.Line(scene.Pen[0 * Levels + Math.Max(0, level - 2)], center, end);
+                        context.Line(scene.Pen[1 * Levels + Math.Max(0, level - 2)], center, end);
+                        context.Line(scene.Pen[2 * Levels + Math.Max(0, level - 2)], center, end);
+                    }
                     break;
             }
         }

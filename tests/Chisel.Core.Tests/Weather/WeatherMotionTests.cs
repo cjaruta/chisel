@@ -32,8 +32,10 @@ public class WeatherMotionTests
                 {
                     var a = WeatherMotion.Get(kind, i, t, 600, 240);
                     Assert.Equal(a, WeatherMotion.Get(kind, i, t, 600, 240));
-                    Assert.InRange(a.X, -2 * a.Size, 600 + 2 * a.Size);
-                    Assert.InRange(a.Y, -2 * a.Size, 240 + 2 * a.Size);
+                    // Slanted streaks and rays start up to a slant's run outside the area.
+                    var margin = 2 * a.Size + 0.4 * 240;
+                    Assert.InRange(a.X, -margin, 600 + margin);
+                    Assert.InRange(a.Y, -margin, 240 + margin);
                     Assert.InRange(a.Opacity, 0, 1);
                 }
             }
@@ -86,6 +88,50 @@ public class WeatherMotionTests
         }
         Assert.True(WeatherMotion.Count(MotionKind.Rain, 200, 100) < WeatherMotion.Count(MotionKind.Rain, 600, 240));
         Assert.True(WeatherMotion.Count(MotionKind.HeavyRain, 4000, 3000) >= WeatherMotion.Count(MotionKind.Rain, 4000, 3000));
+    }
+
+    [Fact]
+    public void Rain_HasThreeDepths_FarIsShorterAndFainterThanNear()
+    {
+        foreach (var kind in new[] { MotionKind.Rain, MotionKind.HeavyRain })
+        {
+            var far = Enumerable.Range(0, 12).Select(i => WeatherMotion.Get(kind, i, 1, 600, 240)).Where(p => p.Depth == 0).ToList();
+            var near = Enumerable.Range(0, 12).Select(i => WeatherMotion.Get(kind, i, 1, 600, 240)).Where(p => p.Depth == 2).ToList();
+            Assert.True(far.Count > 0 && near.Count > 0);
+            Assert.True(far.Max(p => p.Size) < near.Min(p => p.Size));
+            Assert.True(far.Max(p => p.Opacity) < near.Min(p => p.Opacity));
+            Assert.All(far.Concat(near), p => Assert.True(p.Angle > 0));
+        }
+    }
+
+    [Fact]
+    public void Snow_FarFlakesAreSmallerAndFainter()
+    {
+        var flakes = Enumerable.Range(0, 18).Select(i => WeatherMotion.Get(MotionKind.Snow, i, 1, 600, 240)).ToList();
+        Assert.True(flakes.Where(p => p.Depth == 0).Max(p => p.Size) < flakes.Where(p => p.Depth == 2).Min(p => p.Size));
+        Assert.True(flakes.Where(p => p.Depth == 0).Max(p => p.Opacity) < flakes.Where(p => p.Depth == 2).Min(p => p.Opacity));
+    }
+
+    [Fact]
+    public void Clouds_AreBlobsOfThreeToFivePuffs_InTwoLayersAtDifferentSpeeds()
+    {
+        for (var i = 0; i < 4; i++)
+        {
+            Assert.InRange(WeatherMotion.PuffCount(i), 3, 5);
+        }
+        double Travelled(int index) => Math.Abs(WeatherMotion.Get(MotionKind.Clouds, index, 10, 600, 240).X - WeatherMotion.Get(MotionKind.Clouds, index, 0, 600, 240).X);
+        Assert.NotEqual(WeatherMotion.Get(MotionKind.Clouds, 0, 0, 600, 240).Depth, WeatherMotion.Get(MotionKind.Clouds, 1, 0, 600, 240).Depth);
+        Assert.True(Travelled(1) > Travelled(0));
+    }
+
+    [Fact]
+    public void Sun_IsAGlowPlusSixRays_ThatTurnSlowly()
+    {
+        Assert.Equal(7, WeatherMotion.Count(MotionKind.SunGlow, 600, 240));
+        Assert.Equal(0, WeatherMotion.Get(MotionKind.SunGlow, 0, 0, 600, 240).Depth);
+        var a = WeatherMotion.Get(MotionKind.SunGlow, 1, 0, 600, 240).Angle;
+        var b = WeatherMotion.Get(MotionKind.SunGlow, 1, 10, 600, 240).Angle;
+        Assert.InRange(b - a, 0.01, 0.5);
     }
 
     [Fact]
