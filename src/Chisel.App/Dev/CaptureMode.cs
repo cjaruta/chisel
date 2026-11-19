@@ -109,10 +109,11 @@ internal static class CaptureMode
                         ? layout.AddWidget(WidgetRegistry.Clock, 1, 0, 0.5)
                         : layout.RemoveWidget(WidgetRegistry.Clock));
                 }));
-                script.Add((6000, Start));
-                script.Add((7500, () => { Stop("A motion on"); vm.Weather.Show(WeatherState.Loading); }));
-                script.Add((8000, Start));
-                script.Add((9500, () => Stop("B motion off")));
+                // Measure after a few seconds of warmup so JIT of the motion code isn't counted as its running cost.
+                script.Add((9000, Start));
+                script.Add((11000, () => { Stop("A motion on"); vm.Weather.Show(WeatherState.Loading); }));
+                script.Add((11500, Start));
+                script.Add((13500, () => Stop("B motion off")));
                 break;
             case "drag":
                 script.Add((1500, () => { host.ScriptPickUp("links"); Mark("pick up links"); }));
