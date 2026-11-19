@@ -70,8 +70,9 @@ public sealed partial class LayoutHost : Decorator
     private readonly List<Panel> _handles = new();
     private readonly ColumnHandleLayer _columnHandleLayer;
     private readonly List<Panel> _columnHandles = new();
-    private readonly Border _phantom;
-    private readonly Border _insertLine;
+    // The one drop preview: a translucent accent rectangle with a caption, shown for the zone under the pointer.
+    private readonly Border _preview;
+    private readonly TextBlock _previewCaption;
     private IReadOnlyCollection<int> _newColumnGaps = [];
     private int? _newColumnTarget;
 
@@ -110,15 +111,16 @@ public sealed partial class LayoutHost : Decorator
     // The card the dragged widget would merge into (highlighted while the pointer is over it).
     private WidgetFrame? _mergeTarget;
 
-    private void SetMergeTarget(WidgetFrame? frame)
-    {
-        if (!ReferenceEquals(_mergeTarget, frame))
-        {
-            _mergeTarget?.Classes.Set("mergeTarget", false);
-            _mergeTarget = frame;
-            _mergeTarget?.Classes.Set("mergeTarget", true);
-        }
-    }
+    // The zone the pointer is in. It only changes to another zone once the pointer has moved a few pixels from where
+    // the current one was chosen, so a pointer resting on a boundary does not flicker between two previews.
+    private enum ZoneKind { None, NewColumn, Merge, Gap }
+
+    private readonly record struct DropZone(ZoneKind Kind, int A = 0, int B = 0);
+
+    public const double ZoneHysteresis = 4;
+
+    private DropZone _zone;
+    private Point _zonePoint;
 
     // The card being merged into, while a drag hovers it (for tests).
     public WidgetFrame? MergeTarget => _mergeTarget;
@@ -130,16 +132,13 @@ public sealed partial class LayoutHost : Decorator
         _columnHandleLayer = new ColumnHandleLayer(_columns);
         _float.Classes.Add("dragFloat");
 
-        var labelText = new TextBlock { Text = "New column" };
-        var label = new Border { Name = "NewColumnLabel", Child = labelText, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 12, 0, 0) };
-        label.Classes.Add("newColumnLabel");
-        _phantom = new Border { Name = "NewColumnPhantom", IsVisible = false, Child = label };
-        _phantom.Classes.Add("newColumnPhantom");
-        _insertLine = new Border { Name = "DropIndicator", IsVisible = false, Height = 3 };
-        _insertLine.Classes.Add("dropIndicator");
+        _previewCaption = new TextBlock();
+        var caption = new Border { Name = "DropPreviewCaption", Child = _previewCaption, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        caption.Classes.Add("dropPreviewCaption");
+        _preview = new Border { Name = "DropPreview", IsVisible = false, Child = caption };
+        _preview.Classes.Add("dropPreview");
 
-        _overlay.Children.Add(_phantom);
-        _overlay.Children.Add(_insertLine);
+        _overlay.Children.Add(_preview);
         _overlay.Children.Add(_float);
         // An explicit dark backing, so no layout pass can ever show the default (light) fallback behind the cards.
         Child = new Panel { Name = "LayoutBacking", Background = BackingBrush(), Children = { _columns, _columnHandleLayer, _overlay } };
@@ -505,7 +504,7 @@ public sealed partial class LayoutHost : Decorator
     }
 
     private void SetMembers(WidgetFrame frame, WidgetSlot slot) =>
-        frame.SetMembers(slot.Members.Select(m => (m, ViewOf(m))).ToList(), slot.ActiveIndex);
+        frame.SetMembers(slot.Members.Select(m => (m, ViewOf(m))).ToList(), slot.ActiveIndex, slot.ViewMode, slot.PaneWeights);
 
     private WidgetFrame Frame(WidgetDefinition widget)
     {
@@ -520,6 +519,21 @@ public sealed partial class LayoutHost : Decorator
             frame.TabSelected += id => Layout?.SelectTab(id);
             frame.TabUnmerged += id => Layout?.Unmerge(id);
             frame.TabReordered += (id, index) => Layout?.ReorderTab(id, index);
+            frame.ViewModeRequested += (mode, width) => Layout?.SetViewMode(created.WidgetId, mode, width);
+            frame.PaneResizeBegan += () => Layout?.BeginPaneResize();
+            frame.PaneResizeMoved += (id, dx, leftMin, rightMin, space) =>
+                Layout?.PreviewPaneResize(id, dx / space, leftMin / space, rightMin / space);
+            frame.PaneResizeEnded += commit =>
+            {
+                if (commit)
+                {
+                    Layout?.CommitPaneResize();
+                }
+                else
+                {
+                    Layout?.CancelPaneResize();
+                }
+            };
             frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
             _frames[widget.Id] = frame;
         }
@@ -614,7 +628,7 @@ public sealed partial class LayoutHost : Decorator
         else if (_mergeTarget is { } merge)
         {
             _droppedId = merge.WidgetId;
-            layout.DropOnWidget(merge.WidgetId);
+            layout.DropOnWidget(merge.WidgetId, merge.InnerWidth);
         }
         else if (_target is { } target)
         {
@@ -839,35 +853,83 @@ public sealed partial class LayoutHost : Decorator
         Canvas.SetLeft(_float, point.X - _grabOffset.X);
         Canvas.SetTop(_float, point.Y - _grabOffset.Y);
 
-        _newColumnTarget = LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps);
-        // Over the middle of another card: merge into it. Near its top or bottom edge: insert there.
-        var merge = _newColumnTarget is null && Layout is { } layout
-            ? LayoutDropTargets.FindMerge(point, _pickWidgets, at => layout.CanMergeInto(_pickFrames[at.Column][at.Index].WidgetId))
-            : null;
-        SetMergeTarget(merge is { } m ? _pickFrames[m.Column][m.Index] : null);
-        _target = _newColumnTarget is null && merge is null ? LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) : null;
-
-        SetActive(_phantom, _newColumnTarget is not null);
-        if (_newColumnTarget is { } gap)
+        var candidate = Classify(point);
+        if (candidate != _zone && (_zone.Kind == ZoneKind.None || Distance(point, _zonePoint) >= ZoneHysteresis))
         {
-            var rect = LayoutDropTargets.PhantomColumn(gap, _pickColumns, Bounds.Width, Gap);
-            _phantom.Width = rect.Width;
-            _phantom.Height = rect.Height;
-            Canvas.SetLeft(_phantom, rect.X);
-            Canvas.SetTop(_phantom, rect.Y);
+            _zone = candidate;
+            _zonePoint = point;
+        }
+        ApplyZone();
+    }
+
+    private static double Distance(Point a, Point b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
+
+    // The zone a pointer position belongs to: a new column, merging into the middle of a card, or the gap near a card's
+    // top or bottom edge.
+    private DropZone Classify(Point point)
+    {
+        if (LayoutDropTargets.FindNewColumn(point, _pickColumns, Bounds.Width, Gap, EdgeZoneFraction, DividerZoneWidth, _newColumnGaps) is { } gap)
+        {
+            return new DropZone(ZoneKind.NewColumn, gap);
+        }
+        // Over the middle of another card: merge into it. Near its top or bottom edge: insert there.
+        if (Layout is { } layout
+            && LayoutDropTargets.FindMerge(point, _pickWidgets, at => layout.CanMergeInto(_pickFrames[at.Column][at.Index].WidgetId)) is { } merge)
+        {
+            return new DropZone(ZoneKind.Merge, merge.Column, merge.Index);
+        }
+        return LayoutDropTargets.Find(point, _pickColumns, _pickWidgets, Gap) is { } target
+            ? new DropZone(ZoneKind.Gap, target.Column, target.Index)
+            : default;
+    }
+
+    // Names a card for the drop caption: its title, or its members' titles for a group.
+    private static string CardTitle(WidgetFrame frame) =>
+        string.Join(" + ", frame.MemberIds.Select(id => WidgetRegistry.Get(id)?.Title ?? id));
+
+    // Shows the one preview for the current zone, and records where a drop would go.
+    private void ApplyZone()
+    {
+        _newColumnTarget = _zone.Kind == ZoneKind.NewColumn ? _zone.A : null;
+        _mergeTarget = _zone.Kind == ZoneKind.Merge ? _pickFrames[_zone.A][_zone.B] : null;
+        _target = _zone.Kind == ZoneKind.Gap ? (_zone.A, _zone.B) : null;
+
+        Rect? rect = null;
+        string caption = "";
+        switch (_zone.Kind)
+        {
+            case ZoneKind.NewColumn:
+                rect = LayoutDropTargets.PhantomColumn(_zone.A, _pickColumns, Bounds.Width, Gap);
+                caption = "New column";
+                break;
+            case ZoneKind.Merge:
+                rect = _pickWidgets[_zone.A][_zone.B];
+                caption = $"Tab with {CardTitle(_pickFrames[_zone.A][_zone.B])}";
+                break;
+            case ZoneKind.Gap when !LayoutDropTargets.IsHome((_zone.A, _zone.B), _origin):
+                // A gap that would put the widget back where it was gets no preview: its slot already shows as the home placeholder.
+                var column = _pickColumns[_zone.A];
+                var cards = _pickFrames[_zone.A];
+                var y = LayoutDropTargets.InsertionY(column, _pickWidgets[_zone.A], _zone.B, Gap);
+                rect = new Rect(column.Left, y - GapPreviewHeight / 2, column.Width, GapPreviewHeight);
+                caption = _zone.B < cards.Count ? $"Above {CardTitle(cards[_zone.B])}"
+                    : cards.Count > 0 ? $"Below {CardTitle(cards[^1])}" : "Here";
+                break;
         }
 
-        // A gap that would put the widget back where it was gets no line: its slot already shows as the home placeholder.
-        var showLine = _target is { } hovered && !LayoutDropTargets.IsHome(hovered, _origin);
-        SetActive(_insertLine, showLine);
-        if (showLine && _target is { } t)
+        SetActive(_preview, rect is not null);
+        if (rect is { } r)
         {
-            var column = _pickColumns[t.Column];
-            _insertLine.Width = column.Width;
-            Canvas.SetLeft(_insertLine, column.Left);
-            Canvas.SetTop(_insertLine, LayoutDropTargets.InsertionY(column, _pickWidgets[t.Column], t.Index, Gap) - 1.5);
+            _preview.Width = r.Width;
+            _preview.Height = r.Height;
+            Canvas.SetLeft(_preview, r.X);
+            Canvas.SetTop(_preview, r.Y);
+            _previewCaption.Text = caption;
         }
     }
+
+    // How tall the preview is for an insert between cards.
+    private const double GapPreviewHeight = 32;
 
     // Shows a drop target at rest first, then activates it, so the style eases it in (~120 ms).
     private static void SetActive(Border target, bool active)
@@ -898,13 +960,13 @@ public sealed partial class LayoutHost : Decorator
         _trayWidget = null;
         _dragging = false;
         _target = null;
-        SetMergeTarget(null);
+        _mergeTarget = null;
+        _zone = default;
         _origin = null;
         Cursor = null;
         _newColumnTarget = null;
         _newColumnGaps = [];
-        SetActive(_phantom, false);
-        SetActive(_insertLine, false);
+        SetActive(_preview, false);
         // Put the columns back as the layout has them (after a drop, the layout already has the new order).
         if (Layout is not null)
         {

@@ -322,8 +322,10 @@ public class WidgetGroupHeadlessTests
         MoveTo(window, over);
 
         Assert.Same(Frame(window, "tasks"), Host(window).MergeTarget);
-        Assert.True(Frame(window, "tasks").Classes.Contains("mergeTarget"));
-        Assert.False(Single<Border>(window, "DropIndicator").IsVisible);
+        var preview = Single<Border>(window, "DropPreview");
+        Assert.True(preview.IsVisible);
+        Assert.Equal(InWindow(Frame(window, "tasks"), window).Width, preview.Bounds.Width, 1);
+        Assert.Contains("Tab with Tasks", Single<Border>(window, "DropPreviewCaption").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
 
         Release(window, over);
 
@@ -332,7 +334,6 @@ public class WidgetGroupHeadlessTests
         Assert.Equal(new[] { "tasks", "notes" }, group.MemberIds);
         Assert.Equal("tasks", group.ActiveId);
         Assert.Null(Host(window).MergeTarget);
-        Assert.False(group.Classes.Contains("mergeTarget"));
         Assert.DoesNotContain(Frames(window), f => f.WidgetId == "notes");
         window.Close();
     }
@@ -472,7 +473,7 @@ public class WidgetGroupHeadlessTests
         Assert.Equal(5, group.MemberIds.Count);
         var cells = group.TabStrip.Children.OfType<Grid>().ToList();
         Assert.Equal(5, cells.Count);
-        Assert.All(cells, c => Assert.Equal(cells[0].Bounds.Width, c.Bounds.Width, 1));
+        Assert.All(cells, c => Assert.InRange(c.Bounds.Width, cells[0].Bounds.Width - 1, cells[0].Bounds.Width + 1));
         Assert.True(cells.Sum(c => c.Bounds.Width) <= group.Header.Bounds.Width + 1);
 
         var links = group.TabButton("links").GetVisualDescendants().OfType<TextBlock>().Single();

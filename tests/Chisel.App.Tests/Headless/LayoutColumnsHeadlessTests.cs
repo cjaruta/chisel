@@ -26,7 +26,7 @@ public class LayoutColumnsHeadlessTests
     private static string Order(Window window) =>
         string.Join(" | ", Host(window).Frames.Select(c => string.Join(",", c.Select(f => f.WidgetId))));
 
-    private static Border Phantom(Window window) => Named<Border>(window, "NewColumnPhantom");
+    private static Border Phantom(Window window) => Named<Border>(window, "DropPreview");
 
     private static Rect[] Positions(Window window) =>
         Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window)).ToArray();
@@ -111,7 +111,7 @@ public class LayoutColumnsHeadlessTests
 
         MoveTo(window, ZoneCenter(window, 2));
         Assert.True(Phantom(window).IsVisible);
-        MoveTo(window, Within(window, "tasks"));
+        MoveTo(window, Within(window, "notes"));
         Assert.False(Phantom(window).IsVisible);
 
         Release(window, Bar(window, "notes"));
@@ -133,7 +133,7 @@ public class LayoutColumnsHeadlessTests
         var host = InWindow(Host(window), window);
         Assert.Equal(host.Left, phantom.Left, 1.5);
         Assert.InRange(phantom.Width, host.Width / 4, host.Width / 2);
-        var label = Named<Border>(window, "NewColumnLabel");
+        var label = Named<Border>(window, "DropPreviewCaption");
         Assert.Contains("New column", label.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
         Release(window, ZoneCenter(window, 0));
         window.Close();
