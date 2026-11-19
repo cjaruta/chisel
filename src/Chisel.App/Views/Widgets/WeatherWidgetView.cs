@@ -26,6 +26,19 @@ public sealed class WeatherWidgetView : WidgetView
         Backdrop.WeatherBackdropLayer.Install(this);
     }
 
+    public override bool HeaderOverlaysContent => true;
+
+    // Over the backdrop the title uses the widget's primary text color (the same one the contrast test checks).
+    public override IBrush? HeaderForeground =>
+        _weather is { State: WeatherState.Ready } ? Brush("CurrentBlockOutlineBrush", Brushes.White) : null;
+
+    // The title bar floats over the backdrop, so the content makes room for it while it is shown.
+    protected override void OnHeaderShownChanged()
+    {
+        Padding = new Thickness(16, HeaderShown ? WidgetFrame.HeaderHeight : 0, 16, 12);
+        Rebuild();
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -68,12 +81,13 @@ public sealed class WeatherWidgetView : WidgetView
 
     private void Rebuild()
     {
+        RaiseHeaderForegroundChanged();
         if (_weather is null)
         {
             return;
         }
         var width = Bounds.Width - Padding.Left - Padding.Right;
-        var height = Bounds.Height - Padding.Bottom;
+        var height = Bounds.Height - Padding.Top - Padding.Bottom;
         var panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 10 };
 
         if (_weather.State != WeatherState.Ready || _weather.Snapshot is not { } snapshot)
@@ -117,7 +131,20 @@ public sealed class WeatherWidgetView : WidgetView
             panel.Children.Add(Text(_weather.UpdatedText, 11, dim: true, name: "WeatherUpdatedLine"));
             panel.Children.Add(Text(WeatherLayout.Credit, 11, dim: true, name: "WeatherFooter"));
         }
-        Content = panel;
+        Content = WithLocation(panel);
+    }
+
+    // With the title hidden the place name goes small at the top left, so the card still says where it is.
+    private Control WithLocation(StackPanel panel)
+    {
+        if (HeaderShown || _weather is not { LocationName.Length: > 0 })
+        {
+            return panel;
+        }
+        var place = Text(_weather.LocationName, 11, dim: true, name: "WeatherLocation");
+        place.HorizontalAlignment = HorizontalAlignment.Left;
+        place.VerticalAlignment = VerticalAlignment.Top;
+        return new Grid { Children = { panel, place } };
     }
 
     // Loading, no location and offline each show one short message (offline adds when it last updated).

@@ -28,7 +28,14 @@ public sealed class WidgetFrame : Border
 
     // The header's own leading column for the remove badge: zero wide, opened in edit mode so the title never sits under it.
     private readonly ColumnDefinition _badgeColumn;
-    private const double BadgeColumnWidth = 24;
+    private const double BadgeColumnWidth = 44;
+
+    // The title bar's height: its top margin (12), minimum height (32) and bottom margin (6).
+    public const double HeaderHeight = 50;
+
+    private readonly TextBlock _heading;
+    private readonly Grid _header;
+    private bool _showHeader = true;
 
     public WidgetFrame(WidgetDefinition widget, WidgetView view)
     {
@@ -38,20 +45,21 @@ public sealed class WidgetFrame : Border
         Classes.Add("widgetFrame");
         MinHeight = widget.MinHeight;
 
-        var heading = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
-        heading.Classes.Add("cardHeading");
-        heading.Classes.Add("widgetHeading");
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("0,*,Auto") };
+        _heading = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
+        _heading.Classes.Add("cardHeading");
+        _heading.Classes.Add("widgetHeading");
+        var header = _header = new Grid { ColumnDefinitions = new ColumnDefinitions("0,*,Auto") };
         _badgeColumn = header.ColumnDefinitions[0];
         header.Classes.Add("widgetHeader");
-        Grid.SetColumn(heading, 1);
-        header.Children.Add(heading);
+        Grid.SetColumn(_heading, 1);
+        header.Children.Add(_heading);
         if (view.HeaderActions is { } actions)
         {
             Grid.SetColumn(actions, 2);
             header.Children.Add(actions);
         }
-        DockPanel.SetDock(header, Dock.Top);
+        view.HeaderForegroundChanged += (_, _) => UpdateHeadingColor();
+        UpdateHeadingColor();
 
         Control body = view;
         if (widget.ScrollsContent)
@@ -65,7 +73,17 @@ public sealed class WidgetFrame : Border
             };
         }
 
-        Content = new DockPanel { Children = { header, body } };
+        if (view.HeaderOverlaysContent)
+        {
+            // The view paints the whole card; the title bar sits on top of it.
+            header.VerticalAlignment = VerticalAlignment.Top;
+            Content = new Panel { Children = { body, header } };
+        }
+        else
+        {
+            DockPanel.SetDock(header, Dock.Top);
+            Content = new DockPanel { Children = { header, body } };
+        }
         Content.Classes.Add("widgetContent");
 
         // Takes the widget off the dashboard (into the tray); its data stays. A small badge on the top-left corner.
@@ -77,14 +95,64 @@ public sealed class WidgetFrame : Border
         RemoveButton.Classes.Add("removeWidget");
         ToolTip.SetTip(RemoveButton, "Remove from dashboard");
 
+        // Shows or hides this widget's title. A small badge beside the remove badge.
+        HeaderButton = new Button
+        {
+            Name = $"ToggleHeader_{widget.Id}",
+            Content = new Path { Data = Geometry.Parse("M0,0 L6,0 M0,3.5 L4,3.5") },
+        };
+        HeaderButton.Classes.Add("removeWidget");
+        HeaderButton.Classes.Add("headerBadge");
+
         // The whole widget is the drag handle. Transparent so it catches every click and hover meant for the
         // content underneath; focusable so focus can be moved off the content when editing starts.
         EditBar = new Border { Background = Brushes.Transparent, Focusable = true };
         EditBar.Classes.Add("editBar");
-        _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton } };
+        ToolTip.SetTip(EditBar, widget.Title);
+        _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton, HeaderButton } };
         _editLayer.Classes.Add("editLayer");
 
         Child = new Panel { Children = { Content, _editLayer } };
+        ApplyHeader();
+    }
+
+    // The badge that shows or hides the title.
+    public Button HeaderButton { get; }
+
+    // Whether the title is shown. Hidden, the row is gone (unless the widget has header buttons, which stay) and
+    // the content fills the card.
+    public bool ShowHeader
+    {
+        get => _showHeader;
+        set
+        {
+            if (_showHeader != value)
+            {
+                _showHeader = value;
+                ApplyHeader();
+            }
+        }
+    }
+
+    private void ApplyHeader()
+    {
+        _heading.IsVisible = _showHeader;
+        _header.IsVisible = _showHeader || View.HeaderActions is not null;
+        View.Classes.Set("headerless", !_showHeader);
+        View.SetHeaderShown(_showHeader);
+        ToolTip.SetTip(HeaderButton, _showHeader ? "Hide title" : "Show title");
+    }
+
+    private void UpdateHeadingColor()
+    {
+        if (View.HeaderForeground is { } brush)
+        {
+            _heading.Foreground = brush;
+        }
+        else
+        {
+            _heading.ClearValue(TextBlock.ForegroundProperty);
+        }
     }
 
     public WidgetDefinition Widget { get; }
@@ -92,7 +160,7 @@ public sealed class WidgetFrame : Border
     public WidgetView View { get; }
 
     // The heading and the widget's view; inert and dimmed in edit mode.
-    public DockPanel Content { get; }
+    public Panel Content { get; }
 
     // The transparent layer over the whole card that drags the widget in edit mode.
     public Border EditBar { get; }
@@ -116,6 +184,7 @@ public sealed class WidgetFrame : Border
         {
             var editing = change.GetNewValue<bool>();
             Classes.Set("editing", editing);
+            View.Classes.Set("editingWidget", editing);
             _editLayer.IsVisible = editing;
             _badgeColumn.Width = new GridLength(editing ? BadgeColumnWidth : 0);
 

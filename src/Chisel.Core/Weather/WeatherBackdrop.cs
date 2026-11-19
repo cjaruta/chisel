@@ -9,6 +9,7 @@ public static class WeatherBackdrop
 {
     // The weather widget's secondary text (hour labels, condition, footer): light grey, so backdrops can be brighter than
     // the app's dim grey would allow.
+    public const uint PrimaryText = 0xF2F4F8;
     public const uint SecondaryText = 0xC4C9D2;
 
     public static string Key(WeatherCondition condition, bool isDay) =>

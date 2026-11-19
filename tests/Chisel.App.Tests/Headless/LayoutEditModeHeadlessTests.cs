@@ -63,7 +63,11 @@ public class LayoutEditModeHeadlessTests
         foreach (var frame in Frames(window))
         {
             var heading = frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
-            var badge = InWindow(frame.RemoveButton, window);
+            if (!heading.IsEffectivelyVisible)
+            {
+                continue;
+            }
+            var badge = InWindow(frame.HeaderButton, window);
             var title = InWindow(heading, window);
             Assert.True(title.Left >= badge.Right, $"{frame.WidgetId}: title starts at {title.Left}, badge ends at {badge.Right}");
         }

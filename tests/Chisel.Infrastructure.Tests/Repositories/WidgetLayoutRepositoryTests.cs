@@ -86,6 +86,27 @@ public class WidgetLayoutRepositoryTests : IDisposable
         Assert.Equal(2, readContext.LayoutColumns.Count());
     }
 
+    [Fact]
+    public void HeaderChoice_RoundTrips_IncludingNoChoice()
+    {
+        var layout = new WidgetLayout(new[]
+        {
+            new LayoutColumn(1, new[]
+            {
+                new WidgetPlacement("schedule", 1, true),
+                new WidgetPlacement("tasks", 1, false),
+                new WidgetPlacement("notes"),
+            }),
+        });
+        using var context = _fixture.CreateContext();
+        new WidgetLayoutRepository(context).Save(layout);
+
+        using var readContext = _fixture.CreateContext();
+        var loaded = new WidgetLayoutRepository(readContext).Get()!.Columns[0].Widgets;
+
+        Assert.Equal(new bool?[] { true, false, null }, loaded.Select(w => w.ShowHeader).ToArray());
+    }
+
     // The inverse of WidgetLayout.Describe, for writing test layouts compactly.
     private static WidgetLayout Parse(string described) =>
         new(described.Split(" | ").Select(column =>

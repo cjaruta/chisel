@@ -18,6 +18,7 @@ public static class WidgetLayoutMapper
                 ColumnIndex = columnIndex,
                 Position = position,
                 HeightWeight = widget.HeightWeight,
+                ShowHeader = widget.ShowHeader,
             }))
             .ToList();
         return (columns, placements);
@@ -37,7 +38,7 @@ public static class WidgetLayoutMapper
             .OrderBy(g => g.Key)
             .Select(g => new LayoutColumn(
                 widths.GetValueOrDefault(g.Key, 1),
-                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight)).ToList())),
+                g.OrderBy(p => p.Position).Select(p => new WidgetPlacement(p.WidgetId, p.HeightWeight, p.ShowHeader)).ToList())),
             hiddenIds);
     }
 }

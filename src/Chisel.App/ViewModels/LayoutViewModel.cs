@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace Chisel.App.ViewModels;
 
 // One widget in a column of the shown layout.
-public sealed record WidgetSlot(WidgetDefinition Widget, double HeightWeight)
+public sealed record WidgetSlot(WidgetDefinition Widget, double HeightWeight, bool ShowHeader)
 {
     public string Id => Widget.Id;
     public string Title => Widget.Title;
@@ -57,6 +57,17 @@ public partial class LayoutViewModel : ViewModelBase
         IsTrayOpen = true;
     }
 
+    // Shows or hides a widget's title (working copy only; Done saves it, Cancel and Reset put it back).
+    public void ToggleHeader(string widgetId)
+    {
+        if (!IsEditing || Layout.Find(widgetId) is not { } at)
+        {
+            return;
+        }
+        var current = WidgetHeaders.EffectiveShowHeader(Layout.Columns[at.Column].Widgets[at.Index], WidgetRegistry.Get(widgetId)!.DefaultShowHeader);
+        Layout = Layout.SetShowHeader(widgetId, !current);
+    }
+
     // The quick path from the tray: the widget goes to the bottom of the first column.
     public void AddWidgetFromTray(string widgetId)
     {
@@ -73,7 +84,8 @@ public partial class LayoutViewModel : ViewModelBase
 
     public static IReadOnlyList<LayoutColumnSlot> Slots(WidgetLayout layout) => layout.Columns
         .Select(c => new LayoutColumnSlot(c.WidthWeight,
-            c.Widgets.Select(w => new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight)).ToList()))
+            c.Widgets.Select(w => new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight,
+                WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader))).ToList()))
         .ToList();
 
     // repository: where the layout is saved; null keeps it in memory only.

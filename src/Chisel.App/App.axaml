@@ -68,7 +68,7 @@
             <Setter Property="RenderTransform" Value="scale(0.985)" />
         </Style>
 
-        <Style Selector="Border.widgetFrame.editing DockPanel.widgetContent">
+        <Style Selector="Border.widgetFrame.editing :is(Panel).widgetContent">
             <Setter Property="Opacity" Value="0.55" />
         </Style>
 
@@ -243,6 +243,11 @@
             <Setter Property="Cursor" Value="Hand" />
         </Style>
 
+        <!-- The title badge: the same round badge, just to the right of the remove badge -->
+        <Style Selector="Button.removeWidget.headerBadge">
+            <Setter Property="Margin" Value="28,8,0,0" />
+        </Style>
+
         <Style Selector="Button.removeWidget Path">
             <Setter Property="Stroke" Value="White" />
             <Setter Property="StrokeThickness" Value="1.8" />
@@ -347,6 +352,19 @@
         <Style Selector=":is(UserControl).scrolledWidget">
             <Setter Property="Margin" Value="16,0,16,16" />
             <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <!-- No title bar above a list: leave room at the top for the edit-mode badges, so entering edit mode moves nothing -->
+        <Style Selector=":is(UserControl).scrolledWidget.headerless">
+            <Setter Property="Margin" Value="16,24,16,16" />
+        </Style>
+
+        <Style Selector="TextBlock#WeatherLocation">
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+
+        <Style Selector=":is(UserControl).editingWidget TextBlock#WeatherLocation">
+            <Setter Property="Margin" Value="38,10,0,0" />
         </Style>
 
         <Style Selector="TextBlock.cardHeading">

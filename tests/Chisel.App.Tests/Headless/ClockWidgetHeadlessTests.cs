@@ -42,7 +42,8 @@ public class ClockWidgetHeadlessTests
         var window = UiSnapshot.ShowMainWindow(width, height);
         var main = (MainViewModel)window.DataContext!;
         var layout = main.Layout.Layout;
-        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1)
+            .SetShowHeader(WidgetRegistry.Clock, true));
         Dispatcher.UIThread.RunJobs();
 
         var face = window.GetVisualDescendants().OfType<ClockFace>().Single();
@@ -60,6 +61,25 @@ public class ClockWidgetHeadlessTests
         if (width == 1200) UiSnapshot.Render(window, "clock-centered");
         Assert.True(topGap >= 0, $"face overlaps the heading ({topGap})");
         Assert.InRange(Math.Abs(topGap - bottomGap), 0, 1);
+    }
+
+    [AvaloniaFact]
+    public void WithTheTitleHidden_TheFaceIsCenteredInTheWholeCard()
+    {
+        var window = UiSnapshot.ShowMainWindow(1200, 760);
+        var main = (MainViewModel)window.DataContext!;
+        var layout = main.Layout.Layout;
+        main.Layout.Apply(layout.AddWidget(WidgetRegistry.Clock, 0, layout.Columns[0].Widgets.Count, 1));
+        Dispatcher.UIThread.RunJobs();
+
+        var face = window.GetVisualDescendants().OfType<ClockFace>().Single();
+        var area = face.GetVisualAncestors().OfType<WidgetFrame>().Single().Content;
+        double Top(Visual v) => v.TranslatePoint(new Point(0, 0), window)!.Value.Y;
+        var circleTop = Top(face) + face.Bounds.Height / 2 - face.FaceRadius;
+        var circleBottom = circleTop + 2 * face.FaceRadius;
+
+        Assert.InRange(Math.Abs((circleTop - Top(area)) - (Top(area) + area.Bounds.Height - circleBottom)), 0, 1);
+        window.Close();
     }
 
     [AvaloniaFact]

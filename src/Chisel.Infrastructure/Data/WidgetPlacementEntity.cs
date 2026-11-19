@@ -9,4 +9,7 @@ public class WidgetPlacementEntity
     public int ColumnIndex { get; set; }
     public int Position { get; set; }
     public double HeightWeight { get; set; } = 1;
+
+    // The user's header choice; null means the widget's default.
+    public bool? ShowHeader { get; set; }
 }
