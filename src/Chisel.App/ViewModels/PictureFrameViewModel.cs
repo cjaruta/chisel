@@ -60,7 +60,25 @@ public sealed class PictureFrameViewModel
     public bool IsVisible
     {
         get => _visible;
-        set => _visible = value;
+        set
+        {
+            _visible = value;
+            UpdateRunning();
+        }
+    }
+
+    // Raised when IsRunning changed (the view starts or stops animated pictures).
+    public event Action? RunningChanged;
+
+    private bool _lastRunning;
+
+    internal void UpdateRunning()
+    {
+        if (IsRunning != _lastRunning)
+        {
+            _lastRunning = IsRunning;
+            RunningChanged?.Invoke();
+        }
     }
 
     // Visible, the window is not minimized, and the layout is not being edited. The timer only runs then.
@@ -70,7 +88,17 @@ public sealed class PictureFrameViewModel
     public bool ShouldAnimate => IsRunning;
 
     // A load in progress for this frame (a dropped picture on its way) and the last message about it.
-    public int Pending { get; internal set; }
+    private int _pending;
+
+    public int Pending
+    {
+        get => _pending;
+        internal set
+        {
+            _pending = value;
+            Changed?.Invoke();
+        }
+    }
 
     // Moves by one picture (wrapping) and restarts the timer. Does nothing with fewer than two pictures.
     public bool Step(int direction)
@@ -116,6 +144,11 @@ public sealed class PictureFrameViewModel
     // Whether the picture shown can be adjusted: a still picture, and a layout being edited.
     public bool CanAdjust =>
         _owner.IsEditing && Current is { } picture && _owner.AssetOf(picture.AssetId) is { IsGif: false };
+
+    // Raised when the frame entered or left the adjust state.
+    public event Action? AdjustStateChanged;
+
+    internal void AdjustingChanged() => AdjustStateChanged?.Invoke();
 
     public bool BeginAdjust() => CanAdjust && _owner.BeginAdjust(FrameId);
 

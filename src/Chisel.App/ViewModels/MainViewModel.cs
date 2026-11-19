@@ -43,7 +43,8 @@ public partial class MainViewModel : ViewModelBase
         Services.IArtSampler? artSampler = null,
         Services.PictureImportService? pictureImport = null,
         PictureSettingsViewModel? pictureSettings = null,
-        TimeProvider? time = null)
+        TimeProvider? time = null,
+        Chisel.Core.Pictures.PictureCatalog? pictureCatalog = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -60,7 +61,7 @@ public partial class MainViewModel : ViewModelBase
         QuickLinks = quickLinks;
         Settings = settings;
         Layout = layout ?? new LayoutViewModel();
-        PictureFrames = new PictureFramesViewModel(Layout, time, import: pictureImport);
+        PictureFrames = new PictureFramesViewModel(Layout, time, import: pictureImport, catalog: pictureCatalog);
         PictureSettings = pictureSettings ?? new PictureSettingsViewModel(null, Layout, null);
         Volume.ScrollEnabled = MediaSettings.ScrollVolume;
         MediaSettings.PropertyChanged += (_, e) =>

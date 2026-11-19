@@ -40,6 +40,14 @@ public partial class MainWindow : Window
         Deactivated += (_, _) => _spaceDown = false;
 
         DataContextChanged += (_, _) => (DataContext as MainViewModel)?.Settings.Theme?.Track(this);
+        PropertyChanged += (_, e) =>
+        {
+            // Picture frames stop their timers and animations while the window is minimized.
+            if (e.Property == WindowStateProperty && DataContext is MainViewModel main)
+            {
+                main.PictureFrames.WindowMinimized = WindowState == WindowState.Minimized;
+            }
+        };
 
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
         Loaded += (_, _) =>

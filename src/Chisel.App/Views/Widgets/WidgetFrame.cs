@@ -152,6 +152,19 @@ public sealed class WidgetFrame : Border
         HeaderButton.Classes.Add("removeWidget");
         HeaderButton.Classes.Add("headerBadge");
 
+        // Starts adjusting (panning and zooming) the picture a picture frame shows. Only on a picture frame, in edit mode.
+        AdjustButton = new Button
+        {
+            Name = $"AdjustPicture_{widget.Id}",
+            Content = new Path { Data = Geometry.Parse("M0,2.5 H1.5 V0 M3.5,0 V1.5 H6 M6,3.5 H4.5 V6 M2.5,6 V4.5 H0") },
+            IsVisible = false,
+        };
+        AdjustButton.Classes.Add("removeWidget");
+        AdjustButton.Classes.Add("adjustBadge");
+        ToolTip.SetTip(AdjustButton, "Adjust picture");
+        AutomationProperties.SetName(AdjustButton, "Adjust picture");
+        AdjustButton.Click += (_, _) => AdjustRequested?.Invoke(ActiveId);
+
         // Switches a group between tabs and split view: at the right end of the header in tabs view, in the gap
         // between the first two panes in split view. Quiet; theme tokens only (see App.axaml).
         ViewModeButton = new Button
@@ -174,7 +187,7 @@ public sealed class WidgetFrame : Border
         // content underneath; focusable so focus can be moved off the content when editing starts.
         EditBar = new Border { Background = Brushes.Transparent, Focusable = true };
         EditBar.Classes.Add("editBar");
-        _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton, HeaderButton } };
+        _editLayer = new Grid { IsVisible = false, Children = { EditBar, RemoveButton, HeaderButton, AdjustButton } };
         _editLayer.Classes.Add("editLayer");
 
         _splitOverlay.IsVisible = false;
@@ -191,6 +204,46 @@ public sealed class WidgetFrame : Border
 
     // The badge that shows or hides the title. Not offered on a group: its header is always shown.
     public Button HeaderButton { get; }
+
+    // The badge that starts adjusting a picture frame's picture, and the request it makes (with the frame's id).
+    public Button AdjustButton { get; }
+
+    public event System.Action<string>? AdjustRequested;
+
+    // Whether the picture shown is being adjusted: the card stops being a drag handle and its content comes alive.
+    public bool IsAdjusting
+    {
+        get => _adjusting;
+        set
+        {
+            if (_adjusting != value)
+            {
+                _adjusting = value;
+                Classes.Set("adjusting", value);
+                ApplyEditing();
+                UpdateAdjust();
+            }
+        }
+    }
+
+    private bool _adjusting;
+
+    private bool IsPictureActive => _members.Count > 0 && _members[_active].Definition.TypeId == WidgetRegistry.PictureFrame;
+
+    private double BadgeWidth() => IsPictureActive ? BadgeColumnWidth + 20 : BadgeColumnWidth;
+
+    // The adjust badge shows on a picture frame (plain, or the active tab), in edit mode; adjusting hides every badge and the drag layer.
+    private void UpdateAdjust()
+    {
+        AdjustButton.IsVisible = IsEditing && !_adjusting && IsPictureActive && !_splitShown;
+        EditBar.IsVisible = !_adjusting;
+        RemoveButton.IsVisible = !_adjusting;
+        HeaderButton.IsVisible = !IsGroup && !_adjusting;
+        if (IsEditing)
+        {
+            _badgeColumn.Width = new GridLength(BadgeWidth());
+        }
+    }
 
     // The group's tabs / split toggle. Only visible on a group.
     public Button ViewModeButton { get; }
@@ -729,6 +782,7 @@ public sealed class WidgetFrame : Border
     // every pane is shown (and live).
     private void ApplyActive()
     {
+        UpdateAdjust();
         for (var i = 0; i < _members.Count && !_released; i++)
         {
             var member = _members[i];
@@ -760,7 +814,7 @@ public sealed class WidgetFrame : Border
             member.View.Classes.Set("headerless", !shown);
             member.View.SetHeaderShown(shown);
         }
-        HeaderButton.IsVisible = !IsGroup;
+        HeaderButton.IsVisible = !IsGroup && !_adjusting;
         ToolTip.SetTip(HeaderButton, _showHeader ? "Hide title" : "Show title");
     }
 
@@ -769,9 +823,9 @@ public sealed class WidgetFrame : Border
     private void ApplyEditing()
     {
         var editing = IsEditing;
-        var inert = editing && !IsGroup;
+        var inert = editing && !IsGroup && !_adjusting;
         Content.IsHitTestVisible = !inert;
-        _bodyHost.IsHitTestVisible = !editing;
+        _bodyHost.IsHitTestVisible = !editing || _adjusting;
         var mode = editing ? KeyboardNavigationMode.None : KeyboardNavigationMode.Continue;
         KeyboardNavigation.SetTabNavigation(_bodyHost, mode);
         foreach (var body in Live.Select(m => m.PaneBody).OfType<Panel>())
@@ -893,8 +947,9 @@ public sealed class WidgetFrame : Border
                 member.View.Classes.Set("editingWidget", editing);
             }
             _editLayer.IsVisible = editing;
-            _badgeColumn.Width = new GridLength(editing ? BadgeColumnWidth : 0);
+            _badgeColumn.Width = new GridLength(editing ? BadgeWidth() : 0);
             ApplyEditing();
+            UpdateAdjust();
         }
     }
 }

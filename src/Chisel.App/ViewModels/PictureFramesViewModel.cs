@@ -62,7 +62,20 @@ public sealed class PictureFramesViewModel : ViewModelBase
     public bool IsEditing => _layout.IsEditing;
 
     // Set by the window when it is minimized or restored.
-    public bool WindowMinimized { get; set; }
+    private bool _windowMinimized;
+
+    public bool WindowMinimized
+    {
+        get => _windowMinimized;
+        set
+        {
+            _windowMinimized = value;
+            foreach (var frame in _frames.Values)
+            {
+                frame.UpdateRunning();
+            }
+        }
+    }
 
     public FrameContent Content(string frameId) => _layout.Pictures.Get(frameId);
 
@@ -215,6 +228,20 @@ public sealed class PictureFramesViewModel : ViewModelBase
 
     private void OnLayoutChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
+        {
+            foreach (var frame in _frames.Values)
+            {
+                frame.UpdateRunning();
+            }
+        }
+        if (e.PropertyName == nameof(LayoutViewModel.AdjustingFrameId))
+        {
+            foreach (var frame in _frames.Values)
+            {
+                frame.AdjustingChanged();
+            }
+        }
         if (e.PropertyName == nameof(LayoutViewModel.Pictures))
         {
             foreach (var frame in _frames.Values)

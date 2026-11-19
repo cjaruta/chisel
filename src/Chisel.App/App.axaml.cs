@@ -72,6 +72,7 @@ public partial class App : Application
                     _spectrum,
                     new MediaSettingsViewModel(_services.UserSettings),
                     _volume,
+                    pictureCatalog: _services.Pictures,
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures));
                 weather.ShowCached();
