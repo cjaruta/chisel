@@ -9,6 +9,7 @@ public partial class MainViewModel : ViewModelBase
     public AnalogClockViewModel AnalogClock { get; }
     public WeatherViewModel Weather { get; }
     public WeatherSettingsViewModel WeatherSettings { get; }
+    public MediaViewModel Media { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -27,12 +28,14 @@ public partial class MainViewModel : ViewModelBase
         SettingsViewModel settings,
         LayoutViewModel? layout = null,
         WeatherViewModel? weather = null,
-        WeatherSettingsViewModel? weatherSettings = null)
+        WeatherSettingsViewModel? weatherSettings = null,
+        Chisel.Core.Media.IMediaService? media = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
         Weather = weather ?? new WeatherViewModel(new Services.FakeWeatherService(), TimeProvider.System);
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
+        Media = new MediaViewModel(media ?? new Services.FakeMediaService(), TimeProvider.System);
         Schedule = schedule;
         Tasks = tasks;
         Notes = notes;
@@ -44,6 +47,10 @@ public partial class MainViewModel : ViewModelBase
             if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
             {
                 OnPropertyChanged(nameof(CanOpenSettings));
+            }
+            else if (e.PropertyName == nameof(LayoutViewModel.Layout))
+            {
+                UpdateMediaActive();
             }
         };
     }
@@ -70,6 +77,7 @@ public partial class MainViewModel : ViewModelBase
     // neither skipped nor doubled.
     public void Tick()
     {
+        Media.Tick();
         if (Clock.NeedsRefresh)
         {
             Refresh();
@@ -83,7 +91,12 @@ public partial class MainViewModel : ViewModelBase
         // The weather is only fetched while its widget is on the dashboard.
         Weather.IsActive = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Weather);
         Weather.Refresh();
+        UpdateMediaActive();
     }
+
+    // The media widget only listens to the system while it is on the dashboard.
+    private void UpdateMediaActive() =>
+        Media.IsActive = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Media);
 
     // Escape cancels a widget drag or resize; otherwise it cancels layout editing; otherwise it closes whatever
     // floats over the window: settings or a schedule editor.

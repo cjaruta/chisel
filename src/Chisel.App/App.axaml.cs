@@ -15,6 +15,7 @@ namespace Chisel.App;
 public partial class App : Application
 {
     private AppServices? _services;
+    private Chisel.Core.Media.IMediaService? _mediaService;
 
     public override void Initialize()
     {
@@ -27,6 +28,8 @@ public partial class App : Application
         {
             // The weather-motion capture never touches real data: a temp database, a fake weather service and an in-memory store.
             var scenario = Dev.CaptureMode.Scenario(desktop.Args);
+            // The media capture plays sample metadata from a fake service; otherwise the real system media session is used.
+            _mediaService = scenario == "media" ? new FakeMediaService { Current = Dev.CaptureMode.SampleMedia() } : new WindowsMediaService();
             var isolated = scenario == "weather-motion";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
             var startup = AppStartup.Run(() => new AppServices(databasePath), AppPaths.GetErrorLogPath());
@@ -55,7 +58,8 @@ public partial class App : Application
                     settings,
                     new LayoutViewModel(_services.WidgetLayout),
                     weather,
-                    new WeatherSettingsViewModel(weatherStore, isolated ? new NoGeocoder() : new OpenMeteoGeocoder(), weather, userSettings: _services.UserSettings));
+                    new WeatherSettingsViewModel(weatherStore, isolated ? new NoGeocoder() : new OpenMeteoGeocoder(), weather, userSettings: _services.UserSettings),
+                    _mediaService);
                 weather.ShowCached();
                 mainViewModel.Refresh();
 
@@ -71,6 +75,7 @@ public partial class App : Application
 
                 desktop.Exit += (_, _) =>
                 {
+                    (_mediaService as IDisposable)?.Dispose();
                     _services?.Dispose();
                     if (isolated)
                     {

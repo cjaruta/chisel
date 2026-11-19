@@ -29,7 +29,8 @@ public static class UiSnapshot
     // layoutRepository: where the widget layout is kept, so a test can reopen the window with it; none by default.
     public static MainWindow ShowMainWindow(double width = 1200, double height = 760, DateTimeOffset? now = null,
         IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null,
-        Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null)
+        Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
+        Chisel.Core.Media.IMediaService? media = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -64,7 +65,8 @@ public static class UiSnapshot
             settings,
             new LayoutViewModel(layoutRepository),
             weather,
-            new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather, userSettings: userSettings));
+            new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather, userSettings: userSettings),
+            media);
 
         var window = new MainWindow(windowPlacementPath: null)
         {
