@@ -20,4 +20,4 @@ public class UserSettingsEntity
     public string ThemeMode { get; set; } = UserSettings.DefaultThemeMode;
     public string? AccentColor { get; set; }
     public string SchedulePalette { get; set; } = UserSettings.DefaultSchedulePalette;
-}
+}
