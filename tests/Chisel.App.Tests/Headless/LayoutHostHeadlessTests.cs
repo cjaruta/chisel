@@ -23,8 +23,7 @@ public class LayoutHostHeadlessTests
 
     private static string[][] Ids(LayoutHost host) => host.Frames.Select(c => c.Select(f => f.WidgetId).ToArray()).ToArray();
 
-    private static string Heading(WidgetFrame frame) =>
-        frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading")).Text ?? "";
+    private static string Heading(WidgetFrame frame) => frame.Widget.Title;
 
     private static Rect InWindow(Visual visual, Window window) =>
         new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
@@ -61,11 +60,14 @@ public class LayoutHostHeadlessTests
             Assert.True(client.Contains(bounds), $"{frame.WidgetId} at {bounds} is outside {client}");
             Assert.True(bounds.Height >= frame.MinHeight - 0.5, $"{frame.WidgetId} is shorter than its minimum");
 
-            var heading = frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
-            Assert.True(bounds.Contains(InWindow(heading, window)), $"{frame.WidgetId} heading is cut off");
-            if (frame.View.HeaderActions is { } actions)
+            var heading = frame.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Classes.Contains("widgetHeading"));
+            if (heading is not null)
             {
-                Assert.True(bounds.Contains(InWindow(actions, window)), $"{frame.WidgetId} header buttons are cut off");
+                Assert.True(bounds.Contains(InWindow(heading, window)), $"{frame.WidgetId} heading is cut off");
+            }
+            if (frame.View.BodyActions is { } actions)
+            {
+                Assert.True(bounds.Contains(InWindow(actions, window)), $"{frame.WidgetId} buttons are cut off");
             }
         }
 

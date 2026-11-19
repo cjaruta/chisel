@@ -62,8 +62,8 @@ public class LayoutEditModeHeadlessTests
         EnterEditMode(window);
         foreach (var frame in Frames(window))
         {
-            var heading = frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
-            if (!heading.IsEffectivelyVisible)
+            var heading = frame.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Classes.Contains("widgetHeading"));
+            if (heading is null)
             {
                 continue;
             }

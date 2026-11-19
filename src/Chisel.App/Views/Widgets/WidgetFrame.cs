@@ -30,11 +30,10 @@ public sealed class WidgetFrame : Border
     private readonly ColumnDefinition _badgeColumn;
     private const double BadgeColumnWidth = 44;
 
-    // The title bar's height: its top margin (12), minimum height (32) and bottom margin (6).
-    public const double HeaderHeight = 50;
+    // The one header every card shares: a fixed-height bar with the title on the left.
+    public const double HeaderHeight = 44;
 
-    private readonly TextBlock _heading;
-    private readonly Grid _header;
+    private readonly DockPanel _dock;
     private bool _showHeader = true;
 
     public WidgetFrame(WidgetDefinition widget, WidgetView view)
@@ -45,21 +44,16 @@ public sealed class WidgetFrame : Border
         Classes.Add("widgetFrame");
         MinHeight = widget.MinHeight;
 
-        _heading = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
-        _heading.Classes.Add("cardHeading");
-        _heading.Classes.Add("widgetHeading");
-        var header = _header = new Grid { ColumnDefinitions = new ColumnDefinitions("0,*,Auto") };
-        _badgeColumn = header.ColumnDefinitions[0];
-        header.Classes.Add("widgetHeader");
-        Grid.SetColumn(_heading, 1);
-        header.Children.Add(_heading);
-        if (view.HeaderActions is { } actions)
-        {
-            Grid.SetColumn(actions, 2);
-            header.Children.Add(actions);
-        }
-        view.HeaderForegroundChanged += (_, _) => UpdateHeadingColor();
-        UpdateHeadingColor();
+        var heading = new TextBlock { Text = widget.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
+        heading.Classes.Add("cardHeading");
+        heading.Classes.Add("widgetHeading");
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("0,*") };
+        _badgeColumn = grid.ColumnDefinitions[0];
+        Grid.SetColumn(heading, 1);
+        grid.Children.Add(heading);
+        Header = new Border { Child = grid, Height = HeaderHeight };
+        Header.Classes.Add("widgetHeader");
+        DockPanel.SetDock(Header, Dock.Top);
 
         Control body = view;
         if (widget.ScrollsContent)
@@ -73,17 +67,15 @@ public sealed class WidgetFrame : Border
             };
         }
 
-        if (view.HeaderOverlaysContent)
+        if (view.BodyActions is { } actions)
         {
-            // The view paints the whole card; the title bar sits on top of it.
-            header.VerticalAlignment = VerticalAlignment.Top;
-            Content = new Panel { Children = { body, header } };
+            actions.HorizontalAlignment = HorizontalAlignment.Right;
+            actions.Margin = new Thickness(12, 8, 12, 0);
+            DockPanel.SetDock(actions, Dock.Top);
+            body = new DockPanel { Children = { actions, body } };
         }
-        else
-        {
-            DockPanel.SetDock(header, Dock.Top);
-            Content = new DockPanel { Children = { header, body } };
-        }
+        _dock = new DockPanel { Children = { Header, body } };
+        Content = _dock;
         Content.Classes.Add("widgetContent");
 
         // Takes the widget off the dashboard (into the tray); its data stays. A small badge on the top-left corner.
@@ -119,8 +111,10 @@ public sealed class WidgetFrame : Border
     // The badge that shows or hides the title.
     public Button HeaderButton { get; }
 
-    // Whether the title is shown. Hidden, the row is gone (unless the widget has header buttons, which stay) and
-    // the content fills the card.
+    // The shared header bar. It is out of the visual tree while the header is hidden.
+    public Border Header { get; }
+
+    // Whether the header is shown. Hidden, the whole row is removed and the body fills the card.
     public bool ShowHeader
     {
         get => _showHeader;
@@ -136,23 +130,17 @@ public sealed class WidgetFrame : Border
 
     private void ApplyHeader()
     {
-        _heading.IsVisible = _showHeader;
-        _header.IsVisible = _showHeader || View.HeaderActions is not null;
+        if (_showHeader && !_dock.Children.Contains(Header))
+        {
+            _dock.Children.Insert(0, Header);
+        }
+        else if (!_showHeader)
+        {
+            _dock.Children.Remove(Header);
+        }
         View.Classes.Set("headerless", !_showHeader);
         View.SetHeaderShown(_showHeader);
         ToolTip.SetTip(HeaderButton, _showHeader ? "Hide title" : "Show title");
-    }
-
-    private void UpdateHeadingColor()
-    {
-        if (View.HeaderForeground is { } brush)
-        {
-            _heading.Foreground = brush;
-        }
-        else
-        {
-            _heading.ClearValue(TextBlock.ForegroundProperty);
-        }
     }
 
     public WidgetDefinition Widget { get; }

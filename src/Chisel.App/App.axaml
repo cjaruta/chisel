@@ -16,6 +16,7 @@
 
         <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
+        <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#FFFFFF" Opacity="0.04" />
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
         <SolidColorBrush x:Key="DimTextBrush" Color="{StaticResource DimTextColor}" />
         <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
@@ -343,9 +344,13 @@
             <Setter Property="Foreground" Value="#1A1305" />
         </Style>
 
-        <Style Selector="Grid.widgetHeader">
-            <Setter Property="Margin" Value="16,12,12,6" />
-            <Setter Property="MinHeight" Value="32" />
+        <!-- The one header bar shared by every widget card -->
+        <Style Selector="Border.widgetHeader">
+            <Setter Property="Background" Value="{StaticResource HeaderBackgroundBrush}" />
+            <Setter Property="Padding" Value="16,0,12,0" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
+            <Setter Property="CornerRadius" Value="10,10,0,0" />
         </Style>
 
         <!-- Top-aligned so a list's input row stays right under the list, as before, when the card is taller -->
@@ -363,7 +368,7 @@
             <Setter Property="Margin" Value="0,10,0,0" />
         </Style>
 
-        <Style Selector=":is(UserControl).editingWidget TextBlock#WeatherLocation">
+        <Style Selector=":is(UserControl).editingWidget.headerless TextBlock#WeatherLocation">
             <Setter Property="Margin" Value="38,10,0,0" />
         </Style>
 

@@ -18,7 +18,7 @@ public class WidgetHeaderHeadlessTests
     private static WidgetFrame Frame(Window window, string id) => Frames(window).Single(f => f.WidgetId == id);
 
     private static bool TitleShown(WidgetFrame frame) =>
-        frame.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading")).IsEffectivelyVisible;
+        frame.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Classes.Contains("widgetHeading") && t.IsEffectivelyVisible);
 
     private static LayoutViewModel Layout(Window window) => ((MainViewModel)window.DataContext!).Layout;
 
@@ -120,24 +120,6 @@ public class WidgetHeaderHeadlessTests
         layout.EnterEditCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         UiSnapshot.Render(window, "widget-headers-edit-1200x760");
-        window.Close();
-    }
-
-    // The title over the weather backdrop uses the primary text color that the contrast test checks on every gradient stop.
-    [AvaloniaFact]
-    public void WeatherTitle_WhenShown_UsesThePrimaryTextColor()
-    {
-        var window = ShowWithEveryWidget();
-        var layout = Layout(window);
-        layout.EnterEditCommand.Execute(null);
-        layout.ToggleHeader("weather");
-        ((MainViewModel)window.DataContext!).Weather.Show(WeatherState.Ready, new Chisel.Core.Weather.WeatherSnapshot(
-            20, 18, Chisel.Core.Weather.WeatherCondition.Clear, 24, 12, []));
-        Dispatcher.UIThread.RunJobs();
-
-        var heading = Frame(window, "weather").GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("widgetHeading"));
-        Assert.True(heading.IsEffectivelyVisible);
-        Assert.Equal(0xFF000000 | Chisel.Core.Weather.WeatherBackdrop.PrimaryText, ((Avalonia.Media.ISolidColorBrush)heading.Foreground!).Color.ToUInt32());
         window.Close();
     }
 }
