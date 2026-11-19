@@ -62,6 +62,19 @@ public class WeatherBackdropTests
         }
     }
 
+    // Day must look different from night by color (hue and saturation), not only by brightness.
+    [Fact]
+    public void DayTopStop_IsClearlyDifferentInColorFromNight()
+    {
+        foreach (var condition in Enum.GetValues<WeatherCondition>())
+        {
+            var day = WeatherBackdrop.Gradients[WeatherBackdrop.Key(condition, true)].Top;
+            var night = WeatherBackdrop.Gradients[WeatherBackdrop.Key(condition, false)].Top;
+            var distance = Math.Sqrt(new[] { 16, 8, 0 }.Sum(shift => Math.Pow(((day >> shift) & 255) - ((night >> shift) & 255), 2)));
+            Assert.True(distance >= 7, $"{condition}: {distance:0.0}");
+        }
+    }
+
     [Fact]
     public void TextKeepsAtLeast4Point5ToOneContrast_OnEveryGradientStop()
     {
