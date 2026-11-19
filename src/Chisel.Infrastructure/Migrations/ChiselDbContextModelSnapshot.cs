@@ -173,6 +173,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<int>("ClockFormat")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("MediaVisualizer")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");

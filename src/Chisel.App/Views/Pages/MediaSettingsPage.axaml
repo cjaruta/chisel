@@ -1,0 +1,11 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.MediaSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="VISUALIZER" />
+        <CheckBox Name="MediaVisualizerToggle" Content="Show audio bars while music is playing"
+                  IsChecked="{Binding MediaSettings.ShowVisualizer}" />
+    </StackPanel>
+</UserControl>

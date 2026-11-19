@@ -25,6 +25,7 @@ public sealed class MediaWidgetView : WidgetView
     private const string NoteIcon = "M9,18 V6 L19,4 V16 M9,18 A2.5,2.5 0 1 1 4,18 A2.5,2.5 0 1 1 9,18 M19,16 A2.5,2.5 0 1 1 14,16 A2.5,2.5 0 1 1 19,16";
 
     private MediaViewModel? _media;
+    private MediaSettingsViewModel? _settings;
     private readonly TextBlock _nothing;
     private readonly Grid _player;
     private readonly Border _artBox;
@@ -35,6 +36,7 @@ public sealed class MediaWidgetView : WidgetView
     private readonly ColumnDefinition _filled, _rest;
     private readonly Button _previous, _playPause, _next;
     private readonly Path _playPauseIcon;
+    private readonly SpectrumBars _bars;
     private byte[]? _shownBytes;
     private Bitmap? _bitmap;
 
@@ -86,10 +88,15 @@ public sealed class MediaWidgetView : WidgetView
         _playPause = new Button { Name = "MediaPlayPause", Content = _playPauseIcon };
         _playPause.Classes.Add("mediaButton");
         _playPauseIcon.Bind(Shape.FillProperty, this.GetResourceObservable("CurrentBlockOutlineBrush"));
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(-4, 0, 0, 0) };
-        buttons.Children.Add(_previous);
-        buttons.Children.Add(_playPause);
-        buttons.Children.Add(_next);
+        var buttonRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(-4, 0, 0, 0) };
+        buttonRow.Children.Add(_previous);
+        buttonRow.Children.Add(_playPause);
+        buttonRow.Children.Add(_next);
+        _bars = new SpectrumBars { Name = "MediaBars", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(_bars, 1);
+        var buttons = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12 };
+        buttons.Children.Add(buttonRow);
+        buttons.Children.Add(_bars);
 
         var details = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
         details.Children.Add(_title);
@@ -115,6 +122,10 @@ public sealed class MediaWidgetView : WidgetView
             _previous.Command = _media.PreviousCommand;
             _next.Command = _media.NextCommand;
             _playPause.Command = _media.PlayPauseCommand;
+            _bars.Source = main.Spectrum;
+            _bars.Enabled = main.MediaSettings.ShowVisualizer;
+            _settings = main.MediaSettings;
+            _settings.PropertyChanged += OnSettingsChanged;
         }
         Refresh();
     }
@@ -127,6 +138,13 @@ public sealed class MediaWidgetView : WidgetView
             _previous.Command = _next.Command = _playPause.Command = null;
             _media = null;
         }
+        if (_settings is not null)
+        {
+            _settings.PropertyChanged -= OnSettingsChanged;
+            _settings = null;
+        }
+        _bars.Playing = false;
+        _bars.Source = null;
         ShowArt(null);
         base.OnDetachedFromVisualTree(e);
     }
@@ -146,6 +164,14 @@ public sealed class MediaWidgetView : WidgetView
         else
         {
             Refresh();
+        }
+    }
+
+    private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_settings is not null && e.PropertyName == nameof(MediaSettingsViewModel.ShowVisualizer))
+        {
+            _bars.Enabled = _settings.ShowVisualizer;
         }
     }
 
@@ -172,6 +198,7 @@ public sealed class MediaWidgetView : WidgetView
         if (_media is not { HasSession: true } media)
         {
             Content = _nothing;
+            _bars.Playing = false;
             ShowArt(null);
             return;
         }
@@ -186,6 +213,7 @@ public sealed class MediaWidgetView : WidgetView
         ShowProgress();
         FitToRoom();
         Content = _player;
+        _bars.Playing = media.IsPlaying;
     }
 
     private void ShowProgress()

@@ -88,4 +88,15 @@ public class UserSettingsTests
         Assert.Equal((TemperatureUnit.Fahrenheit, ClockFormat.TwelveHour, "saturated"),
             (changed.TemperatureUnit, changed.ClockFormat, changed.SchedulePalette));
     }
+
+    [Fact]
+    public void MediaVisualizer_DefaultsToOn_AndWithMediaVisualizerChangesOnlyIt()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), ClockFormat.TwelveHour, "saturated");
+
+        var changed = settings.WithMediaVisualizer(false);
+
+        Assert.True(settings.MediaVisualizer);
+        Assert.Equal((false, ClockFormat.TwelveHour, "saturated"), (changed.MediaVisualizer, changed.ClockFormat, changed.SchedulePalette));
+    }
 }

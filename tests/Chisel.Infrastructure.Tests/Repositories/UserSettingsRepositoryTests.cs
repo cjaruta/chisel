@@ -105,5 +105,16 @@ public class UserSettingsRepositoryTests : IDisposable
         Assert.Equal(TemperatureUnit.Fahrenheit, new UserSettingsRepository(readContext).Get()!.TemperatureUnit);
     }
 
+    [Fact]
+    public void Save_ThenGet_PersistsTheMediaVisualizerChoice()
+    {
+        using var context = _fixture.CreateContext();
+        new UserSettingsRepository(context).Save(
+            new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithMediaVisualizer(false));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.False(new UserSettingsRepository(readContext).Get()!.MediaVisualizer);
+    }
+
     public void Dispose() => _fixture.Dispose();
 }

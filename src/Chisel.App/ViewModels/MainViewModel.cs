@@ -10,6 +10,9 @@ public partial class MainViewModel : ViewModelBase
     public WeatherViewModel Weather { get; }
     public WeatherSettingsViewModel WeatherSettings { get; }
     public MediaViewModel Media { get; }
+    public MediaSettingsViewModel MediaSettings { get; }
+    // Where the media widget's audio bars come from; null means flat bars.
+    public Chisel.Core.Media.ISpectrumSource? Spectrum { get; }
     public ScheduleViewModel Schedule { get; }
     public TaskListViewModel Tasks { get; }
     public NotesViewModel Notes { get; }
@@ -29,12 +32,16 @@ public partial class MainViewModel : ViewModelBase
         LayoutViewModel? layout = null,
         WeatherViewModel? weather = null,
         WeatherSettingsViewModel? weatherSettings = null,
-        Chisel.Core.Media.IMediaService? media = null)
+        Chisel.Core.Media.IMediaService? media = null,
+        Chisel.Core.Media.ISpectrumSource? spectrum = null,
+        MediaSettingsViewModel? mediaSettings = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
         Weather = weather ?? new WeatherViewModel(new Services.FakeWeatherService(), TimeProvider.System);
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
+        Spectrum = spectrum;
+        MediaSettings = mediaSettings ?? new MediaSettingsViewModel(null);
         Media = new MediaViewModel(media ?? new Services.FakeMediaService(), TimeProvider.System);
         Schedule = schedule;
         Tasks = tasks;

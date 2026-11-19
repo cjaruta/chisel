@@ -6,7 +6,7 @@ public class UserSettings
     public const string DefaultSchedulePalette = "minimal";
 
     public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour,
-        string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius)
+        string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius, bool mediaVisualizer = true)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -23,6 +23,7 @@ public class UserSettings
         BedTime = bedTime;
         ClockFormat = clockFormat;
         TemperatureUnit = temperatureUnit;
+        MediaVisualizer = mediaVisualizer;
         SchedulePalette = string.IsNullOrWhiteSpace(schedulePalette) ? DefaultSchedulePalette : schedulePalette.Trim();
     }
 
@@ -32,10 +33,14 @@ public class UserSettings
     public ClockFormat ClockFormat { get; }
     public string SchedulePalette { get; }
     public TemperatureUnit TemperatureUnit { get; }
+    // Whether the media widget shows its audio bars.
+    public bool MediaVisualizer { get; }
 
-    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit);
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer);
 
     public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit);
 
-    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit);
+    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer);
+
+    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on);
 }
