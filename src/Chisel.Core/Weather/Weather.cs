@@ -9,7 +9,7 @@ public sealed record HourlyWeather(TimeOnly Time, WeatherCondition Condition, do
 // Temperatures are in Celsius.
 public sealed record WeatherSnapshot(
     double TemperatureC, double FeelsLikeC, WeatherCondition Condition, double HighC, double LowC,
-    IReadOnlyList<HourlyWeather> Hourly);
+    IReadOnlyList<HourlyWeather> Hourly, bool IsDay = true);
 
 // Thrown by a service when no location is set up yet.
 public sealed class WeatherLocationMissingException : Exception;

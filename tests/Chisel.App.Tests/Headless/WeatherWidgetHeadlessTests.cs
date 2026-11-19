@@ -96,6 +96,18 @@ public class WeatherWidgetHeadlessTests
     }
 
     [AvaloniaFact]
+    public void Backdrop_ShowsWhenReady_AndNotWhileLoading()
+    {
+        var (window, main) = WindowWithWeather(0.6);
+        var view = window.GetVisualDescendants().OfType<WeatherWidgetView>().Single();
+        Assert.IsType<Avalonia.Media.LinearGradientBrush>(view.Background);
+
+        main.Weather.Show(WeatherState.Loading, null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Null(view.Background);
+    }
+
+    [AvaloniaFact]
     public void Large_ShowsFeelsLikeHighLowAndFooter()
     {
         var (window, _) = WindowWithWeather(1000);

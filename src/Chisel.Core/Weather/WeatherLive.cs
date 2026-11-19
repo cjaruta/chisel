@@ -84,7 +84,8 @@ public static class WeatherForecastParser
             WeatherCodes.ToCondition(current.GetProperty("weather_code").GetInt32()),
             daily.GetProperty("temperature_2m_max")[0].GetDouble(),
             daily.GetProperty("temperature_2m_min")[0].GetDouble(),
-            entries);
+            entries,
+            !current.TryGetProperty("is_day", out var isDay) || isDay.GetInt32() != 0);
     }
 
     public static IReadOnlyList<GeocodingResult> ParseGeocoding(string json)
