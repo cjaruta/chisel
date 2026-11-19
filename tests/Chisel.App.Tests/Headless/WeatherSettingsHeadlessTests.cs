@@ -30,7 +30,7 @@ public class WeatherSettingsHeadlessTests
         w.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);
 
     [AvaloniaFact]
-    public async Task WeatherPage_SearchListsPlaces_AndPickingOneSavesIt()
+    public async Task WeatherPage_TypingShowsSuggestions_AndPickingOneSavesIt()
     {
         var geocoder = new FakeGeocoder(
         [
@@ -48,23 +48,25 @@ public class WeatherSettingsHeadlessTests
         Assert.Equal("Weather data by Open-Meteo", Named<TextBlock>(window, "WeatherCredit").Text);
         Assert.Equal("No location set", Named<TextBlock>(window, "WeatherChosen").Text);
 
-        Named<TextBox>(window, "WeatherSearchBox").Text = "Testville";
-        await main.WeatherSettings.SearchCommand.ExecuteAsync(null);
-        Dispatcher.UIThread.RunJobs();
+        var box = Named<AutoCompleteBox>(window, "WeatherSearchBox");
+        box.Text = "Testville";
+        for (var i = 0; i < 100 && (box.ItemsSource as IEnumerable<object>)?.Any() != true; i++)
+        {
+            await Task.Delay(50);
+            Dispatcher.UIThread.RunJobs();
+        }
 
         Assert.Equal("Testville", geocoder.LastSearch);
-        var list = Named<ListBox>(window, "WeatherResults");
-        Assert.Equal(2, list.ItemCount);
-        var texts = list.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Contains("Testville, Test Region, Testland", texts);
+        var shown = ((IEnumerable<object>)box.ItemsSource!).Cast<GeocodingResult>().Select(r => r.DisplayText).ToList();
+        Assert.Equal(["Testville, Test Region, Testland", "Testville, Otherland"], shown);
         UiSnapshot.Render(window, "settings-weather");
 
-        list.SelectedIndex = 0;
+        box.SelectedItem = box.ItemsSource!.Cast<object>().First();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(new WeatherLocation("Testville", 12.35, -45.68), store.GetLocation());
         Assert.Equal("Testville", Named<TextBlock>(window, "WeatherChosen").Text);
-        Assert.Equal(0, Named<ListBox>(window, "WeatherResults").ItemCount);
+        Assert.Equal("", box.Text);
 
         Named<Button>(window, "WeatherClearButton").Command!.Execute(null);
         Dispatcher.UIThread.RunJobs();

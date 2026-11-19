@@ -7,19 +7,17 @@
     <StackPanel Spacing="10">
         <TextBlock Classes="settingsSection" Text="LOCATION" />
         <TextBlock Name="WeatherChosen" Text="{Binding WeatherSettings.ChosenText}" />
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox Name="WeatherSearchBox" Watermark="Search for a place" Text="{Binding WeatherSettings.Query}" />
-            <Button Name="WeatherSearchButton" Grid.Column="1" Content="Search" Command="{Binding WeatherSettings.SearchCommand}" />
-        </Grid>
-        <TextBlock Text="{Binding WeatherSettings.Message}" IsVisible="{Binding WeatherSettings.Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        <ListBox Name="WeatherResults" ItemsSource="{Binding WeatherSettings.Results}"
-                 SelectedItem="{Binding WeatherSettings.SelectedResult}">
-            <ListBox.ItemTemplate>
+        <AutoCompleteBox Name="WeatherSearchBox" Watermark="Search for a place"
+                         FilterMode="None" MinimumPrefixLength="3" MinimumPopulateDelay="0"
+                         MaxDropDownHeight="240"
+                         Text="{Binding WeatherSettings.Query}"
+                         SelectedItem="{Binding WeatherSettings.SelectedResult}">
+            <AutoCompleteBox.ItemTemplate>
                 <DataTemplate x:DataType="core:GeocodingResult">
                     <TextBlock Text="{Binding DisplayText}" />
                 </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+            </AutoCompleteBox.ItemTemplate>
+        </AutoCompleteBox>
         <Button Name="WeatherClearButton" Content="Clear location" HorizontalAlignment="Left" Command="{Binding WeatherSettings.ClearCommand}" />
         <TextBlock Name="WeatherCredit" Text="{Binding WeatherSettings.Credit}" Opacity="0.6" FontSize="11" />
     </StackPanel>
