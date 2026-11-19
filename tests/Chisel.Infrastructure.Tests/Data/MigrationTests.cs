@@ -99,6 +99,27 @@ public class MigrationTests
     }
 
     [Fact]
+    public void AddTheme_LoadsExistingSettingsAsDefaultModeWithNoCustomAccent()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261119061321_AddMediaScrollVolume");
+            context.Database.ExecuteSqlRaw(
+                "INSERT INTO UserSettings (Id, Name, WakeTime, BedTime, ClockFormat, SchedulePalette) VALUES ('6f1c2f4e-0000-0000-0000-000000000004', 'Test User', '06:30:00', '23:00:00', 1, 'minimal')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var loaded = new Chisel.Infrastructure.Repositories.UserSettingsRepository(readContext).Get()!;
+        Assert.Equal("default", loaded.ThemeMode);
+        Assert.Null(loaded.AccentColor);
+        Assert.Equal(ClockFormat.TwelveHour, loaded.ClockFormat);
+    }
+
+    [Fact]
     public void AddLayoutColumnsAndWeights_MovesOldSideAndMainRowsIntoColumns()
     {
         var (connection, options) = CreateOptions();

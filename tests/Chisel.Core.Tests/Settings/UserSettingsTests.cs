@@ -117,4 +117,34 @@ public class UserSettingsTests
         Assert.False(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).MediaScrollVolume);
         Assert.True(settings.WithSchedulePalette("saturated").WithMediaVolume(false).MediaScrollVolume);
     }
+
+    [Fact]
+    public void Theme_DefaultsToDefaultModeAndNoCustomAccent()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0));
+
+        Assert.Equal("default", settings.ThemeMode);
+        Assert.Null(settings.AccentColor);
+    }
+
+    [Fact]
+    public void WithThemeAndAccent_KeepEverythingElse()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), ClockFormat.TwelveHour, "bold")
+            .WithThemeMode("ocean").WithAccentColor("#1d4ed8");
+
+        Assert.Equal("ocean", settings.ThemeMode);
+        Assert.Equal("#1D4ED8", settings.AccentColor);
+        Assert.Equal(ClockFormat.TwelveHour, settings.ClockFormat);
+        Assert.Equal("bold", settings.SchedulePalette);
+        Assert.Equal("ocean", settings.WithClockFormat(ClockFormat.TwentyFourHour).ThemeMode);
+        Assert.Equal("#1D4ED8", settings.WithMediaVolume(false).AccentColor);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not a color")]
+    public void AccentColor_IgnoresMissingOrInvalidValues(string? value) =>
+        Assert.Null(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithAccentColor(value).AccentColor);
 }

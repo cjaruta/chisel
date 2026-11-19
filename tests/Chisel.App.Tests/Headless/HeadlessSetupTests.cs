@@ -9,6 +9,6 @@ public class HeadlessSetupTests
     public void HeadlessApp_IsTheRealAppWithItsResources()
     {
         Assert.IsType<App>(Application.Current);
-        Assert.True(Application.Current!.Resources.ContainsKey("WindowBackgroundBrush"));
+        Assert.True(Application.Current!.TryGetResource("WindowBackgroundBrush", null, out _));
     }
 }

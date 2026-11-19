@@ -61,4 +61,15 @@ public class UserSettingsMapperTests
 
         Assert.Equal(UserSettings.DefaultSchedulePalette, entity.ToDomain().SchedulePalette);
     }
+
+    [Fact]
+    public void Theme_SurvivesARoundTrip()
+    {
+        var settings = new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0)).WithThemeMode("plum").WithAccentColor("#112233");
+
+        var back = settings.ToEntity().ToDomain();
+
+        Assert.Equal("plum", back.ThemeMode);
+        Assert.Equal("#112233", back.AccentColor);
+    }
 }

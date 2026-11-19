@@ -15,5 +15,7 @@ public class UserSettingsEntity
     public bool MediaVisualizer { get; set; } = true;
     public bool MediaVolume { get; set; } = true;
     public bool MediaScrollVolume { get; set; }
+    public string ThemeMode { get; set; } = UserSettings.DefaultThemeMode;
+    public string? AccentColor { get; set; }
     public string SchedulePalette { get; set; } = UserSettings.DefaultSchedulePalette;
 }

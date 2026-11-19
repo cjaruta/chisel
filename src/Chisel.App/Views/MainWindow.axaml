@@ -110,12 +110,71 @@
 
                     <Grid Grid.Column="1" RowDefinitions="*,Auto" Margin="24,20">
                         <!-- General: settings that are not about one widget -->
-                        <StackPanel Name="GeneralPage" Spacing="10" IsVisible="{Binding Settings.IsGeneralTab}">
+                        <ScrollViewer Name="GeneralPage" IsVisible="{Binding Settings.IsGeneralTab}">
+                        <StackPanel Spacing="10">
                             <TextBlock Classes="cardHeading" Text="General" />
                             <TextBlock Classes="settingsSection" Text="CLOCK FORMAT" />
                             <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
                             <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+
+                            <TextBlock Classes="settingsSection" Text="MODE" />
+                            <!-- Each mode shows its window, card, raised, secondary text and text colors; choosing one restyles the app right away -->
+                            <ListBox Name="ThemeModeList" Classes="paletteList" ItemsSource="{Binding Settings.ThemeModeOptions}"
+                                     SelectedItem="{Binding Settings.SelectedThemeMode}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ThemeModeOption">
+                                        <StackPanel Spacing="5" MinWidth="86">
+                                            <TextBlock Text="{Binding Name}" />
+                                            <ItemsControl ItemsSource="{Binding Preview}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="IBrush">
+                                                        <Border Classes="paletteChip" Background="{Binding}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Classes="settingsSection" Text="ACCENT COLOR" />
+                            <ItemsControl Name="AccentSwatches" ItemsSource="{Binding Settings.AccentSwatches}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ColorSwatchOption">
+                                        <Button Classes="swatch" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Name}"
+                                                Command="{Binding #AccentSwatches.((vm:MainViewModel)DataContext).Settings.SelectAccentCommand}"
+                                                CommandParameter="{Binding Key}">
+                                            <Ellipse Classes="swatchDot" Fill="{Binding Brush}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ColorPicker Name="AccentPicker" Color="{Binding Settings.AccentValue, Mode=TwoWay}" />
+                                <TextBox Name="AccentHexBox" Width="104" MaxLength="7" Watermark="#RRGGBB" Text="{Binding Settings.AccentHex, Mode=TwoWay}" />
+                                <Button Name="AccentResetButton" Content="Reset to default" Command="{Binding Settings.ResetAccentCommand}" />
+                            </StackPanel>
+                            <!-- Live preview: real controls in the current mode and accent -->
+                            <Border Classes="accentPreview">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Button Name="AccentPreviewButton" Classes="editPrimary" Content="Button" />
+                                    <TextBlock Name="AccentPreviewText" VerticalAlignment="Center" Foreground="{DynamicResource AccentTextBrush}" Text="Accent text" />
+                                    <ProgressBar Name="AccentPreviewBar" Width="120" Value="60" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Name="AccentAdjustedNote" Classes="dim" IsVisible="{Binding Settings.AccentAdjusted}"
+                                       Text="Adjusted slightly so it stays readable in this mode." />
                         </StackPanel>
+                        </ScrollViewer>
 
                         <!-- Widgets: the widgets that have options, and the selected one's page -->
                         <Grid Name="WidgetsPage" ColumnDefinitions="150,*" IsVisible="{Binding Settings.IsWidgetsTab}">
