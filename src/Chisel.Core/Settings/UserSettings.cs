@@ -9,7 +9,7 @@ public class UserSettings
 
     public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour,
         string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius, bool mediaVisualizer = true, bool mediaVolume = true, bool mediaScrollVolume = false,
-        string? themeMode = null, string? accentColor = null)
+        string? themeMode = null, string? accentColor = null, bool mediaAlbumGradient = true, bool mediaAnimateGradient = true)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -29,6 +29,8 @@ public class UserSettings
         MediaVisualizer = mediaVisualizer;
         MediaVolume = mediaVolume;
         MediaScrollVolume = mediaScrollVolume;
+        MediaAlbumGradient = mediaAlbumGradient;
+        MediaAnimateGradient = mediaAnimateGradient;
         ThemeMode = string.IsNullOrWhiteSpace(themeMode) ? DefaultThemeMode : themeMode.Trim();
         // Only a valid hex color is kept; null means the default accent.
         AccentColor = Theme.Rgb.TryParse(accentColor, out var accent) ? accent.ToHex() : null;
@@ -46,23 +48,30 @@ public class UserSettings
     // Whether the media widget shows its volume row.
     public bool MediaVolume { get; }
     public bool MediaScrollVolume { get; }
+    // Whether the media widget paints a gradient from the cover art, and whether that gradient drifts slowly while playing.
+    public bool MediaAlbumGradient { get; }
+    public bool MediaAnimateGradient { get; }
     public string ThemeMode { get; }
     // The chosen accent as #RRGGBB, or null for the default orange.
     public string? AccentColor { get; }
 
-    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
+    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
+    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
+    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume, ThemeMode, AccentColor);
+    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on, ThemeMode, AccentColor);
+    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
 
-    public UserSettings WithThemeMode(string themeMode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, themeMode, AccentColor);
+    public UserSettings WithMediaAlbumGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, on, MediaAnimateGradient);
 
-    public UserSettings WithAccentColor(string? accentColor) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, accentColor);
+    public UserSettings WithMediaAnimateGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, on);
+
+    public UserSettings WithThemeMode(string themeMode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, themeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient);
+
+    public UserSettings WithAccentColor(string? accentColor) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, accentColor, MediaAlbumGradient, MediaAnimateGradient);
 }
