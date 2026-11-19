@@ -10,7 +10,8 @@ namespace Chisel.App.ViewModels;
 // active tab). Widget is the card's own widget (see WidgetPlacement.WidgetId); a group always shows its header.
 public sealed record WidgetSlot(
     WidgetDefinition Widget, double HeightWeight, bool ShowHeader,
-    IReadOnlyList<WidgetDefinition>? GroupMembers = null, int ActiveIndex = 0)
+    IReadOnlyList<WidgetDefinition>? GroupMembers = null, int ActiveIndex = 0,
+    GroupViewMode ViewMode = GroupViewMode.Tabs, IReadOnlyList<double>? PaneWeights = null)
 {
     public string Id => Widget.Id;
     public string Title => Widget.Title;
@@ -25,6 +26,9 @@ public sealed record WidgetSlot(
     // A group fits every member: the largest minimum of each (see WidgetGroupSize).
     public double MinHeight => WidgetGroupSize.Minimum(Members.Select(m => (m.MinWidth, m.MinHeight))).Height;
     public double MinWidth => WidgetGroupSize.Minimum(Members.Select(m => (m.MinWidth, m.MinHeight))).Width;
+
+    // What the card needs to show its members side by side: every pane's minimum plus the gaps.
+    public double SplitMinWidth => GroupSplit.MinimumWidth(Members.Select(m => m.MinWidth));
 }
 
 // One column of the shown layout.
@@ -106,6 +110,70 @@ public partial class LayoutViewModel : ViewModelBase
         }
     }
 
+    public static double MinWidthOf(string widgetId) => WidgetRegistry.Get(widgetId)?.MinWidth ?? LayoutLimits.MinimumColumnWidth;
+
+    // Why the card holding this widget cannot show its members side by side at this width; null when it can.
+    public string? SplitRefusal(string widgetId, double cardWidth) =>
+        Layout.Find(widgetId) is null ? "Not on the dashboard." : Layout.SetViewMode(widgetId, GroupViewMode.Split, cardWidth, MinWidthOf).Refusal;
+
+    // Switches a group between tabs and split view and returns why it was refused (null when it worked or nothing
+    // changed). cardWidth is the card's width in pixels. Outside edit mode it is saved at once; in edit mode it is
+    // part of the working copy, like everything else.
+    public string? SetViewMode(string widgetId, GroupViewMode mode, double cardWidth)
+    {
+        if (Layout.Find(widgetId) is null)
+        {
+            return "Not on the dashboard.";
+        }
+        var result = Layout.SetViewMode(widgetId, mode, cardWidth, MinWidthOf);
+        if (!ReferenceEquals(result.Layout, Layout))
+        {
+            Layout = result.Layout;
+            if (!IsEditing)
+            {
+                _repository?.Save(Layout);
+            }
+        }
+        return result.Refusal;
+    }
+
+    // The layout from when the current pane resize began; null when none is going on.
+    private WidgetLayout? _paneResizeStart;
+
+    // Starts dragging a divider between panes (also outside edit mode).
+    public void BeginPaneResize() => _paneResizeStart = Layout;
+
+    // Shows the resize live: the pane grows by delta (a fraction of the panes' width; negative shrinks it) against the
+    // pane to its right, from the weights the resize started with. Each pane stops at its own minimum fraction.
+    public void PreviewPaneResize(string widgetId, double delta, double minimumFractionLeft, double minimumFractionRight)
+    {
+        if (_paneResizeStart is { } start)
+        {
+            Layout = start.ResizePanes(widgetId, delta, minimumFractionLeft, minimumFractionRight);
+        }
+    }
+
+    // Keeps the new widths: saved at once outside edit mode, part of the working copy in edit mode.
+    public void CommitPaneResize()
+    {
+        var changed = _paneResizeStart is { } start && !ReferenceEquals(start, Layout);
+        _paneResizeStart = null;
+        if (changed && !IsEditing)
+        {
+            _repository?.Save(Layout);
+        }
+    }
+
+    // Puts the widths back as they were when the resize began.
+    public void CancelPaneResize()
+    {
+        if (_paneResizeStart is { } start)
+        {
+            Layout = start;
+        }
+        _paneResizeStart = null;
+    }
+
     // Moves a widget out of its group, onto its own card right below it. Edit mode only.
     public void Unmerge(string widgetId)
     {
@@ -131,14 +199,15 @@ public partial class LayoutViewModel : ViewModelBase
 
     // Drops the dragged widget onto another card: it becomes the last tab there and the target's tab stays active.
     // Ends the drag either way; returns whether it merged.
-    public bool DropOnWidget(string targetId)
+    // cardWidth is the target card's width: a split group takes the widget as another pane when it fits there.
+    public bool DropOnWidget(string targetId, double cardWidth = 0)
     {
         if (DraggedWidgetId is not { } id || !CanMergeInto(targetId))
         {
             CancelWidgetDrag();
             return false;
         }
-        return Finish(Layout.Combine(id, targetId));
+        return Finish(Layout.Combine(id, targetId, cardWidth, MinWidthOf));
     }
 
     // The quick path from the tray: the widget goes to the bottom of the first column.
@@ -161,7 +230,8 @@ public partial class LayoutViewModel : ViewModelBase
 
     private static WidgetSlot Slot(WidgetPlacement w) => w.IsGroup
         ? new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight, true,
-            w.MemberIds.Select(id => WidgetRegistry.Get(id)!).ToList(), w.ActiveIndex)
+            w.MemberIds.Select(id => WidgetRegistry.Get(id)!).ToList(), w.ActiveIndex,
+            w.ViewMode, w.Members!.Select(m => m.WidthWeight).ToList())
         : new WidgetSlot(WidgetRegistry.Get(w.WidgetId)!, w.HeightWeight,
             WidgetHeaders.EffectiveShowHeader(w, WidgetRegistry.Get(w.WidgetId)!.DefaultShowHeader));
 
@@ -234,6 +304,7 @@ public partial class LayoutViewModel : ViewModelBase
     {
         CancelWidgetDrag();
         CancelResize();
+        CancelPaneResize();
         Snapshot = null;
         IsEditing = false;
     }
