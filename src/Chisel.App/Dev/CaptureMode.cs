@@ -19,6 +19,16 @@ namespace Chisel.App.Dev;
 // scripted edit, saves a render of it every ~16 ms into artifacts/ui/capture/<scenario>/, then exits.
 internal static class CaptureMode
 {
+    // The weather-motion scenario's data: always rain, no network, no location.
+    public static Chisel.Core.Weather.IWeatherService RainWeather() => new RainService();
+
+    private sealed class RainService : Chisel.Core.Weather.IWeatherService
+    {
+        public System.Threading.Tasks.Task<Chisel.Core.Weather.WeatherSnapshot> GetAsync(System.Threading.CancellationToken cancellationToken = default) =>
+            System.Threading.Tasks.Task.FromResult(new Chisel.Core.Weather.WeatherSnapshot(14, 12, Chisel.Core.Weather.WeatherCondition.Rain, 16, 9,
+                Enumerable.Range(0, 8).Select(i => new Chisel.Core.Weather.HourlyWeather(new TimeOnly(10 + i, 0), Chisel.Core.Weather.WeatherCondition.Rain, 14 - i)).ToList()));
+    }
+
     public static string? Scenario(string[]? args)
     {
         var i = Array.IndexOf(args ?? [], "--capture");
@@ -44,7 +54,7 @@ internal static class CaptureMode
 
         void Mark(string name) { marks.Add((frameNo, name)); }
         var script = new List<(int Ms, Action Do)>();
-        if (scenario != "clock")
+        if (scenario is not ("clock" or "weather-motion"))
         {
             script.Add((600, () => { vm.CustomizeLayoutCommand.Execute(null); Mark("edit mode"); }));
         }
@@ -64,6 +74,46 @@ internal static class CaptureMode
                     Mark("clock shown");
                 }));
                 script.Add((3500, () => Mark("clock running")));
+                break;
+            case "weather-motion":
+                // Rain scene on the weather widget from a fake service; App runs this scenario on a temp database and an in-memory
+                // weather store, so no real data is read or written. Frames are saved densely around a forced layout
+                // rebuild; CPU and GC are logged over a window with motion (A) and one without (B, weather Loading).
+                var cpu = new List<string>();
+                (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms, long Callbacks, long Renders, double RenderMs) mark0 = default;
+                void Start() => mark0 = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime, GC.GetTotalAllocatedBytes(false),
+                    GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2), clock.ElapsedMilliseconds,
+                    Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Callbacks, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.RenderMilliseconds);
+                void Stop(string name)
+                {
+                    var wall = (clock.ElapsedMilliseconds - mark0.Ms) / 1000.0;
+                    var used = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime - mark0.Cpu).TotalSeconds;
+                    cpu.Add($"{name}: cpu {used:F3}s over {wall:F2}s = {100 * used / wall:F1}% of one core; allocated {(GC.GetTotalAllocatedBytes(false) - mark0.Bytes) / wall / 1024:F1} KB/s; GCs gen0 {GC.CollectionCount(0) - mark0.G0} gen1 {GC.CollectionCount(1) - mark0.G1} gen2 {GC.CollectionCount(2) - mark0.G2}; motion handlers running {Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Running}, frame callbacks {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Callbacks - mark0.Callbacks) / wall:F0}/s, draws {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders - mark0.Renders) / wall:F1}/s taking {(Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.RenderMilliseconds - mark0.RenderMs) / Math.Max(1, Chisel.App.Views.Widgets.Backdrop.WeatherMotionStats.Renders - mark0.Renders):F3} ms each");
+                    File.WriteAllLines(Path.Combine(dir, "cpu.txt"), cpu);
+                }
+                script.Add((100, () => Mark("start")));
+                script.Add((300, () =>
+                {
+                    var layout = vm.Layout.Layout;
+                    if (layout.Find(WidgetRegistry.Weather) is null)
+                    {
+                        vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Weather, 0, layout.Columns[0].Widgets.Count, 0.6));
+                    }
+                }));
+                script.Add((4700, () => Mark("before rebuild")));
+                script.Add((5000, () =>
+                {
+                    Mark("rebuild");
+                    var layout = vm.Layout.Layout;
+                    vm.Layout.Apply(layout.Find(WidgetRegistry.Clock) is null
+                        ? layout.AddWidget(WidgetRegistry.Clock, 1, 0, 0.5)
+                        : layout.RemoveWidget(WidgetRegistry.Clock));
+                }));
+                // Measure after a few seconds of warmup so JIT of the motion code isn't counted as its running cost.
+                script.Add((9000, Start));
+                script.Add((11000, () => { Stop("A motion on"); vm.Weather.Show(WeatherState.Loading); }));
+                script.Add((11500, Start));
+                script.Add((13500, () => Stop("B motion off")));
                 break;
             case "drag":
                 script.Add((1500, () => { host.ScriptPickUp("links"); Mark("pick up links"); }));
@@ -89,7 +139,7 @@ internal static class CaptureMode
                 try { script[step++].Do(); }
                 catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "error.txt"), ex.ToString()); timer.Stop(); exit(); return; }
             }
-            if (ms > 400)
+            if (ms > 400 && (scenario != "weather-motion" || ms is > 4600 and < 5700))
             {
                 var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
                 if (size.Width > 0)

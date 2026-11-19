@@ -3,10 +3,14 @@ namespace Chisel.Core.Weather;
 // Muted two-stop vertical gradient, as 0xRRGGBB.
 public readonly record struct BackdropGradient(uint Top, uint Bottom);
 
-// Weather backdrop data and logic, all in this file. Colors are kept dark and low saturation so the widget's
-// text stays readable (WeatherBackdropTests checks 4.5:1 contrast on every stop).
+// Weather backdrop data and logic, all in this file. Colors are kept muted so the widget's text stays readable
+// (WeatherBackdropTests checks 4.5:1 contrast on every stop, with the motion particles on top).
 public static class WeatherBackdrop
 {
+    // The weather widget's secondary text (hour labels, condition, footer): light grey, so backdrops can be brighter than
+    // the app's dim grey would allow.
+    public const uint SecondaryText = 0xC4C9D2;
+
     public static string Key(WeatherCondition condition, bool isDay) =>
         (condition switch
         {
@@ -21,19 +25,19 @@ public static class WeatherBackdrop
 
     public static readonly IReadOnlyDictionary<string, BackdropGradient> Gradients = new Dictionary<string, BackdropGradient>
     {
-        ["clear-day"] = new(0x0E2846, 0x09223F),
+        ["clear-day"] = new(0x1C4472, 0x183960),
         ["clear-night"] = new(0x141C30, 0x0E1422),
-        ["partly-cloudy-day"] = new(0x1C2837, 0x162331),
+        ["partly-cloudy-day"] = new(0x2F4152, 0x283645),
         ["partly-cloudy-night"] = new(0x181E2E, 0x11161F),
-        ["cloudy-day"] = new(0x222830, 0x1C222B),
+        ["cloudy-day"] = new(0x393F49, 0x30353D),
         ["cloudy-night"] = new(0x1D2024, 0x14161A),
-        ["rain-day"] = new(0x1D2839, 0x172232),
+        ["rain-day"] = new(0x2F3D51, 0x283344),
         ["rain-night"] = new(0x181E27, 0x11151B),
-        ["snow-day"] = new(0x1F2931, 0x19232B),
+        ["snow-day"] = new(0x38434C, 0x303941),
         ["snow-night"] = new(0x1E242B, 0x161A20),
-        ["storm-day"] = new(0x232736, 0x1C2130),
+        ["storm-day"] = new(0x2F3546, 0x282C3B),
         ["storm-night"] = new(0x15181D, 0x0E1013),
-        ["fog-day"] = new(0x23282B, 0x1C2326),
+        ["fog-day"] = new(0x3B4042, 0x323639),
         ["fog-night"] = new(0x202327, 0x17191C),
     };
 }

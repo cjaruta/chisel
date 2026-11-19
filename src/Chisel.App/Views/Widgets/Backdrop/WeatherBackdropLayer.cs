@@ -21,6 +21,7 @@ public sealed class WeatherBackdropLayer
     {
         var layer = new WeatherBackdropLayer(host);
         host.CornerRadius = new CornerRadius(12);
+        WeatherMotionLayer.Install(host);
         host.AttachedToVisualTree += (_, _) =>
         {
             if (host.DataContext is MainViewModel main)

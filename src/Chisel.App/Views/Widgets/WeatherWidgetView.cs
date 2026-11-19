@@ -62,7 +62,7 @@ public sealed class WeatherWidgetView : WidgetView
         new()
         {
             Text = text, FontSize = size, FontWeight = weight, Name = name,
-            Foreground = dim ? Brush("DimTextBrush", Brushes.Gray) : Brush("CurrentBlockOutlineBrush", Brushes.White),
+            Foreground = dim ? Backdrop.WeatherText.Secondary : Brush("CurrentBlockOutlineBrush", Brushes.White),
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 

@@ -130,7 +130,7 @@ public static class UiSnapshot
         links.Add(new QuickLink("Docs", "https://example.com/docs"));
     }
 
-    private static string FindRepoRoot()
+    public static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "Chisel.slnx")))

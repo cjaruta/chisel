@@ -16,8 +16,8 @@ public class WeatherBackdropTests
     }
     """;
 
-    // The widget's text colors (App.axaml: CurrentBlockOutlineColor and DimTextColor).
-    private static readonly uint[] TextColors = [0xF2F4F8, 0x8A8F98];
+    // The widget's text colors: primary (App.axaml CurrentBlockOutlineColor) and the weather widget's own secondary grey.
+    private static readonly uint[] TextColors = [0xF2F4F8, WeatherBackdrop.SecondaryText];
 
     private static double Luminance(uint rgb)
     {
@@ -85,6 +85,30 @@ public class WeatherBackdropTests
                 foreach (var text in TextColors)
                 {
                     Assert.True(Contrast(stop, text) >= 4.5, $"{key} {stop:X6} vs {text:X6}: {Contrast(stop, text):0.00}");
+                }
+            }
+        }
+    }
+
+    // Particles at their maximum opacity (stacked twice, as when two overlap) must not break text contrast.
+    [Fact]
+    public void TextKeepsContrast_WhenMotionParticlesAreAtMaximumOpacity()
+    {
+        uint Over(uint particle, double alpha, uint background)
+        {
+            uint Mix(int shift) => (uint)Math.Round((((particle >> shift) & 255) * alpha) + (((background >> shift) & 255) * (1 - alpha)));
+            return (Mix(16) << 16) | (Mix(8) << 8) | Mix(0);
+        }
+
+        foreach (var (key, gradient) in WeatherBackdrop.Gradients)
+        {
+            var style = WeatherMotion.Style(key);
+            foreach (var stop in new[] { gradient.Top, gradient.Bottom })
+            {
+                var composite = Over(style.Color, style.MaxOpacity, Over(style.Color, style.MaxOpacity, stop));
+                foreach (var text in TextColors)
+                {
+                    Assert.True(Contrast(composite, text) >= 4.5, $"{key} {stop:X6}: {Contrast(composite, text):0.00}");
                 }
             }
         }
