@@ -29,7 +29,7 @@
                                     Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.SelectNoteCommand}"
                                     CommandParameter="{Binding Note}">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" />
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
                                     <TextBlock Classes="dim" Text="{Binding Body}" />
                                     <TextBlock Classes="dim" FontSize="11" Text="{Binding UpdatedLabel}" />
                                 </StackPanel>

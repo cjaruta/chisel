@@ -25,8 +25,7 @@ public sealed class ClockFace : Control
     // Hour, minute and second.
     public int HandCount => 3;
 
-    private IBrush Brush(string key, IBrush fallback) =>
-        this.TryFindResource(key, ActualThemeVariant, out var found) && found is IBrush brush ? brush : fallback;
+    private IBrush Brush(string key) => Theming.ThemeService.Brush(this, key);
 
     // Radius of the drawn circle: the smaller of width and height, less the padding.
     public double FaceRadius => Math.Min(Bounds.Width, Bounds.Height) / 2 - Padding;
@@ -39,10 +38,10 @@ public sealed class ClockFace : Control
             return;
         }
         var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
-        var tickBrush = Brush("DimTextBrush", Brushes.Gray);
-        var handBrush = Brush("CurrentBlockOutlineBrush", Brushes.White);
-        var secondBrush = Brush("EditAccentBrush", Brushes.Orange);
-        var rim = new Pen(Brush("GridLineBrush", Brushes.DimGray), 1);
+        var tickBrush = Brush("DimTextBrush");
+        var handBrush = Brush("TextBrush");
+        var secondBrush = Brush("AccentBrush");
+        var rim = new Pen(Brush("GridLineBrush"), 1);
 
         context.DrawEllipse(null, rim, center, radius, radius);
         for (var i = 0; i < 60; i += 5)

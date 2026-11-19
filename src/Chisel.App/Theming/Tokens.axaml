@@ -1,0 +1,61 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The one place colors are defined. These are the Default mode with the default orange accent; ThemeService
+         changes each brush's Color in place when the mode or accent changes, so every control that uses a brush
+         (StaticResource or DynamicResource) follows. Nothing outside the Theming folder may hold a literal color
+         (ThemeGuardTests). -->
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#14161A" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#1F222A" />
+    <SolidColorBrush x:Key="RaisedBrush" Color="#2B2E36" />
+    <SolidColorBrush x:Key="EditBadgeBrush" Color="#2B2E36" />
+    <SolidColorBrush x:Key="EditBarBrush" Color="#262932" />
+    <SolidColorBrush x:Key="EditPageBrush" Color="#16181D" />
+
+    <!-- Lines -->
+    <SolidColorBrush x:Key="GridLineBrush" Color="#2A2E37" />
+    <SolidColorBrush x:Key="HoverLineBrush" Color="#3D4350" />
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="#7A8190" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextBrush" Color="#ECEEF2" />
+    <SolidColorBrush x:Key="DimTextBrush" Color="#9AA0AA" />
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="#5A5F69" />
+
+    <!-- Accent: fill, its states, accent-colored text, text on a fill, and soft tints -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#F5A524" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#F7B84F" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#D28F1F" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#F5A524" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#000000" />
+    <SolidColorBrush x:Key="AccentSubtleBrush" Color="#F5A524" Opacity="0.16" />
+    <SolidColorBrush x:Key="AccentBorderBrush" Color="#F5A524" Opacity="0.5" />
+    <SolidColorBrush x:Key="DragPreviewBrush" Color="#F5A524" Opacity="0.25" />
+
+    <!-- Faint washes: white on dark modes, black on light -->
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#FFFFFF" Opacity="0.04" />
+    <SolidColorBrush x:Key="HoverWashBrush" Color="#FFFFFF" Opacity="0.08" />
+    <SolidColorBrush x:Key="EditHairlineBrush" Color="#FFFFFF" Opacity="0.16" />
+    <SolidColorBrush x:Key="EditHairlineHoverBrush" Color="#FFFFFF" Opacity="0.35" />
+    <SolidColorBrush x:Key="EditPillBrush" Color="#FFFFFF" Opacity="0.28" />
+
+    <!-- Status marks on the schedule -->
+    <SolidColorBrush x:Key="CheckpointBrush" Color="#E06C75" />
+    <SolidColorBrush x:Key="ReminderBrush" Color="#C9B77A" />
+
+    <!-- Not themed: the dim behind the settings dialog, and the outline of the current block, which sits on schedule
+         palette colors and weather backdrops rather than on a theme surface -->
+    <SolidColorBrush x:Key="ScrimBrush" Color="#000000" Opacity="0.6" />
+    <Color x:Key="CurrentBlockOutlineColor">#F2F4F8</Color>
+    <SolidColorBrush x:Key="CurrentBlockOutlineBrush" Color="{StaticResource CurrentBlockOutlineColor}" />
+
+    <!-- Shadows are black in every mode -->
+    <BoxShadows x:Key="EditingCardShadow">0 6 18 0 #55000000</BoxShadows>
+    <BoxShadows x:Key="DragFloatShadow">0 4 12 0 #60000000</BoxShadows>
+    <BoxShadows x:Key="DragLiftedShadow">0 18 44 2 #A0000000</BoxShadows>
+    <BoxShadows x:Key="ToolbarShadow">0 10 28 0 #99000000</BoxShadows>
+    <BoxShadows x:Key="DialogShadow">0 12 40 0 #99000000</BoxShadows>
+    <BoxShadows x:Key="FlyoutShadow">0 6 24 0 #80000000</BoxShadows>
+    <BoxShadows x:Key="CurrentBlockGlow">0 0 10 1 #55FFFFFF</BoxShadows>
+</ResourceDictionary>

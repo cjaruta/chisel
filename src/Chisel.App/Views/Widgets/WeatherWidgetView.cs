@@ -58,14 +58,13 @@ public sealed class WeatherWidgetView : WidgetView
 
     private void OnWeatherChanged(object? sender, PropertyChangedEventArgs e) => Rebuild();
 
-    private IBrush Brush(string key, IBrush fallback) =>
-        this.TryFindResource(key, ActualThemeVariant, out var found) && found is IBrush brush ? brush : fallback;
+    private IBrush Brush(string key) => Theming.ThemeService.Brush(this, key);
 
     private TextBlock Text(string text, double size, bool dim = false, string? name = null, FontWeight weight = FontWeight.Normal) =>
         new()
         {
             Text = text, FontSize = size, FontWeight = weight, Name = name,
-            Foreground = dim ? Backdrop.WeatherText.Secondary : Brush("CurrentBlockOutlineBrush", Brushes.White),
+            Foreground = dim ? Backdrop.WeatherText.Secondary : Brush("CurrentBlockOutlineBrush"),
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
@@ -199,8 +198,7 @@ public sealed class ConditionIcon : Control
         {
             return;
         }
-        var stroke = this.TryFindResource("CurrentBlockOutlineBrush", ActualThemeVariant, out var found) && found is IBrush brush
-            ? brush : Brushes.White;
+        var stroke = Theming.ThemeService.Brush(this, "CurrentBlockOutlineBrush");
         var pen = new Pen(stroke, 1.5, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
         using (context.PushTransform(Matrix.CreateScale(size / 24, size / 24)))
         {

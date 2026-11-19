@@ -1,3 +1,4 @@
+using Chisel.App.Theming;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -105,10 +106,7 @@ public sealed partial class LayoutHost : Decorator
     private IReadOnlyList<Rect> _pickColumns = [];
     private IReadOnlyList<IReadOnlyList<Rect>> _pickWidgets = [];
 
-    private static IBrush BackingBrush() =>
-        Application.Current?.TryFindResource("WindowBackgroundBrush", Application.Current.ActualThemeVariant, out var brush) == true && brush is IBrush b
-            ? b
-            : new SolidColorBrush(Color.Parse("#14161A"));
+    private IBrush BackingBrush() => Theming.ThemeService.Brush(this, "WindowBackgroundBrush");
 
     public LayoutHost()
     {
@@ -579,8 +577,12 @@ public sealed partial class LayoutHost : Decorator
     public static readonly TimeSpan DropBorderIn = TimeSpan.FromMilliseconds(350);
     public static readonly TimeSpan DropBorderOut = TimeSpan.FromMilliseconds(350);
 
-    private static readonly Color NeutralBorder = Color.FromArgb(0x29, 0xFF, 0xFF, 0xFF);
-    private static readonly Color AmberBorder = Color.Parse("#B0F5A524");
+    // The drop border's quiet and accent colors, read from the theme each time so a changed mode or accent shows.
+    private Color NeutralBorder => ColorWithAlpha("EditHairlineBrush", 0x29);
+    private Color AmberBorder => ColorWithAlpha("AccentBrush", 0xB0);
+
+    private Color ColorWithAlpha(string key, byte alpha) =>
+        Theming.ThemeService.Brush(this, key) is ISolidColorBrush b ? b.Color.WithAlpha(alpha) : default;
 
     private string? _droppedId;
 
