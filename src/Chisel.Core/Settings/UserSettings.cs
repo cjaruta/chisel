@@ -4,9 +4,12 @@ public class UserSettings
 {
     // Id of the schedule color palette. The app knows which ids exist and falls back for unknown ones.
     public const string DefaultSchedulePalette = "minimal";
+    // Id of the theme mode (see Theme.ThemeModes); the app falls back to Default for unknown ids.
+    public const string DefaultThemeMode = "default";
 
     public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour,
-        string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius, bool mediaVisualizer = true, bool mediaVolume = true, bool mediaScrollVolume = false)
+        string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius, bool mediaVisualizer = true, bool mediaVolume = true, bool mediaScrollVolume = false,
+        string? themeMode = null, string? accentColor = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -26,6 +29,9 @@ public class UserSettings
         MediaVisualizer = mediaVisualizer;
         MediaVolume = mediaVolume;
         MediaScrollVolume = mediaScrollVolume;
+        ThemeMode = string.IsNullOrWhiteSpace(themeMode) ? DefaultThemeMode : themeMode.Trim();
+        // Only a valid hex color is kept; null means the default accent.
+        AccentColor = Theme.Rgb.TryParse(accentColor, out var accent) ? accent.ToHex() : null;
         SchedulePalette = string.IsNullOrWhiteSpace(schedulePalette) ? DefaultSchedulePalette : schedulePalette.Trim();
     }
 
@@ -40,16 +46,23 @@ public class UserSettings
     // Whether the media widget shows its volume row.
     public bool MediaVolume { get; }
     public bool MediaScrollVolume { get; }
+    public string ThemeMode { get; }
+    // The chosen accent as #RRGGBB, or null for the default orange.
+    public string? AccentColor { get; }
 
-    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume);
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
 
-    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume);
+    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
 
-    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume);
+    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
 
-    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume);
+    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor);
 
-    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume);
+    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume, ThemeMode, AccentColor);
 
-    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on);
+    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on, ThemeMode, AccentColor);
+
+    public UserSettings WithThemeMode(string themeMode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, themeMode, AccentColor);
+
+    public UserSettings WithAccentColor(string? accentColor) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, accentColor);
 }
