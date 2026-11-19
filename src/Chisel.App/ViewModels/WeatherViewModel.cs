@@ -37,6 +37,12 @@ public partial class WeatherViewModel : ViewModelBase
 
     public string Format(double celsius) => WeatherLayout.FormatTemperature(celsius, Unit);
 
+    // The saved location's name ("" when none), shown small in the widget when its title is hidden.
+    [ObservableProperty]
+    public partial string LocationName { get; private set; } = "";
+
+    private void RefreshLocationName() => LocationName = _store?.GetLocation()?.Name ?? "";
+
     [ObservableProperty]
     public partial WeatherSnapshot? Snapshot { get; private set; }
 
@@ -77,6 +83,7 @@ public partial class WeatherViewModel : ViewModelBase
         {
             return;
         }
+        RefreshLocationName();
         if (_store.GetLocation() is null)
         {
             Show(WeatherState.NoLocation);
@@ -94,6 +101,7 @@ public partial class WeatherViewModel : ViewModelBase
     public void LocationChanged()
     {
         _generation++;
+        RefreshLocationName();
         _fetching = false;
         _nextFetchAt = null;
         Show(WeatherState.Loading);

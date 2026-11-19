@@ -25,6 +25,27 @@ public class WeatherViewModelTests
     }
 
     [Fact]
+    public async Task LocationName_FollowsTheSavedLocation()
+    {
+        var store = new Chisel.App.Services.MemoryWeatherStore();
+        store.SaveLocation(new WeatherLocation("Testville", 1, 2));
+        var vm = new WeatherViewModel(new Service(() => Task.FromResult(Sample)),
+            new FakeTimeProvider(new DateTimeOffset(2000, 1, 1, 9, 0, 0, TimeSpan.Zero)), store);
+
+        vm.ShowCached();
+        Assert.Equal("Testville", vm.LocationName);
+
+        store.SaveLocation(new WeatherLocation("Otherton", 3, 4));
+        vm.LocationChanged();
+        Assert.Equal("Otherton", vm.LocationName);
+
+        store.SaveLocation(null);
+        vm.LocationChanged();
+        Assert.Equal("", vm.LocationName);
+        await Task.CompletedTask;
+    }
+
+    [Fact]
     public void StartsLoading()
     {
         var (vm, _) = Make(() => new TaskCompletionSource<WeatherSnapshot>().Task);

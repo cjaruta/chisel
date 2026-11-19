@@ -235,6 +235,7 @@ public sealed partial class LayoutHost : Decorator
             foreach (var slot in column.Widgets)
             {
                 WeightedStackPanel.SetWeight(_frames[slot.Id], slot.HeightWeight);
+                _frames[slot.Id].ShowHeader = slot.ShowHeader;
             }
         }
     }
@@ -271,6 +272,7 @@ public sealed partial class LayoutHost : Decorator
             {
                 var slot = column.Widgets[i];
                 var frame = Frame(slot.Widget);
+                frame.ShowHeader = slot.ShowHeader;
                 WeightedStackPanel.SetWeight(frame, slot.HeightWeight);
                 panel.Children.Add(frame);
                 if (i + 1 < column.Widgets.Count)
@@ -470,6 +472,7 @@ public sealed partial class LayoutHost : Decorator
             frame.EditBar.Cursor = GrabCursor;
             frame.EditBar.PointerPressed += (_, e) => OnBarPressed(frame, e);
             frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(frame.WidgetId);
+            frame.HeaderButton.Click += (_, _) => Layout?.ToggleHeader(frame.WidgetId);
             frame.RemoveButton.IsEnabled = Layout?.CanRemoveWidgets ?? true;
             _frames[widget.Id] = frame;
         }

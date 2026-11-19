@@ -21,6 +21,9 @@ public sealed class ClockWidgetView : WidgetView
         Content = _face;
     }
 
+    // With no title bar the face is centered in the whole card, so the bottom padding goes.
+    protected override void OnHeaderShownChanged() => Padding = HeaderShown ? new Thickness(0, 0, 0, 12) : new Thickness(0);
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
