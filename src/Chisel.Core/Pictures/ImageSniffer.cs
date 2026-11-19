@@ -42,8 +42,53 @@ public static class ImageLimits
 
 // Reads the type and size of PNG, JPEG, GIF and WebP files from their first bytes, and nothing else: the file's name
 // and any claimed type are never trusted. SVG and every other format give null.
+public enum ImageProblem { NotAnImage, WebPage, Unsupported }
+
+public static class ImageProblems
+{
+    public static string Message(ImageProblem problem) => problem switch
+    {
+        ImageProblem.WebPage => "That link is a web page, not an image",
+        ImageProblem.Unsupported => "AVIF and other formats are not supported",
+        _ => "Not an image",
+    };
+}
+
 public static class ImageSniffer
 {
+    private static readonly string[] UnsupportedTypes =
+        ["image/avif", "image/heic", "image/heif", "image/svg+xml", "image/bmp", "image/tiff", "image/x-icon", "image/vnd.microsoft.icon", "image/jxl"];
+
+    private static readonly string[] UnsupportedBrands = ["avif", "avis", "heic", "heix", "hevc", "mif1", "msf1"];
+
+    // Why bytes that are not a PNG, JPEG, GIF or WebP are not usable: a web page (a link to a page, an error page), a picture
+    // in a format this app does not read (AVIF, HEIC, SVG and the like), or something else. contentType is what a server
+    // said, when known; the bytes decide first.
+    public static ImageProblem Classify(ReadOnlySpan<byte> data, string? contentType)
+    {
+        var type = (contentType ?? "").Split(';')[0].Trim().ToLowerInvariant();
+        var head = System.Text.Encoding.UTF8.GetString(data[..Math.Min(data.Length, 512)]).TrimStart('\uFEFF', ' ', '\t', '\r', '\n');
+
+        if (data.Length >= 12 && data[4] == 'f' && data[5] == 't' && data[6] == 'y' && data[7] == 'p'
+            && UnsupportedBrands.Contains(System.Text.Encoding.ASCII.GetString(data.Slice(8, 4))))
+        {
+            return ImageProblem.Unsupported;
+        }
+        if (head.StartsWith("<svg", StringComparison.OrdinalIgnoreCase)
+            || (head.StartsWith("<?xml", StringComparison.Ordinal) && head.Contains("<svg", StringComparison.OrdinalIgnoreCase)))
+        {
+            return ImageProblem.Unsupported;
+        }
+        if (type is "text/html" or "application/xhtml+xml"
+            || head.StartsWith("<!doctype html", StringComparison.OrdinalIgnoreCase) || head.StartsWith("<html", StringComparison.OrdinalIgnoreCase)
+            || head.StartsWith("<head", StringComparison.OrdinalIgnoreCase) || head.StartsWith("<body", StringComparison.OrdinalIgnoreCase))
+        {
+            return ImageProblem.WebPage;
+        }
+        return UnsupportedTypes.Contains(type) || (data.Length >= 2 && data[0] == 0x42 && data[1] == 0x4D && type.StartsWith("image/", StringComparison.Ordinal))
+            ? ImageProblem.Unsupported
+            : ImageProblem.NotAnImage;
+    }
     public static ImageInfo? Sniff(ReadOnlySpan<byte> data)
     {
         try

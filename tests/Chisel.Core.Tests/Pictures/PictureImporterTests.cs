@@ -49,7 +49,7 @@ public class PictureImporterTests
     {
         var importer = Importer();
 
-        Assert.Contains("PNG, JPEG, GIF or WebP", importer.Prepare("<svg/>"u8.ToArray(), "x.png", null, true).Error);
+        Assert.Equal("AVIF and other formats are not supported", importer.Prepare("<svg/>"u8.ToArray(), "x.png", null, true).Error);
         Assert.Contains("12000", importer.Prepare(Png(12001, 10), "x.png", null, true).Error);
         Assert.Contains("megapixels", importer.Prepare(Png(11000, 10000), "x.png", null, true).Error);
         Assert.Contains("30 MB", importer.Prepare(new byte[31 * 1024 * 1024], "x.png", null, true).Error);

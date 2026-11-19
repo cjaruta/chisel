@@ -52,7 +52,7 @@ public sealed record PrepareResult(PreparedPicture? Picture, string? Error);
 public sealed class PictureImporter(IPictureRepository repository, IPictureFileStore files, IImageResizer resizer, TimeProvider time)
 {
     // Checks the bytes by their content, applies the "Keep original files" decision, and hashes the result.
-    public PrepareResult Prepare(byte[] bytes, string fileName, string? sourceUrl, bool keepOriginals)
+    public PrepareResult Prepare(byte[] bytes, string fileName, string? sourceUrl, bool keepOriginals, string? contentType = null)
     {
         if (bytes.LongLength > ImageLimits.MaxDownloadBytes)
         {
@@ -60,7 +60,7 @@ public sealed class PictureImporter(IPictureRepository repository, IPictureFileS
         }
         if (ImageSniffer.Sniff(bytes) is not { } info)
         {
-            return new PrepareResult(null, "That isn't a PNG, JPEG, GIF or WebP picture.");
+            return new PrepareResult(null, ImageProblems.Message(ImageSniffer.Classify(bytes, contentType)));
         }
         if (ImageLimits.Check(info.Width, info.Height) is { } tooBig)
         {
