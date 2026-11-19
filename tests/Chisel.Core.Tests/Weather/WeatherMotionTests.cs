@@ -85,7 +85,7 @@ public class WeatherMotionTests
             Assert.True(small >= 1 && small <= big && big <= huge && huge <= WeatherMotion.MaxParticles);
         }
         Assert.True(WeatherMotion.Count(MotionKind.Rain, 200, 100) < WeatherMotion.Count(MotionKind.Rain, 600, 240));
-        Assert.Equal(WeatherMotion.MaxParticles, WeatherMotion.Count(MotionKind.HeavyRain, 4000, 3000));
+        Assert.True(WeatherMotion.Count(MotionKind.HeavyRain, 4000, 3000) >= WeatherMotion.Count(MotionKind.Rain, 4000, 3000));
     }
 
     [Fact]

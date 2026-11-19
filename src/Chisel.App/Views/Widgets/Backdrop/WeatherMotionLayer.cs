@@ -134,7 +134,7 @@ public sealed class WeatherMotionLayer
             {
                 var style = WeatherMotion.Style(key);
                 Kind = style.Kind;
-                _visual?.SendHandlerMessage(new WeatherMotionHandler.Scene(style));
+                _visual?.SendHandlerMessage(new WeatherMotionHandler.Scene(key));
             }
         }
         if (run != IsAnimating)

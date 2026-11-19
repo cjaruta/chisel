@@ -51,7 +51,7 @@ public static class WeatherMotion
     }
 
     // Redraws per second: faster for falling scenes, slow for the rest.
-    public static double Fps(MotionKind kind) => kind is MotionKind.Rain or MotionKind.HeavyRain or MotionKind.Snow ? 15 : 8;
+    public static double Fps(MotionKind kind) => kind is MotionKind.Rain or MotionKind.HeavyRain or MotionKind.Snow ? 12 : 8;
 
     // Seconds after which the scene repeats exactly.
     public static double Loop(MotionKind kind) => kind switch
@@ -68,11 +68,11 @@ public static class WeatherMotion
 
     private static (int Min, int Max) Range(MotionKind kind) => kind switch
     {
-        MotionKind.Rain => (8, 30),
-        MotionKind.HeavyRain => (12, MaxParticles),
-        MotionKind.Snow => (8, 30),
-        MotionKind.Stars => (4, 12),
-        MotionKind.Clouds => (2, 4),
+        MotionKind.Rain => (6, 16),
+        MotionKind.HeavyRain => (10, 28),
+        MotionKind.Snow => (6, 18),
+        MotionKind.Stars => (4, 10),
+        MotionKind.Clouds => (2, 3),
         MotionKind.Fog => (2, 3),
         MotionKind.SunGlow => (1, 1),
         _ => (0, 0),

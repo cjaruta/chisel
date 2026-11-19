@@ -19,6 +19,16 @@ namespace Chisel.App.Dev;
 // scripted edit, saves a render of it every ~16 ms into artifacts/ui/capture/<scenario>/, then exits.
 internal static class CaptureMode
 {
+    // The weather-motion scenario's data: always rain, no network, no location.
+    public static Chisel.Core.Weather.IWeatherService RainWeather() => new RainService();
+
+    private sealed class RainService : Chisel.Core.Weather.IWeatherService
+    {
+        public System.Threading.Tasks.Task<Chisel.Core.Weather.WeatherSnapshot> GetAsync(System.Threading.CancellationToken cancellationToken = default) =>
+            System.Threading.Tasks.Task.FromResult(new Chisel.Core.Weather.WeatherSnapshot(14, 12, Chisel.Core.Weather.WeatherCondition.Rain, 16, 9,
+                Enumerable.Range(0, 8).Select(i => new Chisel.Core.Weather.HourlyWeather(new TimeOnly(10 + i, 0), Chisel.Core.Weather.WeatherCondition.Rain, 14 - i)).ToList()));
+    }
+
     public static string? Scenario(string[]? args)
     {
         var i = Array.IndexOf(args ?? [], "--capture");
@@ -66,10 +76,9 @@ internal static class CaptureMode
                 script.Add((3500, () => Mark("clock running")));
                 break;
             case "weather-motion":
-                // Rain scene on the weather widget (shown, not saved). Frames are saved densely around a forced layout
+                // Rain scene on the weather widget from a fake service; App runs this scenario on a temp database and an in-memory
+                // weather store, so no real data is read or written. Frames are saved densely around a forced layout
                 // rebuild; CPU and GC are logged over a window with motion (A) and one without (B, weather Loading).
-                var rain = new Chisel.Core.Weather.WeatherSnapshot(14, 12, Chisel.Core.Weather.WeatherCondition.Rain, 16, 9,
-                    Enumerable.Range(0, 8).Select(i => new Chisel.Core.Weather.HourlyWeather(new TimeOnly(10 + i, 0), Chisel.Core.Weather.WeatherCondition.Rain, 14 - i)).ToList());
                 var cpu = new List<string>();
                 (TimeSpan Cpu, long Bytes, int G0, int G1, int G2, long Ms) mark0 = default;
                 void Start() => mark0 = (System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime, GC.GetTotalAllocatedBytes(false),
@@ -84,14 +93,12 @@ internal static class CaptureMode
                 script.Add((100, () => Mark("start")));
                 script.Add((300, () =>
                 {
-                    vm.Weather.Show(WeatherState.Ready, rain);
                     var layout = vm.Layout.Layout;
                     if (layout.Find(WidgetRegistry.Weather) is null)
                     {
                         vm.Layout.Apply(layout.AddWidget(WidgetRegistry.Weather, 0, layout.Columns[0].Widgets.Count, 0.6));
                     }
                 }));
-                script.Add((2000, () => vm.Weather.Show(WeatherState.Ready, rain)));
                 script.Add((4700, () => Mark("before rebuild")));
                 script.Add((5000, () =>
                 {
