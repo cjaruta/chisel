@@ -48,13 +48,13 @@ public class WeatherMotionDrawTests
     [AvaloniaFact]
     public void Draw_AllocatesNothingInSteadyState()
     {
-        const int frames = 30;
+        const int frames = 60;
         var offenders = new List<string>();
         foreach (var key in WeatherBackdrop.Gradients.Keys)
         {
             var bitmap = new RenderTargetBitmap(new PixelSize((int)WidgetSize.Width, (int)WidgetSize.Height));
             using var context = bitmap.CreateDrawingContext();
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 12; i++)
             {
                 WeatherMotionDrawing.Draw(context, key, WidgetSize, i * 0.04);
             }
