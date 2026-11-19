@@ -18,13 +18,13 @@
         </Style>
     </w:WidgetView.Styles>
 
-    <w:WidgetView.HeaderActions>
+    <w:WidgetView.BodyActions>
         <StackPanel Orientation="Horizontal" Spacing="6">
             <Button Name="NowButton" Content="Now" Click="OnNowClick" />
             <Button Name="AddMarkerButton" Content="+ Marker" Command="{Binding Schedule.AddMarkerCommand}" />
             <Button Name="AddBlockButton" Classes="accent" Content="+ Block" Command="{Binding Schedule.AddBlockCommand}" />
         </StackPanel>
-    </w:WidgetView.HeaderActions>
+    </w:WidgetView.BodyActions>
 
     <!-- A 24-hour day grid. Blocks are boxes sized by their times, markers are lines. -->
     <DockPanel>

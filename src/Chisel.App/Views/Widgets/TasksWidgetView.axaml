@@ -8,9 +8,9 @@
               x:Class="Chisel.App.Views.Widgets.TasksWidgetView"
               x:DataType="vm:MainViewModel">
 
-    <w:WidgetView.HeaderActions>
+    <w:WidgetView.BodyActions>
         <Button Content="Clear completed" Command="{Binding Tasks.ClearCompletedCommand}" />
-    </w:WidgetView.HeaderActions>
+    </w:WidgetView.BodyActions>
 
     <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,10,0,0">

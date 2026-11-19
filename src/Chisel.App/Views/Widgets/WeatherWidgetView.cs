@@ -19,25 +19,15 @@ public sealed class WeatherWidgetView : WidgetView
 
     public WeatherWidgetView()
     {
-        // Same bottom padding as the clock so content sits evenly under the heading.
-        Padding = new Thickness(16, 0, 16, 12);
+                Padding = new Thickness(16, 0, 16, 12);
         ClipToBounds = true;
         IsHitTestVisible = false;
         Backdrop.WeatherBackdropLayer.Install(this);
     }
 
-    public override bool HeaderOverlaysContent => true;
-
-    // Over the backdrop the title uses the widget's primary text color (the same one the contrast test checks).
-    public override IBrush? HeaderForeground =>
-        _weather is { State: WeatherState.Ready } ? Brush("CurrentBlockOutlineBrush", Brushes.White) : null;
-
-    // The title bar floats over the backdrop, so the content makes room for it while it is shown.
-    protected override void OnHeaderShownChanged()
-    {
-        Padding = new Thickness(16, HeaderShown ? WidgetFrame.HeaderHeight : 0, 16, 12);
-        Rebuild();
-    }
+    // The backdrop fills this view, which sits below the header; with no header it fills the whole card.
+    protected override void OnHeaderShownChanged() =>
+        CornerRadius = HeaderShown ? new CornerRadius(0, 0, 12, 12) : new CornerRadius(12);
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -81,7 +71,6 @@ public sealed class WeatherWidgetView : WidgetView
 
     private void Rebuild()
     {
-        RaiseHeaderForegroundChanged();
         if (_weather is null)
         {
             return;
@@ -134,10 +123,10 @@ public sealed class WeatherWidgetView : WidgetView
         Content = WithLocation(panel);
     }
 
-    // With the title hidden the place name goes small at the top left, so the card still says where it is.
+    // The place name sits small at the top left of the body, so the card always says where it is.
     private Control WithLocation(StackPanel panel)
     {
-        if (HeaderShown || _weather is not { LocationName.Length: > 0 })
+        if (_weather is not { LocationName.Length: > 0 })
         {
             return panel;
         }

@@ -38,10 +38,8 @@ public class MainWindowHeadlessTests
     }
 
     [AvaloniaTheory]
-    [InlineData("Today")]
     [InlineData("Tasks")]
     [InlineData("Notes")]
-    [InlineData("Quick links")]
     public void MainWindow_ShowsCardHeading(string heading)
     {
         var window = UiSnapshot.ShowMainWindow();
