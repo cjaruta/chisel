@@ -41,19 +41,59 @@ internal sealed class BasicPad
         IsError = false;
     }
 
-    // Shows a number as if it had been typed: the next digit replaces it.
+    // Shows a number as a result: the next digit replaces it, an operator carries on from it.
     public void Show(Num value)
     {
         Reset();
         try
         {
-            _value = value.Exact ?? checked((decimal)value.Approx);
+            _value = ToDecimal(value);
         }
         catch (OverflowException)
         {
             IsError = true;
         }
     }
+
+    // Puts a number on the display as the second operand (memory recall).
+    public void Recall(Num value)
+    {
+        if (IsError)
+        {
+            Reset();
+        }
+        try
+        {
+            _value = ToDecimal(value);
+        }
+        catch (OverflowException)
+        {
+            Reset();
+            IsError = true;
+            return;
+        }
+        if (_pending is null)
+        {
+            _last = null;
+            _accumulator = null;
+        }
+        _typing = false;
+        _operandReady = true;
+    }
+
+    // Settles the typed number, so the next digit starts a new one.
+    public void Commit()
+    {
+        if (!IsError)
+        {
+            _value = Current();
+            _typing = false;
+        }
+    }
+
+    // The number as the calculator shows it (12 significant digits), so a result and what is copied from it agree.
+    private static decimal ToDecimal(Num value) =>
+        decimal.Parse(CalculatorFormat.Neutral(value), NumberStyles.Float, CultureInfo.InvariantCulture);
 
     public void Press(CalcKey key)
     {
