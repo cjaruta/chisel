@@ -224,4 +224,45 @@ public class AlarmServiceTests
 
         Assert.Single(fired);
     }
+
+    [Fact]
+    public void Next_IsTheSoonestEnabledAlarm_TodayOrOnAFollowingDay()
+    {
+        var (service, time, _, _) = Make(hour: 7);
+        service.Add(new TimeOnly(9, 30), "Later", AlarmDays.Every);
+        service.Add(new TimeOnly(8, 0), "Sooner", AlarmDays.Every);
+        service.Add(new TimeOnly(6, 0), "Tomorrow", AlarmDays.Every);
+
+        var next = service.Next();
+        Assert.Equal("Sooner", next!.Value.Alarm.Label);
+        Assert.Equal(new DateTime(2000, 1, 1, 8, 0, 0), next.Value.At);
+
+        time.Advance(TimeSpan.FromHours(3)); // 10:00: only tomorrow's are left
+        Assert.Equal("Tomorrow", service.Next()!.Value.Alarm.Label);
+        Assert.Equal(new DateTime(2000, 1, 2, 6, 0, 0), service.Next()!.Value.At);
+    }
+
+    [Fact]
+    public void Next_SkipsDisabledAlarmsAndDaysThatDoNotMatch_AndIsNullWithNone()
+    {
+        var (service, _, _, _) = Make(hour: 7); // a Saturday
+        Assert.Null(service.Next());
+
+        var off = service.Add(new TimeOnly(8, 0), "Off", AlarmDays.Every);
+        service.SetEnabled(off.Id, false);
+        Assert.Null(service.Next());
+
+        service.Add(new TimeOnly(8, 0), "Mondays", AlarmDays.Monday);
+        var next = service.Next()!.Value;
+        Assert.Equal("Mondays", next.Alarm.Label);
+        Assert.Equal(new DateTime(2000, 1, 3, 8, 0, 0), next.At);
+    }
+
+    [Fact]
+    public void AOneTimeAlarmWhoseTimeIsNow_NextRingsTomorrow()
+    {
+        var (service, _, _, _) = Make(hour: 8);
+        service.Add(new TimeOnly(8, 0), "Now", AlarmDays.None);
+        Assert.Equal(new DateTime(2000, 1, 2, 8, 0, 0), service.Next()!.Value.At);
+    }
 }

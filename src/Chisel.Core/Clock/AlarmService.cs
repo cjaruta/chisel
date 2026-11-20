@@ -62,6 +62,31 @@ public sealed class AlarmService
 
     public void CancelSnooze(Guid id) => _snoozes.Remove(id);
 
+    // The enabled alarm that will ring soonest from now, with the moment it will. A one-time alarm counts for its next time of day.
+    public (Alarm Alarm, DateTime At)? Next()
+    {
+        var now = _time.GetLocalNow().DateTime;
+        var today = DateOnly.FromDateTime(now);
+        (Alarm Alarm, DateTime At)? best = null;
+        foreach (var alarm in _alarms.Where(a => a.Enabled))
+        {
+            for (var day = 0; day <= 7; day++)
+            {
+                var date = today.AddDays(day);
+                var at = date.ToDateTime(alarm.Time);
+                if (alarm.OccursOn(date) && at > now)
+                {
+                    if (best is null || at < best.Value.At)
+                    {
+                        best = (alarm, at);
+                    }
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
     public void Check()
     {
         var now = _time.GetLocalNow().DateTime;

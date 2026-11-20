@@ -85,6 +85,27 @@ public partial class AlarmsViewModel : ViewModelBase
 
     public const int SnoozeMinutes = 5;
 
+    private Guid? _sticky;
+    private Alarm? _shown;
+    private bool _updatingNext;
+
+    // The compact alarm display: the next alarm to ring, large, with an on/off switch and one action to manage the full list.
+    [ObservableProperty]
+    public partial bool HasAlarms { get; private set; }
+
+    [ObservableProperty]
+    public partial string NextTimeText { get; private set; } = "--:--";
+
+    [ObservableProperty]
+    public partial string NextCaption { get; private set; } = "No alarms set";
+
+    [ObservableProperty]
+    public partial bool NextEnabled { get; set; }
+
+    // Whether the full list and editor is open (it opens from the compact display, outside the narrow slot).
+    [ObservableProperty]
+    public partial bool IsManaging { get; private set; }
+
     public DayToggle[] Days { get; } =
     [
         new(AlarmDays.Monday, "Mon"), new(AlarmDays.Tuesday, "Tue"), new(AlarmDays.Wednesday, "Wed"), new(AlarmDays.Thursday, "Thu"),
@@ -107,7 +128,45 @@ public partial class AlarmsViewModel : ViewModelBase
         Rebuild();
     }
 
-    public void Tick() => _service.Check();
+    public void Tick()
+    {
+        _service.Check();
+        UpdateNext();
+    }
+
+    [RelayCommand]
+    private void Manage() => IsManaging = !IsManaging;
+
+    partial void OnNextEnabledChanged(bool value)
+    {
+        if (_updatingNext || _shown is not { } shown)
+        {
+            return;
+        }
+        _service.SetEnabled(shown.Id, value);
+        // An alarm switched off stays on show, so it can be switched back on; the display moves on once it is on again.
+        _sticky = value ? null : shown.Id;
+        Rebuild();
+    }
+
+    // Shows the alarm that will ring next; with none enabled, the earliest one (switched off). Cheap: nothing is raised unless it changed.
+    private void UpdateNext()
+    {
+        var alarms = _service.Alarms;
+        if (_sticky is { } sticky && alarms.FirstOrDefault(a => a.Id == sticky) is { Enabled: true })
+        {
+            _sticky = null;
+        }
+        var shown = alarms.FirstOrDefault(a => a.Id == _sticky) ?? _service.Next()?.Alarm ?? alarms.FirstOrDefault();
+        _updatingNext = true;
+        _shown = shown;
+        HasAlarms = shown is not null;
+        NextTimeText = shown is null ? "--:--" : _display.Time(shown.Time);
+        NextCaption = shown is null ? "No alarms set"
+            : string.IsNullOrWhiteSpace(shown.Label) ? AlarmFormat.Days(shown.Days) : shown.Label + " · " + AlarmFormat.Days(shown.Days);
+        NextEnabled = shown?.Enabled ?? false;
+        _updatingNext = false;
+    }
 
     private bool CanAdd() => TimeOnly.TryParse(NewTime, CultureInfo.InvariantCulture, out _);
 
@@ -128,11 +187,19 @@ public partial class AlarmsViewModel : ViewModelBase
         Rebuild();
     }
 
-    internal void SetEnabled(Guid id, bool enabled) => _service.SetEnabled(id, enabled);
+    internal void SetEnabled(Guid id, bool enabled)
+    {
+        _service.SetEnabled(id, enabled);
+        UpdateNext();
+    }
 
     internal void Delete(Guid id)
     {
         _service.Delete(id);
+        if (_sticky == id)
+        {
+            _sticky = null;
+        }
         Rebuild();
     }
 
@@ -177,5 +244,6 @@ public partial class AlarmsViewModel : ViewModelBase
         {
             Items.Add(new AlarmItemViewModel(this, alarm, _display.Time(alarm.Time)));
         }
+        UpdateNext();
     }
 }
