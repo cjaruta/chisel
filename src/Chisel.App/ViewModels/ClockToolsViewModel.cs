@@ -22,6 +22,7 @@ public partial class ClockToolsViewModel : ViewModelBase
     private TimerState _timer;
     private StopwatchState _stopwatch;
     private bool _announced;
+    private (string, string, bool) _buttons;
 
     // Raised once when the running timer reaches zero (not for one that finished while the app was closed).
     public event Action? TimerFinished;
@@ -233,6 +234,12 @@ public partial class ClockToolsViewModel : ViewModelBase
         var timerShown = status is TimerStatus.Running or TimerStatus.Finished;
         ShowChip = !IsExpanded && (timerShown || StopwatchRunning);
         ChipText = timerShown ? (status == TimerStatus.Finished ? "Done" : TimerText) : StopwatchText[..^2];
+        var buttons = (TimerButtonText, StopwatchButtonText, CanSetTimer);
+        if (buttons == _buttons)
+        {
+            return;
+        }
+        _buttons = buttons;
         OnPropertyChanged(nameof(TimerButtonText));
         OnPropertyChanged(nameof(StopwatchButtonText));
         OnPropertyChanged(nameof(CanSetTimer));

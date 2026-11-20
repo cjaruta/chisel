@@ -74,6 +74,7 @@ public partial class App : Application
                     _volume,
                     pictureCatalog: _services.Pictures,
                     clockSettings: new ClockSettingsViewModel(_services.ClockStyles),
+                    clockTools: new ClockToolsViewModel(_services.ClockTools, _services.Time),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
