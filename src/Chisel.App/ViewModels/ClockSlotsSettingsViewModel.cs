@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using Chisel.Core.Clock;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
 
@@ -47,6 +48,9 @@ public partial class ClockSlotSettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool HasEmpty { get; set; }
+
+    [RelayCommand]
+    private void SelectMode(bool scrolling) => Scrolling = scrolling;
 
     public ClockSlotSettingsViewModel(string title)
     {
@@ -92,9 +96,19 @@ public partial class ClockSlotsSettingsViewModel : ViewModelBase
     public IReadOnlyList<ClockSlotSettingsViewModel> Slots { get; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSlotCountOne))]
+    [NotifyPropertyChangedFor(nameof(IsSlotCountTwo))]
+    [NotifyPropertyChangedFor(nameof(IsSlotCountThree))]
     public partial int SlotCountIndex { get; set; }
 
     public int SlotCount => SlotCountIndex + 1;
+
+    public bool IsSlotCountOne => SlotCountIndex == 0;
+    public bool IsSlotCountTwo => SlotCountIndex == 1;
+    public bool IsSlotCountThree => SlotCountIndex == 2;
+
+    [RelayCommand]
+    private void SelectSlotCount(int count) => SlotCountIndex = count - 1;
 
     public ClockSlotsSettingsViewModel(ClockToolsViewModel tools)
     {
