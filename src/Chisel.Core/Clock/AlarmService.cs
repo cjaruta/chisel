@@ -11,6 +11,7 @@ public sealed class AlarmService
     private readonly TimeProvider _time;
     private List<Alarm> _alarms;
     private DateTime _lastCheck;
+    private readonly Dictionary<Guid, DateTime> _snoozes = [];
 
     public event Action<Alarm>? Fired;
 
@@ -46,14 +47,34 @@ public sealed class AlarmService
     public void Delete(Guid id)
     {
         _alarms.RemoveAll(a => a.Id == id);
+        _snoozes.Remove(id);
         _repository.Delete(id);
     }
+
+    // Rings the alarm again after the delay (held in memory only: a snooze does not outlive the app).
+    public void Snooze(Guid id, TimeSpan delay)
+    {
+        if (_alarms.Exists(a => a.Id == id))
+        {
+            _snoozes[id] = _time.GetLocalNow().DateTime + delay;
+        }
+    }
+
+    public void CancelSnooze(Guid id) => _snoozes.Remove(id);
 
     public void Check()
     {
         var now = _time.GetLocalNow().DateTime;
         var due = Due(_alarms, _lastCheck, now);
         _lastCheck = now;
+        foreach (var id in _snoozes.Where(s => s.Value <= now).Select(s => s.Key).ToList())
+        {
+            _snoozes.Remove(id);
+            if (_alarms.Find(a => a.Id == id) is { } snoozed)
+            {
+                Fired?.Invoke(snoozed);
+            }
+        }
         foreach (var alarm in due)
         {
             var fired = alarm with { LastFiredOn = DateOnly.FromDateTime(now), Enabled = alarm.Repeats };

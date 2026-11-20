@@ -171,4 +171,57 @@ public class AlarmServiceTests
     [InlineData(AlarmDays.Weekend, "Weekends")]
     [InlineData(AlarmDays.Monday | AlarmDays.Wednesday, "Mon, Wed")]
     public void DaysText_Summarizes(AlarmDays days, string expected) => Assert.Equal(expected, AlarmFormat.Days(days));
+
+    [Fact]
+    public void Snooze_RingsTheAlarmAgainAfterTheDelay_EvenForAOneTimeAlarm()
+    {
+        var (service, time, _, fired) = Make();
+        service.Add(Eight, "Nap", AlarmDays.None);
+        time.Advance(TimeSpan.FromHours(1));
+        service.Check();
+        Assert.Single(fired);
+
+        service.Snooze(fired[0].Id, TimeSpan.FromMinutes(5));
+        time.Advance(TimeSpan.FromMinutes(4));
+        service.Check();
+        Assert.Single(fired);
+
+        time.Advance(TimeSpan.FromMinutes(1));
+        service.Check();
+        service.Check();
+        Assert.Equal(2, fired.Count);
+        Assert.Equal("Nap", fired[1].Label);
+    }
+
+    [Fact]
+    public void CancellingASnooze_StopsItRinging()
+    {
+        var (service, time, _, fired) = Make();
+        var alarm = service.Add(Eight, "Nap", AlarmDays.None);
+        time.Advance(TimeSpan.FromHours(1));
+        service.Check();
+        service.Snooze(alarm.Id, TimeSpan.FromMinutes(5));
+        service.CancelSnooze(alarm.Id);
+
+        time.Advance(TimeSpan.FromMinutes(10));
+        service.Check();
+
+        Assert.Single(fired);
+    }
+
+    [Fact]
+    public void ADeletedAlarm_DoesNotRingFromASnooze()
+    {
+        var (service, time, _, fired) = Make();
+        var alarm = service.Add(Eight, "Gone", AlarmDays.None);
+        time.Advance(TimeSpan.FromHours(1));
+        service.Check();
+        service.Snooze(alarm.Id, TimeSpan.FromMinutes(5));
+        service.Delete(alarm.Id);
+
+        time.Advance(TimeSpan.FromMinutes(10));
+        service.Check();
+
+        Assert.Single(fired);
+    }
 }
