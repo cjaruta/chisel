@@ -114,8 +114,8 @@ public class HttpImageDownloaderTests
 
         var result = await Downloader(handler).DownloadAsync("https://example.com/logo.png");
 
-        Assert.Equal(DownloadError.NotAPicture, result.Error);
-        Assert.Contains("PNG, JPEG, GIF or WebP", result.Message);
+        Assert.Equal(DownloadError.Unsupported, result.Error);
+        Assert.Equal("AVIF and other formats are not supported", result.Message);
     }
 
     [Fact]

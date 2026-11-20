@@ -29,16 +29,26 @@ public interface IImageResizer
     byte[]? Resize(byte[] data, int width, int height);
 }
 
-public enum DownloadError { None, BadAddress, TooLarge, Timeout, TooManyRedirects, NotAPicture, Failed }
+public enum DownloadError { None, BadAddress, TooLarge, Timeout, TooManyRedirects, NotAPicture, Failed, Refused, WebPage, Unsupported, Unreachable }
 
-public sealed record DownloadResult(byte[]? Bytes, DownloadError Error = DownloadError.None, string? Message = null, string? FileName = null)
+// Status and ContentType: what the server said (0 and null when there was no answer); ContentType is the downloaded
+// file's declared type, for classifying it.
+public sealed record DownloadResult(byte[]? Bytes, DownloadError Error = DownloadError.None, string? Message = null, string? FileName = null,
+    int Status = 0, string? ContentType = null)
 {
     public bool Succeeded => Bytes is not null;
 }
 
 public interface IImageDownloader
 {
-    Task<DownloadResult> DownloadAsync(string url, CancellationToken cancellation = default);
+    // referer: the page the address came from, when known (a site may only serve its pictures to its own pages).
+    Task<DownloadResult> DownloadAsync(string url, string? referer = null, CancellationToken cancellation = default);
+}
+
+// A plain-text diagnostic log for drops of pictures. Never receives page contents; never throws.
+public interface IPictureDropLog
+{
+    void Write(string line);
 }
 
 // A picture that passed every check and is ready to store: the bytes to keep (a display-size copy when asked for),
