@@ -94,33 +94,29 @@ public class LayoutInstanceTests : IDisposable
     }
 
     [Fact]
-    public void Remove_DeletesAnInstance_WithoutAHiddenEntryOrAnOpenedTray()
+    public void Remove_DeletesAnInstance_WithoutAHiddenEntry()
     {
         var layout = Editing();
         layout.AddWidgetFromTray(TestMultiWidget.TypeId);
         layout.AddWidgetFromTray(TestMultiWidget.TypeId);
         var first = Instances(layout)[0];
-        layout.IsTrayOpen = false;
 
         layout.RemoveWidget(first);
 
         Assert.Single(Instances(layout));
         Assert.DoesNotContain(first, layout.Layout.HiddenWidgetIds);
-        Assert.False(layout.IsTrayOpen);
         Assert.Equal(new[] { "Test frame" }, Titles(layout));
     }
 
     [Fact]
-    public void Remove_OfASingleInstanceWidget_StillHidesItAndOpensTheTray()
+    public void Remove_OfASingleInstanceWidget_StillHidesIt()
     {
         var layout = Editing();
-        layout.IsTrayOpen = false;
 
         layout.RemoveWidget("notes");
 
         Assert.Contains("notes", layout.Layout.HiddenWidgetIds);
         Assert.Contains(layout.TrayWidgets, w => w.Id == "notes");
-        Assert.True(layout.IsTrayOpen);
     }
 
     [Fact]

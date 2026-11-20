@@ -56,23 +56,15 @@ public partial class LayoutViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(Columns), nameof(TrayWidgets), nameof(HasHiddenWidgets), nameof(CanRemoveWidgets))]
     public partial WidgetLayout Layout { get; private set; }
 
-    // The widgets that are not on the dashboard, in registry order: what the tray lists.
-    // A widget that allows several instances is always offered ("Add" makes a new one); any other only while hidden.
+    // The widgets that can be added: hidden ones, plus any type that allows several instances. In registry order.
     public IReadOnlyList<WidgetDefinition> TrayWidgets =>
         WidgetRegistry.AllTypes.Where(w => w.AllowMultiple || Layout.HiddenWidgetIds.Contains(w.Id)).ToList();
 
-    // Whether the tray has anything to offer.
+    // Whether anything can be added.
     public bool HasHiddenWidgets => TrayWidgets.Count > 0;
 
     // False when only one widget is left: it cannot be removed.
     public bool CanRemoveWidgets => Layout.CanRemoveWidget;
-
-    // Whether the tray shows its cards. It opens when entering edit mode with widgets hidden and when one is removed.
-    [ObservableProperty]
-    public partial bool IsTrayOpen { get; set; }
-
-    [RelayCommand]
-    private void ToggleTray() => IsTrayOpen = !IsTrayOpen;
 
     // Takes a widget off the dashboard (working copy only; its data is untouched). Not the last one.
     public void RemoveWidget(string widgetId)
@@ -82,8 +74,6 @@ public partial class LayoutViewModel : ViewModelBase
             return;
         }
         Layout = Layout.RemoveWidget(widgetId);
-        // An instance is deleted, so there is nothing new in the tray to look at.
-        IsTrayOpen = IsTrayOpen || !InstanceIds.IsInstance(widgetId);
     }
 
     // Shows or hides a widget's title (working copy only; Done saves it, Cancel and Reset put it back).
@@ -222,7 +212,7 @@ public partial class LayoutViewModel : ViewModelBase
         return Finish(Layout.Combine(id, targetId, cardWidth, MinWidthOf));
     }
 
-    // The quick path from the tray: the widget goes to the bottom of the first column. For a type that allows
+    // The quick path from the widget library: the widget goes to the bottom of the first column. For a type that allows
     // several instances, widgetId is the type id and a new instance is made.
     public void AddWidgetFromTray(string widgetId)
     {
@@ -334,8 +324,6 @@ public partial class LayoutViewModel : ViewModelBase
     {
         Snapshot = Layout;
         _picturesSnapshot = Pictures;
-        // Opens only when the user hid one of the original widgets, not for the clock, weather or media waiting there by default.
-        IsTrayOpen = Layout.HiddenWidgetIds.Any(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator);
         IsEditing = true;
     }
 

@@ -241,32 +241,28 @@
             <Setter Property="Opacity" Value="0.3" />
         </Style>
 
-        <!-- The tray in the edit toolbar: a "Widgets (n)" toggle and small cards for the hidden widgets -->
-        <Style Selector="Button.trayToggle">
+        <!-- The widget library: a toolbar toggle and a floating panel of rows -->
+        <Style Selector="Button.libraryToggle">
             <Setter Property="Background" Value="Transparent" />
         </Style>
-
-        <Style Selector="Path.trayChevron">
-            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
-            <Setter Property="StrokeThickness" Value="1.6" />
-            <Setter Property="RenderTransform" Value="rotate(-90deg)" />
+        <Style Selector="Button.libraryToggle.active">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
         </Style>
 
-        <Style Selector="Path.trayChevron.open">
-            <Setter Property="RenderTransform" Value="none" />
+        <Style Selector="Border.libraryPanel">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="16" />
         </Style>
 
-        <Style Selector="Border.trayCard">
+        <Style Selector="Border.libraryRow">
             <Setter Property="Background" Value="{StaticResource EditBarBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="8,5" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style Selector="Border.trayCard:pointerover">
-            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="Padding" Value="10,8" />
         </Style>
 
         <Style Selector="Path.trayIcon">
@@ -278,11 +274,6 @@
             <Setter Property="StrokeLineCap" Value="Round" />
             <Setter Property="StrokeJoin" Value="Round" />
             <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-
-        <Style Selector="TextBlock.trayPlus">
-            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
-            <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
         <Style Selector="Border.toolbarDivider">

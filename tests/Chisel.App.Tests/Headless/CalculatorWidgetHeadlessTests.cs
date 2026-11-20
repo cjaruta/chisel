@@ -59,7 +59,6 @@ public class CalculatorWidgetHeadlessTests
         Settle();
 
         Assert.Contains(main.Layout.TrayWidgets, w => w.Id == WidgetRegistry.Calculator);
-        Assert.False(main.Layout.IsTrayOpen);
         Assert.Empty(window.GetVisualDescendants().OfType<CalculatorWidgetView>());
 
         main.Layout.AddWidgetFromTray(WidgetRegistry.Calculator);
