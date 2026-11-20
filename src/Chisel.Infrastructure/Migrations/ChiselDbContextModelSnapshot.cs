@@ -17,6 +17,127 @@ namespace Chisel.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.AlarmEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("LastFiredOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Alarms");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClockStyleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Alignment")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("BorderWidth")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("DialColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EmphasizeQuarters")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Hands")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("HourColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("HourThickness")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("MarkerColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Markers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MinuteColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("MinuteThickness")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("NumeralColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Numerals")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SecondColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("SecondThickness")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("Shape")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClockStyles");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClockToolsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SlotsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("StopwatchBankedTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("StopwatchLapsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("StopwatchStartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TimerBankedTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TimerDurationTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("TimerStartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClockTools");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.FrameOptionsEntity", b =>
                 {
                     b.Property<string>("FrameId")
