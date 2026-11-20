@@ -44,5 +44,27 @@
         <ComboBox Name="ClockMinuteColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MinuteColorIndex}" />
         <TextBlock Text="Second hand" Opacity="0.7" />
         <ComboBox Name="ClockSecondColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.SecondColorIndex}" />
+        <TextBlock Classes="settingsSection" Text="SLOTS" Margin="0,10,0,0" />
+        <TextBlock Text="Number of slots" Opacity="0.7" />
+        <ComboBox Name="ClockSlotCount" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.SlotCountNames}" SelectedIndex="{Binding ClockSlotsSettings.SlotCountIndex}" />
+        <TextBlock Text="The wheel over a scrolling slot moves between its tools; right-click jumps to one. A widget too small for its slots gives the last visible one the tools of the hidden ones." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <ItemsControl Name="ClockSlotList" ItemsSource="{Binding ClockSlotsSettings.Slots}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ClockSlotSettingsViewModel">
+                    <StackPanel Spacing="6" Margin="0,8,0,0" IsVisible="{Binding IsShown}">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                        <ComboBox Name="ClockSlotMode" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.ModeNames}" SelectedIndex="{Binding ModeIndex}" />
+                        <ComboBox Name="ClockSlotPinned" MinWidth="220" HorizontalAlignment="Left" IsVisible="{Binding IsPinned}" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.ToolNames}" SelectedIndex="{Binding PinnedIndex}" />
+                        <StackPanel Name="ClockSlotTools" Spacing="2" IsVisible="{Binding Scrolling}">
+                            <CheckBox Content="Clock" IsChecked="{Binding HasClock}" />
+                            <CheckBox Content="Timer" IsChecked="{Binding HasTimer}" />
+                            <CheckBox Content="Stopwatch" IsChecked="{Binding HasStopwatch}" />
+                            <CheckBox Content="Alarm" IsChecked="{Binding HasAlarm}" />
+                            <CheckBox Content="Empty" IsChecked="{Binding HasEmpty}" />
+                        </StackPanel>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </StackPanel>
 </UserControl>

@@ -14,6 +14,7 @@ public partial class MainViewModel : ViewModelBase
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
+    public ClockSlotsSettingsViewModel ClockSlotsSettings { get; }
     public MediaViewModel Media { get; }
     public MediaBackgroundViewModel MediaBackground { get; }
     public MediaSettingsViewModel MediaSettings { get; }
@@ -65,6 +66,7 @@ public partial class MainViewModel : ViewModelBase
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
+        ClockSlotsSettings = new ClockSlotsSettingsViewModel(ClockTools);
         Spectrum = spectrum;
         MediaSettings = mediaSettings ?? new MediaSettingsViewModel(null);
         Volume = new VolumeViewModel(volume ?? new Services.FakeVolumeService(), TimeProvider.System);
