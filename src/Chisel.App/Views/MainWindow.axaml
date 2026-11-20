@@ -97,6 +97,21 @@
             <TextBlock Name="PictureNoticeText" Text="{Binding PictureFrames.Notice}" TextWrapping="Wrap" />
         </Border>
 
+        <!-- An alert (an alarm ringing, a timer done): stays until dismissed -->
+        <Border Grid.Row="1" Name="AlertBanner" Classes="card" ZIndex="30" Padding="16,12" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" MinWidth="280" MaxWidth="520"
+                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0"
+                IsVisible="{Binding Alerts.Current, Converter={x:Static convA:ObjectConverters.IsNotNull}}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Name="AlertTitle" FontWeight="SemiBold" FontSize="18" Text="{Binding Alerts.Current.Title}" TextWrapping="Wrap" />
+                    <TextBlock Name="AlertMessage" Opacity="0.7" Text="{Binding Alerts.Current.Message}" TextWrapping="Wrap" />
+                    <TextBlock Name="AlertWaiting" Opacity="0.6" FontSize="11" Text="{Binding Alerts.WaitingCount, StringFormat='{}{0} more waiting'}"
+                               IsVisible="{Binding Alerts.HasWaiting}" />
+                </StackPanel>
+                <Button Name="AlertDismiss" Content="Dismiss" Command="{Binding Alerts.DismissCommand}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
         <!-- Settings dialog: a centered 720x520 card over a dimmed page; Esc or Close dismisses it -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="settingsScrim"
                 IsVisible="{Binding Settings.IsOpen}" ZIndex="10" Margin="-20">

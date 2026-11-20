@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -34,6 +35,7 @@ public sealed class ClockWidgetView : WidgetView
     private readonly Button _stopwatchStart = new() { Name = "ClockStopwatchStart", MinWidth = 80 };
     private readonly Button _lap = new() { Name = "ClockStopwatchLap", Content = "Lap" };
     private readonly ItemsControl _laps = new() { Name = "ClockLaps", FontSize = 12 };
+    private readonly Border _alarmHost = new() { Name = "ClockAlarmPanel", IsVisible = false, Padding = new Thickness(8) };
     private readonly Viewbox _timerPanel;
     private readonly Viewbox _stopwatchPanel;
     private readonly StackPanel _config = new() { Name = "ClockConfig", Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -74,6 +76,7 @@ public sealed class ClockWidgetView : WidgetView
         body.Children.Add(_face);
         body.Children.Add(_timerPanel);
         body.Children.Add(_stopwatchPanel);
+        body.Children.Add(_alarmHost);
         body.Children.Add(_chip);
         body.Children.Add(_open);
         body.Children.Add(_config);
@@ -127,6 +130,7 @@ public sealed class ClockWidgetView : WidgetView
             _tools.PropertyChanged += OnToolsChanged;
             main.Layout.PropertyChanged += OnLayoutChanged;
             _laps.ItemsSource = _tools.LapTexts;
+            _alarmHost.Child ??= BuildAlarmPanel(main.Alarms);
             BuildStrip();
             BuildConfig();
             Sync();
@@ -183,6 +187,7 @@ public sealed class ClockWidgetView : WidgetView
         _face.Opacity = editing ? 0.2 : 1;
         _timerPanel.IsVisible = open && mode == ClockMode.Timer;
         _stopwatchPanel.IsVisible = open && mode == ClockMode.Stopwatch;
+        _alarmHost.IsVisible = open && mode == ClockMode.Alarm;
         _strip.IsVisible = open;
         Grid.SetRow(_strip, tools.StripAtBottom ? 2 : 0);
         _open.IsVisible = !editing && !open && ToolModes(tools).Count > 0;
@@ -208,7 +213,7 @@ public sealed class ClockWidgetView : WidgetView
 
     // The tools that can be opened: every enabled mode except the plain clock.
     private static System.Collections.Generic.IReadOnlyList<ClockMode> ToolModes(ClockToolsViewModel tools) =>
-        tools.EnabledModes.Where(m => m is ClockMode.Timer or ClockMode.Stopwatch).ToList();
+        tools.EnabledModes.Where(m => m != ClockMode.Clock).ToList();
 
     private void BuildStrip()
     {
@@ -234,7 +239,7 @@ public sealed class ClockWidgetView : WidgetView
             return;
         }
         _config.Children.Clear();
-        foreach (var mode in new[] { ClockMode.Timer, ClockMode.Stopwatch })
+        foreach (var mode in new[] { ClockMode.Alarm, ClockMode.Timer, ClockMode.Stopwatch })
         {
             var box = new CheckBox { Name = "ClockToolToggle_" + mode, Content = mode.ToString(), IsChecked = tools.Config.IsEnabled(mode), FontSize = 12 };
             box.IsCheckedChanged += (_, _) => _tools?.SetToolEnabled(mode, box.IsChecked == true);
@@ -250,6 +255,64 @@ public sealed class ClockWidgetView : WidgetView
             }
         };
         _config.Children.Add(placement);
+    }
+
+    // The Alarm tab: a form to add an alarm (time as HH:MM, a label, the days) over the list, each row with an on/off box and a delete button.
+    private static Control BuildAlarmPanel(AlarmsViewModel alarms)
+    {
+        var time = new TextBox { Name = "ClockAlarmTime", Width = 80, Watermark = "HH:MM", FontSize = 13 };
+        time.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewTime)) { Source = alarms, Mode = BindingMode.TwoWay });
+        var label = new TextBox { Name = "ClockAlarmLabel", Watermark = "Label", MinWidth = 100, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Stretch };
+        label.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewLabel)) { Source = alarms, Mode = BindingMode.TwoWay });
+        var add = new Button { Name = "ClockAlarmAdd", Content = "Add", Command = alarms.AddCommand };
+
+        var days = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
+        foreach (var day in alarms.Days)
+        {
+            var toggle = new ToggleButton { Name = "ClockAlarmDay_" + day.Day, Content = day.Title, FontSize = 11, Padding = new Thickness(5, 2) };
+            toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(DayToggle.IsOn)) { Source = day, Mode = BindingMode.TwoWay });
+            days.Children.Add(toggle);
+        }
+
+        var form = new StackPanel { Spacing = 6 };
+        var top = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 6 };
+        top.Children.Add(time);
+        top.Children.Add(label);
+        top.Children.Add(add);
+        Grid.SetColumn(label, 1);
+        Grid.SetColumn(add, 2);
+        form.Children.Add(top);
+        form.Children.Add(days);
+
+        var list = new ItemsControl
+        {
+            Name = "ClockAlarmList",
+            ItemsSource = alarms.Items,
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<AlarmItemViewModel>((item, _) =>
+            {
+                var on = new CheckBox { VerticalAlignment = VerticalAlignment.Center };
+                on.Bind(CheckBox.IsCheckedProperty, new Binding(nameof(AlarmItemViewModel.Enabled)) { Source = item, Mode = BindingMode.TwoWay });
+                var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+                text.Children.Add(new TextBlock { Text = item.TimeText, FontSize = 18, FontWeight = FontWeight.SemiBold });
+                text.Children.Add(new TextBlock { Text = string.IsNullOrEmpty(item.Label) ? item.DaysText : item.Label + " · " + item.DaysText, FontSize = 11, Opacity = 0.7 });
+                var delete = new Button { Content = "x", FontSize = 11, Padding = new Thickness(6, 1), VerticalAlignment = VerticalAlignment.Center };
+                delete.Click += (_, _) => item?.DeleteCommand.Execute(null);
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(0, 3) };
+                row.Children.Add(on);
+                row.Children.Add(text);
+                row.Children.Add(delete);
+                Grid.SetColumn(text, 1);
+                Grid.SetColumn(delete, 2);
+                return row;
+            }),
+        };
+
+        var panel = new Grid { RowDefinitions = new RowDefinitions("Auto,*"), RowSpacing = 8 };
+        panel.Children.Add(form);
+        var scroll = new ScrollViewer { Content = list };
+        panel.Children.Add(scroll);
+        Grid.SetRow(scroll, 1);
+        return panel;
     }
 
     private static Button Tool(string name, string text, Action click)

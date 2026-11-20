@@ -11,6 +11,8 @@ public partial class MainViewModel : ViewModelBase
     public WeatherSettingsViewModel WeatherSettings { get; }
     public ClockSettingsViewModel ClockSettings { get; }
     public ClockToolsViewModel ClockTools { get; }
+    public AlertsViewModel Alerts { get; }
+    public AlarmsViewModel Alarms { get; }
     public MediaViewModel Media { get; }
     public MediaBackgroundViewModel MediaBackground { get; }
     public MediaSettingsViewModel MediaSettings { get; }
@@ -48,7 +50,9 @@ public partial class MainViewModel : ViewModelBase
         TimeProvider? time = null,
         Chisel.Core.Pictures.PictureCatalog? pictureCatalog = null,
         ClockSettingsViewModel? clockSettings = null,
-        ClockToolsViewModel? clockTools = null)
+        ClockToolsViewModel? clockTools = null,
+        AlarmsViewModel? alarms = null,
+        AlertsViewModel? alerts = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -56,6 +60,9 @@ public partial class MainViewModel : ViewModelBase
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
         ClockSettings = clockSettings ?? new ClockSettingsViewModel();
         ClockTools = clockTools ?? new ClockToolsViewModel(null, time ?? TimeProvider.System);
+        Alerts = alerts ?? new AlertsViewModel();
+        Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
+        ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
         Spectrum = spectrum;
         MediaSettings = mediaSettings ?? new MediaSettingsViewModel(null);
         Volume = new VolumeViewModel(volume ?? new Services.FakeVolumeService(), TimeProvider.System);
@@ -117,6 +124,7 @@ public partial class MainViewModel : ViewModelBase
         Media.Tick();
         PictureFrames.Tick();
         ClockTools.Tick();
+        Alarms.Tick();
         if (Clock.NeedsRefresh)
         {
             Refresh();

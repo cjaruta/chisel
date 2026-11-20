@@ -32,14 +32,14 @@ public static class UiSnapshot
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
-        Chisel.App.Tests.Support.PictureKit? pictures = null)
+        Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
         var context = new ChiselDbContext(new DbContextOptionsBuilder<ChiselDbContext>().UseSqlite(connection).Options);
         context.Database.Migrate();
 
-        var time = new FakeTimeProvider(now ?? SampleNow);
+        var time = clock ?? new FakeTimeProvider(now ?? SampleNow);
         var schedule = new ScheduleRepository(context);
         var markers = new MarkerRepository(context);
         var tasks = new TaskRepository(context);

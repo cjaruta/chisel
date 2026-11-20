@@ -58,6 +58,7 @@ public partial class App : Application
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
                 var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures);
+                var alerts = new AlertsViewModel(new WindowsAlertSound());
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
@@ -75,6 +76,8 @@ public partial class App : Application
                     pictureCatalog: _services.Pictures,
                     clockSettings: new ClockSettingsViewModel(_services.ClockStyles),
                     clockTools: new ClockToolsViewModel(_services.ClockTools, _services.Time),
+                    alarms: new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(_services.Alarms, _services.Time), alerts, timeDisplay),
+                    alerts: alerts,
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));

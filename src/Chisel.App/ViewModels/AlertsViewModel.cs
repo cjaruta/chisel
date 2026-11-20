@@ -20,6 +20,8 @@ public partial class AlertsViewModel : ViewModelBase
 
     public int WaitingCount => _waiting.Count;
 
+    public bool HasWaiting => _waiting.Count > 0;
+
     public AlertsViewModel(IAlertSound? sound = null)
     {
         _sound = sound ?? new NoAlertSound();
@@ -37,6 +39,8 @@ public partial class AlertsViewModel : ViewModelBase
         {
             _waiting.Enqueue(alert);
             OnPropertyChanged(nameof(WaitingCount));
+        OnPropertyChanged(nameof(HasWaiting));
+            OnPropertyChanged(nameof(HasWaiting));
         }
     }
 
@@ -45,5 +49,6 @@ public partial class AlertsViewModel : ViewModelBase
     {
         Current = _waiting.Count > 0 ? _waiting.Dequeue() : null;
         OnPropertyChanged(nameof(WaitingCount));
+        OnPropertyChanged(nameof(HasWaiting));
     }
 }
