@@ -86,7 +86,7 @@ public class PictureDropImportTests : IDisposable
 
     private sealed class GatedDownloader(Task<DownloadResult> gate) : IImageDownloader
     {
-        public Task<DownloadResult> DownloadAsync(string url, CancellationToken cancellation = default) => gate;
+        public Task<DownloadResult> DownloadAsync(string url, string? referer = null, CancellationToken cancellation = default) => gate;
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class PictureDropImportTests : IDisposable
 
         Assert.Single(Assets(placement.FrameIds[0]));
         Assert.Contains("logo.svg", _frames.Notice);
-        Assert.Contains("PNG, JPEG, GIF or WebP", _frames.Notice);
+        Assert.Contains("AVIF and other formats are not supported", _frames.Notice);
         Assert.Contains(placement.FrameIds[0], _layout.Layout.WidgetIds);
     }
 

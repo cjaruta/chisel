@@ -1,12 +1,23 @@
 using Avalonia.Input;
 using Chisel.App.Services;
+using Chisel.Core.Pictures;
 
 namespace Chisel.App.Tests.ViewModels;
 
-// What a drop carries, in order of preference: files from Explorer, then bitmap data, then an image address.
+// What a drop carries, in order of preference: files from Explorer, then bitmap data, then the addresses a browser gives
+// (an img src in HTML first, then a URI list, then plain text), all as the candidates of one picture.
 public class PictureDropPayloadTests
 {
     private static readonly byte[] Png = [1, 2, 3];
+
+    private sealed class MemoryLog : IPictureDropLog
+    {
+        public List<string> Lines { get; } = [];
+        public void Write(string line) => Lines.Add(line);
+    }
+
+    private static string[] Addresses(IReadOnlyList<PictureSource> sources) =>
+        sources.Cast<WebSource>().Single().Candidates.Select(c => c.Address).ToArray();
 
     [Fact]
     public void Files_BeatEverythingElse()
@@ -27,21 +38,32 @@ public class PictureDropPayloadTests
     }
 
     [Fact]
-    public void AnImgSrcInHtml_IsPreferredToTheLinkAroundIt()
+    public void AnImgSrcInHtml_IsTriedBeforeTheLinkAroundIt_AllAsOnePictureWithCandidates()
     {
         var sources = PictureDropPayload.Choose([], null, ["https://example.com/page"],
             "<a href=\"https://example.com/page\"><img src=\"https://example.com/cat.png\"></a>");
 
-        Assert.Equal(new PictureSource[] { new UrlSource("https://example.com/cat.png") }, sources);
+        Assert.Equal(new[] { "https://example.com/cat.png", "https://example.com/page" }, Addresses(sources));
     }
 
     [Fact]
-    public void ADraggedLink_IsAnAddress_EachLineOfAListToo()
+    public void ARelativeSrc_IsResolvedAgainstThePageAddressInTheHtmlHeader_AndThePageIsTheReferer()
     {
-        Assert.Equal(new PictureSource[] { new UrlSource("https://example.com/a.png") },
-            PictureDropPayload.Choose([], null, ["https://example.com/a.png"], null));
-        Assert.Equal(new PictureSource[] { new UrlSource("http://example.com/a.png"), new UrlSource("https://example.com/b.png") },
-            PictureDropPayload.Choose([], null, ["http://example.com/a.png\r\n# comment\r\nhttps://example.com/b.png\r\nftp://example.com/c.png"], null));
+        var html = "Version:0.9\r\nSourceURL:https://example.com/gallery/index.html\r\n<img src=\"../img/cat.webp\">";
+
+        var source = Assert.IsType<WebSource>(Assert.Single(PictureDropPayload.Choose([], null, [], html)));
+
+        Assert.Equal("https://example.com/img/cat.webp", source.Candidates[0].Address);
+        Assert.Equal("https://example.com/gallery/index.html", source.Candidates[0].Referer);
+    }
+
+    [Fact]
+    public void UriListEntries_ThenPlainText_AreCandidatesToo_WithoutRepeats()
+    {
+        var sources = PictureDropPayload.Choose([], null, ["https://example.com/text.jpg", "https://example.com/a.png"], null,
+            ["https://example.com/a.png\r\n# comment\r\nhttp://example.com/b.png\r\nftp://example.com/c.png"]);
+
+        Assert.Equal(new[] { "https://example.com/a.png", "http://example.com/b.png", "https://example.com/text.jpg" }, Addresses(sources));
     }
 
     [Theory]
@@ -54,8 +76,8 @@ public class PictureDropPayloadTests
         Assert.Empty(PictureDropPayload.Choose([], null, [text], null));
 
     [Fact]
-    public void ADataImage_IsAnAddress() =>
-        Assert.Single(PictureDropPayload.Choose([], null, ["data:image/png;base64,AAAA"], null));
+    public void ADataImage_IsACandidate() =>
+        Assert.Equal(new[] { "data:image/png;base64,AAAA" }, Addresses(PictureDropPayload.Choose([], null, ["data:image/png;base64,AAAA"], null)));
 
     [Fact]
     public void NothingUsable_GivesNothing() => Assert.Empty(PictureDropPayload.Choose([], null, [], null));
@@ -69,7 +91,7 @@ public class PictureDropPayloadTests
         data.Add(item);
 
         Assert.True(PictureDropPayload.HasPictures(data));
-        Assert.Equal(new PictureSource[] { new UrlSource("https://example.com/a.png") }, PictureDropPayload.Read(data));
+        Assert.Equal(new[] { "https://example.com/a.png" }, Addresses(PictureDropPayload.Read(data)));
     }
 
     [Fact]
@@ -82,5 +104,35 @@ public class PictureDropPayloadTests
 
         Assert.False(PictureDropPayload.HasPictures(data));
         Assert.Empty(PictureDropPayload.Read(data));
+    }
+
+    [Fact]
+    public void EveryDrop_LogsTheFormatsPresent_AndTheCandidatesFound()
+    {
+        var item = new DataTransferItem();
+        item.SetText("https://example.com/a.png");
+        var data = new DataTransfer();
+        data.Add(item);
+        var log = new MemoryLog();
+
+        PictureDropPayload.Read(data, log);
+
+        var text = string.Join("\n", log.Lines);
+        Assert.Contains("drop formats:", text);
+        Assert.Contains("drop candidates (1): https://example.com/a.png", text);
+    }
+
+    [Fact]
+    public void ADropWithNoPicture_LogsThatToo()
+    {
+        var item = new DataTransferItem();
+        item.SetText("hello");
+        var data = new DataTransfer();
+        data.Add(item);
+        var log = new MemoryLog();
+
+        PictureDropPayload.Read(data, log);
+
+        Assert.Contains(log.Lines, l => l.Contains("drop candidates (0)"));
     }
 }

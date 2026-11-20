@@ -16,6 +16,12 @@
             <ComboBoxItem Content="One frame per picture" />
         </ComboBox>
 
+        <StackPanel Spacing="4" IsVisible="{Binding PictureSettings.HasDropLog}">
+            <TextBlock Name="PictureDropLogText" Text="{Binding PictureSettings.DropLogText}" Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+            <Button Name="PictureDropLogButton" Content="Open folder" HorizontalAlignment="Left"
+                    Command="{Binding PictureSettings.OpenDropLogFolderCommand}" />
+        </StackPanel>
+
         <TextBlock Classes="settingsSection" Text="FRAME" Margin="0,10,0,0" />
         <TextBlock Name="PictureNoFrames" IsVisible="{Binding !PictureSettings.HasFrames}" TextWrapping="Wrap"
                    Text="No picture frames yet. Choose Customize layout, then drag pictures onto the dashboard." />

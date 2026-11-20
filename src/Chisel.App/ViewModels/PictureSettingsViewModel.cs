@@ -47,9 +47,31 @@ public sealed partial class PictureSettingsViewModel : ViewModelBase
     private readonly LayoutViewModel _layout;
     private readonly PictureCatalog? _catalog;
     private bool _syncing;
+    private readonly Action<string>? _openFolder;
 
-    public PictureSettingsViewModel(IUserSettingsRepository? settings, LayoutViewModel layout, PictureCatalog? catalog)
+    // Where the drop diagnostics are written, or null when there is no log. The settings page shows it.
+    public string? DropLogPath { get; }
+
+    public bool HasDropLog => DropLogPath is not null;
+
+    public string DropLogText => DropLogPath is null ? "" : "Drop log: " + DropLogPath;
+
+    // Opens the folder holding the drop log.
+    [RelayCommand]
+    private void OpenDropLogFolder()
     {
+        if (DropLogPath is not null && System.IO.Path.GetDirectoryName(DropLogPath) is { } folder)
+        {
+            System.IO.Directory.CreateDirectory(folder);
+            _openFolder?.Invoke(folder);
+        }
+    }
+
+    public PictureSettingsViewModel(IUserSettingsRepository? settings, LayoutViewModel layout, PictureCatalog? catalog,
+        string? dropLogPath = null, Action<string>? openFolder = null)
+    {
+        DropLogPath = dropLogPath;
+        _openFolder = openFolder;
         _settings = settings;
         _layout = layout;
         _catalog = catalog;

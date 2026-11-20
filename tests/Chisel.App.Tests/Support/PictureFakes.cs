@@ -38,13 +38,15 @@ public sealed class FakeDownloader : IImageDownloader
 {
     public Dictionary<string, DownloadResult> Answers { get; } = [];
     public List<string> Asked { get; } = [];
+    public List<string?> Referers { get; } = [];
 
     // An answer that arrives only when the task completes (a download still on its way).
     public Dictionary<string, Task<DownloadResult>> Held { get; } = [];
 
-    public Task<DownloadResult> DownloadAsync(string url, CancellationToken cancellation = default)
+    public Task<DownloadResult> DownloadAsync(string url, string? referer = null, CancellationToken cancellation = default)
     {
         Asked.Add(url);
+        Referers.Add(referer);
         if (Held.TryGetValue(url, out var held))
         {
             return held;

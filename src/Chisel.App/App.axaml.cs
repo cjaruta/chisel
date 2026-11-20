@@ -73,8 +73,9 @@ public partial class App : Application
                     new MediaSettingsViewModel(_services.UserSettings),
                     _volume,
                     pictureCatalog: _services.Pictures,
-                    pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings),
-                    pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures));
+                    pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
+                    pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
+                        folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
                 weather.ShowCached();
                 mainViewModel.Refresh();
 

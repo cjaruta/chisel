@@ -88,7 +88,7 @@ public partial class MainWindow : Window
             e.DragEffects = DragDropEffects.None;
             return;
         }
-        var sources = PictureDropPayload.Read(e.DataTransfer);
+        var sources = PictureDropPayload.Read(e.DataTransfer, main.PictureFrames.Log);
         if (sources.Count == 0)
         {
             LayoutHost.ExternalDragLeave();

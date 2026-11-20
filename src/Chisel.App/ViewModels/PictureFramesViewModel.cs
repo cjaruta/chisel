@@ -39,6 +39,9 @@ public sealed class PictureFramesViewModel : ViewModelBase
 
     public PictureCatalog? Catalog => _catalog;
 
+    // The drop diagnostics log, when there is one.
+    public IPictureDropLog? Log => _import?.Log;
+
     // The stored picture an id names (looked up once, then remembered), or null when it is gone.
     public PictureAsset? AssetOf(Guid id)
     {

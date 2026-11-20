@@ -32,6 +32,7 @@ public sealed class AppServices : IDisposable
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
+    public IPictureDropLog PictureDropLog { get; }
 
     // picturesFolder: where picture files go; by default a "pictures" folder next to the database.
     public AppServices(string dbPath, TimeProvider? time = null, string? picturesFolder = null)
@@ -68,7 +69,8 @@ public sealed class AppServices : IDisposable
         var pictureRepository = new PictureRepository(DbContext);
         Pictures = new PictureCatalog(pictureRepository, files);
         PictureImporter = new PictureImporter(pictureRepository, files, new Services.AvaloniaImageResizer(), Time);
-        PictureDownloader = HttpImageDownloader.CreateDefault();
+        PictureDropLog = new FilePictureDropLog(AppPaths.GetDropLogPath());
+        PictureDownloader = HttpImageDownloader.CreateDefault(PictureDropLog);
         SweepPictures(folder);
     }
 

@@ -189,4 +189,21 @@ public class PictureSettingsViewModelTests
         Assert.True(vm.Pictures[2].CanMoveUp);
         Assert.False(vm.Pictures[2].CanMoveDown);
     }
+
+    [Fact]
+    public void TheDropLog_IsShownWithItsPath_AndItsFolderCanBeOpened()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "chisel-logs-" + Guid.NewGuid().ToString("N"));
+        string? opened = null;
+        var vm = new PictureSettingsViewModel(_settings, _layout, _pictures.Catalog, Path.Combine(folder, "picture-drop.log"), f => opened = f);
+
+        Assert.True(vm.HasDropLog);
+        Assert.Equal("Drop log: " + Path.Combine(folder, "picture-drop.log"), vm.DropLogText);
+
+        vm.OpenDropLogFolderCommand.Execute(null);
+
+        Assert.Equal(folder, opened);
+        Directory.Delete(folder);
+        Assert.False(Settings().HasDropLog);
+    }
 }
