@@ -17,6 +17,33 @@ namespace Chisel.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.AlarmEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("LastFiredOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Alarms");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockStyleEntity", b =>
                 {
                     b.Property<int>("Id")

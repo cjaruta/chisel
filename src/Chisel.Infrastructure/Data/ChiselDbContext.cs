@@ -38,6 +38,7 @@ public class ChiselDbContext : DbContext
     public DbSet<WeatherCacheEntity> WeatherCaches => Set<WeatherCacheEntity>();
     public DbSet<ClockStyleEntity> ClockStyles => Set<ClockStyleEntity>();
     public DbSet<ClockToolsEntity> ClockTools => Set<ClockToolsEntity>();
+    public DbSet<AlarmEntity> Alarms => Set<AlarmEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
