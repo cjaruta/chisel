@@ -107,7 +107,7 @@ public class LayoutTrayTests
         layout.RemoveWidget("schedule");
 
         Assert.Equal(new[] { "schedule", "links" }, Tray(layout));
-        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator"));
+        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator" && t != "Daily verse"));
         Assert.True(layout.HasHiddenWidgets);
     }
 

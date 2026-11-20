@@ -32,7 +32,7 @@ public static class UiSnapshot
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
-        Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null)
+        Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -78,7 +78,8 @@ public static class UiSnapshot
             pictureImport: kit.Service,
             pictureSettings: new PictureSettingsViewModel(userSettings, layout, kit.Catalog),
             time: time,
-            pictureCatalog: kit.Catalog);
+            pictureCatalog: kit.Catalog,
+            scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

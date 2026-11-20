@@ -79,6 +79,7 @@ public partial class App : Application
                     alarms: new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(_services.Alarms, _services.Time), alerts, timeDisplay),
                     alerts: alerts,
                     calculatorSettings: new CalculatorSettingsViewModel(_services.CalculatorSettings),
+                    scripture: new ScriptureViewModel(_services.Time),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
