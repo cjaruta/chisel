@@ -30,6 +30,7 @@ public sealed class AppServices : IDisposable
     public IWidgetLayoutRepository WidgetLayout { get; }
     public IWeatherStore Weather { get; }
     public Chisel.Core.Clock.IClockStyleRepository ClockStyles { get; }
+    public Chisel.Core.Clock.IClockToolsRepository ClockTools { get; }
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
@@ -65,6 +66,7 @@ public sealed class AppServices : IDisposable
         WidgetLayout = new WidgetLayoutRepository(DbContext);
         Weather = new WeatherRepository(DbContext);
         ClockStyles = new ClockStyleRepository(DbContext);
+        ClockTools = new ClockToolsRepository(DbContext);
 
         var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
         var files = new PictureFileStore(folder);

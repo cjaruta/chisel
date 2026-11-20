@@ -78,6 +78,50 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("ClockStyles");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClockToolsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AlarmEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("StopwatchBankedTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("StopwatchEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("StopwatchLapsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("StopwatchStartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Strip")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TimerBankedTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TimerDurationTicks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("TimerEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("TimerStartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClockTools");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.FrameOptionsEntity", b =>
                 {
                     b.Property<string>("FrameId")
