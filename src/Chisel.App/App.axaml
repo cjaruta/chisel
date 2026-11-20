@@ -51,6 +51,11 @@
             <Setter Property="Opacity" Value="0.55" />
         </Style>
 
+        <!-- Adjusting a picture: the picture is live and at full strength -->
+        <Style Selector="Border.widgetFrame.editing.adjusting :is(Panel).widgetContent">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
         <!-- The drag surface: covers the whole widget -->
         <Style Selector="Border.editBar">
             <Setter Property="Background" Value="Transparent" />
@@ -212,6 +217,10 @@
         <!-- The title badge: the same round badge, just to the right of the remove badge -->
         <Style Selector="Button.removeWidget.headerBadge">
             <Setter Property="Margin" Value="28,8,0,0" />
+        </Style>
+
+        <Style Selector="Button.removeWidget.adjustBadge">
+            <Setter Property="Margin" Value="48,8,0,0" />
         </Style>
 
         <Style Selector="Button.removeWidget Path">

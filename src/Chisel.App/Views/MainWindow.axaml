@@ -90,6 +90,13 @@
             </StackPanel>
         </Border>
 
+        <!-- A short message about a drop of pictures (a picture that failed). Goes away by itself. -->
+        <Border Grid.Row="1" Name="PictureNotice" Classes="card" ZIndex="5" Padding="14,10" MaxWidth="520"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,12" IsHitTestVisible="False"
+                IsVisible="{Binding PictureFrames.Notice, Converter={x:Static convA:ObjectConverters.IsNotNull}}">
+            <TextBlock Name="PictureNoticeText" Text="{Binding PictureFrames.Notice}" TextWrapping="Wrap" />
+        </Border>
+
         <!-- Settings dialog: a centered 720x520 card over a dimmed page; Esc or Close dismisses it -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="settingsScrim"
                 IsVisible="{Binding Settings.IsOpen}" ZIndex="10" Margin="-20">

@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Chisel.App.Services;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Chisel.App.Startup;
@@ -41,6 +42,20 @@ public partial class MainWindow : Window
 
         DataContextChanged += (_, _) => (DataContext as MainViewModel)?.Settings.Theme?.Track(this);
 
+        // Pictures dragged in from Explorer or a browser: accepted in edit mode only.
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragOverEvent, OnPictureDragOver);
+        AddHandler(DragDrop.DragLeaveEvent, (_, _) => LayoutHost.ExternalDragLeave());
+        AddHandler(DragDrop.DropEvent, OnPictureDrop);
+        PropertyChanged += (_, e) =>
+        {
+            // Picture frames stop their timers and animations while the window is minimized.
+            if (e.Property == WindowStateProperty && DataContext is MainViewModel main)
+            {
+                main.PictureFrames.WindowMinimized = WindowState == WindowState.Minimized;
+            }
+        };
+
         _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
         Loaded += (_, _) =>
         {
@@ -51,6 +66,41 @@ public partial class MainWindow : Window
         };
         Unloaded += (_, _) => _timer.Stop();
         Closing += (_, _) => SavePlacement();
+    }
+
+    private void OnPictureDragOver(object? sender, DragEventArgs e)
+    {
+        if (DataContext is not MainViewModel { Layout.IsEditing: true } || !PictureDropPayload.HasPictures(e.DataTransfer))
+        {
+            LayoutHost.ExternalDragLeave();
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+        e.DragEffects = LayoutHost.ExternalDragOver(e.GetPosition(LayoutHost)) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnPictureDrop(object? sender, DragEventArgs e)
+    {
+        if (DataContext is not MainViewModel { Layout.IsEditing: true } main)
+        {
+            LayoutHost.ExternalDragLeave();
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+        var sources = PictureDropPayload.Read(e.DataTransfer, main.PictureFrames.Log);
+        if (sources.Count == 0)
+        {
+            LayoutHost.ExternalDragLeave();
+            return;
+        }
+        var placement = LayoutHost.ExternalDrop(e.GetPosition(LayoutHost), main.PictureFrames.FramesFor(sources.Count));
+        e.Handled = true;
+        e.DragEffects = placement is null ? DragDropEffects.None : DragDropEffects.Copy;
+        if (placement is not null)
+        {
+            _ = main.PictureFrames.DropSafelyAsync(placement, sources);
+        }
     }
 
     // Space plays or pauses the current media session, from the tunnel phase so it is decided in one place before any

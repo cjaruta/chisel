@@ -31,7 +31,8 @@ public static class UiSnapshot
         IEnumerable<ScheduleBlock>? blocks = null, string? palette = null, Chisel.Core.Layout.IWidgetLayoutRepository? layoutRepository = null,
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
-        Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null)
+        Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
+        Chisel.App.Tests.Support.PictureKit? pictures = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -51,6 +52,9 @@ public static class UiSnapshot
         }
         var userSettings = new UserSettingsRepository(context);
         userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette, themeMode: themeMode, accentColor: accent));
+        var kit = pictures ?? new Chisel.App.Tests.Support.PictureKit();
+        kit.Attach(context, time, userSettings);
+        var layout = new LayoutViewModel(layoutRepository, kit.Catalog);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService());
@@ -64,13 +68,17 @@ public static class UiSnapshot
             new NotesViewModel(notes, time, timeDisplay),
             new QuickLinksViewModel(links, _ => { }),
             settings,
-            new LayoutViewModel(layoutRepository),
+            layout,
             weather,
             new WeatherSettingsViewModel(store, geocoder ?? new Chisel.App.Services.NoGeocoder(), weather, userSettings: userSettings),
             media,
             spectrum,
             new MediaSettingsViewModel(userSettings),
-            volume);
+            volume,
+            pictureImport: kit.Service,
+            pictureSettings: new PictureSettingsViewModel(userSettings, layout, kit.Catalog),
+            time: time,
+            pictureCatalog: kit.Catalog);
 
         var window = new MainWindow(windowPlacementPath: null)
         {
@@ -82,6 +90,7 @@ public static class UiSnapshot
         {
             context.Dispose();
             connection.Dispose();
+            kit.Dispose();
         };
 
         window.Show();

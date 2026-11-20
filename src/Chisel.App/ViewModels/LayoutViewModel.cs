@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Chisel.Core.Layout;
+using Chisel.Core.Pictures;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -31,6 +33,12 @@ public sealed record WidgetSlot(
     public double SplitMinWidth => GroupSplit.MinimumWidth(Members.Select(m => m.MinWidth));
 }
 
+// Where a drop of pictures goes: into a gap between cards, a new column, or onto a card's middle.
+public enum PictureDropKind { Gap, NewColumn, Card }
+
+// The frames a drop of pictures fills, in order, and whether the drop made them (false: it went into a frame that was there).
+public sealed record PictureDropPlacement(IReadOnlyList<string> FrameIds, bool CreatedFrames);
+
 // One column of the shown layout.
 public sealed record LayoutColumnSlot(double WidthWeight, IReadOnlyList<WidgetSlot> Widgets);
 
@@ -42,6 +50,7 @@ public sealed record LayoutColumnSlot(double WidthWeight, IReadOnlyList<WidgetSl
 public partial class LayoutViewModel : ViewModelBase
 {
     private readonly IWidgetLayoutRepository? _repository;
+    private readonly PictureCatalog? _pictureCatalog;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Columns), nameof(TrayWidgets), nameof(HasHiddenWidgets), nameof(CanRemoveWidgets))]
@@ -265,9 +274,11 @@ public partial class LayoutViewModel : ViewModelBase
     }
 
     // repository: where the layout is saved; null keeps it in memory only.
-    public LayoutViewModel(IWidgetLayoutRepository? repository = null)
+    public LayoutViewModel(IWidgetLayoutRepository? repository = null, PictureCatalog? pictures = null)
     {
         _repository = repository;
+        _pictureCatalog = pictures;
+        Pictures = pictures?.Load() ?? PictureFrameSet.Empty;
         var saved = repository?.Get();
         if (saved is null)
         {
@@ -287,6 +298,27 @@ public partial class LayoutViewModel : ViewModelBase
         }
     }
 
+    // Every picture frame's options and pictures. Part of the working copy: in edit mode a change is kept here until
+    // Done (Cancel puts the old set back); outside edit mode it is saved at once.
+    [ObservableProperty]
+    public partial PictureFrameSet Pictures { get; private set; }
+
+    private PictureFrameSet? _picturesSnapshot;
+
+    public void UpdatePictures(Func<PictureFrameSet, PictureFrameSet> change)
+    {
+        var next = change(Pictures);
+        if (ReferenceEquals(next, Pictures))
+        {
+            return;
+        }
+        Pictures = next;
+        if (!IsEditing && _pictureCatalog is not null)
+        {
+            Pictures = _pictureCatalog.SaveAndSweep(Pictures, Layout.WidgetIds);
+        }
+    }
+
     // Shows a new layout, normalized; the host rebuilds right away. Not saved here.
     public void Apply(WidgetLayout layout) => Layout = WidgetLayoutNormalizer.Normalize(layout, WidgetRegistry.DefaultLayout, WidgetRegistry.Types);
 
@@ -301,6 +333,7 @@ public partial class LayoutViewModel : ViewModelBase
     private void EnterEdit()
     {
         Snapshot = Layout;
+        _picturesSnapshot = Pictures;
         // Opens only when the user hid one of the original widgets, not for the clock, weather or media waiting there by default.
         IsTrayOpen = Layout.HiddenWidgetIds.Any(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media);
         IsEditing = true;
@@ -314,6 +347,15 @@ public partial class LayoutViewModel : ViewModelBase
     {
         Layout = Layout.RemoveEmptyColumns();
         _repository?.Save(Layout);
+        if (_pictureCatalog is not null)
+        {
+            // Pictures only frames that are still on the dashboard keep; whatever no frame uses is deleted now, not before.
+            Pictures = _pictureCatalog.SaveAndSweep(Pictures, Layout.WidgetIds);
+        }
+        else
+        {
+            Pictures = Pictures.PrunedTo(Layout.WidgetIds);
+        }
         Exit();
     }
 
@@ -321,6 +363,7 @@ public partial class LayoutViewModel : ViewModelBase
     private void Cancel()
     {
         Layout = Snapshot!;
+        Pictures = _picturesSnapshot ?? Pictures;
         Exit();
     }
 
@@ -335,6 +378,8 @@ public partial class LayoutViewModel : ViewModelBase
         CancelResize();
         CancelPaneResize();
         Snapshot = null;
+        _picturesSnapshot = null;
+        AdjustingFrameId = null;
         IsEditing = false;
     }
 
@@ -363,6 +408,119 @@ public partial class LayoutViewModel : ViewModelBase
             IsDraggingFromTray = true;
             DraggedWidgetId = instance ?? widgetId;
         }
+    }
+
+    // Takes away a frame a drop made that ended with no picture: the drop's own, so it is not an undoable edit.
+    public void DiscardFrame(string frameId)
+    {
+        if (Layout.Find(frameId) is null || !Layout.CanRemoveWidget || Pictures.Get(frameId).Pictures.Count > 0)
+        {
+            return;
+        }
+        Layout = Layout.RemoveWidget(frameId);
+        if (!IsEditing)
+        {
+            _repository?.Save(Layout);
+        }
+    }
+
+    // The picture frame whose current picture is being adjusted (panned and zoomed); null when none. Edit mode only.
+    [ObservableProperty]
+    public partial string? AdjustingFrameId { get; private set; }
+
+    // Asked before adjusting starts: false for a picture that cannot be adjusted (an animated GIF).
+    public Func<string, bool>? AdjustGate { get; set; }
+
+    public bool BeginAdjust(string frameId)
+    {
+        if (!IsEditing || Layout.Find(frameId) is null || AdjustGate?.Invoke(frameId) == false)
+        {
+            return false;
+        }
+        AdjustingFrameId = frameId;
+        return true;
+    }
+
+    public void EndAdjust() => AdjustingFrameId = null;
+
+    // Whether the drag in progress carries pictures from outside the app (it adds frames, or fills one).
+    [ObservableProperty]
+    public partial bool IsDraggingPictures { get; private set; }
+
+    // Starts a drag of pictures from outside the app. Only in edit mode (a drop outside it is refused). Like a drag from
+    // the tray, it carries a new picture frame that is only added when the drop lands.
+    public bool BeginPictureDrag()
+    {
+        if (!IsEditing || NewInstanceOf(WidgetRegistry.PictureFrame) is not { } id)
+        {
+            return false;
+        }
+        IsDraggingFromTray = true;
+        IsDraggingPictures = true;
+        DraggedWidgetId = id;
+        return true;
+    }
+
+    // Lands a drop of pictures and ends the drag. frameCount is how many new frames the drop makes (at least 1);
+    // column and index say where (see PictureDropKind). Onto a card whose shown widget is a picture frame, nothing is
+    // added: the pictures go into that frame. Null when no picture drag is going on or the place does not exist.
+    public PictureDropPlacement? DropPictures(PictureDropKind kind, int column, int index, int frameCount, double cardWidth = 0)
+    {
+        if (!IsDraggingPictures)
+        {
+            return null;
+        }
+        EndDrag();
+        if (column < 0 || column >= Layout.Columns.Count + (kind == PictureDropKind.NewColumn ? 1 : 0)
+            || (kind == PictureDropKind.Card && (index < 0 || index >= Layout.Columns[column].Widgets.Count)))
+        {
+            return null;
+        }
+
+        WidgetPlacement? card = kind == PictureDropKind.Card ? Layout.Columns[column].Widgets[index] : null;
+        if (card is not null && WidgetRegistry.Get(card.ActiveId)?.TypeId == WidgetRegistry.PictureFrame)
+        {
+            return new PictureDropPlacement([card.ActiveId], false);
+        }
+
+        var ids = new List<string>();
+        string NewId()
+        {
+            var id = InstanceIds.NewInstanceId(WidgetRegistry.PictureFrame, Layout.WidgetIds.Concat(Snapshot?.WidgetIds ?? []).Concat(ids));
+            ids.Add(id);
+            return id;
+        }
+
+        var height = DefaultHeight(WidgetRegistry.PictureFrame);
+        var layout = Layout;
+        var first = NewId();
+        switch (kind)
+        {
+            case PictureDropKind.Gap:
+                layout = layout.AddWidget(first, column, index, height);
+                break;
+            case PictureDropKind.NewColumn:
+                layout = layout.CanAddInNewColumn
+                    ? layout.AddWidgetInNewColumn(first, column)
+                    : layout.AddWidget(first, Math.Min(column, layout.Columns.Count - 1), layout.Columns[Math.Min(column, layout.Columns.Count - 1)].Widgets.Count, height);
+                break;
+            default:
+                layout = layout.AddWidget(first, column, index + 1, height);
+                if (layout.CanCombine(first, card!.WidgetId))
+                {
+                    layout = layout.Combine(first, card.WidgetId, cardWidth, MinWidthOf);
+                }
+                break;
+        }
+        // The rest of a drop of several: one card each, stacked right below the one before (the first, when it joined a card as a tab, goes below that card).
+        for (var k = 1; k < Math.Max(1, frameCount); k++)
+        {
+            var anchorId = k == 1 && card is not null && layout.Find(first) == layout.Find(card.WidgetId) ? card.WidgetId : ids[k - 1];
+            var anchor = layout.Find(anchorId)!.Value;
+            layout = layout.AddWidget(NewId(), anchor.Column, anchor.Index + 1, height);
+        }
+        Layout = layout.RemoveEmptyColumns();
+        return new PictureDropPlacement(ids, true);
     }
 
     // Picks up a widget. Only in edit mode, and only a widget that is in the layout.
@@ -419,6 +577,7 @@ public partial class LayoutViewModel : ViewModelBase
     {
         DraggedWidgetId = null;
         IsDraggingFromTray = false;
+        IsDraggingPictures = false;
     }
 
     private bool CanDropInNewColumn(string id) => IsDraggingFromTray ? Layout.CanAddInNewColumn : Layout.CanMoveToNewColumn(id);

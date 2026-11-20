@@ -207,6 +207,12 @@ public sealed partial class LayoutHost : Decorator
             case nameof(LayoutViewModel.CanRemoveWidgets):
                 UpdateRemoveButtons();
                 break;
+            case nameof(LayoutViewModel.AdjustingFrameId):
+                foreach (var frame in _frames.Values)
+                {
+                    frame.IsAdjusting = Layout?.AdjustingFrameId is { } adjusting && frame.ActiveId == adjusting;
+                }
+                break;
             case nameof(LayoutViewModel.DraggedWidgetId) when Layout?.IsDraggingWidget != true:
                 // Dropped, or cancelled (Esc): clear the drag visuals.
                 EndDrag();
@@ -542,6 +548,7 @@ public sealed partial class LayoutHost : Decorator
             frame.EditBar.PointerPressed += (_, e) => OnBarPressed(created, e);
             frame.RemoveButton.Click += (_, _) => Layout?.RemoveWidget(created.WidgetId);
             frame.HeaderButton.Click += (_, _) => Layout?.ToggleHeader(created.WidgetId);
+            frame.AdjustRequested += id => Layout?.BeginAdjust(id);
             frame.TabSelected += id => Layout?.SelectTab(id);
             frame.TabUnmerged += id => Layout?.Unmerge(id);
             frame.TabReordered += (id, index) => Layout?.ReorderTab(id, index);
@@ -640,6 +647,87 @@ public sealed partial class LayoutHost : Decorator
             Layout?.CancelWidgetDrag();
         }
         EndDrag();
+    }
+
+    // ----- pictures dragged in from outside the app (Explorer, a browser). Edit mode only: the window asks, and this
+    // answers with the same zones and the one preview a widget drag uses.
+
+    private bool _externalDrag;
+
+    public bool IsExternalDrag => _externalDrag;
+
+    // The pointer is over the host with pictures. Returns whether a drop would be accepted (false outside edit mode).
+    public bool ExternalDragOver(Point point)
+    {
+        if (Layout is not { IsEditing: true } layout)
+        {
+            return false;
+        }
+        if (!_externalDrag)
+        {
+            if (!layout.BeginPictureDrag())
+            {
+                return false;
+            }
+            _externalDrag = true;
+            _dragging = true;
+            _origin = null;
+            _pickColumns = ColumnScrollers.Select(BoundsInHost).ToList();
+            _pickFrames = Frames;
+            _pickWidgets = Frames.Select(c => (IReadOnlyList<Rect>)c.Select(BoundsInHost).ToList()).ToList();
+            FindNewColumnGaps(null);
+        }
+        UpdateDrag(point);
+        return true;
+    }
+
+    // The pointer left (or the drag was cancelled): nothing is added.
+    public void ExternalDragLeave()
+    {
+        if (!_externalDrag)
+        {
+            return;
+        }
+        _externalDrag = false;
+        Layout?.CancelWidgetDrag();
+        EndDrag();
+    }
+
+    // Lands the drop where the preview shows: new frames (frameCount of them) or the frame whose slideshow it joins.
+    // Returns where the pictures go, or null when there was no place.
+    public PictureDropPlacement? ExternalDrop(Point point, int frameCount)
+    {
+        if (!_externalDrag || Layout is not { } layout)
+        {
+            return null;
+        }
+        UpdateDrag(point);
+        var newColumn = _newColumnTarget;
+        var merge = _mergeTarget;
+        var gap = _target;
+        _externalDrag = false;
+
+        PictureDropPlacement? placement;
+        if (newColumn is { } column)
+        {
+            placement = layout.DropPictures(PictureDropKind.NewColumn, column, 0, frameCount);
+        }
+        else if (merge is not null && layout.Layout.Find(merge.WidgetId) is { } at)
+        {
+            placement = layout.DropPictures(PictureDropKind.Card, at.Column, at.Index, frameCount, merge.InnerWidth);
+        }
+        else if (gap is { } target)
+        {
+            placement = layout.DropPictures(PictureDropKind.Gap, target.Column, target.Index, frameCount);
+        }
+        else
+        {
+            layout.CancelWidgetDrag();
+            placement = null;
+        }
+        _droppedId = placement?.FrameIds.FirstOrDefault();
+        EndDrag();
+        return placement;
     }
 
     // Drops the dragged widget on the current target, or puts it back when there is none.
@@ -900,7 +988,7 @@ public sealed partial class LayoutHost : Decorator
         }
         // Over the middle of another card: merge into it. Near its top or bottom edge: insert there.
         if (Layout is { } layout
-            && LayoutDropTargets.FindMerge(point, _pickWidgets, at => layout.CanMergeInto(_pickFrames[at.Column][at.Index].WidgetId)) is { } merge)
+            && LayoutDropTargets.FindMerge(point, _pickWidgets, at => layout.IsDraggingPictures || layout.CanMergeInto(_pickFrames[at.Column][at.Index].WidgetId)) is { } merge)
         {
             return new DropZone(ZoneKind.Merge, merge.Column, merge.Index);
         }
@@ -930,7 +1018,11 @@ public sealed partial class LayoutHost : Decorator
                 break;
             case ZoneKind.Merge:
                 rect = _pickWidgets[_zone.A][_zone.B];
-                caption = $"Tab with {CardTitle(_pickFrames[_zone.A][_zone.B])}";
+                var target = _pickFrames[_zone.A][_zone.B];
+                // Pictures dropped on a picture frame join its slideshow; on anything else they become a tab.
+                caption = Layout?.IsDraggingPictures == true && target.ShowsPictureFrame
+                    ? $"Add to {target.ActiveTitle}"
+                    : $"Tab with {CardTitle(target)}";
                 break;
             case ZoneKind.Gap when !LayoutDropTargets.IsHome((_zone.A, _zone.B), _origin):
                 // A gap that would put the widget back where it was gets no preview: its slot already shows as the home placeholder.

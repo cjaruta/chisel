@@ -17,6 +17,69 @@ namespace Chisel.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.FrameOptionsEntity", b =>
+                {
+                    b.Property<string>("FrameId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("BlurFill")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CurrentIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Fit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("IntervalSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Transition")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("FrameId");
+
+                    b.ToTable("FrameOptions");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.FramePictureEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("FocalX")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("FocalY")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("FrameId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Zoom")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FrameId");
+
+                    b.ToTable("FramePictures");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.HiddenWidgetEntity", b =>
                 {
                     b.Property<string>("WidgetId")
@@ -89,6 +152,47 @@ namespace Chisel.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Notes");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.PictureAssetEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
+                    b.ToTable("PictureAssets");
                 });
 
             modelBuilder.Entity("Chisel.Infrastructure.Data.QuickLinkEntity", b =>
@@ -194,6 +298,16 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("PictureKeepOriginals")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("PictureMultiDrop")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("SchedulePalette")
                         .IsRequired()

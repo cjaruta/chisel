@@ -21,7 +21,7 @@ public class SettingsTabsHeadlessTests
     }
 
     [AvaloniaFact]
-    public void Tabs_SwitchPages_AndOnlyScheduleIsListed()
+    public void Tabs_SwitchPages_AndEveryWidgetWithOptionsIsListed()
     {
         var window = UiSnapshot.ShowMainWindow();
         var settings = Open(window);
@@ -37,7 +37,7 @@ public class SettingsTabsHeadlessTests
         Assert.False(Named<Control>(window, "GeneralPage").IsVisible);
         Assert.True(Named<Control>(window, "WidgetsPage").IsVisible);
         var titles = Named<ListBox>(window, "WidgetPageList").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text);
-        Assert.Equal(new[] { "Schedule", "Weather", "Media" }, titles);
+        Assert.Equal(new[] { "Schedule", "Weather", "Media", "Picture frame" }, titles);
         UiSnapshot.Render(window, "settings-widgets");
         window.Close();
     }

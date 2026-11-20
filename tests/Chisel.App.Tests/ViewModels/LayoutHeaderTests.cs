@@ -26,7 +26,7 @@ public class LayoutHeaderTests
         Assert.Equal(
             new Dictionary<string, bool>
             {
-                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false,
+                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false, [WidgetRegistry.PictureFrame] = false,
                 [WidgetRegistry.Links] = false, [WidgetRegistry.Tasks] = true, [WidgetRegistry.Notes] = true,
             },
             shown);

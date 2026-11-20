@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             xmlns:conv="using:Chisel.App.Converters"
+             x:Class="Chisel.App.Views.Pages.PictureSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="ALL PICTURE FRAMES" />
+        <CheckBox Name="PictureKeepOriginalsToggle" Content="Keep original files"
+                  IsChecked="{Binding PictureSettings.KeepOriginals}" />
+        <TextBlock Text="Off keeps a smaller copy (up to 2048 pixels) of each picture you add. Animated GIFs are always kept as they are."
+                   Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Text="Dropping several pictures" Margin="0,6,0,0" />
+        <ComboBox Name="PictureMultiDropBox" SelectedIndex="{Binding PictureSettings.MultiDropIndex}" MinWidth="220" HorizontalAlignment="Left">
+            <ComboBoxItem Content="One slideshow" />
+            <ComboBoxItem Content="One frame per picture" />
+        </ComboBox>
+
+        <StackPanel Spacing="4" IsVisible="{Binding PictureSettings.HasDropLog}">
+            <TextBlock Name="PictureDropLogText" Text="{Binding PictureSettings.DropLogText}" Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+            <Button Name="PictureDropLogButton" Content="Open folder" HorizontalAlignment="Left"
+                    Command="{Binding PictureSettings.OpenDropLogFolderCommand}" />
+        </StackPanel>
+
+        <TextBlock Classes="settingsSection" Text="FRAME" Margin="0,10,0,0" />
+        <TextBlock Name="PictureNoFrames" IsVisible="{Binding !PictureSettings.HasFrames}" TextWrapping="Wrap"
+                   Text="No picture frames yet. Choose Customize layout, then drag pictures onto the dashboard." />
+        <StackPanel Spacing="10" IsVisible="{Binding PictureSettings.HasFrames}">
+            <ComboBox Name="PictureFrameBox" ItemsSource="{Binding PictureSettings.Frames}"
+                      SelectedItem="{Binding PictureSettings.SelectedFrame}" MinWidth="220" HorizontalAlignment="Left">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FrameChoice">
+                        <TextBlock Text="{Binding Title}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <TextBlock Text="Fit" />
+            <ComboBox Name="PictureFitBox" SelectedIndex="{Binding PictureSettings.FitIndex}" MinWidth="220" HorizontalAlignment="Left">
+                <ComboBoxItem Content="Fill the frame" />
+                <ComboBoxItem Content="Fit inside the frame" />
+            </ComboBox>
+            <CheckBox Name="PictureBlurToggle" Content="Blur fill behind a fitted picture"
+                      IsEnabled="{Binding PictureSettings.IsFit}" IsChecked="{Binding PictureSettings.BlurFill}" />
+
+            <TextBlock Classes="settingsSection" Text="SLIDESHOW" Margin="0,6,0,0" />
+            <TextBlock Text="Mode" />
+            <ComboBox Name="PictureModeBox" SelectedIndex="{Binding PictureSettings.ModeIndex}" MinWidth="220" HorizontalAlignment="Left">
+                <ComboBoxItem Content="Manual (click or arrow keys)" />
+                <ComboBoxItem Content="Cycle (changes by itself)" />
+            </ComboBox>
+            <StackPanel Spacing="10" IsVisible="{Binding PictureSettings.IsCycle}">
+                <TextBlock Text="Interval" />
+                <ComboBox Name="PictureIntervalBox" ItemsSource="{Binding PictureSettings.IntervalChoices}"
+                          SelectedIndex="{Binding PictureSettings.IntervalIndex}" MinWidth="220" HorizontalAlignment="Left" />
+                <StackPanel Spacing="4" IsVisible="{Binding PictureSettings.IsCustomInterval}">
+                    <TextBox Name="PictureCustomInterval" Watermark="For example 90 s, 20 min or 2 h" MinWidth="220" HorizontalAlignment="Left"
+                             Text="{Binding PictureSettings.CustomIntervalText}" />
+                    <TextBlock Text="Use a number and s, min or h (5 seconds to 24 hours)." Foreground="{StaticResource DimTextBrush}"
+                               FontSize="11" IsVisible="{Binding PictureSettings.CustomIntervalInvalid}" />
+                </StackPanel>
+            </StackPanel>
+            <TextBlock Text="Order" />
+            <ComboBox Name="PictureOrderBox" SelectedIndex="{Binding PictureSettings.OrderIndex}" MinWidth="220" HorizontalAlignment="Left">
+                <ComboBoxItem Content="In order" />
+                <ComboBoxItem Content="Shuffle" />
+            </ComboBox>
+            <TextBlock Text="Transition" />
+            <ComboBox Name="PictureTransitionBox" SelectedIndex="{Binding PictureSettings.TransitionIndex}" MinWidth="220" HorizontalAlignment="Left">
+                <ComboBoxItem Content="Fade" />
+                <ComboBoxItem Content="None" />
+            </ComboBox>
+
+            <TextBlock Classes="settingsSection" Text="PICTURES" Margin="0,6,0,0" />
+            <TextBlock Text="No pictures. Drag some onto the frame in Customize layout." Opacity="0.6"
+                       IsVisible="{Binding !PictureSettings.Pictures.Count}" />
+            <ItemsControl Name="PictureList" ItemsSource="{Binding PictureSettings.Pictures}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PictureRow">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,2">
+                            <Border Width="48" Height="36" CornerRadius="4" ClipToBounds="True" Margin="0,0,10,0">
+                                <Image Source="{Binding ThumbnailPath, Converter={x:Static conv:ThumbnailConverter.Instance}}" Stretch="UniformToFill" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding FileName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <Button Grid.Column="2" Content="Up" Command="{Binding MoveUpCommand}" Margin="6,0,0,0"
+                                    AutomationProperties.Name="Move picture up" />
+                            <Button Grid.Column="3" Content="Down" Command="{Binding MoveDownCommand}" Margin="4,0,0,0"
+                                    AutomationProperties.Name="Move picture down" />
+                            <Button Grid.Column="4" Content="Remove" Command="{Binding RemoveCommand}" Margin="4,0,0,0"
+                                    AutomationProperties.Name="Remove picture" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
