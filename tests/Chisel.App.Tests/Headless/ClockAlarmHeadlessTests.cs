@@ -46,26 +46,41 @@ public class ClockAlarmHeadlessTests : IDisposable
         w.GetVisualDescendants().OfType<Control>().Where(c => c.Name == name).Any(c => c.IsEffectivelyVisible);
 
     [AvaloniaFact]
-    public void TheAlarmTab_ListsAndAddsAlarms()
+    public void TheAlarmSlot_ShowsTheNextAlarmLarge_AndManageOpensTheFullEditor()
     {
         var (window, main) = WithClock();
         main.ClockSlots.Slots[1].Select(ClockTool.Alarm);
         Dispatcher.UIThread.RunJobs();
         Assert.True(Shown(window, "ClockAlarmPanel"));
         Assert.True(Shown(window, "ClockFace")); // the clock stays pinned beside it
+        Assert.Equal("--:--", Named<TextBlock>(window, "ClockAlarmNextTime").Text);
+        Assert.False(Shown(window, "ClockAlarmToggle")); // nothing to switch yet
 
-        Named<TextBox>(window, "ClockAlarmTime").Text = "08:15";
-        Named<TextBox>(window, "ClockAlarmLabel").Text = "Stand up";
-        Named<ToggleButton>(window, "ClockAlarmDay_Monday").IsChecked = true;
+        // The full form does not sit in the slot: it opens from the one Manage button.
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Control>(), c => c.Name is "ClockAlarmTime" or "ClockAlarmLabel" or "ClockAlarmAdd");
+        main.Alarms.ManageCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
-        Click(window, "ClockAlarmAdd");
+        var editor = (Control)((Avalonia.Controls.Flyout)Named<Button>(window, "ClockAlarmManage").Tag!).Content!;
+        Assert.True(main.Alarms.IsManaging);
+        T Find<T>(string name) where T : Control => editor.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);
+
+        Find<TextBox>("ClockAlarmTime").Text = "08:15";
+        Find<TextBox>("ClockAlarmLabel").Text = "Stand up";
+        Find<ToggleButton>("ClockAlarmDay_Monday").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        var add = Find<Button>("ClockAlarmAdd");
+        add.Command!.Execute(add.CommandParameter);
+        Dispatcher.UIThread.RunJobs();
 
         var item = Assert.Single(main.Alarms.Items);
         Assert.Equal("08:15", item.TimeText);
         Assert.Equal("Mon", item.DaysText);
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Text == "08:15");
+        Assert.Equal("08:15", Named<TextBlock>(window, "ClockAlarmNextTime").Text);
+        Assert.Equal("Stand up · Mon", Named<TextBlock>(window, "ClockAlarmNextCaption").Text);
+        Assert.True(Shown(window, "ClockAlarmToggle"));
         UiSnapshot.Render(window, "clock-tools-alarm");
     }
+
 
     [AvaloniaFact]
     public void AnAlert_ShowsABanner_UntilDismissed()

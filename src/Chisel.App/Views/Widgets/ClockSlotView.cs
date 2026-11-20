@@ -50,6 +50,20 @@ public sealed class ClockSlotView : Grid
         UpdateDots();
     }
 
+    // Every tool fits itself to the room this slot has.
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        if (e.NewSize.Width > 0 && e.NewSize.Height > 0)
+        {
+            var scale = ClockTypeScale.For(e.NewSize.Width, e.NewSize.Height);
+            foreach (var built in _built.Values)
+            {
+                built.Rescale(scale);
+            }
+        }
+    }
+
     public ClockSlotViewModel Slot => _slot;
 
     // The right-click menu (built when it opens).
@@ -74,6 +88,10 @@ public sealed class ClockSlotView : Grid
         if (!_built.TryGetValue(tool, out var built))
         {
             _built[tool] = built = ClockToolViews.Build(tool, _main, this);
+            if (Bounds.Width > 0 && Bounds.Height > 0)
+            {
+                built.Rescale(ClockTypeScale.For(Bounds.Width, Bounds.Height));
+            }
         }
         return built.Control;
     }
