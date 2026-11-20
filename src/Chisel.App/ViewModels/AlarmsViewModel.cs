@@ -70,6 +70,21 @@ public partial class AlarmsViewModel : ViewModelBase
 
     public ObservableCollection<AlarmItemViewModel> Items { get; } = [];
 
+    // Set by the clock widget while a slot can show the alarm; then a ringing alarm shows there and no banner is used.
+    public Func<bool>? IsShownOnWidget { get; set; }
+
+    // The alarm ringing in the widget, until it is dismissed or snoozed.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RingingTime))]
+    [NotifyPropertyChangedFor(nameof(RingingTitle))]
+    public partial Alarm? Ringing { get; private set; }
+
+    public string RingingTime => Ringing is { } ringing ? _display.Time(ringing.Time) : "";
+
+    public string RingingTitle => string.IsNullOrWhiteSpace(Ringing?.Label) ? "Alarm" : Ringing.Label;
+
+    public const int SnoozeMinutes = 5;
+
     public DayToggle[] Days { get; } =
     [
         new(AlarmDays.Monday, "Mon"), new(AlarmDays.Tuesday, "Tue"), new(AlarmDays.Wednesday, "Wed"), new(AlarmDays.Thursday, "Thu"),
@@ -123,8 +138,36 @@ public partial class AlarmsViewModel : ViewModelBase
 
     private void OnFired(Alarm alarm)
     {
-        _alerts.Show(string.IsNullOrWhiteSpace(alarm.Label) ? "Alarm" : alarm.Label, _display.Time(alarm.Time));
+        if (IsShownOnWidget?.Invoke() == true)
+        {
+            Ringing = alarm;
+            _alerts.PlaySound();
+        }
+        else
+        {
+            _alerts.Show(string.IsNullOrWhiteSpace(alarm.Label) ? "Alarm" : alarm.Label, _display.Time(alarm.Time));
+        }
         Rebuild();
+    }
+
+    [RelayCommand]
+    private void DismissRinging()
+    {
+        if (Ringing is { } ringing)
+        {
+            _service.CancelSnooze(ringing.Id);
+            Ringing = null;
+        }
+    }
+
+    [RelayCommand]
+    private void Snooze()
+    {
+        if (Ringing is { } ringing)
+        {
+            _service.Snooze(ringing.Id, TimeSpan.FromMinutes(SnoozeMinutes));
+            Ringing = null;
+        }
     }
 
     private void Rebuild()

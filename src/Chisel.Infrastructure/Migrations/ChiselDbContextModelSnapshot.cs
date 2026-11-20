@@ -110,16 +110,11 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AlarmEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Mode")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("SlotsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("StopwatchBankedTicks")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("StopwatchEnabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("StopwatchLapsJson")
@@ -129,16 +124,10 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("StopwatchStartedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Strip")
-                        .HasColumnType("INTEGER");
-
                     b.Property<long>("TimerBankedTicks")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("TimerDurationTicks")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("TimerEnabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset?>("TimerStartedAt")

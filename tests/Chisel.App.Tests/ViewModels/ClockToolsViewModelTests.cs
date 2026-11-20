@@ -8,7 +8,7 @@ public class ClockToolsViewModelTests
 {
     private sealed class MemoryTools : IClockToolsRepository
     {
-        public ClockToolsState Saved { get; private set; } = new(ClockToolsConfig.Default, TimerState.Idle, StopwatchState.Idle, ClockMode.Clock);
+        public ClockToolsState Saved { get; private set; } = new(ClockSlotsConfig.Default, TimerState.Idle, StopwatchState.Idle);
         public int Saves { get; private set; }
         public ClockToolsState Get() => Saved;
         public void Save(ClockToolsState state) { Saved = state; Saves++; }
@@ -142,63 +142,41 @@ public class ClockToolsViewModelTests
     }
 
     [Fact]
-    public void TheChip_ShowsOnlyWhileCollapsed_AndOnlyForARunningToolOrADoneTimer()
+    public void TheIndicator_ShowsARunningTimerOrStopwatch_AndDoneForAFinishedTimer()
     {
         var (vm, time, _) = Make();
-        Assert.False(vm.ShowChip);
+        Assert.False(vm.IndicatorFor(ClockTool.Timer).Active);
+        Assert.False(vm.IndicatorFor(ClockTool.Stopwatch).Active);
 
         vm.StopwatchStartPauseCommand.Execute(null);
-        time.Advance(TimeSpan.FromSeconds(5));
-        vm.Tick();
-        Assert.True(vm.ShowChip);
-        Assert.Equal("00:05", vm.ChipText);
-
         vm.AddTimerSecondsCommand.Execute(60);
         vm.TimerStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromSeconds(5));
         vm.Tick();
-        Assert.Equal("01:00", vm.ChipText); // the timer wins
-
-        vm.ToggleExpandedCommand.Execute(null);
-        Assert.False(vm.ShowChip);
-        vm.ToggleExpandedCommand.Execute(null);
+        Assert.Equal(new ToolIndicator(true, "00:55"), vm.IndicatorFor(ClockTool.Timer));
+        Assert.Equal(new ToolIndicator(true, "00:05"), vm.IndicatorFor(ClockTool.Stopwatch));
+        Assert.False(vm.IndicatorFor(ClockTool.Clock).Active);
 
         time.Advance(TimeSpan.FromMinutes(2));
         vm.Tick();
-        Assert.Equal("Done", vm.ChipText);
+        Assert.Equal(new ToolIndicator(true, "Done"), vm.IndicatorFor(ClockTool.Timer));
+
+        vm.StopwatchStartPauseCommand.Execute(null); // paused: nothing running
+        Assert.False(vm.IndicatorFor(ClockTool.Stopwatch).Active);
     }
 
     [Fact]
-    public void SelectingAMode_ShowsIt_AndIsRemembered()
+    public void TheSlots_AreSavedKeptToThreeAndRestored()
     {
         var (vm, _, repo) = Make();
-        vm.SelectModeCommand.Execute(ClockMode.Stopwatch);
-        Assert.Equal(ClockMode.Stopwatch, vm.Mode);
-        Assert.Equal(ClockMode.Stopwatch, repo.Saved.Mode);
-    }
+        Assert.Equal(ClockSlotsConfig.Default, vm.Slots);
 
-    [Fact]
-    public void DisablingATool_RemovesItFromTheStrip_StopsIt_AndFallsBackToTheClock()
-    {
-        var (vm, _, repo) = Make();
-        vm.StopwatchStartPauseCommand.Execute(null);
-        vm.SelectModeCommand.Execute(ClockMode.Stopwatch);
+        var four = new ClockSlotsConfig(Enumerable.Repeat(ClockSlotConfig.Pinned(ClockTool.Timer), 4).ToList());
+        vm.SetSlots(four);
 
-        vm.SetToolEnabled(ClockMode.Stopwatch, false);
-
-        Assert.DoesNotContain(ClockMode.Stopwatch, vm.EnabledModes);
-        Assert.Equal(ClockMode.Clock, vm.Mode);
-        Assert.False(repo.Saved.Stopwatch.IsRunning);
-        vm.SelectModeCommand.Execute(ClockMode.Stopwatch);
-        Assert.Equal(ClockMode.Clock, vm.Mode);
-    }
-
-    [Fact]
-    public void TheStripPlacement_IsSaved()
-    {
-        var (vm, _, repo) = Make();
-        vm.SetStrip(StripPlacement.Bottom);
-        Assert.Equal(StripPlacement.Bottom, repo.Saved.Config.Strip);
-        Assert.True(vm.StripAtBottom);
+        Assert.Equal(3, vm.Slots.Slots.Count);
+        Assert.Equal(vm.Slots, repo.Saved.Slots);
+        Assert.Equal(vm.Slots, new ClockToolsViewModel(repo, new FakeTimeProvider(T0)).Slots);
     }
 
     [Fact]

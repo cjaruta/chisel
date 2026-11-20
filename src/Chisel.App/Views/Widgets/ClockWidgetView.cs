@@ -1,96 +1,43 @@
-using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Data;
-using Avalonia.Layout;
-using Avalonia.Media;
 using Chisel.App.ViewModels;
-using Chisel.Core.Clock;
 
 namespace Chisel.App.Views.Widgets;
 
-// The clock widget: the analog face, and over it one panel with a mode strip (Clock / Timer / Stopwatch) that the home screen
-// can open. Collapsed it is just the face, a small "Tools" button and, while a timer or stopwatch is running, a chip with its
-// time. In edit mode the panel gives way to the tool settings (which tools are on, where the strip goes). While it is on screen
-// the view follows MainViewModel.AnalogClock and ClockTools; as a hidden tab of a group it stops (and so stops redrawing)
-// until it is shown again. The face ignores the mouse so the widget stays a drag handle in edit mode.
+// The clock widget: up to three slots side by side (wide widget) or one above the other (tall widget), each a clock, timer,
+// stopwatch, alarm or nothing, set up on the Clock page in settings. The widget holds no controls for that setup and nothing
+// sits on or between the slots: just the tools over the card. A widget too small for its slots gives the last one the tools of
+// the hidden ones (see ClockSlotLayout). While it is on screen the view follows MainViewModel.ClockSlots; as a hidden tab of a
+// group it lets go (and so stops redrawing) until it is shown again. In edit mode the card is inert like every other widget, so
+// nothing here competes with dragging it.
 public sealed class ClockWidgetView : WidgetView
 {
     private static readonly Thickness BodyPadding = new(0, 0, 0, 12);
 
-    private readonly ClockFace _face = new() { Name = "ClockFace", IsHitTestVisible = false };
-    private readonly Grid _root = new() { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
-    private readonly StackPanel _strip = new() { Name = "ClockStrip", Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 4, Margin = new Thickness(0, 4) };
-    private readonly Button _open = new() { Name = "ClockOpenButton", Content = "Tools", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, FontSize = 11, Padding = new Thickness(8, 2) };
-    private readonly Button _close = new() { Name = "ClockCloseButton", Content = "Close", FontSize = 12, Padding = new Thickness(8, 2) };
-    private readonly Border _chip = new() { Name = "ClockChip", HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 2), Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand) };
-    private readonly TextBlock _chipText = new() { FontSize = 12 };
-    private readonly TextBlock _timerText = new() { Name = "ClockTimerText", FontSize = 40, HorizontalAlignment = HorizontalAlignment.Center };
-    private readonly Button _timerStart = new() { Name = "ClockTimerStart", MinWidth = 80 };
-    private readonly StackPanel _timerSetters = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 6 };
-    private readonly TextBlock _stopwatchText = new() { Name = "ClockStopwatchText", FontSize = 40, HorizontalAlignment = HorizontalAlignment.Center };
-    private readonly Button _stopwatchStart = new() { Name = "ClockStopwatchStart", MinWidth = 80 };
-    private readonly Button _lap = new() { Name = "ClockStopwatchLap", Content = "Lap" };
-    private readonly ItemsControl _laps = new() { Name = "ClockLaps", FontSize = 12 };
-    private readonly Border _alarmHost = new() { Name = "ClockAlarmPanel", IsVisible = false, Padding = new Thickness(8) };
-    private readonly Viewbox _timerPanel;
-    private readonly Viewbox _stopwatchPanel;
-    private readonly StackPanel _config = new() { Name = "ClockConfig", Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-
-    private IDisposable[] _bindings = [];
+    private readonly Grid _grid = new() { Name = "ClockSlots" };
+    private readonly List<ClockSlotView> _views = [];
     private MainViewModel? _main;
-    private ClockToolsViewModel? _tools;
+    private bool _following;
 
     public ClockWidgetView()
     {
         // The heading sits 12px above this view's top (header margin and its spare height). Pad the bottom by the
         // same amount so the face has equal space above and below.
         Padding = BodyPadding;
-
-        _timerStart.Click += (_, _) => _tools?.TimerStartPauseCommand.Execute(null);
-        _stopwatchStart.Click += (_, _) => _tools?.StopwatchStartPauseCommand.Execute(null);
-        _lap.Click += (_, _) => _tools?.StopwatchLapCommand.Execute(null);
-        _open.Click += (_, _) => _tools?.ToggleExpandedCommand.Execute(null);
-        _close.Click += (_, _) => _tools?.ToggleExpandedCommand.Execute(null);
-        _chip.PointerPressed += (_, e) =>
-        {
-            _tools?.ToggleExpandedCommand.Execute(null);
-            e.Handled = true;
-        };
-        _chip.Child = _chipText;
-
-        _timerSetters.Children.Add(Tool("ClockTimerAdd1m", "+1m", () => _tools?.AddTimerSecondsCommand.Execute(60)));
-        _timerSetters.Children.Add(Tool("ClockTimerAdd5m", "+5m", () => _tools?.AddTimerSecondsCommand.Execute(300)));
-        _timerSetters.Children.Add(Tool("ClockTimerAdd10m", "+10m", () => _tools?.AddTimerSecondsCommand.Execute(600)));
-        _timerSetters.Children.Add(Tool("ClockTimerClear", "Clear", () => _tools?.ClearTimerCommand.Execute(null)));
-
-        _timerPanel = Panel("ClockTimerPanel", _timerText, _timerSetters,
-            Row(_timerStart, Tool("ClockTimerReset", "Reset", () => _tools?.TimerResetCommand.Execute(null))));
-        _stopwatchPanel = Panel("ClockStopwatchPanel", _stopwatchText, Row(_stopwatchStart, _lap,
-            Tool("ClockStopwatchReset", "Reset", () => _tools?.StopwatchResetCommand.Execute(null))), _laps);
-
-        var body = new Grid();
-        body.Children.Add(_face);
-        body.Children.Add(_timerPanel);
-        body.Children.Add(_stopwatchPanel);
-        body.Children.Add(_alarmHost);
-        body.Children.Add(_chip);
-        body.Children.Add(_open);
-        body.Children.Add(_config);
-        _root.Children.Add(_strip);
-        _root.Children.Add(body);
-        Grid.SetRow(body, 1);
-        Content = _root;
+        Content = _grid;
     }
 
-    // Whether the face is following the clock (it is while the widget is shown).
-    public bool IsFollowingClock => _bindings.Length > 0;
+    // Whether the widget is following the clock (it is while the widget is shown).
+    public bool IsFollowingClock => _following;
 
     // With no title bar the face is centered in the whole card, so the bottom padding goes.
-    protected override void OnHeaderShownChanged() => Padding = HeaderShown ? BodyPadding : new Thickness(0);
+    protected override void OnHeaderShownChanged()
+    {
+        Padding = HeaderShown ? BodyPadding : new Thickness(0);
+        ReportSize();
+    }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -115,233 +62,94 @@ public sealed class ClockWidgetView : WidgetView
         }
     }
 
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        ReportSize();
+    }
+
     private void Follow(bool on)
     {
-        if (on && _main is { } main && _bindings.Length == 0)
+        if (on && _main is { } main && !_following)
         {
-            _bindings =
-            [
-                _face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = main.AnalogClock }),
-                _face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = main.AnalogClock }),
-                _face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = main.AnalogClock }),
-                _face.Bind(ClockFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = main.ClockSettings }),
-            ];
-            _tools = main.ClockTools;
-            _tools.PropertyChanged += OnToolsChanged;
-            main.Layout.PropertyChanged += OnLayoutChanged;
-            _laps.ItemsSource = _tools.LapTexts;
-            _alarmHost.Child ??= BuildAlarmPanel(main.Alarms);
-            BuildStrip();
-            BuildConfig();
-            Sync();
+            _following = true;
+            main.ClockSlots.PropertyChanged += OnSlotsChanged;
+            ReportSize();
+            Rebuild();
         }
-        else if (!on)
+        else if (!on && _following)
         {
-            foreach (var binding in _bindings)
-            {
-                binding.Dispose();
-            }
-            _bindings = [];
-            if (_tools is not null)
-            {
-                _tools.PropertyChanged -= OnToolsChanged;
-                _tools = null;
-            }
+            _following = false;
             if (_main is { } m)
             {
-                m.Layout.PropertyChanged -= OnLayoutChanged;
+                m.ClockSlots.PropertyChanged -= OnSlotsChanged;
+                m.ClockSlots.Clear();
             }
+            Release();
         }
     }
 
-    private void OnToolsChanged(object? sender, PropertyChangedEventArgs e)
+    // Tells the slots how much room there is (the card less its padding), so they can decide how many fit.
+    private void ReportSize()
     {
-        if (e.PropertyName is nameof(ClockToolsViewModel.Tabs) or nameof(ClockToolsViewModel.EnabledModes))
-        {
-            BuildStrip();
-            BuildConfig();
-        }
-        Sync();
-    }
-
-    private void OnLayoutChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(LayoutViewModel.IsEditing))
-        {
-            Sync();
-        }
-    }
-
-    // Brings every part in line with the view model: which tool shows, the strip, the chip and the texts.
-    private void Sync()
-    {
-        if (_tools is not { } tools || _main is not { } main)
+        if (!_following || _main is not { } main)
         {
             return;
         }
-        var editing = main.Layout.IsEditing;
-        var open = tools.IsExpanded && !editing;
-        var mode = tools.Mode;
-
-        _face.IsVisible = !open || mode == ClockMode.Clock;
-        _face.Opacity = editing ? 0.2 : 1;
-        _timerPanel.IsVisible = open && mode == ClockMode.Timer;
-        _stopwatchPanel.IsVisible = open && mode == ClockMode.Stopwatch;
-        _alarmHost.IsVisible = open && mode == ClockMode.Alarm;
-        _strip.IsVisible = open;
-        Grid.SetRow(_strip, tools.StripAtBottom ? 2 : 0);
-        _open.IsVisible = !editing && !open && ToolModes(tools).Count > 0;
-        _config.IsVisible = editing;
-
-        _chip.IsVisible = !editing && tools.ShowChip;
-        _chipText.Text = tools.ChipText;
-        _chip.Background = Theming.ThemeService.Brush(this, "RaisedBrush");
-        _chipText.Foreground = Theming.ThemeService.Brush(this, tools.TimerStatus == TimerStatus.Finished ? "AccentBrush" : "TextBrush");
-
-        _timerText.Text = tools.TimerText;
-        _timerText.Foreground = Theming.ThemeService.Brush(this, tools.TimerStatus == TimerStatus.Finished ? "AccentBrush" : "TextBrush");
-        _timerStart.Content = tools.TimerButtonText;
-        _timerSetters.IsVisible = tools.CanSetTimer;
-        _stopwatchText.Text = tools.StopwatchText;
-        _stopwatchStart.Content = tools.StopwatchButtonText;
-        _lap.IsEnabled = tools.StopwatchRunning;
-        foreach (var tab in _strip.Children.OfType<Button>().Where(b => b.Tag is ClockMode))
+        var width = Bounds.Width - Padding.Left - Padding.Right;
+        var height = Bounds.Height - Padding.Top - Padding.Bottom;
+        if (width > 0 && height > 0)
         {
-            tab.Foreground = Theming.ThemeService.Brush(this, (ClockMode)tab.Tag! == mode ? "AccentBrush" : "DimTextBrush");
+            main.ClockSlots.Resize(width, height);
         }
     }
 
-    // The tools that can be opened: every enabled mode except the plain clock.
-    private static System.Collections.Generic.IReadOnlyList<ClockMode> ToolModes(ClockToolsViewModel tools) =>
-        tools.EnabledModes.Where(m => m != ClockMode.Clock).ToList();
-
-    private void BuildStrip()
+    private void OnSlotsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_tools is not { } tools)
+        if (e.PropertyName is nameof(ClockSlotsViewModel.Slots) or nameof(ClockSlotsViewModel.Horizontal))
         {
-            return;
+            Rebuild();
         }
-        _strip.Children.Clear();
-        foreach (var mode in ClockMode.Clock.Yield().Concat(ToolModes(tools)))
-        {
-            var tab = new Button { Name = "ClockTab_" + mode, Content = mode.ToString(), Tag = mode, FontSize = 12, Padding = new Thickness(8, 2) };
-            tab.Click += (_, _) => _tools?.SelectModeCommand.Execute(mode);
-            _strip.Children.Add(tab);
-        }
-        _strip.Children.Add(_close);
     }
 
-    // Edit mode: a check box per tool and a button that moves the strip.
-    private void BuildConfig()
+    private void Release()
     {
-        if (_tools is not { } tools)
+        foreach (var view in _views)
+        {
+            view.Dispose();
+        }
+        _views.Clear();
+        _grid.Children.Clear();
+        _grid.RowDefinitions.Clear();
+        _grid.ColumnDefinitions.Clear();
+    }
+
+    private void Rebuild()
+    {
+        Release();
+        if (_main is not { } main || !_following)
         {
             return;
         }
-        _config.Children.Clear();
-        foreach (var mode in new[] { ClockMode.Alarm, ClockMode.Timer, ClockMode.Stopwatch })
+        var horizontal = main.ClockSlots.Horizontal;
+        var index = 0;
+        foreach (var slot in main.ClockSlots.Slots)
         {
-            var box = new CheckBox { Name = "ClockToolToggle_" + mode, Content = mode.ToString(), IsChecked = tools.Config.IsEnabled(mode), FontSize = 12 };
-            box.IsCheckedChanged += (_, _) => _tools?.SetToolEnabled(mode, box.IsChecked == true);
-            _config.Children.Add(box);
-        }
-        var placement = new Button { Name = "ClockStripPlacement", FontSize = 12, Content = tools.StripAtBottom ? "Mode strip: bottom" : "Mode strip: top" };
-        placement.Click += (_, _) =>
-        {
-            if (_tools is { } t)
+            var star = new GridLength(slot.Weight, GridUnitType.Star);
+            var view = new ClockSlotView(slot, main);
+            if (horizontal)
             {
-                t.SetStrip(t.StripAtBottom ? StripPlacement.Top : StripPlacement.Bottom);
-                placement.Content = t.StripAtBottom ? "Mode strip: bottom" : "Mode strip: top";
+                _grid.ColumnDefinitions.Add(new ColumnDefinition(star));
+                Grid.SetColumn(view, index);
             }
-        };
-        _config.Children.Add(placement);
-    }
-
-    // The Alarm tab: a form to add an alarm (time as HH:MM, a label, the days) over the list, each row with an on/off box and a delete button.
-    private static Control BuildAlarmPanel(AlarmsViewModel alarms)
-    {
-        var time = new TextBox { Name = "ClockAlarmTime", Width = 80, Watermark = "HH:MM", FontSize = 13 };
-        time.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewTime)) { Source = alarms, Mode = BindingMode.TwoWay });
-        var label = new TextBox { Name = "ClockAlarmLabel", Watermark = "Label", MinWidth = 100, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Stretch };
-        label.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewLabel)) { Source = alarms, Mode = BindingMode.TwoWay });
-        var add = new Button { Name = "ClockAlarmAdd", Content = "Add", Command = alarms.AddCommand };
-
-        var days = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
-        foreach (var day in alarms.Days)
-        {
-            var toggle = new ToggleButton { Name = "ClockAlarmDay_" + day.Day, Content = day.Title, FontSize = 11, Padding = new Thickness(5, 2) };
-            toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(DayToggle.IsOn)) { Source = day, Mode = BindingMode.TwoWay });
-            days.Children.Add(toggle);
-        }
-
-        var form = new StackPanel { Spacing = 6 };
-        var top = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 6 };
-        top.Children.Add(time);
-        top.Children.Add(label);
-        top.Children.Add(add);
-        Grid.SetColumn(label, 1);
-        Grid.SetColumn(add, 2);
-        form.Children.Add(top);
-        form.Children.Add(days);
-
-        var list = new ItemsControl
-        {
-            Name = "ClockAlarmList",
-            ItemsSource = alarms.Items,
-            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<AlarmItemViewModel>((item, _) =>
+            else
             {
-                var on = new CheckBox { VerticalAlignment = VerticalAlignment.Center };
-                on.Bind(CheckBox.IsCheckedProperty, new Binding(nameof(AlarmItemViewModel.Enabled)) { Source = item, Mode = BindingMode.TwoWay });
-                var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-                text.Children.Add(new TextBlock { Text = item.TimeText, FontSize = 18, FontWeight = FontWeight.SemiBold });
-                text.Children.Add(new TextBlock { Text = string.IsNullOrEmpty(item.Label) ? item.DaysText : item.Label + " · " + item.DaysText, FontSize = 11, Opacity = 0.7 });
-                var delete = new Button { Content = "x", FontSize = 11, Padding = new Thickness(6, 1), VerticalAlignment = VerticalAlignment.Center };
-                delete.Click += (_, _) => item?.DeleteCommand.Execute(null);
-                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(0, 3) };
-                row.Children.Add(on);
-                row.Children.Add(text);
-                row.Children.Add(delete);
-                Grid.SetColumn(text, 1);
-                Grid.SetColumn(delete, 2);
-                return row;
-            }),
-        };
-
-        var panel = new Grid { RowDefinitions = new RowDefinitions("Auto,*"), RowSpacing = 8 };
-        panel.Children.Add(form);
-        var scroll = new ScrollViewer { Content = list };
-        panel.Children.Add(scroll);
-        Grid.SetRow(scroll, 1);
-        return panel;
-    }
-
-    private static Button Tool(string name, string text, Action click)
-    {
-        var button = new Button { Name = name, Content = text, FontSize = 12, Padding = new Thickness(8, 2) };
-        button.Click += (_, _) => click();
-        return button;
-    }
-
-    private static StackPanel Row(params Control[] items)
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 6 };
-        row.Children.AddRange(items);
-        return row;
-    }
-
-    // A tool's content, scaled down (never up) so it fits a small widget.
-    private static Viewbox Panel(string name, params Control[] items)
-    {
-        var stack = new StackPanel { Spacing = 8, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8) };
-        stack.Children.AddRange(items);
-        return new Viewbox { Name = name, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, Child = stack };
-    }
-}
-
-internal static class ClockModeExtensions
-{
-    public static System.Collections.Generic.IEnumerable<T> Yield<T>(this T item)
-    {
-        yield return item;
+                _grid.RowDefinitions.Add(new RowDefinition(star));
+                Grid.SetRow(view, index);
+            }
+            _views.Add(view);
+            _grid.Children.Add(view);
+            index++;
+        }
     }
 }

@@ -11,8 +11,12 @@ using Chisel.Core.Clock;
 
 namespace Chisel.App.Tests.Headless;
 
-public class ClockAlarmHeadlessTests
+public class ClockAlarmHeadlessTests : IDisposable
 {
+    public ClockAlarmHeadlessTests() => SlideHost.SlideDuration = TimeSpan.Zero;
+
+    public void Dispose() => SlideHost.SlideDuration = TimeSpan.FromMilliseconds(160);
+
     private static (MainWindow Window, MainViewModel Main) WithClock()
     {
         var window = UiSnapshot.ShowMainWindow(1200, 760);
@@ -45,10 +49,10 @@ public class ClockAlarmHeadlessTests
     public void TheAlarmTab_ListsAndAddsAlarms()
     {
         var (window, main) = WithClock();
-        Click(window, "ClockOpenButton");
-        Click(window, "ClockTab_Alarm");
+        main.ClockSlots.Slots[1].Select(ClockTool.Alarm);
+        Dispatcher.UIThread.RunJobs();
         Assert.True(Shown(window, "ClockAlarmPanel"));
-        Assert.False(Shown(window, "ClockFace"));
+        Assert.True(Shown(window, "ClockFace")); // the clock stays pinned beside it
 
         Named<TextBox>(window, "ClockAlarmTime").Text = "08:15";
         Named<TextBox>(window, "ClockAlarmLabel").Text = "Stand up";

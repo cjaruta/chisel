@@ -1,18 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Chisel.Core.Clock;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
 
-// One strip button of the clock panel.
-public sealed record ModeTab(ClockMode Mode, string Title, bool IsSelected);
+// Whether a tool is doing something worth showing while it is off screen, and the short text for it (its time).
+public readonly record struct ToolIndicator(bool Active, string Text);
 
-// The clock widget's panel: a mode strip (Clock / Alarm / Timer / Stopwatch) over the tool shown, plus the small chip that
-// stands in for a running tool while the panel is collapsed. The timer and stopwatch are Core state (absolute timestamps); this
+// The timer and stopwatch, and which slots the clock widget has. The timer and stopwatch are Core state (absolute timestamps); this
 // only reads them against the TimeProvider on Tick (about every 200 ms), so a restart or a sleep needs no special handling.
 // State is saved when it changes, never on Tick.
 public partial class ClockToolsViewModel : ViewModelBase
@@ -27,15 +24,9 @@ public partial class ClockToolsViewModel : ViewModelBase
     // Raised once when the running timer reaches zero (not for one that finished while the app was closed).
     public event Action? TimerFinished;
 
+    // The slots of the clock widget, set on the Clock page in settings.
     [ObservableProperty]
-    public partial ClockToolsConfig Config { get; private set; }
-
-    [ObservableProperty]
-    public partial ClockMode Mode { get; private set; }
-
-    // Whether the panel (mode strip and tool) is open over the clock; collapsed shows only the clock and the chip.
-    [ObservableProperty]
-    public partial bool IsExpanded { get; private set; }
+    public partial ClockSlotsConfig Slots { get; private set; }
 
     [ObservableProperty]
     public partial string TimerText { get; private set; } = "00:00";
@@ -49,19 +40,7 @@ public partial class ClockToolsViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool StopwatchRunning { get; private set; }
 
-    [ObservableProperty]
-    public partial string ChipText { get; private set; } = "";
-
-    [ObservableProperty]
-    public partial bool ShowChip { get; private set; }
-
     public ObservableCollection<string> LapTexts { get; } = [];
-
-    public IReadOnlyList<ClockMode> EnabledModes => Config.EnabledModes;
-
-    public IReadOnlyList<ModeTab> Tabs => EnabledModes.Select(m => new ModeTab(m, m.ToString(), m == Mode)).ToList();
-
-    public bool StripAtBottom => Config.Strip == StripPlacement.Bottom;
 
     public string TimerButtonText => TimerStatus switch
     {
@@ -80,33 +59,28 @@ public partial class ClockToolsViewModel : ViewModelBase
     {
         _repository = repository;
         _time = time;
-        var state = repository?.Get() ?? new ClockToolsState(ClockToolsConfig.Default, TimerState.Idle, StopwatchState.Idle, ClockMode.Clock);
-        Config = state.Config;
+        var state = repository?.Get() ?? new ClockToolsState(ClockSlotsConfig.Default, TimerState.Idle, StopwatchState.Idle);
+        Slots = state.Slots.Normalized();
         _timer = state.Timer;
         _stopwatch = state.Stopwatch;
-        Mode = Config.IsEnabled(state.Mode) ? state.Mode : ClockMode.Clock;
         _announced = _timer.Status(_time.GetUtcNow()) == TimerStatus.Finished;
         Refresh(false);
     }
 
     public void Tick() => Refresh(true);
 
-    [RelayCommand]
-    private void ToggleExpanded()
+    // A running timer or stopwatch (or a finished timer), for the dots of a slot that is showing something else.
+    public ToolIndicator IndicatorFor(ClockTool tool) => tool switch
     {
-        IsExpanded = !IsExpanded;
-        Refresh(false);
-    }
+        ClockTool.Timer when TimerStatus == TimerStatus.Running => new(true, TimerText),
+        ClockTool.Timer when TimerStatus == TimerStatus.Finished => new(true, "Done"),
+        ClockTool.Stopwatch when StopwatchRunning => new(true, StopwatchText[..^2]),
+        _ => default,
+    };
 
-    [RelayCommand]
-    private void SelectMode(ClockMode mode)
+    public void SetSlots(ClockSlotsConfig slots)
     {
-        if (!Config.IsEnabled(mode))
-        {
-            return;
-        }
-        Mode = mode;
-        OnPropertyChanged(nameof(Tabs));
+        Slots = slots.Normalized();
         Save();
     }
 
@@ -161,54 +135,13 @@ public partial class ClockToolsViewModel : ViewModelBase
         Changed();
     }
 
-    // Edit mode: switch a tool on or off. Switching one off stops and clears it.
-    public void SetToolEnabled(ClockMode mode, bool enabled)
-    {
-        if (mode == ClockMode.Clock)
-        {
-            return;
-        }
-        Config = mode switch
-        {
-            ClockMode.Alarm => Config with { AlarmEnabled = enabled },
-            ClockMode.Timer => Config with { TimerEnabled = enabled },
-            _ => Config with { StopwatchEnabled = enabled },
-        };
-        if (!enabled)
-        {
-            if (mode == ClockMode.Timer)
-            {
-                _timer = _timer.Reset().WithDuration(TimeSpan.Zero);
-            }
-            else if (mode == ClockMode.Stopwatch)
-            {
-                _stopwatch = StopwatchState.Idle;
-            }
-            if (Mode == mode)
-            {
-                Mode = ClockMode.Clock;
-            }
-        }
-        OnPropertyChanged(nameof(EnabledModes));
-        OnPropertyChanged(nameof(Tabs));
-        Changed();
-    }
-
-    // Edit mode: put the mode strip above or below the tool.
-    public void SetStrip(StripPlacement strip)
-    {
-        Config = Config with { Strip = strip };
-        OnPropertyChanged(nameof(StripAtBottom));
-        Save();
-    }
-
     private void Changed()
     {
         Refresh(false);
         Save();
     }
 
-    private void Save() => _repository?.Save(new ClockToolsState(Config, _timer, _stopwatch, Mode));
+    private void Save() => _repository?.Save(new ClockToolsState(Slots, _timer, _stopwatch));
 
     private void Refresh(bool mayAlert)
     {
@@ -226,14 +159,10 @@ public partial class ClockToolsViewModel : ViewModelBase
             TimerFinished?.Invoke();
         }
 
-        var elapsed = _stopwatch.Elapsed(now);
-        StopwatchText = ClockToolsFormat.Stopwatch(elapsed);
+        StopwatchText = ClockToolsFormat.Stopwatch(_stopwatch.Elapsed(now));
         StopwatchRunning = _stopwatch.IsRunning;
         SyncLaps();
 
-        var timerShown = status is TimerStatus.Running or TimerStatus.Finished;
-        ShowChip = !IsExpanded && (timerShown || StopwatchRunning);
-        ChipText = timerShown ? (status == TimerStatus.Finished ? "Done" : TimerText) : StopwatchText[..^2];
         var buttons = (TimerButtonText, StopwatchButtonText, CanSetTimer);
         if (buttons == _buttons)
         {

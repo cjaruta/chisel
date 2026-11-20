@@ -27,6 +27,9 @@ public partial class AlertsViewModel : ViewModelBase
         _sound = sound ?? new NoAlertSound();
     }
 
+    // Just the sound, for an alert that is shown somewhere else (an alarm ringing in the clock widget).
+    public void PlaySound() => _sound.Play();
+
     public void Show(string title, string message)
     {
         _sound.Play();
