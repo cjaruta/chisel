@@ -61,6 +61,7 @@ public sealed class ClockWidgetView : WidgetView
                 _face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = main.AnalogClock }),
                 _face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = main.AnalogClock }),
                 _face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = main.AnalogClock }),
+                _face.Bind(ClockFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = main.ClockSettings }),
             ];
         }
         else if (!on)

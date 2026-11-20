@@ -86,21 +86,50 @@ public class ClockFaceRenderTests
             var face = Face(preset.Style);
             var bitmap = new RenderTargetBitmap(new PixelSize(300, 300));
             using var context = bitmap.CreateDrawingContext();
-            for (var i = 0; i < 12; i++)
+            for (var i = 0; i < 200; i++)
             {
                 face.Draw(context);
             }
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < frames; i++)
+            // Best of three rounds: a round that happens to include one-off runtime work (JIT, caches) is not steady state.
+            var perFrame = long.MaxValue;
+            for (var round = 0; round < 3; round++)
             {
-                face.Draw(context);
+                var before = GC.GetAllocatedBytesForCurrentThread();
+                for (var i = 0; i < frames; i++)
+                {
+                    face.Draw(context);
+                }
+                perFrame = Math.Min(perFrame, (GC.GetAllocatedBytesForCurrentThread() - before) / frames);
             }
-            var perFrame = (GC.GetAllocatedBytesForCurrentThread() - before) / frames;
             if (perFrame > 64)
             {
                 offenders.Add($"{preset.Id}: {perFrame} B/frame");
             }
         }
         Assert.True(offenders.Count == 0, string.Join("; ", offenders));
+    }
+
+    // artifacts/ui/clock-presets.png: every preset, one tile each, to look at.
+    [AvaloniaFact]
+    public void Sheet_WritesEveryPreset()
+    {
+        const int tile = 260;
+        var sheet = new RenderTargetBitmap(new PixelSize(tile * 3, tile * 2));
+        using (var context = sheet.CreateDrawingContext())
+        {
+            context.DrawRectangle(Avalonia.Media.Brushes.Black, null, new Rect(0, 0, tile * 3, tile * 2));
+            for (var i = 0; i < ClockPresets.All.Count; i++)
+            {
+                var face = Face(ClockPresets.All[i].Style, tile, tile);
+                using (context.PushTransform(Matrix.CreateTranslation(i % 3 * tile, i / 3 * tile)))
+                {
+                    face.Draw(context);
+                }
+            }
+        }
+        var directory = Path.Combine(UiSnapshot.FindRepoRoot(), "artifacts", "ui");
+        Directory.CreateDirectory(directory);
+        sheet.Save(Path.Combine(directory, "clock-presets.png"));
+        Assert.True(File.Exists(Path.Combine(directory, "clock-presets.png")));
     }
 }

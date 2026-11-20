@@ -73,6 +73,7 @@ public partial class App : Application
                     new MediaSettingsViewModel(_services.UserSettings),
                     _volume,
                     pictureCatalog: _services.Pictures,
+                    clockSettings: new ClockSettingsViewModel(_services.ClockStyles),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));

@@ -32,7 +32,7 @@ public sealed class ClockFace : Control
     private BuiltFor? _built;
     private RenderTargetBitmap? _dial;
     private Hand? _hour, _minute, _second;
-    private IBrush _centerBrush = Brushes.Gray;
+    private IBrush _centerBrush = null!;
 
     static ClockFace() => AffectsRender<ClockFace>(HourAngleProperty, MinuteAngleProperty, SecondAngleProperty, StyleProperty);
 
@@ -117,12 +117,13 @@ public sealed class ClockFace : Control
         {
             return;
         }
+        var shades = style.Colors;
         _built = new BuiltFor(style, radius, scale, text, dim, grid, accent);
-        BuildDial(style, radius, scale, Part(style.Colors.Dial, grid), Part(style.Colors.Markers, dim), Part(style.Colors.Numerals, text));
+        BuildDial(style, radius, scale, Part(shades.Dial, grid), Part(shades.Markers, dim), Part(shades.Numerals, text));
 
-        var hourBrush = Part(style.Colors.Hour, text);
-        var minuteBrush = Part(style.Colors.Minute, text);
-        var secondBrush = Part(style.Colors.Second, accent);
+        var hourBrush = Part(shades.Hour, text);
+        var minuteBrush = Part(shades.Minute, text);
+        var secondBrush = Part(shades.Second, accent);
         _hour = BuildHand(style.Hands, radius * 0.5, style.HourThickness, hourBrush);
         _minute = BuildHand(style.Hands, radius * 0.75, style.MinuteThickness, minuteBrush);
         _second = new Hand(null, new Pen(secondBrush, style.SecondThickness, lineCap: PenLineCap.Round),
@@ -239,7 +240,7 @@ public sealed class ClockFace : Control
         {
             var big = style.Numerals is NumeralStyle.Twelve or NumeralStyle.Four;
             var fontSize = Math.Max(9, radius * (big ? 0.24 : 0.17));
-            var reach = style.Markers == MarkerStyle.None ? 0.8 : 0.68;
+            var reach = style.Markers == MarkerStyle.None ? 0.77 : 0.68;
             foreach (var label in ClockLabels.For(style.Numerals))
             {
                 var angle = ClockLabels.AngleOf(label.Hour);

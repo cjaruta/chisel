@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.ClockSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="6">
+        <TextBlock Classes="settingsSection" Text="LOOK" />
+        <TextBlock Text="Preset" Opacity="0.7" />
+        <ComboBox Name="ClockPreset" PlaceholderText="Custom" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.PresetNames}" SelectedIndex="{Binding ClockSettings.PresetIndex}" />
+        <TextBlock Text="Alignment" Opacity="0.7" />
+        <ComboBox Name="ClockAlignment" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.AlignmentNames}" SelectedIndex="{Binding ClockSettings.AlignmentIndex}" />
+        <CheckBox Name="ClockShowSeconds" Content="Show seconds hand" IsChecked="{Binding ClockSettings.ShowSeconds}" />
+        <TextBlock Classes="settingsSection" Text="DIAL" Margin="0,10,0,0" />
+        <TextBlock Text="Shape" Opacity="0.7" />
+        <ComboBox Name="ClockShape" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.ShapeNames}" SelectedIndex="{Binding ClockSettings.ShapeIndex}" />
+        <TextBlock Text="Border width" Opacity="0.7" />
+        <Slider Name="ClockBorder" Minimum="0" Maximum="8" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.BorderWidth}" />
+        <TextBlock Text="Markers" Opacity="0.7" />
+        <ComboBox Name="ClockMarkers" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.MarkerNames}" SelectedIndex="{Binding ClockSettings.MarkerIndex}" />
+        <CheckBox Name="ClockQuarters" Content="Emphasize quarter hours" IsChecked="{Binding ClockSettings.EmphasizeQuarters}" />
+        <TextBlock Text="Numerals" Opacity="0.7" />
+        <ComboBox Name="ClockNumerals" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.NumeralNames}" SelectedIndex="{Binding ClockSettings.NumeralIndex}" />
+        <TextBlock Classes="settingsSection" Text="HANDS" Margin="0,10,0,0" />
+        <TextBlock Text="Style" Opacity="0.7" />
+        <ComboBox Name="ClockHands" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.HandNames}" SelectedIndex="{Binding ClockSettings.HandIndex}" />
+        <TextBlock Text="Hour hand thickness" Opacity="0.7" />
+        <Slider Name="ClockHourThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.HourThickness}" />
+        <TextBlock Text="Minute hand thickness" Opacity="0.7" />
+        <Slider Name="ClockMinuteThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.MinuteThickness}" />
+        <TextBlock Text="Second hand thickness" Opacity="0.7" />
+        <Slider Name="ClockSecondThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.SecondThickness}" />
+        <TextBlock Classes="settingsSection" Text="COLORS" Margin="0,10,0,0" />
+        <TextBlock Text="Palette" Opacity="0.7" />
+        <ComboBox Name="ClockPalette" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.PaletteNames}" SelectedIndex="{Binding ClockSettings.PaletteIndex}" />
+        <TextBlock Text="Dial" Opacity="0.7" />
+        <ComboBox Name="ClockDialColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.DialColorIndex}" />
+        <TextBlock Text="Markers" Opacity="0.7" />
+        <ComboBox Name="ClockMarkerColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MarkerColorIndex}" />
+        <TextBlock Text="Numerals" Opacity="0.7" />
+        <ComboBox Name="ClockNumeralColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.NumeralColorIndex}" />
+        <TextBlock Text="Hour hand" Opacity="0.7" />
+        <ComboBox Name="ClockHourColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.HourColorIndex}" />
+        <TextBlock Text="Minute hand" Opacity="0.7" />
+        <ComboBox Name="ClockMinuteColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MinuteColorIndex}" />
+        <TextBlock Text="Second hand" Opacity="0.7" />
+        <ComboBox Name="ClockSecondColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.SecondColorIndex}" />
+    </StackPanel>
+</UserControl>

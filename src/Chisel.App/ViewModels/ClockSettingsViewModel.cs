@@ -117,12 +117,12 @@ public partial class ClockSettingsViewModel : ViewModelBase
             nameof(MinuteThickness) => s => s with { MinuteThickness = MinuteThickness },
             nameof(SecondThickness) => s => s with { SecondThickness = SecondThickness },
             nameof(ShowSeconds) => s => s with { ShowSeconds = ShowSeconds },
-            nameof(DialColorIndex) when DialColorIndex >= 0 => s => s with { Colors = s.Colors with { Dial = Hex(DialColorIndex) } },
-            nameof(MarkerColorIndex) when MarkerColorIndex >= 0 => s => s with { Colors = s.Colors with { Markers = Hex(MarkerColorIndex) } },
-            nameof(NumeralColorIndex) when NumeralColorIndex >= 0 => s => s with { Colors = s.Colors with { Numerals = Hex(NumeralColorIndex) } },
-            nameof(HourColorIndex) when HourColorIndex >= 0 => s => s with { Colors = s.Colors with { Hour = Hex(HourColorIndex) } },
-            nameof(MinuteColorIndex) when MinuteColorIndex >= 0 => s => s with { Colors = s.Colors with { Minute = Hex(MinuteColorIndex) } },
-            nameof(SecondColorIndex) when SecondColorIndex >= 0 => s => s with { Colors = s.Colors with { Second = Hex(SecondColorIndex) } },
+            nameof(DialColorIndex) when DialColorIndex >= 0 => s => Recolor(s, c => c with { Dial = Hex(DialColorIndex) }),
+            nameof(MarkerColorIndex) when MarkerColorIndex >= 0 => s => Recolor(s, c => c with { Markers = Hex(MarkerColorIndex) }),
+            nameof(NumeralColorIndex) when NumeralColorIndex >= 0 => s => Recolor(s, c => c with { Numerals = Hex(NumeralColorIndex) }),
+            nameof(HourColorIndex) when HourColorIndex >= 0 => s => Recolor(s, c => c with { Hour = Hex(HourColorIndex) }),
+            nameof(MinuteColorIndex) when MinuteColorIndex >= 0 => s => Recolor(s, c => c with { Minute = Hex(MinuteColorIndex) }),
+            nameof(SecondColorIndex) when SecondColorIndex >= 0 => s => Recolor(s, c => c with { Second = Hex(SecondColorIndex) }),
             _ => null,
         };
         if (change is not null)
@@ -135,13 +135,16 @@ public partial class ClockSettingsViewModel : ViewModelBase
 
     private static string? Hex(int swatch) => ClockSwatches.All[swatch].Hex;
 
+    private static ClockStyle Recolor(ClockStyle style, Func<ClockColors, ClockColors> change) => style with { Colors = change(style.Colors) };
+
     // Points every option control at the current style.
     private void Sync()
     {
         _syncing = true;
         var s = Style;
         PresetIndex = ClockPresets.All.ToList().FindIndex(p => p.Id == ClockPresets.IdOf(s));
-        PaletteIndex = ClockPalettes.All.ToList().FindIndex(p => p.Colors == s.Colors);
+        var shades = s.Colors;
+        PaletteIndex = ClockPalettes.All.ToList().FindIndex(p => p.Colors == shades);
         AlignmentIndex = (int)s.Alignment;
         ShapeIndex = (int)s.Shape;
         BorderWidth = s.BorderWidth;
@@ -153,12 +156,12 @@ public partial class ClockSettingsViewModel : ViewModelBase
         MinuteThickness = s.MinuteThickness;
         SecondThickness = s.SecondThickness;
         ShowSeconds = s.ShowSeconds;
-        DialColorIndex = ClockSwatches.IndexOf(s.Colors.Dial);
-        MarkerColorIndex = ClockSwatches.IndexOf(s.Colors.Markers);
-        NumeralColorIndex = ClockSwatches.IndexOf(s.Colors.Numerals);
-        HourColorIndex = ClockSwatches.IndexOf(s.Colors.Hour);
-        MinuteColorIndex = ClockSwatches.IndexOf(s.Colors.Minute);
-        SecondColorIndex = ClockSwatches.IndexOf(s.Colors.Second);
+        DialColorIndex = ClockSwatches.IndexOf(shades.Dial);
+        MarkerColorIndex = ClockSwatches.IndexOf(shades.Markers);
+        NumeralColorIndex = ClockSwatches.IndexOf(shades.Numerals);
+        HourColorIndex = ClockSwatches.IndexOf(shades.Hour);
+        MinuteColorIndex = ClockSwatches.IndexOf(shades.Minute);
+        SecondColorIndex = ClockSwatches.IndexOf(shades.Second);
         _syncing = false;
     }
 }
