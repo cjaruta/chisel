@@ -2,7 +2,7 @@ using Chisel.Core.Theme;
 
 namespace Chisel.Core.Clock;
 
-public enum ClockAlignment { Center, Left, Right }
+public enum ClockAlignment { Left, Center, Right }
 public enum DialShape { Round, Square, RoundedSquare }
 public enum MarkerStyle { None, Ticks, Dots, Bars }
 public enum NumeralStyle { None, Twelve, Four, All, Roman }
@@ -94,4 +94,30 @@ public static class ClockPalettes
 
     public static ClockStyle Apply(string id, ClockStyle current) =>
         All.FirstOrDefault(p => p.Id == id) is { } palette ? current with { Colors = palette.Colors } : current;
+}
+
+public sealed record ClockSwatch(string Title, string? Hex);
+
+// The colors offered for each part of the clock. The first (no color) means the theme's own color.
+public static class ClockSwatches
+{
+    public static IReadOnlyList<ClockSwatch> All { get; } =
+    [
+        new("Theme", null), new("White", "#F5F5F5"), new("Gray", "#9AA0A6"), new("Amber", "#F2C46D"), new("Orange", "#E8702A"),
+        new("Red", "#E05A5A"), new("Green", "#6FAF7B"), new("Blue", "#4FA3C7"), new("Violet", "#A98BE0"),
+    ];
+
+    public static int IndexOf(string? hex) => hex is null ? 0 : ListIndex(hex);
+
+    private static int ListIndex(string hex)
+    {
+        for (var i = 0; i < All.Count; i++)
+        {
+            if (string.Equals(All[i].Hex, hex, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
