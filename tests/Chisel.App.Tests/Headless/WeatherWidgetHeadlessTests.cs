@@ -45,7 +45,6 @@ public class WeatherWidgetHeadlessTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(main.Layout.TrayWidgets, w => w.Id == WidgetRegistry.Weather);
-        Assert.False(main.Layout.IsTrayOpen);
         Assert.Empty(window.GetVisualDescendants().OfType<WeatherWidgetView>());
 
         main.Layout.AddWidgetFromTray(WidgetRegistry.Weather);

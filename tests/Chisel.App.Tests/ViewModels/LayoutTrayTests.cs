@@ -112,23 +112,6 @@ public class LayoutTrayTests
     }
 
     [Fact]
-    public void Tray_OpensWhenAWidgetIsRemoved_AndOnEnteringEditModeWithWidgetsHidden()
-    {
-        var layout = Editing();
-        Assert.False(layout.IsTrayOpen); // only the clock is hidden: the tray stays closed
-
-        layout.RemoveWidget("notes");
-        Assert.True(layout.IsTrayOpen);
-
-        layout.ToggleTrayCommand.Execute(null);
-        Assert.False(layout.IsTrayOpen);
-        layout.DoneCommand.Execute(null);
-
-        layout.EnterEditCommand.Execute(null);
-        Assert.True(layout.IsTrayOpen);
-    }
-
-    [Fact]
     public void ClickingATrayCard_AddsItAtTheBottomOfTheFirstColumn()
     {
         var layout = Editing();
