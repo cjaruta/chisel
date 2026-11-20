@@ -22,6 +22,10 @@ public class ClockSettingsHeadlessTests
         Assert.Equal(ClockAlignment.Center, face.Style.Alignment);
 
         main.ClockSettings.PresetIndex = ClockPresets.All.ToList().FindIndex(p => p.Id == "modern");
+        // Alignment moves the face when its slot is wider than the face: a clock-only widget.
+        main.ClockTools.SetSlots(new ClockSlotsConfig([ClockSlotConfig.Pinned(ClockTool.Clock)]));
+        Dispatcher.UIThread.RunJobs();
+        face = window.GetVisualDescendants().OfType<ClockFace>().Single();
         main.ClockSettings.AlignmentIndex = (int)ClockAlignment.Right;
         Dispatcher.UIThread.RunJobs();
 
