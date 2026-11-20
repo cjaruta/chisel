@@ -19,14 +19,14 @@ public class LayoutHeaderTests
         layout.Columns.SelectMany(c => c.Widgets).Single(w => w.Id == id).ShowHeader;
 
     [Fact]
-    public void RegistryDefaults_HideClockScheduleWeatherAndLinks_ShowTasksAndNotes()
+    public void RegistryDefaults_HideClockScheduleWeatherAndLinks_ShowTasksNotesAndCalculator()
     {
         var shown = WidgetRegistry.All.ToDictionary(w => w.Id, w => w.DefaultShowHeader);
 
         Assert.Equal(
             new Dictionary<string, bool>
             {
-                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false, [WidgetRegistry.PictureFrame] = false,
+                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false, [WidgetRegistry.PictureFrame] = false, [WidgetRegistry.Calculator] = true,
                 [WidgetRegistry.Links] = false, [WidgetRegistry.Tasks] = true, [WidgetRegistry.Notes] = true,
             },
             shown);

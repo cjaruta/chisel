@@ -52,6 +52,22 @@ public class CalculatorLayoutTests
     }
 
     [Fact]
+    public void ATooShortWidget_KeepsTheKeysAtTheirMinimum_AndReportsTheHeightItNeeds()
+    {
+        var tooShort = CalculatorLayout.For(300, 120, advanced: false);
+        Assert.Equal(CalculatorLayout.MinKeyHeight, tooShort.KeyHeight, 3);
+        Assert.True(tooShort.MinHeight > 120);
+
+        var atMinimum = CalculatorLayout.For(300, tooShort.MinHeight, advanced: false);
+        Assert.Equal(tooShort.MinHeight, atMinimum.MinHeight, 3);
+        Assert.Equal(CalculatorLayout.MinKeyHeight, atMinimum.KeyHeight, 3);
+
+        var roomy = CalculatorLayout.For(300, 600, advanced: false);
+        Assert.True(roomy.KeyHeight > CalculatorLayout.MinKeyHeight);
+        Assert.True(roomy.MinHeight < 600);
+    }
+
+    [Fact]
     public void Text_FollowsTheSharedTypeScale()
     {
         var layout = CalculatorLayout.For(300, 480, advanced: false);

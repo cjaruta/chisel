@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.CalculatorSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="MODE" />
+        <CheckBox Name="CalculatorAdvancedToggle" Content="Advanced features"
+                  IsChecked="{Binding CalculatorSettings.Advanced}" />
+        <TextBlock Text="Adds scientific keys beside the keypad when the widget is wide enough." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Classes="settingsSection" Text="ANGLE MODE" Margin="0,10,0,0" />
+        <RadioButton Name="CalculatorDegrees" GroupName="CalculatorAngle" Content="Degrees"
+                     IsChecked="{Binding CalculatorSettings.IsDegrees}" />
+        <RadioButton Name="CalculatorRadians" GroupName="CalculatorAngle" Content="Radians"
+                     IsChecked="{Binding CalculatorSettings.IsRadians}" />
+    </StackPanel>
+</UserControl>

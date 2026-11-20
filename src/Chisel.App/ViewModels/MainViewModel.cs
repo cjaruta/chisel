@@ -11,6 +11,8 @@ public partial class MainViewModel : ViewModelBase
     public WeatherSettingsViewModel WeatherSettings { get; }
     public ClockSettingsViewModel ClockSettings { get; }
     public ClockToolsViewModel ClockTools { get; }
+    public CalculatorSettingsViewModel CalculatorSettings { get; }
+    public CalculatorViewModel Calculator { get; }
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -54,7 +56,8 @@ public partial class MainViewModel : ViewModelBase
         ClockSettingsViewModel? clockSettings = null,
         ClockToolsViewModel? clockTools = null,
         AlarmsViewModel? alarms = null,
-        AlertsViewModel? alerts = null)
+        AlertsViewModel? alerts = null,
+        CalculatorSettingsViewModel? calculatorSettings = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -62,6 +65,8 @@ public partial class MainViewModel : ViewModelBase
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
         ClockSettings = clockSettings ?? new ClockSettingsViewModel();
         ClockTools = clockTools ?? new ClockToolsViewModel(null, time ?? TimeProvider.System);
+        CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
+        Calculator = new CalculatorViewModel(CalculatorSettings);
         Alerts = alerts ?? new AlertsViewModel();
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");

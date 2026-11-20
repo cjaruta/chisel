@@ -63,6 +63,9 @@ public partial class CalculatorViewModel : ViewModelBase
     [ObservableProperty]
     public partial CalculatorLayout Layout { get; private set; }
 
+    // The decimal key's label: the culture's separator.
+    public string DecimalSeparator { get; }
+
     public string AngleLabel => Angle == AngleMode.Degrees ? "DEG" : "RAD";
 
     // The number to copy with Ctrl+C.
@@ -72,6 +75,7 @@ public partial class CalculatorViewModel : ViewModelBase
     {
         _settings = settings;
         _engine = new CalculatorEngine(culture) { Angle = settings.Angle };
+        DecimalSeparator = (culture ?? CultureInfo.CurrentCulture).NumberFormat.NumberDecimalSeparator;
         Layout = CalculatorLayout.For(_width, _height, settings.Advanced);
         settings.PropertyChanged += OnSettingsChanged;
         Refresh();
