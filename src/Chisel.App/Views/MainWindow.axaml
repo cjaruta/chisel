@@ -208,7 +208,7 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <ScrollViewer Grid.Column="1">
+                            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="{Binding Settings.SelectedWidgetPage.FillsHeight, Converter={x:Static conv:FillsHeightConverter.Instance}}">
                                 <ContentControl Name="WidgetPageHost"
                                                 Content="{Binding Settings.SelectedWidgetPage, Converter={x:Static conv:PageViewConverter.Instance}}" />
                             </ScrollViewer>

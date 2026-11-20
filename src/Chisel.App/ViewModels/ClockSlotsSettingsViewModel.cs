@@ -108,7 +108,7 @@ public partial class ClockSlotsSettingsViewModel : ViewModelBase
     public bool IsSlotCountThree => SlotCountIndex == 2;
 
     [RelayCommand]
-    private void SelectSlotCount(int count) => SlotCountIndex = count - 1;
+    private void SelectSlotCount(object? count) => SlotCountIndex = System.Convert.ToInt32(count, System.Globalization.CultureInfo.InvariantCulture) - 1;
 
     public ClockSlotsSettingsViewModel(ClockToolsViewModel tools)
     {

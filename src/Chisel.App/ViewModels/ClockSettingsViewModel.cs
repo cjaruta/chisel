@@ -32,7 +32,11 @@ public partial class ClockSettingsViewModel : ViewModelBase
     public double MaxBorder => ClockStyle.MaxBorder;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewStyle))]
     public partial ClockStyle Style { get; private set; } = ClockStyle.Default;
+
+    // The live preview at the top of the page: the same look, always centered (alignment is about the widget, not the preview).
+    public ClockStyle PreviewStyle => Style with { Alignment = ClockAlignment.Center };
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ResetToPresetCommand))]

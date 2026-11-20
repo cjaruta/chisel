@@ -1,70 +1,185 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Chisel.App.ViewModels"
+             xmlns:core="using:Chisel.Core.Clock"
+             xmlns:w="using:Chisel.App.Views.Widgets"
              x:Class="Chisel.App.Views.Pages.ClockSettingsPage"
              x:DataType="vm:MainViewModel">
-    <StackPanel Spacing="6">
-        <TextBlock Classes="settingsSection" Text="LOOK" />
-        <TextBlock Text="Preset" Opacity="0.7" />
-        <ComboBox Name="ClockPreset" PlaceholderText="Custom" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.PresetNames}" SelectedIndex="{Binding ClockSettings.PresetIndex}" />
-        <TextBlock Text="Alignment" Opacity="0.7" />
-        <ComboBox Name="ClockAlignment" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.AlignmentNames}" SelectedIndex="{Binding ClockSettings.AlignmentIndex}" />
-        <CheckBox Name="ClockShowSeconds" Content="Show seconds hand" IsChecked="{Binding ClockSettings.ShowSeconds}" />
-        <TextBlock Classes="settingsSection" Text="DIAL" Margin="0,10,0,0" />
-        <TextBlock Text="Shape" Opacity="0.7" />
-        <ComboBox Name="ClockShape" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.ShapeNames}" SelectedIndex="{Binding ClockSettings.ShapeIndex}" />
-        <TextBlock Text="Border width" Opacity="0.7" />
-        <Slider Name="ClockBorder" Minimum="0" Maximum="8" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.BorderWidth}" />
-        <TextBlock Text="Markers" Opacity="0.7" />
-        <ComboBox Name="ClockMarkers" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.MarkerNames}" SelectedIndex="{Binding ClockSettings.MarkerIndex}" />
-        <CheckBox Name="ClockQuarters" Content="Emphasize quarter hours" IsChecked="{Binding ClockSettings.EmphasizeQuarters}" />
-        <TextBlock Text="Numerals" Opacity="0.7" />
-        <ComboBox Name="ClockNumerals" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.NumeralNames}" SelectedIndex="{Binding ClockSettings.NumeralIndex}" />
-        <TextBlock Classes="settingsSection" Text="HANDS" Margin="0,10,0,0" />
-        <TextBlock Text="Style" Opacity="0.7" />
-        <ComboBox Name="ClockHands" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.HandNames}" SelectedIndex="{Binding ClockSettings.HandIndex}" />
-        <TextBlock Text="Hour hand thickness" Opacity="0.7" />
-        <Slider Name="ClockHourThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.HourThickness}" />
-        <TextBlock Text="Minute hand thickness" Opacity="0.7" />
-        <Slider Name="ClockMinuteThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.MinuteThickness}" />
-        <TextBlock Text="Second hand thickness" Opacity="0.7" />
-        <Slider Name="ClockSecondThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Width="260" HorizontalAlignment="Left" Value="{Binding ClockSettings.SecondThickness}" />
-        <TextBlock Classes="settingsSection" Text="COLORS" Margin="0,10,0,0" />
-        <TextBlock Text="Palette" Opacity="0.7" />
-        <ComboBox Name="ClockPalette" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.PaletteNames}" SelectedIndex="{Binding ClockSettings.PaletteIndex}" />
-        <TextBlock Text="Dial" Opacity="0.7" />
-        <ComboBox Name="ClockDialColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.DialColorIndex}" />
-        <TextBlock Text="Markers" Opacity="0.7" />
-        <ComboBox Name="ClockMarkerColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MarkerColorIndex}" />
-        <TextBlock Text="Numerals" Opacity="0.7" />
-        <ComboBox Name="ClockNumeralColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.NumeralColorIndex}" />
-        <TextBlock Text="Hour hand" Opacity="0.7" />
-        <ComboBox Name="ClockHourColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.HourColorIndex}" />
-        <TextBlock Text="Minute hand" Opacity="0.7" />
-        <ComboBox Name="ClockMinuteColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MinuteColorIndex}" />
-        <TextBlock Text="Second hand" Opacity="0.7" />
-        <ComboBox Name="ClockSecondColor" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.SecondColorIndex}" />
-        <TextBlock Classes="settingsSection" Text="SLOTS" Margin="0,10,0,0" />
-        <TextBlock Text="Number of slots" Opacity="0.7" />
-        <ComboBox Name="ClockSlotCount" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.SlotCountNames}" SelectedIndex="{Binding ClockSlotsSettings.SlotCountIndex}" />
-        <TextBlock Text="The wheel over a scrolling slot moves between its tools; right-click jumps to one. A widget too small for its slots gives the last visible one the tools of the hidden ones." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
-        <ItemsControl Name="ClockSlotList" ItemsSource="{Binding ClockSlotsSettings.Slots}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:ClockSlotSettingsViewModel">
-                    <StackPanel Spacing="6" Margin="0,8,0,0" IsVisible="{Binding IsShown}">
-                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                        <ComboBox Name="ClockSlotMode" MinWidth="220" HorizontalAlignment="Left" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.ModeNames}" SelectedIndex="{Binding ModeIndex}" />
-                        <ComboBox Name="ClockSlotPinned" MinWidth="220" HorizontalAlignment="Left" IsVisible="{Binding IsPinned}" ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.ToolNames}" SelectedIndex="{Binding PinnedIndex}" />
-                        <StackPanel Name="ClockSlotTools" Spacing="2" IsVisible="{Binding Scrolling}">
-                            <CheckBox Content="Clock" IsChecked="{Binding HasClock}" />
-                            <CheckBox Content="Timer" IsChecked="{Binding HasTimer}" />
-                            <CheckBox Content="Stopwatch" IsChecked="{Binding HasStopwatch}" />
-                            <CheckBox Content="Alarm" IsChecked="{Binding HasAlarm}" />
-                            <CheckBox Content="Empty" IsChecked="{Binding HasEmpty}" />
-                        </StackPanel>
+    <UserControl.Resources>
+        <!-- Slim headers for the Customize groups, so all five fit under the gallery -->
+        <x:Double x:Key="ExpanderMinHeight">30</x:Double>
+        <Thickness x:Key="ExpanderHeaderPadding">10,2</Thickness>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <!-- A scroll set's tools: small pills that switch on and off -->
+        <Style Selector="ToggleButton.chip">
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource DimTextBrush}" />
+        </Style>
+        <Style Selector="ToggleButton.chip:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- The page fills the room it is given: the live preview and the tabs stay put and each tab holds its own controls -->
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+        <Border Grid.Row="0" Name="ClockPreviewHost" Height="72">
+            <w:ClockFace Name="ClockPreview" IsHitTestVisible="False"
+                         HourAngle="{Binding AnalogClock.HourAngle}" MinuteAngle="{Binding AnalogClock.MinuteAngle}"
+                         SecondAngle="{Binding AnalogClock.SecondAngle}" Style="{Binding ClockSettings.PreviewStyle}" />
+        </Border>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4">
+            <Button Name="ClockTabLayout" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsLayoutTab}" Content="Layout"
+                    Command="{Binding ClockSettings.SelectTabCommand}" CommandParameter="{x:Static vm:ClockSettingsTab.Layout}" />
+            <Button Name="ClockTabFace" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsFaceTab}" Content="Face"
+                    Command="{Binding ClockSettings.SelectTabCommand}" CommandParameter="{x:Static vm:ClockSettingsTab.Face}" />
+            <Button Name="ClockTabTools" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsToolsTab}" Content="Tools"
+                    Command="{Binding ClockSettings.SelectTabCommand}" CommandParameter="{x:Static vm:ClockSettingsTab.Tools}" />
+            <Button Name="ClockTabBehavior" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsBehaviorTab}" Content="Behavior"
+                    Command="{Binding ClockSettings.SelectTabCommand}" CommandParameter="{x:Static vm:ClockSettingsTab.Behavior}" />
+        </StackPanel>
+
+        <!-- Layout: where the clock sits and how many slots there are -->
+        <ScrollViewer Grid.Row="2" Name="ClockLayoutTab" IsVisible="{Binding ClockSettings.IsLayoutTab}">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="settingsSection" Text="ALIGNMENT" />
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
+                    <Button Name="ClockAlignLeft" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsAlignmentLeft}" Content="Left"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSettings.SelectAlignmentCommand}" CommandParameter="{x:Static core:ClockAlignment.Left}" />
+                    <Button Name="ClockAlignCenter" Grid.Column="1" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsAlignmentCenter}" Content="Center"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSettings.SelectAlignmentCommand}" CommandParameter="{x:Static core:ClockAlignment.Center}" />
+                    <Button Name="ClockAlignRight" Grid.Column="2" Classes="settingsTab" Classes.selected="{Binding ClockSettings.IsAlignmentRight}" Content="Right"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSettings.SelectAlignmentCommand}" CommandParameter="{x:Static core:ClockAlignment.Right}" />
+                </Grid>
+                <TextBlock Text="Where the clock sits when its slot is wider than it is." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+
+                <TextBlock Classes="settingsSection" Text="SLOTS" Margin="0,10,0,0" />
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
+                    <Button Name="ClockSlotCount1" Classes="settingsTab" Classes.selected="{Binding ClockSlotsSettings.IsSlotCountOne}" Content="1"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSlotsSettings.SelectSlotCountCommand}" CommandParameter="1" />
+                    <Button Name="ClockSlotCount2" Grid.Column="1" Classes="settingsTab" Classes.selected="{Binding ClockSlotsSettings.IsSlotCountTwo}" Content="2"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSlotsSettings.SelectSlotCountCommand}" CommandParameter="2" />
+                    <Button Name="ClockSlotCount3" Grid.Column="2" Classes="settingsTab" Classes.selected="{Binding ClockSlotsSettings.IsSlotCountThree}" Content="3"
+                            HorizontalContentAlignment="Center" Command="{Binding ClockSlotsSettings.SelectSlotCountCommand}" CommandParameter="3" />
+                </Grid>
+                <TextBlock Text="Slots sit side by side in a wide widget and one above the other in a tall one. A widget too small for them gives the last visible slot the tools of the hidden ones. Set up each slot on the Tools tab."
+                           Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Face: pick a look, then fine-tune it in the groups below -->
+        <ScrollViewer Grid.Row="2" Name="ClockFaceTab" IsVisible="{Binding ClockSettings.IsFaceTab}">
+            <StackPanel Spacing="6">
+                <WrapPanel Name="ClockPresetGallery" />
+
+                <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                    <TextBlock Classes="settingsSection" Text="CUSTOMIZE" VerticalAlignment="Center" />
+                    <Button Name="ClockResetPreset" Grid.Column="1" Content="Reset to preset" FontSize="12" Padding="10,3" Command="{Binding ClockSettings.ResetToPresetCommand}" />
+                </Grid>
+                <Expander Name="ClockCustomize_Dial" Header="Dial" HorizontalAlignment="Stretch" IsExpanded="False">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Shape" Opacity="0.7" />
+                        <ComboBox Name="ClockShape" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.ShapeNames}" SelectedIndex="{Binding ClockSettings.ShapeIndex}" />
+                        <TextBlock Text="Border width" Opacity="0.7" />
+                        <Slider Name="ClockBorder" Minimum="0" Maximum="{Binding ClockSettings.MaxBorder}" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding ClockSettings.BorderWidth}" />
                     </StackPanel>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
+                </Expander>
+                <Expander Name="ClockCustomize_Markers" Header="Markers" HorizontalAlignment="Stretch" IsExpanded="False">
+                    <StackPanel Spacing="6">
+                        <ComboBox Name="ClockMarkers" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.MarkerNames}" SelectedIndex="{Binding ClockSettings.MarkerIndex}" />
+                        <CheckBox Name="ClockQuarters" Content="Emphasize quarter hours" IsChecked="{Binding ClockSettings.EmphasizeQuarters}" />
+                    </StackPanel>
+                </Expander>
+                <Expander Name="ClockCustomize_Numerals" Header="Numerals" HorizontalAlignment="Stretch" IsExpanded="False">
+                    <ComboBox Name="ClockNumerals" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.NumeralNames}" SelectedIndex="{Binding ClockSettings.NumeralIndex}" />
+                </Expander>
+                <Expander Name="ClockCustomize_Hands" Header="Hands" HorizontalAlignment="Stretch" IsExpanded="False">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Style" Opacity="0.7" />
+                        <ComboBox Name="ClockHands" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.HandNames}" SelectedIndex="{Binding ClockSettings.HandIndex}" />
+                        <TextBlock Text="Hour hand thickness" Opacity="0.7" />
+                        <Slider Name="ClockHourThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding ClockSettings.HourThickness}" />
+                        <TextBlock Text="Minute hand thickness" Opacity="0.7" />
+                        <Slider Name="ClockMinuteThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding ClockSettings.MinuteThickness}" />
+                        <TextBlock Text="Second hand thickness" Opacity="0.7" />
+                        <Slider Name="ClockSecondThickness" Minimum="1" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding ClockSettings.SecondThickness}" />
+                    </StackPanel>
+                </Expander>
+                <Expander Name="ClockCustomize_Colors" Header="Colors" HorizontalAlignment="Stretch" IsExpanded="False">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Palette" Opacity="0.7" />
+                        <ComboBox Name="ClockPalette" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.PaletteNames}" SelectedIndex="{Binding ClockSettings.PaletteIndex}" />
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="4">
+                            <TextBlock Text="Dial" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockDialColor" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.DialColorIndex}" />
+                            <TextBlock Grid.Row="1" Text="Markers" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockMarkerColor" Grid.Row="1" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MarkerColorIndex}" />
+                            <TextBlock Grid.Row="2" Text="Numerals" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockNumeralColor" Grid.Row="2" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.NumeralColorIndex}" />
+                            <TextBlock Grid.Row="3" Text="Hour hand" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockHourColor" Grid.Row="3" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.HourColorIndex}" />
+                            <TextBlock Grid.Row="4" Text="Minute hand" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockMinuteColor" Grid.Row="4" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.MinuteColorIndex}" />
+                            <TextBlock Grid.Row="5" Text="Second hand" VerticalAlignment="Center" Opacity="0.7" />
+                            <ComboBox Name="ClockSecondColor" Grid.Row="5" Grid.Column="1" MinWidth="140" ItemsSource="{x:Static vm:ClockSettingsViewModel.SwatchNames}" SelectedIndex="{Binding ClockSettings.SecondColorIndex}" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Tools: one row per slot that is on -->
+        <ScrollViewer Grid.Row="2" Name="ClockToolsTab" IsVisible="{Binding ClockSettings.IsToolsTab}">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Pin a slot to one tool, or let it scroll through a set (the wheel over a scrolling slot moves between its tools; right-click jumps to one)."
+                           Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+                <ItemsControl Name="ClockSlotList" ItemsSource="{Binding ClockSlotsSettings.Slots}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ClockSlotSettingsViewModel">
+                            <Grid ColumnDefinitions="76,*" IsVisible="{Binding IsShown}" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
+                                        <Button Name="ClockSlotPinned" Classes="settingsTab" Classes.selected="{Binding IsPinned}" Content="Pinned"
+                                                HorizontalContentAlignment="Center" Command="{Binding SelectModeCommand}" CommandParameter="{x:False}" />
+                                        <Button Name="ClockSlotScrolling" Grid.Column="1" Classes="settingsTab" Classes.selected="{Binding Scrolling}" Content="Scrolling"
+                                                HorizontalContentAlignment="Center" Command="{Binding SelectModeCommand}" CommandParameter="{x:True}" />
+                                    </Grid>
+                                    <ComboBox Name="ClockSlotPinnedTool" MinWidth="160" IsVisible="{Binding IsPinned}"
+                                              ItemsSource="{x:Static vm:ClockSlotsSettingsViewModel.ToolNames}" SelectedIndex="{Binding PinnedIndex}" />
+                                    <WrapPanel Name="ClockSlotChips" IsVisible="{Binding Scrolling}" ItemSpacing="4" LineSpacing="4">
+                                        <ToggleButton Classes="chip" Content="Clock" IsChecked="{Binding HasClock}" />
+                                        <ToggleButton Classes="chip" Content="Timer" IsChecked="{Binding HasTimer}" />
+                                        <ToggleButton Classes="chip" Content="Stopwatch" IsChecked="{Binding HasStopwatch}" />
+                                        <ToggleButton Classes="chip" Content="Alarm" IsChecked="{Binding HasAlarm}" />
+                                        <ToggleButton Classes="chip" Content="Empty" IsChecked="{Binding HasEmpty}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Behavior: what the clock does -->
+        <ScrollViewer Grid.Row="2" Name="ClockBehaviorTab" IsVisible="{Binding ClockSettings.IsBehaviorTab}">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="settingsSection" Text="SECONDS" />
+                <CheckBox Name="ClockShowSeconds" Content="Show seconds hand" IsChecked="{Binding ClockSettings.ShowSeconds}" />
+                <TextBlock Classes="settingsSection" Text="TIME FORMAT" Margin="0,10,0,0" />
+                <RadioButton Name="ClockFormat24" GroupName="ClockBehaviorFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
+                <RadioButton Name="ClockFormat12" GroupName="ClockBehaviorFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+                <TextBlock Text="The same choice as General, and it applies everywhere times are shown, including alarms." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
