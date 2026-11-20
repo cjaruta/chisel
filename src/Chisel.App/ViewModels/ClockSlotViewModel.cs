@@ -18,7 +18,9 @@ public partial class ClockSlotViewModel : ViewModelBase
 
     public IReadOnlyList<ClockTool> Tools { get; }
     public bool Scrolling { get; }
-    public double Weight { get; }
+
+    // The room this slot has along the widget, in pixels (kept current by ClockSlotsViewModel; the view sizes itself from it).
+    public double Extent { get; internal set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Current))]
@@ -44,7 +46,7 @@ public partial class ClockSlotViewModel : ViewModelBase
     {
         Tools = plan.Tools;
         Scrolling = plan.Scrolling;
-        Weight = plan.Weight;
+        Extent = plan.Extent;
         _tools = tools;
         _alarms = alarms;
         Index = Tools.Count == 0 ? 0 : System.Math.Clamp(startIndex, 0, Tools.Count - 1);

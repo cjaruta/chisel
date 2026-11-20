@@ -106,9 +106,37 @@ public sealed class ClockWidgetView : WidgetView
 
     private void OnSlotsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(ClockSlotsViewModel.Slots) or nameof(ClockSlotsViewModel.Horizontal))
+        if (e.PropertyName == nameof(ClockSlotsViewModel.Extents))
+        {
+            ApplyExtents();
+        }
+        else if (e.PropertyName is nameof(ClockSlotsViewModel.Slots) or nameof(ClockSlotsViewModel.Horizontal))
         {
             Rebuild();
+        }
+    }
+
+    // A resize changes how much room each slot has without changing which slots there are: just resize the columns or rows.
+    private void ApplyExtents()
+    {
+        if (_main is not { } main || main.ClockSlots.Slots.Count != _views.Count)
+        {
+            return;
+        }
+        var extents = main.ClockSlots.Extents;
+        if (main.ClockSlots.Horizontal && _grid.ColumnDefinitions.Count == extents.Count)
+        {
+            for (var i = 0; i < extents.Count; i++)
+            {
+                _grid.ColumnDefinitions[i].Width = new GridLength(extents[i], GridUnitType.Star);
+            }
+        }
+        else if (!main.ClockSlots.Horizontal && _grid.RowDefinitions.Count == extents.Count)
+        {
+            for (var i = 0; i < extents.Count; i++)
+            {
+                _grid.RowDefinitions[i].Height = new GridLength(extents[i], GridUnitType.Star);
+            }
         }
     }
 
@@ -135,7 +163,7 @@ public sealed class ClockWidgetView : WidgetView
         var index = 0;
         foreach (var slot in main.ClockSlots.Slots)
         {
-            var star = new GridLength(slot.Weight, GridUnitType.Star);
+            var star = new GridLength(slot.Extent, GridUnitType.Star);
             var view = new ClockSlotView(slot, main);
             if (horizontal)
             {

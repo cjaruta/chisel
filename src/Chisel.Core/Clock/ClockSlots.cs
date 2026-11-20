@@ -44,8 +44,12 @@ public sealed record ClockSlotsConfig(IReadOnlyList<ClockSlotConfig> Slots)
     public override int GetHashCode() => Slots.Aggregate(0, (hash, slot) => HashCode.Combine(hash, slot));
 }
 
-// What is drawn: one slot with the tools it can show (after absorbing) and its share of the widget.
-public sealed record ClockSlotPlan(IReadOnlyList<ClockTool> Tools, bool Scrolling, double Weight);
+// What is drawn: one slot with the tools it can show (after absorbing) and its room along the way the slots run, in pixels.
+public sealed record ClockSlotPlan(IReadOnlyList<ClockTool> Tools, bool Scrolling, double Extent)
+{
+    // A slot that only ever shows the clock: it wants a square, so it takes the room it needs and no more.
+    public bool IsClock => !Scrolling && Tools.Count == 1 && Tools[0] == ClockTool.Clock;
+}
 
 public sealed record ClockLayoutPlan(bool Horizontal, IReadOnlyList<ClockSlotPlan> Slots);
 
@@ -77,9 +81,30 @@ public static class ClockSlotLayout
                 tools = Absorb(tools, slots.Skip(capacity).SelectMany(s => s.Tools));
                 scrolling = true;
             }
-            plans.Add(new ClockSlotPlan(tools, scrolling, i == 0 ? 2 : 1));
+            plans.Add(new ClockSlotPlan(tools, scrolling, 0));
         }
-        return new ClockLayoutPlan(IsHorizontal(width, height), plans);
+        var horizontal = IsHorizontal(width, height);
+        return new ClockLayoutPlan(horizontal, Allocate(plans, horizontal ? width : height, horizontal ? height : width));
+    }
+
+    // Divides the room E along the slots. A clock slot takes a square of the cross size C (the clock is as wide as it is tall, so
+    // anything more would be empty) but never so much that the other slots drop below MinSlotExtent; the other slots share what is
+    // left equally. With no clock slot, or only clock slots, the room is shared equally. Only slots that are on take part.
+    private static IReadOnlyList<ClockSlotPlan> Allocate(List<ClockSlotPlan> plans, double room, double cross)
+    {
+        var clocks = plans.Count(p => p.IsClock);
+        var others = plans.Count - clocks;
+        double clockEach, otherEach;
+        if (clocks == 0 || others == 0)
+        {
+            clockEach = otherEach = room / plans.Count;
+        }
+        else
+        {
+            clockEach = Math.Max(0, Math.Min(cross, (room - others * MinSlotExtent) / clocks));
+            otherEach = (room - clockEach * clocks) / others;
+        }
+        return plans.Select(p => p with { Extent = p.IsClock ? clockEach : otherEach }).ToList();
     }
 
     private static IReadOnlyList<ClockTool> Absorb(IReadOnlyList<ClockTool> own, IEnumerable<ClockTool> hidden)

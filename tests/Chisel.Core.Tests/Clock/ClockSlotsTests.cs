@@ -58,14 +58,14 @@ public class ClockSlotsTests
         Assert.Equal(expected, ClockSlotLayout.Capacity(width, height));
 
     [Fact]
-    public void WhenEverySlotFits_TheyAreShownAsConfigured_TheMainOneWider()
+    public void WhenEverySlotFits_TheyAreShownAsConfigured_TheClockASquare()
     {
         var plan = ClockSlotLayout.Plan(ClockSlotsConfig.Default, 640, 300);
         Assert.True(plan.Horizontal);
         Assert.Equal(2, plan.Slots.Count);
         Assert.Equal([ClockTool.Clock], plan.Slots[0].Tools);
         Assert.Equal(ClockSlotsConfig.Default.Slots[1].Tools, plan.Slots[1].Tools);
-        Assert.True(plan.Slots[0].Weight > plan.Slots[1].Weight);
+        Assert.Equal(300, plan.Slots[0].Extent); // the clock takes a square of the widget height
     }
 
     [Fact]

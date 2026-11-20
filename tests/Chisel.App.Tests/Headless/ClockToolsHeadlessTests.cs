@@ -80,7 +80,8 @@ public class ClockToolsHeadlessTests : IDisposable
         Assert.False(Shown(window, "ClockStopwatchPanel"));
         var widget = window.GetVisualDescendants().OfType<ClockWidgetView>().Single();
         Assert.DoesNotContain(widget.GetVisualDescendants().OfType<Button>(), b => b.Content is "Tools" or "Close");
-        Assert.True(views[0].Bounds.Width > views[1].Bounds.Width); // the main slot is wider
+        Assert.True(views[0].Bounds.Width <= views[0].Bounds.Height + 1); // the clock takes a square, no unused width
+        Assert.True(views[1].Bounds.Width > 150);
         Assert.True(main.ClockSlots.Horizontal);
         UiSnapshot.Render(window, "clock-slots-default");
     }

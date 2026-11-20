@@ -22,6 +22,10 @@ public partial class ClockSlotsViewModel : ViewModelBase
     public partial bool Horizontal { get; private set; } = true;
 
     // Whether some slot can show the alarm; if not, a ringing alarm uses the banner instead.
+    // How much room each slot has along the widget (pixels), in the order of Slots; changes with every resize.
+    [ObservableProperty]
+    public partial IReadOnlyList<double> Extents { get; private set; } = [];
+
     public bool AlarmReachable => Slots.Any(s => s.Tools.Contains(ClockTool.Alarm));
 
     public ClockSlotsViewModel(ClockToolsViewModel tools, AlarmsViewModel alarms)
@@ -83,6 +87,15 @@ public partial class ClockSlotsViewModel : ViewModelBase
         var plan = ClockSlotLayout.Plan(_tools.Slots, size.Width, size.Height);
         Horizontal = plan.Horizontal;
         var slots = plan.Slots.Select((p, i) => Reuse(i, p)).ToList();
+        for (var i = 0; i < slots.Count; i++)
+        {
+            slots[i].Extent = plan.Slots[i].Extent;
+        }
+        var extents = plan.Slots.Select(p => p.Extent).ToList();
+        if (!extents.SequenceEqual(Extents))
+        {
+            Extents = extents;
+        }
         if (!slots.SequenceEqual(Slots))
         {
             Slots = slots;
@@ -92,7 +105,7 @@ public partial class ClockSlotsViewModel : ViewModelBase
 
     private ClockSlotViewModel Reuse(int index, ClockSlotPlan plan)
     {
-        if (index < Slots.Count && Slots[index] is { } old && old.Scrolling == plan.Scrolling && old.Weight == plan.Weight && old.Tools.SequenceEqual(plan.Tools))
+        if (index < Slots.Count && Slots[index] is { } old && old.Scrolling == plan.Scrolling && old.Tools.SequenceEqual(plan.Tools))
         {
             return old;
         }
