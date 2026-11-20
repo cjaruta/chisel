@@ -22,6 +22,13 @@ public sealed record UrlSource(string Url, string? Referer = null) : PictureSour
 // What a browser drop gives for one picture: several candidate addresses, in the order to try them.
 public sealed record WebSource(IReadOnlyList<PictureCandidate> Candidates) : PictureSource;
 
+// A file a browser offers without a path (Windows "virtual file"): its bytes and the name it gave.
+public sealed record VirtualFile(byte[] Bytes, string Name);
+
+// A dropped virtual file, read off the UI thread when the drop is prepared. When it is not a picture (or cannot be read), the
+// web candidates of the same drop are tried instead.
+public sealed record DeferredFileSource(Func<CancellationToken, Task<VirtualFile?>> Load, WebSource? Fallback) : PictureSource;
+
 // A source after its first step: a picture ready to store, or the reason it is not one. Name is what to call it in a message.
 public sealed record PreparedSource(PreparedPicture? Picture, string? Error, string Name);
 
@@ -57,6 +64,8 @@ public sealed class PictureImportService(PictureImporter importer, IImageDownloa
                 }
             case BytesSource bytes:
                 return await Task.Run(() => Wrap(importer.Prepare(bytes.Bytes, bytes.Name, null, keepOriginals), bytes.Name), cancellation);
+            case DeferredFileSource deferred:
+                return await PrepareDeferredAsync(deferred, keepOriginals, cancellation);
             case UrlSource url:
                 return await PrepareAsync(new WebSource([new PictureCandidate(url.Url, url.Referer)]), keepOriginals, cancellation);
             case WebSource web:
@@ -64,6 +73,36 @@ public sealed class PictureImportService(PictureImporter importer, IImageDownloa
             default:
                 return new PreparedSource(null, "That can't be added.", "picture");
         }
+    }
+
+    private async Task<PreparedSource> PrepareDeferredAsync(DeferredFileSource deferred, bool keepOriginals, CancellationToken cancellation)
+    {
+        VirtualFile? file = null;
+        try
+        {
+            file = await deferred.Load(cancellation);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Note($"virtual file result=failed: {ex.GetType().Name}");
+        }
+        if (file is { Bytes.Length: > 0 })
+        {
+            var prepared = await Task.Run(() => importer.Prepare(file.Bytes, file.Name, null, keepOriginals), cancellation);
+            if (prepared.Picture is not null)
+            {
+                Note("virtual file result=ok");
+                return new PreparedSource(prepared.Picture, null, file.Name);
+            }
+            Note($"virtual file result=rejected: {prepared.Error}");
+        }
+        else
+        {
+            Note("virtual file result=none");
+        }
+        return deferred.Fallback is { } web
+            ? await PrepareWebAsync(web, keepOriginals, cancellation)
+            : new PreparedSource(null, ImageProblems.Message(ImageProblem.NotAnImage), file?.Name ?? "picture");
     }
 
     // Tries the candidates in order and takes the first that is a picture. One that is a page, an error or a format that is

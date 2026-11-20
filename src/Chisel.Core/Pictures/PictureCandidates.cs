@@ -11,8 +11,16 @@ public sealed record PictureCandidate(string Address, string? Referer = null);
 // https and data:image addresses are kept.
 public static class PictureCandidates
 {
-    private static readonly Regex ImgSrc = new(
-        @"<img\b[^>]*?\bsrc\s*=\s*(?:""([^""]*)""|'([^']*)'|([^\s>]+))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ImgTag = new(@"<img\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static Regex Attribute(string name) => new(
+        @"(?<![\w-])" + name + @"\s*=\s*(?:""([^""]*)""|'([^']*)'|([^\s>]+))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex SrcAttribute = Attribute("src");
+
+    private static readonly Regex SrcsetAttribute = Attribute("srcset");
+
+    private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
 
     private static readonly Regex BaseHref = new(
         @"<base\b[^>]*?\bhref\s*=\s*(?:""([^""]*)""|'([^']*)'|([^\s>]+))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -46,13 +54,22 @@ public static class PictureCandidates
         if (!string.IsNullOrEmpty(html))
         {
             var baseAddress = BaseOf(html, page) ?? page;
-            foreach (Match match in ImgSrc.Matches(html))
+            foreach (Match tag in ImgTag.Matches(html))
             {
-                var src = Decode(match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Success ? match.Groups[2].Value : match.Groups[3].Value);
-                Add(Resolve(src, baseAddress), page);
+                Add(Resolve(Decode(ValueOf(SrcAttribute, tag.Value)), baseAddress), page);
+                var first = Decode(ValueOf(SrcsetAttribute, tag.Value)).Split(',')[0].Trim().Split(' ', 2)[0];
+                Add(Resolve(first, baseAddress), page);
             }
         }
-        foreach (var list in uriLists)
+        var lists = uriLists.ToList();
+        foreach (var line in lists.Concat(texts).SelectMany(Lines).ToList())
+        {
+            foreach (var inner in Unwrap(line))
+            {
+                Add(inner, page);
+            }
+        }
+        foreach (var list in lists)
         {
             foreach (var line in Lines(list))
             {
@@ -64,6 +81,44 @@ public static class PictureCandidates
             foreach (var line in Lines(text))
             {
                 Add(line, page);
+            }
+        }
+        return result;
+    }
+
+    private static string ValueOf(Regex attribute, string tag)
+    {
+        var match = attribute.Match(tag);
+        return !match.Success ? "" : match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Success ? match.Groups[2].Value : match.Groups[3].Value;
+    }
+
+    // The picture addresses hidden inside a link: a Google Images result carries the picture in "imgurl"; any other link
+    // may carry one as a query value that is an http(s) address ending in a PNG, JPEG, GIF or WebP name.
+    public static IReadOnlyList<string> Unwrap(string link)
+    {
+        var result = new List<string>();
+        if (!Uri.TryCreate(link, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || uri.Query.Length < 2)
+        {
+            return result;
+        }
+        var isGoogleImages = Regex.IsMatch(uri.Host, @"^(www\.)?google\.[a-z.]+$", RegexOptions.IgnoreCase)
+            && uri.AbsolutePath.StartsWith("/imgres", StringComparison.OrdinalIgnoreCase);
+        foreach (var pair in uri.Query[1..].Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var at = pair.IndexOf('=');
+            if (at <= 0)
+            {
+                continue;
+            }
+            var name = pair[..at];
+            var value = Uri.UnescapeDataString(pair[(at + 1)..].Replace('+', ' '));
+            if (!Uri.TryCreate(value, UriKind.Absolute, out var target) || target.Scheme is not ("http" or "https"))
+            {
+                continue;
+            }
+            if (isGoogleImages && name == "imgurl" || ImageExtensions.Any(e => target.AbsolutePath.EndsWith(e, StringComparison.OrdinalIgnoreCase)))
+            {
+                result.Add(value);
             }
         }
         return result;
