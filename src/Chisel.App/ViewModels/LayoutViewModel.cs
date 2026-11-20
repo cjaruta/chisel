@@ -334,8 +334,8 @@ public partial class LayoutViewModel : ViewModelBase
     {
         Snapshot = Layout;
         _picturesSnapshot = Pictures;
-        // Opens only when the user hid one of the original widgets, not for the clock, weather or media waiting there by default.
-        IsTrayOpen = Layout.HiddenWidgetIds.Any(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media);
+        // Opens only when the user hid one of the original widgets, not for the clock, weather, media or daily verse waiting there by default.
+        IsTrayOpen = Layout.HiddenWidgetIds.Any(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Scripture);
         IsEditing = true;
     }
 
