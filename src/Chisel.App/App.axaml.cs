@@ -57,13 +57,14 @@ public partial class App : Application
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
+                MainWindow? mainWindow = null;
                 var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures);
                 var alerts = new AlertsViewModel(new WindowsAlertSound());
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
                     new TaskListViewModel(_services.Tasks),
-                    new NotesViewModel(_services.Notes, _services.Time, timeDisplay),
+                    new NotesViewModel(_services.Notes, _services.Time, _services.NotepadSettings, new NotepadFileService(() => mainWindow?.StorageProvider)),
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,
                     layout,
@@ -85,10 +86,11 @@ public partial class App : Application
                 weather.ShowCached();
                 mainViewModel.Refresh();
 
-                desktop.MainWindow = new MainWindow(isolated ? null : AppPaths.GetWindowPlacementPath())
+                mainWindow = new MainWindow(isolated ? null : AppPaths.GetWindowPlacementPath())
                 {
                     DataContext = mainViewModel,
                 };
+                desktop.MainWindow = mainWindow;
 
                 if (scenario is not null)
                 {
@@ -97,6 +99,7 @@ public partial class App : Application
 
                 desktop.Exit += (_, _) =>
                 {
+                    mainViewModel.Notes.Flush();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();

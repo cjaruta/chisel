@@ -1,46 +1,95 @@
 <w:WidgetView xmlns="https://github.com/avaloniaui"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
               xmlns:vm="using:Chisel.App.ViewModels"
-              xmlns:conv="using:Chisel.App.Converters"
-              xmlns:ctl="using:Chisel.App.Controls"
-              xmlns:convA="using:Avalonia.Data.Converters"
+              xmlns:core="using:Chisel.Core.Notes"
               xmlns:w="using:Chisel.App.Views.Widgets"
               x:Class="Chisel.App.Views.Widgets.NotesWidgetView"
               x:DataType="vm:MainViewModel">
 
+    <w:WidgetView.Styles>
+        <Style Selector="TextBox.padEditor">
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="True" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        </Style>
+        <Style Selector="TextBox.padEditor.nowrap">
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        </Style>
+        <Style Selector="TextBox.padEditor.mono">
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New, monospace" />
+        </Style>
+    </w:WidgetView.Styles>
+
     <DockPanel>
-        <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,10,0,0">
-            <TextBox Text="{Binding Notes.NewNoteTitle}" PlaceholderText="Title" />
-            <TextBox Text="{Binding Notes.NewNoteBody}" PlaceholderText="Body" />
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <Button Content="Save" Command="{Binding Notes.SaveNoteCommand}" />
-                <Button Content="Cancel" Command="{Binding Notes.CancelEditCommand}"
-                        IsVisible="{Binding Notes.EditingNoteId, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
-            </StackPanel>
-        </StackPanel>
-        <StackPanel>
-            <TextBlock Classes="empty" Text="No notes yet"
-                       IsVisible="{Binding Notes.Notes.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
-            <ItemsControl Name="NoteItemsControl" ItemsSource="{Binding Notes.Notes}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:NoteRow">
-                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                            <Button Classes="link" HorizontalAlignment="Left"
-                                    Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.SelectNoteCommand}"
-                                    CommandParameter="{Binding Note}">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
-                                    <TextBlock Classes="dim" Text="{Binding Body}" />
-                                    <TextBlock Classes="dim" FontSize="11" Text="{Binding UpdatedLabel}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Classes="iconButton" Content="x"
-                                    Command="{Binding #NoteItemsControl.((vm:MainViewModel)DataContext).Notes.RemoveNoteCommand}"
-                                    CommandParameter="{Binding Note}" />
-                        </StackPanel>
+        <!-- Pad switcher: always shown, with or without the card's title bar -->
+        <Grid DockPanel.Dock="Top" Name="PadBar" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8">
+            <TextBlock Classes="dim" Text="Pad" VerticalAlignment="Center" />
+            <ComboBox Name="PadPicker" Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="60"
+                      ItemsSource="{Binding Notes.Pads}" SelectedItem="{Binding Notes.SelectedPad}"
+                      AutomationProperties.Name="Pad">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="core:Note">
+                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Name="NewPadButton" Grid.Column="2" Content="New" Command="{Binding Notes.NewPadCommand}"
+                    ToolTip.Tip="Start a new pad" />
+            <Button Name="PadMenuButton" Grid.Column="3" Content="More" ToolTip.Tip="Rename, delete, open or save a text file, view options">
+                <Button.Flyout>
+                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuItem Name="RenamePadItem" Header="Rename pad…" Command="{Binding Notes.BeginRenameCommand}" />
+                        <MenuItem Name="DeletePadItem" Header="Delete pad…" Command="{Binding Notes.RequestDeleteCommand}" />
+                        <Separator />
+                        <MenuItem Name="OpenFileItem" Header="Open text file…" Command="{Binding Notes.OpenTextFileCommand}" />
+                        <MenuItem Name="SaveFileItem" Header="Save as text file…" Command="{Binding Notes.SaveAsTextFileCommand}" />
+                        <Separator />
+                        <MenuItem Name="MonospaceItem" Header="Monospace font" ToggleType="CheckBox" IsChecked="{Binding Notes.Monospace, Mode=TwoWay}" />
+                        <MenuItem Name="WordWrapItem" Header="Word wrap" ToggleType="CheckBox" IsChecked="{Binding Notes.WordWrap, Mode=TwoWay}" />
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
+
+        <!-- Rename: one line under the switcher; Enter keeps the name, Esc cancels -->
+        <Grid DockPanel.Dock="Top" Name="RenameBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+              IsVisible="{Binding Notes.IsRenaming}">
+            <TextBox Name="RenameBox" Text="{Binding Notes.RenameText}" PlaceholderText="Pad name">
+                <TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter" Command="{Binding Notes.CommitRenameCommand}" />
+                    <KeyBinding Gesture="Escape" Command="{Binding Notes.CancelRenameCommand}" />
+                </TextBox.KeyBindings>
+            </TextBox>
+            <Button Name="RenameOkButton" Grid.Column="1" Classes="accent" Content="Rename" Command="{Binding Notes.CommitRenameCommand}" />
+            <Button Name="RenameCancelButton" Grid.Column="2" Content="Cancel" Command="{Binding Notes.CancelRenameCommand}" />
+        </Grid>
+
+        <!-- Delete confirmation -->
+        <Grid DockPanel.Dock="Top" Name="DeleteBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+              IsVisible="{Binding Notes.IsConfirmingDelete}">
+            <TextBlock Name="DeleteQuestion" VerticalAlignment="Center" TextWrapping="Wrap"
+                       Text="{Binding Notes.SelectedPad.Title, StringFormat='Delete “{0}” for good?'}" />
+            <Button Name="DeleteConfirmButton" Grid.Column="1" Classes="accent" Content="Delete" Command="{Binding Notes.ConfirmDeleteCommand}" />
+            <Button Name="DeleteCancelButton" Grid.Column="2" Content="Cancel" Command="{Binding Notes.CancelDeleteCommand}" />
+        </Grid>
+
+        <!-- A file action failed: nothing was lost -->
+        <Grid DockPanel.Dock="Top" Name="NoticeBar" ColumnDefinitions="*,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+              IsVisible="{Binding Notes.HasNotice}">
+            <TextBlock Name="NoticeText" Text="{Binding Notes.Notice}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <Button Name="NoticeDismissButton" Grid.Column="1" Classes="iconButton" Content="x" Command="{Binding Notes.DismissNoticeCommand}" />
+        </Grid>
+
+        <!-- The pad: one plain-text editor that takes all the room left -->
+        <TextBox Name="PadEditor" Classes="padEditor" Text="{Binding Notes.Text}"
+                 Classes.nowrap="{Binding !Notes.WordWrap}" Classes.mono="{Binding Notes.Monospace}"
+                 PlaceholderText="Start typing…" AutomationProperties.Name="Pad text" />
     </DockPanel>
 </w:WidgetView>
