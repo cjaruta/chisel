@@ -42,8 +42,13 @@ public partial class NotesViewModel : ViewModelBase
         var pads = Sorted(repository.GetAll());
         if (pads.Count == 0)
         {
-            repository.Add(new Note(time, DefaultName, ""));
+            var blank = new Note(time, DefaultName, "");
+            repository.Add(blank);
             pads = Sorted(repository.GetAll());
+            if (pads.Count == 0)
+            {
+                pads = [blank];
+            }
         }
         Pads = pads;
         SelectedPad = pads.FirstOrDefault(p => p.Id == saved.LastPadId) ?? pads[0];
