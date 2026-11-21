@@ -222,15 +222,15 @@ public class WidgetGroupHeadlessTests
         var main = Main(window);
         var group = Frame(window, "tasks");
 
-        main.Notes.NewNoteTitle = "Draft title";
+        main.Notes.Text = "Draft note";
         main.Tasks.NewTaskText = "Draft task";
         Click(window, Center(group.TabButton("notes"), window));
         Click(window, Center(group.TabButton("tasks"), window));
 
-        Assert.Equal("Draft title", main.Notes.NewNoteTitle);
+        Assert.Equal("Draft note", main.Notes.Text);
         Assert.Equal("Draft task", main.Tasks.NewTaskText);
-        var box = group.Views[1].GetVisualDescendants().OfType<TextBox>().First();
-        Assert.Equal("Draft title", box.Text);
+        var box = group.Views[1].GetVisualDescendants().OfType<TextBox>().First(t => t.Name == "PadEditor");
+        Assert.Equal("Draft note", box.Text);
         window.Close();
     }
 

@@ -65,7 +65,11 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
         Unloaded += (_, _) => _timer.Stop();
-        Closing += (_, _) => SavePlacement();
+        Closing += (_, _) =>
+        {
+            (DataContext as MainViewModel)?.Notes.Flush();
+            SavePlacement();
+        };
     }
 
     private void OnPictureDragOver(object? sender, DragEventArgs e)

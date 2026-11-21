@@ -23,6 +23,7 @@ public sealed class AppServices : IDisposable
     public TimeProvider Time { get; }
     public ITaskRepository Tasks { get; }
     public INoteRepository Notes { get; }
+    public INotepadSettingsRepository NotepadSettings { get; }
     public IQuickLinkRepository QuickLinks { get; }
     public IMarkerRepository Markers { get; }
     public IScheduleRepository Schedule { get; }
@@ -61,6 +62,7 @@ public sealed class AppServices : IDisposable
 
         Tasks = new TaskRepository(DbContext);
         Notes = new NoteRepository(DbContext, Time);
+        NotepadSettings = new NotepadSettingsRepository(DbContext);
         QuickLinks = new QuickLinkRepository(DbContext);
         Markers = new MarkerRepository(DbContext);
         Schedule = new ScheduleRepository(DbContext);
