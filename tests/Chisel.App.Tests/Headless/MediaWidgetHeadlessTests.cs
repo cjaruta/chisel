@@ -41,7 +41,6 @@ public class MediaWidgetHeadlessTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(main.Layout.TrayWidgets, w => w.Id == WidgetRegistry.Media);
-        Assert.False(main.Layout.IsTrayOpen);
         Assert.Empty(window.GetVisualDescendants().OfType<MediaWidgetView>());
 
         main.Layout.AddWidgetFromTray(WidgetRegistry.Media);

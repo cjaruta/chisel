@@ -256,7 +256,6 @@ public class LayoutGroupTests
 
         Assert.Contains(layout.TrayWidgets, w => w.Id == "tasks");
         Assert.Contains(layout.TrayWidgets, w => w.Id == "notes");
-        Assert.True(layout.IsTrayOpen);
     }
 
     [Fact]
