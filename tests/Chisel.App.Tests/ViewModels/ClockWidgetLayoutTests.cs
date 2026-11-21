@@ -26,7 +26,7 @@ public class ClockWidgetLayoutTests
         var layout = new LayoutViewModel(new Repo(saved)).Layout;
 
         Assert.Equal(new[] { "schedule", "links", "tasks" }, layout.WidgetIds);
-        Assert.Equal(new[] { "notes", "clock", "weather", "media", "scripture" }, layout.HiddenWidgetIds);
+        Assert.Equal(new[] { "notes", "clock", "weather", "media", "calculator", "scripture" }, layout.HiddenWidgetIds);
         Assert.Equal(saved.Columns.Select(c => c.WidthWeight), layout.Columns.Select(c => c.WidthWeight));
     }
 

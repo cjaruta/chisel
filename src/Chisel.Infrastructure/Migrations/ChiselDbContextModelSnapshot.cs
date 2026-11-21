@@ -44,6 +44,22 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("Alarms");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.CalculatorSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Advanced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Angle")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CalculatorSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockStyleEntity", b =>
                 {
                     b.Property<int>("Id")

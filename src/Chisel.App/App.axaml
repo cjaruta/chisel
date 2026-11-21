@@ -558,6 +558,57 @@
             <Setter Property="Opacity" Value="0.3" />
         </Style>
 
+        <!-- Calculator keys: sizes come from the widget (CalculatorLayout); these set only the colors and the shape -->
+        <Style Selector="Button.calcKey">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.calcKey /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource RaisedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.calcKey:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ControlBorderBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.fn /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.fn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ControlBorderBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.op /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.op:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBorderBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.eq /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.eq:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.eq:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentPressedBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.adv /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HeaderBackgroundBrush}" />
+        </Style>
+        <Style Selector="Button.calcKey.adv:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+        </Style>
+
         <Style Selector="Button.gearButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6" />
