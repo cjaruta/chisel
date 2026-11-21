@@ -107,6 +107,11 @@ public partial class MainViewModel : ViewModelBase
             else if (e.PropertyName == nameof(LayoutViewModel.Layout))
             {
                 UpdateMediaActive();
+                // A notepad taken off the dashboard keeps what was just typed.
+                if (!System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Notes))
+                {
+                    Notes.Flush();
+                }
             }
         };
     }

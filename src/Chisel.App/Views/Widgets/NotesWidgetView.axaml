@@ -27,7 +27,7 @@
         </Style>
     </w:WidgetView.Styles>
 
-    <DockPanel>
+    <DockPanel Name="NotepadRoot" Margin="16,0,16,16">
         <!-- Pad switcher: always shown, with or without the card's title bar -->
         <Grid DockPanel.Dock="Top" Name="PadBar" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8">
             <TextBlock Classes="dim" Text="Pad" VerticalAlignment="Center" />

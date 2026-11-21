@@ -20,6 +20,11 @@ public partial class NotesWidgetView : WidgetView
         DataContextChanged += (_, _) => Attach();
     }
 
+    // Like the other widgets: side margins always, and with no title bar extra room at the top for the edit-mode badges,
+    // so entering edit mode moves nothing.
+    protected override void OnHeaderShownChanged() =>
+        NotepadRoot.Margin = HeaderShown ? new Thickness(16, 0, 16, 16) : new Thickness(16, 24, 16, 16);
+
 
     private void Attach()
     {
