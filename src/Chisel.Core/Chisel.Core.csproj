@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Scripture\web-passages.json" LogicalName="Chisel.Core.Scripture.web-passages.json" />
+  </ItemGroup>
+
 </Project>

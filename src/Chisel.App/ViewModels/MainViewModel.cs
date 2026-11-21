@@ -30,6 +30,7 @@ public partial class MainViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
     public PictureFramesViewModel PictureFrames { get; }
     public PictureSettingsViewModel PictureSettings { get; }
+    public ScriptureViewModel Scripture { get; }
 
     // Which widgets are shown where; the window's layout host is built from it.
     public LayoutViewModel Layout { get; }
@@ -57,7 +58,8 @@ public partial class MainViewModel : ViewModelBase
         ClockToolsViewModel? clockTools = null,
         AlarmsViewModel? alarms = null,
         AlertsViewModel? alerts = null,
-        CalculatorSettingsViewModel? calculatorSettings = null)
+        CalculatorSettingsViewModel? calculatorSettings = null,
+        ScriptureViewModel? scripture = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -68,6 +70,7 @@ public partial class MainViewModel : ViewModelBase
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
         Alerts = alerts ?? new AlertsViewModel();
+        Scripture = scripture ?? new ScriptureViewModel(time ?? TimeProvider.System);
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
@@ -134,6 +137,7 @@ public partial class MainViewModel : ViewModelBase
         PictureFrames.Tick();
         ClockTools.Tick();
         Alarms.Tick();
+        Scripture.Tick();
         ClockSlots.Refresh();
         if (Clock.NeedsRefresh)
         {

@@ -35,6 +35,7 @@ public static class WidgetRegistry
     public const string Media = "media";
     public const string PictureFrame = "pictureframe";
     public const string Calculator = "calculator";
+    public const string Scripture = "scripture";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -60,6 +61,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(PictureFrameView), DefaultShowHeader: false, MinWidth: 200, AllowMultiple: true),
         new WidgetDefinition(Calculator, "Calculator", Icon: "M6,3 H18 V21 H6 Z M8.5,6 H15.5 V9.5 H8.5 Z M8.5,13 H9.5 M11.5,13 H12.5 M14.5,13 H15.5 M8.5,17 H9.5 M11.5,17 H12.5 M14.5,17 H15.5",
             DefaultHeight: 1.2, MinimumHeight, ScrollsContent: true, typeof(CalculatorWidgetView), DefaultShowHeader: true, MinWidth: 200),
+        new WidgetDefinition(Scripture, "Daily verse", Icon: "M5,4 H10 A2,2 0 0 1 12,6 V20 A2,2 0 0 0 10,18 H5 Z M19,4 H14 A2,2 0 0 0 12,6 V20 A2,2 0 0 1 14,18 H19 Z",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ScriptureWidgetView), MinWidth: 220),
     };
 
     // Schedule on the left at full height; Tasks, Notes and Quick links stacked on the right.
@@ -68,7 +71,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes), Placement(Links) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();
