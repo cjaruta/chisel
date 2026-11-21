@@ -103,13 +103,21 @@ public sealed class MediaBackgroundViewModel : ViewModelBase
         }
     }
 
+    private byte[]? _handledArt;
+
     private void Reload()
     {
+        var art = IsOn && _media.HasSession ? _media.ArtBytes : null;
+        // A new track raises both the session and the art change; the cover already being handled is not decoded twice.
+        if (art is not null && ReferenceEquals(art, _handledArt))
+        {
+            return;
+        }
+        _handledArt = art;
         _cancel.Cancel();
         _cancel.Dispose();
         _cancel = new CancellationTokenSource();
         var generation = ++_generation;
-        var art = IsOn && _media.HasSession ? _media.ArtBytes : null;
         if (art is null)
         {
             Settled = Task.CompletedTask;
