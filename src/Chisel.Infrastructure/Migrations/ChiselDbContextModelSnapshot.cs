@@ -291,6 +291,25 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("Notes");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.NotepadSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("LastPadId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Monospace")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("WordWrap")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NotepadSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.PictureAssetEntity", b =>
                 {
                     b.Property<Guid>("Id")

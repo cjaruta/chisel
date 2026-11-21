@@ -40,6 +40,7 @@ public class ChiselDbContext : DbContext
     public DbSet<ClockToolsEntity> ClockTools => Set<ClockToolsEntity>();
     public DbSet<AlarmEntity> Alarms => Set<AlarmEntity>();
     public DbSet<CalculatorSettingsEntity> CalculatorSettings => Set<CalculatorSettingsEntity>();
+    public DbSet<NotepadSettingsEntity> NotepadSettings => Set<NotepadSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +83,7 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<ClockStyleEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockToolsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalculatorSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<NotepadSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
     }
 }
 
