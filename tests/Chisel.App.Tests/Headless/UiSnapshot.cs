@@ -34,6 +34,14 @@ public static class UiSnapshot
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null)
     {
+        // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
+        // Closing it here releases its timers, database and bitmaps even when that test forgot to.
+        foreach (var stale in OpenWindows.ToArray())
+        {
+            stale.Close();
+        }
+        OpenWindows.Clear();
+
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
         var context = new ChiselDbContext(new DbContextOptionsBuilder<ChiselDbContext>().UseSqlite(connection).Options);
@@ -94,9 +102,12 @@ public static class UiSnapshot
         };
 
         window.Show();
+        OpenWindows.Add(window);
         Dispatcher.UIThread.RunJobs();
         return window;
     }
+
+    private static readonly List<MainWindow> OpenWindows = new();
 
     public static string Render(MainWindow window, string name)
     {
