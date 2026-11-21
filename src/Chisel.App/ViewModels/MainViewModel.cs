@@ -30,9 +30,13 @@ public partial class MainViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
     public PictureFramesViewModel PictureFrames { get; }
     public PictureSettingsViewModel PictureSettings { get; }
+    public ScriptureViewModel Scripture { get; }
 
     // Which widgets are shown where; the window's layout host is built from it.
     public LayoutViewModel Layout { get; }
+
+    // The edit-mode widget library (search, add, see what is on the dashboard).
+    public WidgetLibraryViewModel Library { get; }
 
     public MainViewModel(
         ClockViewModel clock,
@@ -57,7 +61,8 @@ public partial class MainViewModel : ViewModelBase
         ClockToolsViewModel? clockTools = null,
         AlarmsViewModel? alarms = null,
         AlertsViewModel? alerts = null,
-        CalculatorSettingsViewModel? calculatorSettings = null)
+        CalculatorSettingsViewModel? calculatorSettings = null,
+        ScriptureViewModel? scripture = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -68,6 +73,7 @@ public partial class MainViewModel : ViewModelBase
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
         Alerts = alerts ?? new AlertsViewModel();
+        Scripture = scripture ?? new ScriptureViewModel(time ?? TimeProvider.System);
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
@@ -83,6 +89,7 @@ public partial class MainViewModel : ViewModelBase
         QuickLinks = quickLinks;
         Settings = settings;
         Layout = layout ?? new LayoutViewModel();
+        Library = new WidgetLibraryViewModel(Layout);
         PictureFrames = new PictureFramesViewModel(Layout, time, import: pictureImport, catalog: pictureCatalog);
         PictureSettings = pictureSettings ?? new PictureSettingsViewModel(null, Layout, null);
         Layout.AdjustGate = id => PictureFrames.For(id).CanAdjust;
@@ -104,6 +111,11 @@ public partial class MainViewModel : ViewModelBase
             else if (e.PropertyName == nameof(LayoutViewModel.Layout))
             {
                 UpdateMediaActive();
+                // A notepad taken off the dashboard keeps what was just typed.
+                if (!System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Notes))
+                {
+                    Notes.Flush();
+                }
             }
         };
     }
@@ -131,9 +143,11 @@ public partial class MainViewModel : ViewModelBase
     public void Tick()
     {
         Media.Tick();
+        Notes.Tick();
         PictureFrames.Tick();
         ClockTools.Tick();
         Alarms.Tick();
+        Scripture.Tick();
         ClockSlots.Refresh();
         if (Clock.NeedsRefresh)
         {
@@ -155,7 +169,7 @@ public partial class MainViewModel : ViewModelBase
     private void UpdateMediaActive() =>
         Media.IsActive = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Media);
 
-    // Escape cancels a widget drag or resize; otherwise it cancels layout editing; otherwise it closes whatever
+    // Escape cancels a widget drag or resize; otherwise it closes the widget library; otherwise it cancels layout editing; otherwise it closes whatever
     // floats over the window: settings or a schedule editor.
     [RelayCommand]
     private void CloseOverlays()
@@ -168,6 +182,12 @@ public partial class MainViewModel : ViewModelBase
         if (Layout.IsResizing)
         {
             Layout.CancelResize();
+            return;
+        }
+        // The library closes first; edit mode stays.
+        if (Library.IsOpen)
+        {
+            Library.CloseCommand.Execute(null);
             return;
         }
         if (Layout.IsEditing)

@@ -92,9 +92,8 @@ public sealed partial class LayoutHost : Decorator
     private double _resizeStartX;
     private double _resizeColumnSpace;
 
-    // The title bar press (or tray card press) that may turn into a drag.
+    // The title bar press that may turn into a drag.
     private WidgetFrame? _pressed;
-    private WidgetDefinition? _trayWidget;
     private Point _pressPoint;
     private Point _grabOffset;
     private bool _dragging;
@@ -582,73 +581,6 @@ public sealed partial class LayoutHost : Decorator
         }
     }
 
-    // Tray cards (in the edit toolbar) hand their pointer over here, in this host's coordinates. A press that
-    // moves past the threshold drags the widget onto the dashboard like a title bar; one that doesn't is a click,
-    // which adds the widget at the bottom of the first column.
-    public void TrayCardPressed(WidgetDefinition widget, Point point, Point grabOffset)
-    {
-        if (!IsEditing)
-        {
-            return;
-        }
-        _trayWidget = widget;
-        _pressPoint = point;
-        _grabOffset = grabOffset;
-    }
-
-    public void TrayCardMoved(Point point)
-    {
-        if (_trayWidget is not { } widget || Layout is not { } layout)
-        {
-            return;
-        }
-        if (!_dragging)
-        {
-            var moved = point - _pressPoint;
-            if (Math.Sqrt(moved.X * moved.X + moved.Y * moved.Y) < DragThreshold)
-            {
-                return;
-            }
-            layout.BeginTrayDrag(widget.Id);
-            if (!layout.IsDraggingWidget)
-            {
-                _trayWidget = null;
-                return;
-            }
-            StartDragVisuals(null, widget.Title);
-        }
-        if (layout.IsDraggingWidget)
-        {
-            UpdateDrag(point);
-        }
-    }
-
-    public void TrayCardReleased(Point point)
-    {
-        if (_trayWidget is { } widget && Layout is { } layout)
-        {
-            if (_dragging && layout.IsDraggingWidget)
-            {
-                UpdateDrag(point);
-                Drop(layout);
-            }
-            else if (!_dragging)
-            {
-                layout.AddWidgetFromTray(widget.Id);
-            }
-        }
-        EndDrag();
-    }
-
-    public void TrayCardCaptureLost()
-    {
-        if (_dragging)
-        {
-            Layout?.CancelWidgetDrag();
-        }
-        EndDrag();
-    }
-
     // ----- pictures dragged in from outside the app (Explorer, a browser). Edit mode only: the window asks, and this
     // answers with the same zones and the one preview a widget drag uses.
 
@@ -1075,7 +1007,6 @@ public sealed partial class LayoutHost : Decorator
     private void EndDrag()
     {
         _pressed = null;
-        _trayWidget = null;
         _dragging = false;
         _target = null;
         _mergeTarget = null;

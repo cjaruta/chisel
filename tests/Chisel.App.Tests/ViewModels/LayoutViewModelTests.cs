@@ -30,8 +30,8 @@ public class LayoutViewModelTests
     [Fact]
     public void Registry_HasTheWidgetsWithStableIdsTitlesAndViews()
     {
-        Assert.Equal(new[] { "schedule", "tasks", "notes", "links", "clock", "weather", "media", "pictureframe", "calculator" }, WidgetRegistry.All.Select(w => w.Id));
-        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links", "Clock", "Weather", "Media", "Picture frame", "Calculator" }, WidgetRegistry.All.Select(w => w.Title));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "links", "clock", "weather", "media", "pictureframe", "calculator", "scripture" }, WidgetRegistry.All.Select(w => w.Id));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Daily verse" }, WidgetRegistry.All.Select(w => w.Title));
         Assert.All(WidgetRegistry.All, w =>
         {
             Assert.True(w.MinHeight > 0);
@@ -42,15 +42,15 @@ public class LayoutViewModelTests
     }
 
     [Fact]
-    public void Registry_OnlyTheScheduleScrollsItself()
+    public void Registry_OnlyTheScheduleAndTheNotepadScrollThemselves()
     {
-        Assert.Equal(new[] { "schedule", "clock", "weather", "media", "pictureframe" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
+        Assert.Equal(new[] { "schedule", "notes", "clock", "weather", "media", "pictureframe", "scripture" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
     }
 
     [Fact]
     public void DefaultLayout_IsScheduleOnTheLeftAndTheListsStackedOnTheRight()
     {
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85] (hidden: clock, weather, media, calculator)", WidgetRegistry.DefaultLayout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85] (hidden: clock, weather, media, calculator, scripture)", WidgetRegistry.DefaultLayout.Describe());
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, links:0.5] (hidden: clock, weather, media, calculator)", layout.Layout.Describe());
+        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, links:0.5] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
         Assert.Equal(1, repository.SaveCalls);
         Assert.Equal(layout.Layout.Describe(), repository.Saved!.Describe());
 
@@ -102,7 +102,7 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, links:1] (hidden: notes, clock, weather, media, calculator)", layout.Layout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, links:1] (hidden: notes, clock, weather, media, calculator, scripture)", layout.Layout.Describe());
         Assert.Equal(0, repository.SaveCalls);
     }
 
@@ -139,6 +139,6 @@ public class LayoutViewModelTests
         layout.Apply(Layout(Col(1, ("schedule", 0), ("forecast", 1))));
 
         // Forecast is dropped, schedule raised to the minimum, and the widgets never seen join the first column.
-        Assert.Equal("1[schedule:0.129, tasks:1.355, notes:1.419, links:1.097] (hidden: clock, weather, media, calculator)", layout.Layout.Describe());
+        Assert.Equal("1[schedule:0.129, tasks:1.355, notes:1.419, links:1.097] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
     }
 }

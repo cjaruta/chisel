@@ -84,12 +84,13 @@ public class LayoutRemovalGhostTests
     }
 
     [AvaloniaFact]
-    public void AddingBackFromTheTray_LeavesNoGhost()
+    public void AddingBackFromTheLibrary_LeavesNoGhost()
     {
         var window = ShowEditing();
         Click(window, Frame(window, "notes").RemoveButton);
-        var card = window.GetVisualDescendants().OfType<Border>().Single(b => b.Classes.Contains("trayCard") && b.IsEffectivelyVisible && ((WidgetDefinition)b.DataContext!).Id == "notes");
-        Click(window, card);
+        Click(window, window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "LibraryButton"));
+        var add = window.GetVisualDescendants().OfType<Button>().Single(b => b.Classes.Contains("libraryAdd") && (string?)b.CommandParameter == "notes");
+        Click(window, add);
         AssertClean(window, "none", "");
         Assert.Equal(4, Host(window).GetVisualDescendants().OfType<WidgetFrame>().Count());
         window.Close();

@@ -34,7 +34,14 @@ public partial class MainWindow : Window
         // Keep the layout toolbar centered, but clear of the clock and date on narrow windows.
         LayoutToolbar.SizeChanged += (_, _) => PlaceLayoutToolbar();
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
-        SizeChanged += (_, _) => PlaceLayoutToolbar();
+        SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); };
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MainViewModel main)
+            {
+                main.Library.PropertyChanged += (_, _) => PlaceLibrary();
+            }
+        };
 
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnPreviewKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -65,7 +72,11 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
         Unloaded += (_, _) => _timer.Stop();
-        Closing += (_, _) => SavePlacement();
+        Closing += (_, _) =>
+        {
+            (DataContext as MainViewModel)?.Notes.Flush();
+            SavePlacement();
+        };
     }
 
     private void OnPictureDragOver(object? sender, DragEventArgs e)
@@ -141,29 +152,23 @@ public partial class MainWindow : Window
         visual is TextBox or AutoCompleteBox or Button or ToggleButton or ComboBox or Slider or ListBox or ListBoxItem
             or TabItem or MenuItem or TreeViewItem or NumericUpDown or Widgets.VolumeSlider;
 
-    // Tray cards hand their pointer to the layout host, which shares the title bars' drag and drop.
-    private void OnTrayCardPressed(object? sender, PointerPressedEventArgs e)
+    // Below this window width the library is a centered overlay with a dim layer; at or above it, a side panel.
+    private const double WideWindow = 1000;
+
+    private void PlaceLibrary()
     {
-        if (sender is not Control card || card.DataContext is not WidgetDefinition widget
-            || !e.GetCurrentPoint(card).Properties.IsLeftButtonPressed)
-        {
-            return;
-        }
-        LayoutHost.TrayCardPressed(widget, e.GetPosition(LayoutHost), e.GetPosition(card));
-        e.Pointer.Capture(card);
-        e.Handled = true;
+        var narrow = Bounds.Width < WideWindow;
+        LibraryScrim.IsVisible = narrow && DataContext is MainViewModel { Library.IsOpen: true };
+        LibraryPanel.HorizontalAlignment = narrow ? Avalonia.Layout.HorizontalAlignment.Center : Avalonia.Layout.HorizontalAlignment.Right;
+        LibraryPanel.Width = narrow ? Math.Clamp(Bounds.Width - 80, 240, 480) : 340;
+        LibraryPanel.Margin = narrow ? new Thickness(0, 56, 0, 20) : new Thickness(0, 56, 0, 0);
     }
 
-    private void OnTrayCardMoved(object? sender, PointerEventArgs e) => LayoutHost.TrayCardMoved(e.GetPosition(LayoutHost));
-
-    private void OnTrayCardReleased(object? sender, PointerReleasedEventArgs e)
+    private void OnLibraryScrimPressed(object? sender, PointerPressedEventArgs e)
     {
-        LayoutHost.TrayCardReleased(e.GetPosition(LayoutHost));
-        e.Pointer.Capture(null);
+        (DataContext as MainViewModel)?.Library.CloseCommand.Execute(null);
         e.Handled = true;
     }
-
-    private void OnTrayCardCaptureLost(object? sender, PointerCaptureLostEventArgs e) => LayoutHost.TrayCardCaptureLost();
 
     // Centered over the window, or just right of the clock and date when centering would cover them.
     private void PlaceLayoutToolbar()
@@ -171,13 +176,6 @@ public partial class MainWindow : Window
         if (LayoutToolbar.Parent is not Control area || LayoutToolbar.Bounds.Width <= 0)
         {
             return;
-        }
-        // Many tray cards scroll sideways instead of pushing the toolbar into the buttons on the right.
-        if (CustomizeLayoutButton.TranslatePoint(default, area) is { } gear)
-        {
-            var chrome = LayoutToolbar.Bounds.Width - TrayScroll.Bounds.Width;
-            var room = gear.X - 8 - (ClockPanel.Bounds.Right + 16) - chrome;
-            TrayScroll.MaxWidth = Math.Max(120, room);
         }
         var centered = (area.Bounds.Width - LayoutToolbar.Bounds.Width) / 2;
         var left = Math.Max(centered, ClockPanel.Bounds.Right + 16);

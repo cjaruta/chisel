@@ -29,7 +29,6 @@ public class LayoutScrollTests
 
     [AvaloniaTheory]
     [InlineData("tasks")]
-    [InlineData("notes")]
     [InlineData("links")]
     public void ListWidget_ScrollsInsideItsCard(string id)
     {
