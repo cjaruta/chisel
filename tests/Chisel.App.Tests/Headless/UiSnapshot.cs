@@ -32,7 +32,8 @@ public static class UiSnapshot
         Chisel.Core.Weather.IWeatherGeocoder? geocoder = null, Chisel.Core.Weather.IWeatherStore? weatherStore = null,
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
-        Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null)
+        Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
+        Chisel.App.Services.INotepadFiles? notepadFiles = null)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
@@ -55,6 +56,7 @@ public static class UiSnapshot
         var kit = pictures ?? new Chisel.App.Tests.Support.PictureKit();
         kit.Attach(context, time, userSettings);
         var layout = new LayoutViewModel(layoutRepository, kit.Catalog);
+        var notepadSettings = new NotepadSettingsRepository(context);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService());
@@ -65,7 +67,7 @@ public static class UiSnapshot
             new ClockViewModel(time, timeDisplay),
             new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),
             new TaskListViewModel(tasks),
-            new NotesViewModel(notes, time, timeDisplay),
+            new NotesViewModel(notes, time, notepadSettings, notepadFiles),
             new QuickLinksViewModel(links, _ => { }),
             settings,
             layout,

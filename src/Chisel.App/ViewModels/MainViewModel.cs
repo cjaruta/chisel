@@ -134,6 +134,7 @@ public partial class MainViewModel : ViewModelBase
     public void Tick()
     {
         Media.Tick();
+        Notes.Tick();
         PictureFrames.Tick();
         ClockTools.Tick();
         Alarms.Tick();
