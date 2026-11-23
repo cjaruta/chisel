@@ -21,7 +21,6 @@ public partial class ClockSettingsPage : UserControl
     private readonly List<(Button Card, ClockFaceItem Face)> _customCards = [];
     private ClockSettingsViewModel? _settings;
     private ClockFacesViewModel? _faces;
-    private ClockColors _drawnWith;
 
     public ClockSettingsPage()
     {
@@ -69,12 +68,11 @@ public partial class ClockSettingsPage : UserControl
         {
             return;
         }
-        _drawnWith = settings.Style.Colors;
         for (var i = 0; i < ClockPresets.All.Count; i++)
         {
             var preset = ClockPresets.All[i];
             var index = i;
-            var image = new Image { Name = "ClockPresetThumb_" + preset.Id, Width = ThumbnailSize, Height = ThumbnailSize, Source = Thumbnail(preset, settings) };
+            var image = new Image { Name = "ClockPresetThumb_" + preset.Id, Width = ThumbnailSize, Height = ThumbnailSize, Source = Thumbnail(preset) };
             var caption = new TextBlock { Text = preset.Title, FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center };
             var content = new StackPanel { Spacing = 2 };
             content.Children.Add(image);
@@ -162,9 +160,10 @@ public partial class ClockSettingsPage : UserControl
         }
     }
 
-    private static Bitmap Thumbnail(ClockPreset preset, ClockSettingsViewModel settings) =>
-        // A face with a solid dial wears its own colors (they read on it); the others wear the colors chosen now.
-        ClockThumbnail.Render(preset.Style with { Alignment = ClockAlignment.Center, ShowSeconds = false, Colors = preset.Colors ?? settings.Style.Colors });
+    // A face's preview is the face as defined (its own colors, or the theme's): never the colors chosen for the widget now, which
+    // belong to the working style and would make every preview look like whatever was picked last.
+    private static Bitmap Thumbnail(ClockPreset preset) =>
+        ClockThumbnail.Render(preset.Style with { Alignment = ClockAlignment.Center, ShowSeconds = false });
 
     private void MarkCurrent()
     {
@@ -183,18 +182,6 @@ public partial class ClockSettingsPage : UserControl
         if (e.PropertyName == nameof(ClockSettingsViewModel.PresetIndex))
         {
             MarkCurrent();
-        }
-        else if (e.PropertyName == nameof(ClockSettingsViewModel.Style) && settings.Style.Colors != _drawnWith)
-        {
-            // The thumbnails wear the current colors, so they are drawn again when those change.
-            _drawnWith = settings.Style.Colors;
-            for (var i = 0; i < _cards.Count; i++)
-            {
-                if (((StackPanel)_cards[i].Content!).Children[0] is Image image)
-                {
-                    image.Source = Thumbnail(ClockPresets.All[i], settings);
-                }
-            }
         }
     }
 }

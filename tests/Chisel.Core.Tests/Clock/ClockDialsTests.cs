@@ -68,7 +68,7 @@ public class ClockDialsTests
     }
 
     [Fact]
-    public void Applying_AFilledFace_UsesItsColors_AndAThemeFace_KeepsTheUsersColors()
+    public void Applying_AFace_ReplacesTheColors_WithTheFacesOwn_OrTheTheme()
     {
         var current = ClockStyle.Default with { Alignment = ClockAlignment.Left, ShowSeconds = false, Stopwatch = StopwatchDisplay.Analog, Colors = new ClockColors("#112233", null, null, null, null, null) };
 
@@ -76,7 +76,7 @@ public class ClockDialsTests
         var slim = ClockPresets.Apply("slim", current);
 
         Assert.Equal(Preset("classic").Colors, classic.Colors);
-        Assert.Equal(current.Colors, slim.Colors);
+        Assert.Equal(ClockColors.Theme, slim.Colors); // the user's colors belong to no face, so they do not carry onto one
         Assert.All(new[] { classic, slim }, s =>
         {
             Assert.Equal(ClockAlignment.Left, s.Alignment);

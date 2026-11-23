@@ -39,7 +39,7 @@ public class ClockDialSettingsTests
     }
 
     [Fact]
-    public void ChoosingAFilledFace_BringsItsColors_AndAThemeFace_KeepsTheUsersColors()
+    public void ChoosingAFace_ReplacesTheColors_WithTheFacesOwn_OrTheTheme()
     {
         var settings = new ClockSettingsViewModel(new FakeStyleRepository());
         settings.PaletteIndex = ClockPalettes.All.ToList().FindIndex(p => p.Id == "amber");
@@ -50,7 +50,7 @@ public class ClockDialSettingsTests
         Assert.Equal("#C62828", settings.Style.Colors.Second);
 
         settings.PresetIndex = IndexOf("slim");
-        Assert.Equal("#C62828", settings.Style.Colors.Second); // a theme face keeps the colors as they are
+        Assert.Equal(ClockColors.Theme, settings.Style.Colors); // a theme face follows the theme: nothing of the last face stays
     }
 
     [Fact]
