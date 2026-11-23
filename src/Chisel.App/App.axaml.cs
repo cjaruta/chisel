@@ -76,6 +76,7 @@ public partial class App : Application
                     _volume,
                     pictureCatalog: _services.Pictures,
                     clockSettings: new ClockSettingsViewModel(_services.ClockStyles),
+                    clockFaces: _services.ClockFaces,
                     clockTools: new ClockToolsViewModel(_services.ClockTools, _services.Time),
                     alarms: new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(_services.Alarms, _services.Time), alerts, timeDisplay),
                     alerts: alerts,

@@ -10,6 +10,7 @@ public partial class MainViewModel : ViewModelBase
     public WeatherViewModel Weather { get; }
     public WeatherSettingsViewModel WeatherSettings { get; }
     public ClockSettingsViewModel ClockSettings { get; }
+    public ClockFacesViewModel ClockFaces { get; }
     public ClockToolsViewModel ClockTools { get; }
     public CalculatorSettingsViewModel CalculatorSettings { get; }
     public CalculatorViewModel Calculator { get; }
@@ -62,7 +63,8 @@ public partial class MainViewModel : ViewModelBase
         AlarmsViewModel? alarms = null,
         AlertsViewModel? alerts = null,
         CalculatorSettingsViewModel? calculatorSettings = null,
-        ScriptureViewModel? scripture = null)
+        ScriptureViewModel? scripture = null,
+        Chisel.Core.Clock.IClockFaceStore? clockFaces = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -70,6 +72,7 @@ public partial class MainViewModel : ViewModelBase
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
         ClockSettings = clockSettings ?? new ClockSettingsViewModel();
         ClockTools = clockTools ?? new ClockToolsViewModel(null, time ?? TimeProvider.System);
+        ClockFaces = new ClockFacesViewModel(clockFaces, ClockSettings, ClockTools);
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
         Alerts = alerts ?? new AlertsViewModel();

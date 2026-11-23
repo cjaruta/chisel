@@ -31,6 +31,7 @@ public sealed class AppServices : IDisposable
     public IWidgetLayoutRepository WidgetLayout { get; }
     public IWeatherStore Weather { get; }
     public Chisel.Core.Clock.IClockStyleRepository ClockStyles { get; }
+    public Chisel.Core.Clock.IClockFaceStore ClockFaces { get; }
     public Chisel.Core.Clock.IClockToolsRepository ClockTools { get; }
     public Chisel.Core.Clock.IAlarmRepository Alarms { get; }
     public Chisel.Core.Calculator.ICalculatorSettingsRepository CalculatorSettings { get; }
@@ -70,6 +71,7 @@ public sealed class AppServices : IDisposable
         WidgetLayout = new WidgetLayoutRepository(DbContext);
         Weather = new WeatherRepository(DbContext);
         ClockStyles = new ClockStyleRepository(DbContext);
+        ClockFaces = new ClockFaceRepository(DbContext);
         ClockTools = new ClockToolsRepository(DbContext);
         Alarms = new AlarmRepository(DbContext);
         CalculatorSettings = new CalculatorSettingsRepository(DbContext);

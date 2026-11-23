@@ -37,6 +37,7 @@ public class ChiselDbContext : DbContext
 
     public DbSet<WeatherCacheEntity> WeatherCaches => Set<WeatherCacheEntity>();
     public DbSet<ClockStyleEntity> ClockStyles => Set<ClockStyleEntity>();
+    public DbSet<ClockFaceLibraryEntity> ClockFaceLibraries => Set<ClockFaceLibraryEntity>();
     public DbSet<ClockToolsEntity> ClockTools => Set<ClockToolsEntity>();
     public DbSet<AlarmEntity> Alarms => Set<AlarmEntity>();
     public DbSet<CalculatorSettingsEntity> CalculatorSettings => Set<CalculatorSettingsEntity>();
@@ -81,6 +82,7 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<WeatherLocationEntity>().Property(w => w.Id).ValueGeneratedNever();
         modelBuilder.Entity<WeatherCacheEntity>().Property(w => w.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockStyleEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<ClockFaceLibraryEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockToolsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalculatorSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<NotepadSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();

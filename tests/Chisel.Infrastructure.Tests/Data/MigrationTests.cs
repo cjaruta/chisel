@@ -324,4 +324,24 @@ public class MigrationTests
         Assert.Equal(new[] { "Mail", "Docs", "News" }, links.Select(l => l.Label).ToArray());
         Assert.Equal(new[] { "https://mail.example.com", "https://docs.example.com", "https://news.example.com" }, links.Select(l => l.Url).ToArray());
     }
+
+    [Fact]
+    public void AddClockFaces_LeavesTheSavedClockStyleAloneAndStartsWithNoFaces()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123192602_AddTaskDueDate");
+            context.Database.ExecuteSqlRaw("INSERT INTO ClockStyles (Id, Alignment, Shape, BorderWidth, Markers, EmphasizeQuarters, Numerals, Hands, HourThickness, MinuteThickness, SecondThickness, ShowSeconds) VALUES (1, 2, 0, 3, 1, 1, 4, 1, 5, 4, 2, 0)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var style = new Chisel.Infrastructure.Repositories.ClockStyleRepository(readContext).Get();
+        Assert.Equal(Chisel.Core.Clock.ClockAlignment.Right, style.Alignment);
+        Assert.Equal(Chisel.Core.Clock.NumeralStyle.Roman, style.Numerals);
+        Assert.Empty(new Chisel.Infrastructure.Repositories.ClockFaceRepository(readContext).Load());
+    }
 }

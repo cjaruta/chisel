@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Chisel.Core.Theme;
 
 namespace Chisel.Core.Clock;
@@ -41,7 +42,9 @@ public sealed record ClockStyle
     public bool ShowSeconds { get; init; } = true;
     public ClockColors Colors { get; init; }
 
+    [JsonIgnore]
     public string? DialColor { get => Colors.Dial; init => Colors = Colors with { Dial = value }; }
+    [JsonIgnore]
     public string? MarkerColor { get => Colors.Markers; init => Colors = Colors with { Markers = value }; }
 
     public ClockStyle Normalized() => this with

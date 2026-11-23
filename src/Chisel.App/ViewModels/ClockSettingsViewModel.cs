@@ -138,6 +138,9 @@ public partial class ClockSettingsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanReset))]
     private void ResetToPreset() => Commit(s => ClockPresets.Apply(_basePreset, s));
 
+    // Wears a whole look at once (a saved face): saved and shown like any other change.
+    public void ApplyStyle(ClockStyle style) => Commit(_ => style);
+
     private void Commit(Func<ClockStyle, ClockStyle> change)
     {
         Style = change(Style).Normalized();

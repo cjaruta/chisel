@@ -60,6 +60,20 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("CalculatorSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClockFaceLibraryEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClockFaceLibraries");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockStyleEntity", b =>
                 {
                     b.Property<int>("Id")
