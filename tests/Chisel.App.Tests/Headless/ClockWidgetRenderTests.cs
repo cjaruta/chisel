@@ -89,7 +89,7 @@ public class ClockWidgetRenderTests(ITestOutputHelper output) : IDisposable
         var views = frame.GetVisualDescendants().OfType<ClockSlotView>().ToList();
         if (slots == 2)
         {
-            Assert.True(views[0].Bounds.Width <= views[0].Bounds.Height + 1, "the clock slot takes a square");
+            Assert.True(views[0].Bounds.Width <= views[0].Bounds.Height + 1, "the clock slot is a square"); // evenly spaced, see ClockLayoutHeadlessTests
         }
         AssertNothingClipped(frame);
         Save(frame, name + "-timer");
