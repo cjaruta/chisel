@@ -406,6 +406,9 @@ namespace Chisel.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDone")
                         .HasColumnType("INTEGER");
 

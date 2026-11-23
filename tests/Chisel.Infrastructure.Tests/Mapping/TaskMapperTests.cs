@@ -30,4 +30,14 @@ public class TaskMapperTests
         Assert.Equal("Buy milk", task.Text);
         Assert.True(task.IsDone);
     }
+
+    [Fact]
+    public void DueDate_SurvivesBothDirections()
+    {
+        var task = new TaskItem(Guid.NewGuid(), "Buy milk", false, new DateOnly(2000, 1, 2));
+
+        Assert.Equal(new DateOnly(2000, 1, 2), task.ToEntity().DueDate);
+        Assert.Equal(new DateOnly(2000, 1, 2), task.ToEntity().ToDomain().DueDate);
+        Assert.Null(new TaskEntity { Id = Guid.NewGuid(), Text = "x" }.ToDomain().DueDate);
+    }
 }

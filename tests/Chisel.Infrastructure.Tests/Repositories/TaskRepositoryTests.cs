@@ -85,4 +85,37 @@ public class TaskRepositoryTests : IDisposable
     }
 
     public void Dispose() => _fixture.Dispose();
+
+    [Fact]
+    public void DueDate_IsSavedAndReadBack()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+        var task = new TaskItem("Pay rent");
+        repository.Add(task);
+        task.SetDueDate(new DateOnly(2000, 1, 2));
+        repository.Update(task);
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(new DateOnly(2000, 1, 2), Assert.Single(new TaskRepository(readContext).GetAll()).DueDate);
+    }
+
+    [Fact]
+    public void Reorder_SavesTheNewOrder_AndNewTasksGoAfterIt()
+    {
+        using var context = _fixture.CreateContext();
+        var repository = new TaskRepository(context);
+        var a = new TaskItem("A");
+        var b = new TaskItem("B");
+        var c = new TaskItem("C");
+        repository.Add(a);
+        repository.Add(b);
+        repository.Add(c);
+
+        repository.Reorder(new[] { c.Id, a.Id, b.Id });
+        repository.Add(new TaskItem("D"));
+
+        using var readContext = _fixture.CreateContext();
+        Assert.Equal(new[] { "C", "A", "B", "D" }, new TaskRepository(readContext).GetAll().Select(t => t.Text).ToArray());
+    }
 }

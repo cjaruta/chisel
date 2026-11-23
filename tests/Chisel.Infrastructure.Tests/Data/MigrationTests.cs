@@ -282,4 +282,25 @@ public class MigrationTests
 
         Assert.False(context.Database.HasPendingModelChanges());
     }
-}
+
+    [Fact]
+    public void AddTaskDueDate_KeepsExistingTasksWithTheirOrderAndNoDueDate()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261121002045_AddNotepadSettings");
+            context.Database.ExecuteSqlRaw("INSERT INTO Tasks (Id, Text, IsDone, Position) VALUES ('6f1c2f4e-0000-0000-0000-000000000011', 'Second', 1, 1)");
+            context.Database.ExecuteSqlRaw("INSERT INTO Tasks (Id, Text, IsDone, Position) VALUES ('6f1c2f4e-0000-0000-0000-000000000010', 'First', 0, 0)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var tasks = new Chisel.Infrastructure.Repositories.TaskRepository(readContext).GetAll();
+        Assert.Equal(new[] { "First", "Second" }, tasks.Select(t => t.Text).ToArray());
+        Assert.Equal(new[] { false, true }, tasks.Select(t => t.IsDone).ToArray());
+        Assert.All(tasks, t => Assert.Null(t.DueDate));
+    }
+}

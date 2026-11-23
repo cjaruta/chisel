@@ -24,6 +24,12 @@ public class TaskListViewModelTests
         }
 
         public void Remove(Guid id) => _items.RemoveAll(t => t.Id == id);
+
+        public void Reorder(IReadOnlyList<Guid> orderedIds)
+        {
+            var order = orderedIds.ToList();
+            _items.Sort((x, y) => order.IndexOf(x.Id).CompareTo(order.IndexOf(y.Id)));
+        }
     }
 
     [Fact]

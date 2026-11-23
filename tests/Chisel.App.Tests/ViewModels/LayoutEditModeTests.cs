@@ -49,6 +49,7 @@ public class LayoutEditModeTests
         public void Add(TaskItem task) { }
         public void Update(TaskItem task) { }
         public void Remove(Guid id) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private sealed class FakeNoteRepository : INoteRepository
