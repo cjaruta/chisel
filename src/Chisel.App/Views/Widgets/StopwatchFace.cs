@@ -122,6 +122,7 @@ public sealed class StopwatchFace : Control
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _windowState?.Dispose();
         if (TopLevel.GetTopLevel(this) is Window window)
         {
             _windowState = window.GetObservable(Window.WindowStateProperty).Subscribe(new StateObserver(this));
