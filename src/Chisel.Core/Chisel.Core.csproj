@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripture\web-passages.json" LogicalName="Chisel.Core.Scripture.web-passages.json" />
+    <EmbeddedResource Include="Scripture\kjv-passages.json" LogicalName="Chisel.Core.Scripture.kjv-passages.json" />
   </ItemGroup>
 
 </Project>

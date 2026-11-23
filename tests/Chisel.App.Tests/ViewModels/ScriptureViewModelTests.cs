@@ -22,7 +22,7 @@ public class ScriptureViewModelTests
         Assert.Same(Catalog.ForDate(new DateOnly(2026, 11, 20)), vm.Passage);
         Assert.Equal(vm.Passage.Text, vm.Text);
         Assert.Equal(vm.Passage.Reference, vm.Reference);
-        Assert.Equal("WEB", vm.Translation);
+        Assert.Equal("KJV", vm.Translation);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class ScriptureViewModelTests
         vm.CopyCommand.Execute(null);
         Assert.Equal(Catalog.CopyText(vm.Passage), copied);
         Assert.Contains(vm.Reference, copied);
-        Assert.Contains("(WEB)", copied);
+        Assert.Contains("(KJV)", copied);
     }
 
     [Fact]
@@ -99,12 +99,12 @@ public class ScriptureViewModelTests
     }
 
     [Fact]
-    public void ReadInContext_OpensTheWebChapter()
+    public void ReadInContext_OpensTheKjvChapter()
     {
         string? opened = null;
         var vm = new ScriptureViewModel(At(9), openUrl: url => opened = url);
         vm.ReadInContextCommand.Execute(null);
         Assert.Equal(Catalog.ChapterUrl(vm.Passage), opened);
-        Assert.StartsWith("https://ebible.org/eng-web/", opened);
+        Assert.StartsWith("https://ebible.org/kjv/", opened);
     }
 }

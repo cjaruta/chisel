@@ -8,7 +8,7 @@ namespace Chisel.Core.Scripture;
 // the text to copy, and the page of its chapter. Pure: the date is passed in (the caller gets it from TimeProvider).
 public sealed class ScriptureCatalog
 {
-    private const string ResourceName = "Chisel.Core.Scripture.web-passages.json";
+    private const string ResourceName = "Chisel.Core.Scripture.kjv-passages.json";
     private static readonly Lazy<ScriptureCatalog> BundledCatalog = new(LoadBundled);
 
     public ScriptureCatalog(ScriptureSource source, IReadOnlyList<ScripturePassage> passages)

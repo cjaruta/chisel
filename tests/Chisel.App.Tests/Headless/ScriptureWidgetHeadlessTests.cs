@@ -90,7 +90,7 @@ public class ScriptureWidgetHeadlessTests
         var reference = Named<TextBlock>(window, "ScriptureReference")!;
         Assert.Equal(Shortest.Text, text.Text);
         Assert.Equal(Shortest.Reference, reference.Text);
-        Assert.Equal("WEB", Named<TextBlock>(window, "ScriptureTranslation")!.Text);
+        Assert.Equal("KJV", Named<TextBlock>(window, "ScriptureTranslation")!.Text);
         Assert.True(text.TranslatePoint(default, window)!.Value.Y < reference.TranslatePoint(default, window)!.Value.Y);
         Assert.Null(Named<Button>(window, "ScriptureMore"));
         window.Close();

@@ -10,12 +10,13 @@ public class ScriptureCatalogTests
     public void Bundled_RecordsTheSourceEditionAndPublicDomainStatus()
     {
         var source = Bundled.Source;
-        Assert.Equal("World English Bible", source.Name);
-        Assert.Equal("WEB", source.Abbreviation);
+        Assert.Equal("King James Version", source.Name);
+        Assert.Equal("KJV", source.Abbreviation);
         Assert.True(source.PublicDomain);
-        Assert.Contains("2020", source.Edition);
-        Assert.StartsWith("https://ebible.org/", source.Origin);
-        Assert.Contains("Public Domain", source.License);
+        Assert.Contains("1769", source.Edition);
+        Assert.StartsWith("https://github.com/", source.Origin);
+        Assert.Contains("Public domain", source.License);
+        Assert.Contains("Crown", source.License);
     }
 
     [Fact]
@@ -37,12 +38,15 @@ public class ScriptureCatalogTests
     {
         var john = Bundled.Passages.Single(p => p.Reference == "John 3:16-17");
         Assert.Equal(
-            "For God so loved the world, that he gave his only born Son, that whoever believes in him should not perish, but have eternal life. "
-            + "For God didn’t send his Son into the world to judge the world, but that the world should be saved through him.",
+            "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. "
+            + "For God sent not his Son into the world to condemn the world; but that the world through him might be saved.",
             john.Text);
         var psalm = Bundled.Passages.Single(p => p.Reference == "Psalm 23:1-6");
-        Assert.StartsWith("A Psalm by David. Yahweh is my shepherd; I shall lack nothing.", psalm.Text);
-        Assert.EndsWith("and I will dwell in Yahweh’s house forever.", psalm.Text);
+        Assert.StartsWith("The LORD is my shepherd; I shall not want.", psalm.Text);
+        Assert.EndsWith("and I will dwell in the house of the LORD for ever.", psalm.Text);
+        // The 1769 wording, not a modernized one.
+        Assert.Contains("alway, even unto the end of the world", Bundled.Passages.Single(p => p.Reference == "Matthew 28:19-20").Text);
+        Assert.Contains("throughly furnished", Bundled.Passages.Single(p => p.Reference == "2 Timothy 3:16-17").Text);
         Assert.Equal("Genesis 1:1-5", Bundled.Passages[0].Reference);
         Assert.Equal("Philippians 4:13", Bundled.Passages.Single(p => p.Reference.StartsWith("Philippians 4:13")).Reference);
     }
@@ -79,21 +83,41 @@ public class ScriptureCatalogTests
     public void CopyText_HasTheVerseTheReferenceAndTheTranslation()
     {
         var passage = new ScripturePassage("ROM", "Romans", 8, 28, 28, "We know that all things work together for good.");
-        Assert.Equal("We know that all things work together for good.\n— Romans 8:28, World English Bible (WEB)", Bundled.CopyText(passage));
+        Assert.Equal("We know that all things work together for good.\n— Romans 8:28, King James Version (KJV)", Bundled.CopyText(passage));
     }
 
     [Fact]
-    public void ChapterUrl_OpensTheWebChapter()
+    public void ChapterUrl_OpensTheKjvChapter()
     {
-        Assert.Equal("https://ebible.org/eng-web/JHN03.htm", Bundled.ChapterUrl(new ScripturePassage("JHN", "John", 3, 16, 17, "x")));
-        Assert.Equal("https://ebible.org/eng-web/PSA023.htm", Bundled.ChapterUrl(new ScripturePassage("PSA", "Psalm", 23, 1, 6, "x")));
-        Assert.Equal("https://ebible.org/eng-web/1CO13.htm", Bundled.ChapterUrl(new ScripturePassage("1CO", "1 Corinthians", 13, 1, 13, "x")));
+        Assert.Equal("https://ebible.org/kjv/JHN03.htm", Bundled.ChapterUrl(new ScripturePassage("JHN", "John", 3, 16, 17, "x")));
+        Assert.Equal("https://ebible.org/kjv/PSA023.htm", Bundled.ChapterUrl(new ScripturePassage("PSA", "Psalm", 23, 1, 6, "x")));
+        Assert.Equal("https://ebible.org/kjv/1CO13.htm", Bundled.ChapterUrl(new ScripturePassage("1CO", "1 Corinthians", 13, 1, 13, "x")));
     }
 
     [Fact]
     public void ChapterUrl_ExistsForEveryBundledPassage()
     {
-        Assert.All(Bundled.Passages, p => Assert.Matches(@"^https://ebible\.org/eng-web/[0-9A-Z]{3}\d{2,3}\.htm$", Bundled.ChapterUrl(p)));
+        Assert.All(Bundled.Passages, p => Assert.Matches(@"^https://ebible\.org/kjv/[0-9A-Z]{3}\d{2,3}\.htm$", Bundled.ChapterUrl(p)));
+    }
+
+    [Fact]
+    public void EveryPassage_HasCompleteKjvText_WithNoDuplicatesOrMarkup()
+    {
+        Assert.Equal(Bundled.Passages.Count, Bundled.Passages.Select(p => p.Text).Distinct().Count());
+        Assert.All(Bundled.Passages, p =>
+        {
+            Assert.True(p.Text.Length > 20, p.Reference);
+            Assert.Matches(@"[.?!:;,)'""]$", p.Text); // a verse is never cut off mid-word
+            Assert.DoesNotMatch(@"[\[\]{}¶†*�]", p.Text); // no italic markers, paragraph marks, footnotes or broken characters
+            Assert.DoesNotContain("O lord", p.Text); // the divine name keeps its capitals
+        });
+    }
+
+    [Fact]
+    public void EveryPassage_HasAsManyVersesAsItsReferenceCovers()
+    {
+        // Short sanity bound: a passage of N verses is never shorter than N short sentences.
+        Assert.All(Bundled.Passages, p => Assert.True(p.Text.Length >= (p.LastVerse - p.FirstVerse + 1) * 20, p.Reference));
     }
 
     private static int IndexOf(ScripturePassage passage) => Bundled.Passages.ToList().IndexOf(passage);
