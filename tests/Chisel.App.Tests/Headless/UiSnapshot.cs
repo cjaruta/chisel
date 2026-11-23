@@ -76,7 +76,7 @@ public static class UiSnapshot
             new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),
             new TaskListViewModel(tasks),
             new NotesViewModel(notes, time, notepadSettings, notepadFiles),
-            new QuickLinksViewModel(links, _ => { }),
+            new QuickLinksViewModel(links, openUrl ?? (_ => { })),
             settings,
             layout,
             weather,

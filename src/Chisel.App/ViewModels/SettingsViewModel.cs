@@ -60,11 +60,12 @@ public partial class SettingsViewModel : ViewModelBase
     public partial bool AccentAdjusted { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab))]
     public partial SettingsTab SelectedTab { get; set; }
 
     public bool IsGeneralTab => SelectedTab == SettingsTab.General;
     public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
+    public bool IsQuickLinksTab => SelectedTab == SettingsTab.QuickLinks;
 
     // Widgets that have options, and the one shown on the right of the Widgets tab.
     public IReadOnlyList<SettingsPage> WidgetPages { get; }

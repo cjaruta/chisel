@@ -39,6 +39,18 @@ public class SettingsTabsTests
     }
 
     [Fact]
+    public void SelectTab_ShowsTheQuickLinksTabAlone()
+    {
+        var settings = Create();
+
+        settings.SelectTabCommand.Execute(SettingsTab.QuickLinks);
+
+        Assert.True(settings.IsQuickLinksTab);
+        Assert.False(settings.IsGeneralTab);
+        Assert.False(settings.IsWidgetsTab);
+    }
+
+    [Fact]
     public void DefaultPages_ListScheduleClockWeatherMediaPictureFrameThenCalculator()
     {
         var settings = Create();

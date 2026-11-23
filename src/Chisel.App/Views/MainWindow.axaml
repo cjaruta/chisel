@@ -5,6 +5,7 @@
         xmlns:ctl="using:Chisel.App.Controls"
         xmlns:convA="using:Avalonia.Data.Converters"
         xmlns:views="using:Chisel.App.Views"
+        xmlns:pages="using:Chisel.App.Views.Pages"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
@@ -23,6 +24,48 @@
     <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" ZIndex="1"
                     HorizontalAlignment="Right" VerticalAlignment="Top">
+        <!-- Quick links: small icon buttons (the first few; the rest in the menu), then a divider. Nothing at all when there are none. -->
+        <ItemsControl Name="QuickLinkBar" ItemsSource="{Binding QuickLinks.Visible}" IsVisible="{Binding QuickLinks.HasLinks}"
+                      VerticalAlignment="Center" AutomationProperties.Name="Quick links">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="4" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:QuickLinkItem">
+                    <Button Classes="gearButton" Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Tooltip}"
+                            AutomationProperties.Name="{Binding AutomationName}">
+                        <ctl:QuickLinkGlyph />
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Name="MoreLinksButton" Classes="gearButton" IsVisible="{Binding QuickLinks.HasOverflow}"
+                ToolTip.Tip="More quick links" AutomationProperties.Name="More quick links">
+            <Path Width="20" Height="20" Stretch="Uniform" Fill="Transparent" StrokeThickness="3.2" StrokeLineCap="Round"
+                  Stroke="{DynamicResource DimTextBrush}" Data="M4,12 h0.1 M12,12 h0.1 M20,12 h0.1" />
+            <Button.Flyout>
+                <Flyout Placement="BottomEdgeAlignedRight">
+                    <ItemsControl Name="MoreLinksList" ItemsSource="{Binding QuickLinks.Overflow}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:QuickLinkItem">
+                                <Button Classes="moreLink" Command="{Binding OpenCommand}" Click="OnMoreLinkClick"
+                                        ToolTip.Tip="{Binding Target}" AutomationProperties.Name="{Binding AutomationName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ctl:QuickLinkGlyph />
+                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Flyout>
+            </Button.Flyout>
+        </Button>
+        <Border Name="QuickLinksDivider" Width="1" Height="18" Margin="4,0" VerticalAlignment="Center"
+                Background="{DynamicResource GridLineBrush}" IsVisible="{Binding QuickLinks.HasLinks}" />
+
         <!-- Customize layout: a 2x2 grid of tiles; highlighted while editing -->
         <Button Name="CustomizeLayoutButton" Classes="gearButton" Classes.active="{Binding Layout.IsEditing}"
                 ToolTip.Tip="Customize layout" Command="{Binding CustomizeLayoutCommand}">
@@ -165,6 +208,9 @@
                             <Button Name="WidgetsTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsWidgetsTab}"
                                     Content="Widgets" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.Widgets}" />
+                            <Button Name="QuickLinksTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsQuickLinksTab}"
+                                    Content="Quick links" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.QuickLinks}" />
                         </StackPanel>
                     </Border>
 
@@ -251,6 +297,11 @@
                                                 Content="{Binding Settings.SelectedWidgetPage, Converter={x:Static conv:PageViewConverter.Instance}}" />
                             </ScrollViewer>
                         </Grid>
+
+                        <!-- Quick links: the shortcuts in the top bar -->
+                        <ScrollViewer Name="QuickLinksPage" IsVisible="{Binding Settings.IsQuickLinksTab}">
+                            <pages:QuickLinksSettingsPage />
+                        </ScrollViewer>
 
                         <Button Name="SettingsCloseButton" Grid.Row="1" Content="Close" HorizontalAlignment="Right"
                                 Command="{Binding Settings.CloseCommand}" />

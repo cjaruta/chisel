@@ -7,6 +7,7 @@ public enum SettingsTab
 {
     General,
     Widgets,
+    QuickLinks,
 }
 
 // One page in the Widgets tab. ViewType is a control whose bindings read from MainViewModel.

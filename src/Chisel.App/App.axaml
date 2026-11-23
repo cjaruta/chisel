@@ -605,6 +605,14 @@
             <Setter Property="Padding" Value="6" />
         </Style>
 
+        <Style Selector="Button.moreLink">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
+        </Style>
+
         <Style Selector="Button.gearButton Path">
             <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
         </Style>

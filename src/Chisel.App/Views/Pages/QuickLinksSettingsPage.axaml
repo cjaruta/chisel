@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             xmlns:convA="using:Avalonia.Data.Converters"
+             xmlns:ctl="using:Chisel.App.Controls"
+             x:Class="Chisel.App.Views.Pages.QuickLinksSettingsPage"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.linkRow">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="10">
+        <TextBlock Classes="cardHeading" Text="Quick links" />
+        <TextBlock Classes="dim" TextWrapping="Wrap"
+                   Text="Shortcuts that sit at the top of the window, beside the layout and settings buttons. Link to a website, a document or a folder." />
+
+        <TextBlock Name="QuickLinksEmpty" Classes="empty" Text="No quick links yet. Add your first one below."
+                   IsVisible="{Binding !QuickLinks.HasLinks}" />
+
+        <ItemsControl Name="QuickLinkList" ItemsSource="{Binding QuickLinks.Links}" AutomationProperties.Name="Quick links">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="4" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:QuickLinkItem">
+                    <Border Classes="linkRow">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6">
+                            <ctl:QuickLinkGlyph VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Classes="dim" Text="{Binding Target}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="iconButton" Command="{Binding MoveUpCommand}" Content="Up"
+                                    ToolTip.Tip="Move up" AutomationProperties.Name="Move up" />
+                            <Button Grid.Column="3" Classes="iconButton" Command="{Binding MoveDownCommand}" Content="Down"
+                                    ToolTip.Tip="Move down" AutomationProperties.Name="Move down" />
+                            <Button Grid.Column="4" Classes="iconButton" Command="{Binding EditCommand}" Content="Edit"
+                                    ToolTip.Tip="Edit this link" AutomationProperties.Name="Edit" />
+                            <Button Grid.Column="5" Classes="iconButton" Command="{Binding DeleteCommand}" Content="Delete"
+                                    ToolTip.Tip="Delete this link" AutomationProperties.Name="Delete" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Classes="dim" Foreground="{DynamicResource CheckpointBrush}" TextWrapping="Wrap" Name="OpenErrorText"
+                   Text="{Binding QuickLinks.OpenError}"
+                   IsVisible="{Binding QuickLinks.OpenError, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+
+        <TextBlock Classes="settingsSection" Text="{Binding QuickLinks.FormTitle}" Margin="0,10,0,0" />
+        <TextBox Name="LinkNameBox" Text="{Binding QuickLinks.NewLinkLabel}" PlaceholderText="Name" MaxLength="40"
+                 AutomationProperties.Name="Link name">
+            <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding QuickLinks.SaveQuickLinkCommand}" />
+                <KeyBinding Gesture="Escape" Command="{Binding QuickLinks.CancelEditCommand}" />
+            </TextBox.KeyBindings>
+        </TextBox>
+        <TextBox Name="LinkTargetBox" Text="{Binding QuickLinks.NewLinkTarget}" PlaceholderText="https://example.com or C:\Folder\file.pdf"
+                 AutomationProperties.Name="Web address or path">
+            <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding QuickLinks.SaveQuickLinkCommand}" />
+                <KeyBinding Gesture="Escape" Command="{Binding QuickLinks.CancelEditCommand}" />
+            </TextBox.KeyBindings>
+        </TextBox>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Name="SaveLinkButton" Classes="editPrimary" Content="{Binding QuickLinks.SaveButtonText}"
+                    Command="{Binding QuickLinks.SaveQuickLinkCommand}" />
+            <Button Name="CancelLinkButton" Content="Cancel" Command="{Binding QuickLinks.CancelEditCommand}"
+                    IsVisible="{Binding QuickLinks.IsEditing}" />
+        </StackPanel>
+        <TextBlock Name="LinkErrorText" Classes="dim" Foreground="{DynamicResource CheckpointBrush}" TextWrapping="Wrap"
+                   Text="{Binding QuickLinks.ErrorMessage}"
+                   IsVisible="{Binding QuickLinks.ErrorMessage, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+</UserControl>

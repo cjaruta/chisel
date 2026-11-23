@@ -21,6 +21,9 @@ public partial class MainWindow : Window
     private readonly string? _windowPlacementPath;
     private bool _spaceDown;
 
+    // Choosing a link in the "more" menu opens it (its own command) and closes the menu.
+    private void OnMoreLinkClick(object? sender, RoutedEventArgs e) => MoreLinksButton.Flyout?.Hide();
+
     public MainWindow() : this(AppPaths.GetWindowPlacementPath())
     {
     }
