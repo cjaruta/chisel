@@ -303,4 +303,25 @@ public class MigrationTests
         Assert.Equal(new[] { false, true }, tasks.Select(t => t.IsDone).ToArray());
         Assert.All(tasks, t => Assert.Null(t.DueDate));
     }
+
+    [Fact]
+    public void AddQuickLinkPosition_KeepsEveryExistingLinkInItsOldOrder()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123192602_AddTaskDueDate");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000022', 'Mail', 'https://mail.example.com')");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000021', 'Docs', 'https://docs.example.com')");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000023', 'News', 'https://news.example.com')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var links = new Chisel.Infrastructure.Repositories.QuickLinkRepository(readContext).GetAll();
+        Assert.Equal(new[] { "Mail", "Docs", "News" }, links.Select(l => l.Label).ToArray());
+        Assert.Equal(new[] { "https://mail.example.com", "https://docs.example.com", "https://news.example.com" }, links.Select(l => l.Url).ToArray());
+    }
 }

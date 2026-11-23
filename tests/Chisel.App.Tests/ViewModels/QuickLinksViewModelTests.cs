@@ -15,6 +15,8 @@ public class QuickLinksViewModelTests
         public void Add(QuickLink link) => _items.Add(link);
 
         public void Remove(Guid id) => _items.RemoveAll(l => l.Id == id);
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     [Fact]

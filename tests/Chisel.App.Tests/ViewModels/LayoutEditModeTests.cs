@@ -65,6 +65,8 @@ public class LayoutEditModeTests
         public IReadOnlyList<QuickLink> GetAll() => Array.Empty<QuickLink>();
         public void Add(QuickLink link) { }
         public void Remove(Guid id) { }
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     // A saved layout that differs from the default: three columns.

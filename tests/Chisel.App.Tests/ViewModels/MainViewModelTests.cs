@@ -52,6 +52,8 @@ public class MainViewModelTests
         public IReadOnlyList<QuickLink> GetAll() => Array.Empty<QuickLink>();
         public void Add(QuickLink link) { }
         public void Remove(Guid id) { }
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private static MainViewModel CreateViewModel(

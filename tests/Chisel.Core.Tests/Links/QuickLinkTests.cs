@@ -37,6 +37,13 @@ public class QuickLinkTests
     }
 
     [Fact]
+    public void Constructor_AcceptsAFullPath_ButNotAProgram()
+    {
+        Assert.Equal(@"C:\Docs", new QuickLink("Docs", @"C:\Docs").Url);
+        Assert.Throws<ArgumentException>(() => new QuickLink("Setup", @"C:\Tools\setup.exe"));
+    }
+
+    [Fact]
     public void Constructor_WithSavedState_RestoresId()
     {
         var id = Guid.NewGuid();

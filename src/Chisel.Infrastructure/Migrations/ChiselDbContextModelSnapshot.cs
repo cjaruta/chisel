@@ -361,6 +361,9 @@ namespace Chisel.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("TEXT");
