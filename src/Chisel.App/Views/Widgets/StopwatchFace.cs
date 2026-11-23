@@ -1,0 +1,269 @@
+using System;
+using System.Globalization;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using Chisel.Core.Clock;
+
+namespace Chisel.App.Views.Widgets;
+
+// The analog stopwatch: a round dial in the clock's look (a ClockStyle: fill, rim, markers, colors), a seconds hand that sweeps once
+// a minute, a small sub-dial for the minutes (one turn per 30 minutes) and, under it in the tool, the digital readout.
+//
+// Cheap by design. The still parts (rim, 60 marks, numbers, the sub-dial) are drawn once into a cached bitmap and the two hands are
+// cached shapes that are only rotated, so a frame allocates nothing. Frames are only asked for while the stopwatch is running and
+// the face is on screen and its window is not minimized, and then at about 30 a second; a stopped or hidden face costs nothing.
+public sealed class StopwatchFace : Control
+{
+    public static readonly StyledProperty<ClockStyle> StyleProperty = AvaloniaProperty.Register<StopwatchFace, ClockStyle>(nameof(Style), ClockStyle.Default);
+
+    private const double EdgeGap = 6;
+    private const double Pad = 6;
+    private const double SubOffset = 0.36;
+    private const double SubRadius = 0.26;
+    private static readonly TimeSpan FrameGap = TimeSpan.FromMilliseconds(30);
+
+    private sealed record BuiltFor(ClockStyle Style, double Radius, double Scale, IBrush Text, IBrush Dim, IBrush Grid, IBrush Accent);
+
+    private readonly Action<TimeSpan> _frame;
+    private BuiltFor? _built;
+    private RenderTargetBitmap? _dial;
+    private ClockFace.Hand? _seconds, _minutes;
+    private IBrush _capBrush = null!;
+    private bool _running;
+    private bool _animating;
+    private TimeSpan _lastFrame;
+    private IDisposable? _windowState;
+
+    static StopwatchFace() => AffectsRender<StopwatchFace>(StyleProperty);
+
+    public StopwatchFace()
+    {
+        _frame = OnFrame; // made once: asking for the next frame allocates nothing
+    }
+
+    public ClockStyle Style { get => GetValue(StyleProperty); set => SetValue(StyleProperty, value); }
+
+    // The elapsed time in seconds, read at every frame (the owner keeps the state; this holds none).
+    public Func<double>? ElapsedSource { get; set; }
+
+    // Whether frames are being asked for right now.
+    public bool IsAnimating => _animating;
+
+    // Whether the stopwatch is running: the owner sets this, and it is the only thing that starts frames.
+    public bool IsRunning
+    {
+        get => _running;
+        set
+        {
+            if (_running == value)
+            {
+                return;
+            }
+            _running = value;
+            UpdateAnimation();
+            InvalidateVisual();
+        }
+    }
+
+    // The elapsed time, to read aloud.
+    public static string Describe(TimeSpan elapsed) => $"Stopwatch, {ClockToolsFormat.Stopwatch(elapsed)}";
+
+    public double FaceRadius => Math.Min(Bounds.Width, Bounds.Height) / 2 - EdgeGap;
+
+    private IBrush Brush(string key) => Theming.ThemeService.Brush(this, key);
+
+    // Frames -----------------------------------------------------------------------------------------------------------
+
+    private bool ShouldAnimate => _running && VisualRoot is not null && IsEffectivelyVisible
+        && !(TopLevel.GetTopLevel(this) is Window { WindowState: WindowState.Minimized });
+
+    private void UpdateAnimation()
+    {
+        var want = ShouldAnimate;
+        if (want && !_animating)
+        {
+            _animating = true;
+            if (TopLevel.GetTopLevel(this) is { } top)
+            {
+                top.RequestAnimationFrame(_frame);
+            }
+        }
+        else if (!want)
+        {
+            _animating = false;
+        }
+    }
+
+    private void OnFrame(TimeSpan time)
+    {
+        if (!_animating)
+        {
+            return;
+        }
+        if (!ShouldAnimate)
+        {
+            _animating = false;
+            return;
+        }
+        if (time - _lastFrame >= FrameGap)
+        {
+            _lastFrame = time;
+            InvalidateVisual();
+        }
+        if (TopLevel.GetTopLevel(this) is { } top)
+        {
+            top.RequestAnimationFrame(_frame);
+        }
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (TopLevel.GetTopLevel(this) is Window window)
+        {
+            _windowState = window.GetObservable(Window.WindowStateProperty).Subscribe(new StateObserver(this));
+        }
+        UpdateAnimation();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _animating = false;
+        _windowState?.Dispose();
+        _windowState = null;
+        _dial?.Dispose();
+        _dial = null;
+        _built = null;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty || change.Property.Name == nameof(IsEffectivelyVisible))
+        {
+            UpdateAnimation();
+        }
+    }
+
+    private sealed class StateObserver(StopwatchFace face) : IObserver<WindowState>
+    {
+        public void OnCompleted() { }
+        public void OnError(Exception error) { }
+        public void OnNext(WindowState value) => face.UpdateAnimation();
+    }
+
+    // Drawing ----------------------------------------------------------------------------------------------------------
+
+    public override void Render(DrawingContext context) => Draw(context);
+
+    public void Draw(DrawingContext context)
+    {
+        var radius = FaceRadius;
+        if (radius <= 8)
+        {
+            return;
+        }
+        var style = Style;
+        EnsureCache(style, radius);
+        var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        var side = 2 * (radius + Pad);
+        context.DrawImage(_dial!, new Rect(center.X - radius - Pad, center.Y - radius - Pad, side, side));
+
+        var angles = StopwatchDial.Angles(ElapsedSource?.Invoke() ?? 0);
+        ClockFace.DrawHand(context, new Point(center.X, center.Y + radius * SubOffset), angles.Minutes, _minutes!);
+        ClockFace.DrawHand(context, center, angles.Seconds, _seconds!);
+        var cap = Math.Max(3, style.SecondThickness * 2.2);
+        context.DrawEllipse(_capBrush, null, center, cap, cap);
+    }
+
+    private void EnsureCache(ClockStyle style, double radius)
+    {
+        var scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        var text = Brush("TextBrush");
+        var dim = Brush("DimTextBrush");
+        var grid = Brush("GridLineBrush");
+        var accent = Brush("AccentBrush");
+        if (_built is { } b && _dial is not null && b.Style == style && b.Radius == radius && b.Scale == scale
+            && ReferenceEquals(b.Text, text) && ReferenceEquals(b.Dim, dim) && ReferenceEquals(b.Grid, grid) && ReferenceEquals(b.Accent, accent))
+        {
+            return;
+        }
+        _built = new BuiltFor(style, radius, scale, text, dim, grid, accent);
+        var shades = style.Colors;
+        var secondBrush = ClockFace.Part(shades.Second, accent);
+        var minuteBrush = ClockFace.Part(shades.Hour, text);
+        BuildDial(style, radius, scale, ClockFace.Part(shades.Dial, grid), ClockFace.Part(shades.Markers, dim), ClockFace.Part(shades.Numerals, text),
+            style.DialFill is { } fill ? ClockFace.Part(fill, text) : null);
+        _seconds = new ClockFace.Hand(null, new Pen(secondBrush, Math.Max(1.2, style.SecondThickness), lineCap: PenLineCap.Round),
+            new Point(0, radius * 0.18), new Point(0, -radius * 0.88), secondBrush);
+        var sub = radius * SubRadius;
+        _minutes = new ClockFace.Hand(null, new Pen(minuteBrush, Math.Max(1.6, style.MinuteThickness * 0.6), lineCap: PenLineCap.Round),
+            new Point(0, sub * 0.15), new Point(0, -sub * 0.85), minuteBrush);
+        _capBrush = secondBrush;
+    }
+
+    private void BuildDial(ClockStyle style, double radius, double scale, IBrush rimBrush, IBrush markerBrush, IBrush numeralBrush, IBrush? fillBrush)
+    {
+        var side = 2 * (radius + Pad);
+        _dial?.Dispose();
+        _dial = new RenderTargetBitmap(new PixelSize((int)Math.Ceiling(side * scale), (int)Math.Ceiling(side * scale)), new Vector(96 * scale, 96 * scale));
+        using var context = _dial.CreateDrawingContext();
+        var center = new Point(side / 2, side / 2);
+        ClockFace.PaintShape(context, style, center, radius, fillBrush, style.BorderWidth > 0 ? new Pen(rimBrush, style.BorderWidth) : null);
+
+        // 60 second marks, a longer one every five; the style's marker shape (ticks when it has none).
+        var inset = style.BorderWidth / 2 + 3;
+        var thin = new Pen(markerBrush, 1, lineCap: PenLineCap.Round);
+        var thick = new Pen(markerBrush, style.Markers == MarkerStyle.Bars ? 4 : 2.5, lineCap: PenLineCap.Round);
+        for (var i = 0; i < 60; i++)
+        {
+            var angle = i * 6;
+            var five = i % 5 == 0;
+            var outer = ClockFace.Edge(style.Shape, radius, angle) - inset;
+            if (style.Markers == MarkerStyle.Dots)
+            {
+                var dot = five ? 3.0 : 1.4;
+                context.DrawEllipse(markerBrush, null, ClockFace.PointAt(center, angle, outer - dot), dot, dot);
+            }
+            else
+            {
+                var length = radius * (five ? 0.1 : 0.04);
+                context.DrawLine(five ? thick : thin, ClockFace.PointAt(center, angle, outer - length), ClockFace.PointAt(center, angle, outer));
+            }
+        }
+
+        // The seconds, numbered every ten (the top one reads 60).
+        var fontSize = Math.Max(8, radius * 0.13);
+        for (var s = 10; s <= 60; s += 10)
+        {
+            var angle = s % 60 * 6;
+            var label = new FormattedText(s.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold), fontSize, numeralBrush);
+            var at = ClockFace.PointAt(center, angle, ClockFace.Edge(style.Shape, radius, angle) * 0.75);
+            context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+        }
+
+        // The minutes sub-dial below the middle: 30 marks (one turn is half an hour), numbered 10, 20 and 30.
+        var sub = radius * SubRadius;
+        var subCenter = new Point(center.X, center.Y + radius * SubOffset);
+        context.DrawEllipse(null, thin, subCenter, sub, sub);
+        for (var m = 0; m < 30; m++)
+        {
+            var angle = m * 12;
+            var longMark = m % 5 == 0;
+            context.DrawLine(thin, ClockFace.PointAt(subCenter, angle, sub * (longMark ? 0.74 : 0.86)), ClockFace.PointAt(subCenter, angle, sub * 0.95));
+        }
+        var subFont = Math.Max(6, sub * 0.34);
+        foreach (var m in new[] { 10, 20, 30 })
+        {
+            var label = new FormattedText(m.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                new Typeface(FontFamily.Default), subFont, numeralBrush);
+            var at = ClockFace.PointAt(subCenter, m % 30 * 12, sub * 0.52);
+            context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+        }
+    }
+}

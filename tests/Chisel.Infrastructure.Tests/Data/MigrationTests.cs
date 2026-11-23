@@ -344,4 +344,28 @@ public class MigrationTests
         Assert.Equal(Chisel.Core.Clock.NumeralStyle.Roman, style.Numerals);
         Assert.Empty(new Chisel.Infrastructure.Repositories.ClockFaceRepository(readContext).Load());
     }
+
+    [Fact]
+    public void AddClockDialKinds_KeepsTheSavedStyle_AsAPlainDialWithADigitalStopwatch()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123205933_AddClockFaces");
+            context.Database.ExecuteSqlRaw("INSERT INTO ClockStyles (Id, Alignment, Shape, BorderWidth, Markers, EmphasizeQuarters, Numerals, Hands, HourThickness, MinuteThickness, SecondThickness, ShowSeconds, DialColor) VALUES (1, 0, 1, 3, 2, 1, 4, 2, 5, 4, 2, 1, '#112233')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var style = new Chisel.Infrastructure.Repositories.ClockStyleRepository(readContext).Get();
+        Assert.Equal(Chisel.Core.Clock.DialShape.Square, style.Shape);
+        Assert.Equal(Chisel.Core.Clock.NumeralStyle.Roman, style.Numerals);
+        Assert.Equal("#112233", style.Colors.Dial);
+        Assert.Equal(Chisel.Core.Clock.DialKind.Standard, style.Kind);
+        Assert.Null(style.DialFill);
+        Assert.False(style.Tachymeter || style.MinuteTrack);
+        Assert.Equal(Chisel.Core.Clock.StopwatchDisplay.Digital, style.Stopwatch);
+    }
 }

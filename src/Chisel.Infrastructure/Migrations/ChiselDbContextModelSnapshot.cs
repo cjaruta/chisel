@@ -88,6 +88,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<string>("DialColor")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DialFill")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("EmphasizeQuarters")
                         .HasColumnType("INTEGER");
 
@@ -100,6 +103,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<double>("HourThickness")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("MarkerColor")
                         .HasColumnType("TEXT");
 
@@ -111,6 +117,9 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.Property<double>("MinuteThickness")
                         .HasColumnType("REAL");
+
+                    b.Property<bool>("MinuteTrack")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("NumeralColor")
                         .HasColumnType("TEXT");
@@ -128,6 +137,12 @@ namespace Chisel.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("ShowSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Stopwatch")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Tachymeter")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

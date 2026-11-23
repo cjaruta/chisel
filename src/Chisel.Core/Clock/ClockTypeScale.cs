@@ -4,7 +4,7 @@ namespace Chisel.Core.Clock;
 // app (body 14, caption 12, title 16); everything grows and shrinks together with the smaller side of the slot, so the tools keep
 // the same relative sizes as the clock beside them instead of each view carrying its own fixed font and button sizes.
 public sealed record ClockTypeScale(double Factor, double Display, double Title, double Body, double Caption, double Pad, double Gap,
-    double ButtonMinWidth, double ButtonPadX, double ButtonPadY, bool Compact)
+    double ButtonMinWidth, double ButtonPadX, double ButtonPadY, bool Compact, double DialSize)
 {
     // The slot size (its smaller side, in pixels) at which the base sizes apply.
     public const double Reference = 260;
@@ -28,6 +28,8 @@ public sealed record ClockTypeScale(double Factor, double Display, double Title,
             ButtonMinWidth: body * 5,
             ButtonPadX: Size(10, 8),
             ButtonPadY: Size(4, 3),
-            Compact: height < 150 || width < 170);
+            Compact: height < 150 || width < 170,
+            // The analog stopwatch's dial: about half of the slot's height, never wider than the slot; none when it is compact.
+            DialSize: height < 150 || width < 170 ? 0 : Math.Clamp(Math.Min(height * 0.5, width * 0.85), 80, 260));
     }
 }

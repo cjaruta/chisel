@@ -5,9 +5,13 @@ namespace Chisel.Core.Clock;
 
 public enum ClockAlignment { Left, Center, Right }
 public enum DialShape { Round, Square, RoundedSquare }
-public enum MarkerStyle { None, Ticks, Dots, Bars }
+public enum MarkerStyle { None, Ticks, Dots, Bars, Lume }
 public enum NumeralStyle { None, Twelve, Four, All, Roman }
-public enum HandStyle { Line, Tapered, Baton, Leaf }
+public enum HandStyle { Line, Tapered, Baton, Leaf, Sword }
+// What the dial is: a 12-hour dial, a 24-hour dial (the hour hand goes round once a day), or a chronograph (12-hour with sub-dials).
+public enum DialKind { Standard, TwentyFourHour, Chronograph }
+// How the stopwatch tool shows the time: digits, or a round dial with a sweeping seconds hand and a minutes sub-dial.
+public enum StopwatchDisplay { Digital, Analog }
 
 // Colors per part as #RRGGBB; null means the theme's own color for that part.
 public readonly record struct ClockColors(string? Dial, string? Markers, string? Numerals, string? Hour, string? Minute, string? Second)
@@ -41,6 +45,14 @@ public sealed record ClockStyle
     public double SecondThickness { get; init; } = 1.5;
     public bool ShowSeconds { get; init; } = true;
     public ClockColors Colors { get; init; }
+    public DialKind Kind { get; init; } = DialKind.Standard;
+    // A solid dial color (#RRGGBB), or null for no fill (the card shows through).
+    public string? DialFill { get; init; }
+    // A ring of 60 small marks just inside the rim.
+    public bool MinuteTrack { get; init; }
+    // The speed scale around the outside (see ClockTachymeter).
+    public bool Tachymeter { get; init; }
+    public StopwatchDisplay Stopwatch { get; init; } = StopwatchDisplay.Digital;
 
     [JsonIgnore]
     public string? DialColor { get => Colors.Dial; init => Colors = Colors with { Dial = value }; }
@@ -54,10 +66,12 @@ public sealed record ClockStyle
         MinuteThickness = Math.Clamp(MinuteThickness, MinThickness, MaxThickness),
         SecondThickness = Math.Clamp(SecondThickness, MinThickness, MaxThickness),
         Colors = Colors.Normalized(),
+        DialFill = Rgb.TryParse(DialFill, out var fill) ? fill.ToHex() : null,
     };
 }
 
-public sealed record ClockPreset(string Id, string Title, ClockStyle Style);
+// Colors: a face with a solid dial brings its own colors (they have to read on that dial); a face without keeps the user's.
+public sealed record ClockPreset(string Id, string Title, ClockStyle Style, ClockColors? Colors = null);
 
 public static class ClockPresets
 {
@@ -69,15 +83,33 @@ public static class ClockPresets
         new("ticks", "Ticks", new ClockStyle { Markers = MarkerStyle.Ticks, Numerals = NumeralStyle.None, Hands = HandStyle.Tapered, BorderWidth = 3 }),
         new("modern", "Modern", new ClockStyle { Shape = DialShape.RoundedSquare, Markers = MarkerStyle.Bars, Numerals = NumeralStyle.Four, Hands = HandStyle.Baton, BorderWidth = 3, HourThickness = 6, MinuteThickness = 4 }),
         new("dots", "Dots", new ClockStyle { Markers = MarkerStyle.Dots, Numerals = NumeralStyle.None, Hands = HandStyle.Line, BorderWidth = 0, HourThickness = 5, MinuteThickness = 3 }),
+        // Classic white dial with Roman numerals.
+        new("classic", "Classic", new ClockStyle { Markers = MarkerStyle.Ticks, Numerals = NumeralStyle.Roman, Hands = HandStyle.Leaf, BorderWidth = 3, HourThickness = 5, MinuteThickness = 3, SecondThickness = 1.2, DialFill = "#F6F3EA" },
+            new ClockColors("#2A2A2E", "#2A2A2E", "#1A1A1E", "#1A1A1E", "#1A1A1E", "#B3261E")),
+        // Minimal modern dial: thin hands, no numbers, no markers.
+        new("slim", "Slim", new ClockStyle { Markers = MarkerStyle.None, EmphasizeQuarters = false, Numerals = NumeralStyle.None, Hands = HandStyle.Line, BorderWidth = 1, HourThickness = 2, MinuteThickness = 1.5, SecondThickness = 1 }),
+        // Dark chronograph: two sub-dials, a minute track and a tachymeter ring.
+        new("chrono", "Chrono", new ClockStyle { Kind = DialKind.Chronograph, Markers = MarkerStyle.Ticks, Numerals = NumeralStyle.None, Hands = HandStyle.Baton, BorderWidth = 3, HourThickness = 5, MinuteThickness = 3.5, SecondThickness = 1.2, MinuteTrack = true, Tachymeter = true, DialFill = "#101216" },
+            new ClockColors("#8A93A0", "#C9D1DB", "#E6EAF0", "#E6EAF0", "#E6EAF0", "#FF8A3D")),
+        // A 24-hour dial: the hour hand goes once round a day, midnight at the top.
+        new("hours24", "24 hour", new ClockStyle { Kind = DialKind.TwentyFourHour, Markers = MarkerStyle.Ticks, Numerals = NumeralStyle.All, Hands = HandStyle.Tapered, BorderWidth = 2, HourThickness = 5, MinuteThickness = 3 }),
+        // Retro railway dial: every number, a minute track and heavy black hands on ivory.
+        new("railway", "Railway", new ClockStyle { Markers = MarkerStyle.Ticks, Numerals = NumeralStyle.All, Hands = HandStyle.Baton, BorderWidth = 4, HourThickness = 7, MinuteThickness = 5, SecondThickness = 1.5, MinuteTrack = true, DialFill = "#F4F1E8" },
+            new ClockColors("#1B1B1B", "#1B1B1B", "#1B1B1B", "#1B1B1B", "#1B1B1B", "#C62828")),
+        // Pilot dial: luminous markers and sword hands on black.
+        new("pilot", "Pilot", new ClockStyle { Markers = MarkerStyle.Lume, Numerals = NumeralStyle.Four, Hands = HandStyle.Sword, BorderWidth = 3, HourThickness = 6, MinuteThickness = 4.5, SecondThickness = 1.5, MinuteTrack = true, DialFill = "#0A0B0D" },
+            new ClockColors("#6B7280", "#D8F5A2", "#D8F5A2", "#D8F5A2", "#D8F5A2", "#FF9F43")),
     ];
 
-    // The preset's look on top of the current style; alignment and the seconds switch are the user's, not the look's.
+    // The preset's look on top of the current style; alignment, the seconds switch and the stopwatch display are the user's, not the
+    // look's. Colors too, unless the face has a solid dial and so brings colors that read on it.
     public static ClockStyle Apply(string id, ClockStyle current) =>
         All.FirstOrDefault(p => p.Id == id) is { } preset
-            ? preset.Style with { Alignment = current.Alignment, ShowSeconds = current.ShowSeconds, Colors = current.Colors }
+            ? preset.Style with { Alignment = current.Alignment, ShowSeconds = current.ShowSeconds, Stopwatch = current.Stopwatch, Colors = preset.Colors ?? current.Colors }
             : current;
 
-    // The preset a style matches exactly (ignoring alignment, seconds and colors), or null for a custom look.
+    // The preset a style matches exactly (ignoring alignment, seconds, the stopwatch display and the colors of a theme face), or null
+    // for a custom look.
     public static string? IdOf(ClockStyle style) =>
         All.FirstOrDefault(p => Apply(p.Id, style) == style)?.Id;
 }

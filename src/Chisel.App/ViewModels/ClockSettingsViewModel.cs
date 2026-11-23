@@ -23,9 +23,11 @@ public partial class ClockSettingsViewModel : ViewModelBase
     public static IReadOnlyList<string> SwatchNames { get; } = ClockSwatches.All.Select(s => s.Title).ToList();
     public static IReadOnlyList<string> AlignmentNames { get; } = ["Left", "Center", "Right"];
     public static IReadOnlyList<string> ShapeNames { get; } = ["Round", "Square", "Rounded square"];
-    public static IReadOnlyList<string> MarkerNames { get; } = ["None", "Ticks", "Dots", "Bars"];
+    public static IReadOnlyList<string> MarkerNames { get; } = ["None", "Ticks", "Dots", "Bars", "Luminous"];
     public static IReadOnlyList<string> NumeralNames { get; } = ["None", "12 only", "12 / 3 / 6 / 9", "All 12", "Roman"];
-    public static IReadOnlyList<string> HandNames { get; } = ["Line", "Tapered", "Baton", "Leaf"];
+    public static IReadOnlyList<string> HandNames { get; } = ["Line", "Tapered", "Baton", "Leaf", "Sword"];
+    public static IReadOnlyList<string> KindNames { get; } = ["Standard", "24-hour", "Chronograph"];
+    public static IReadOnlyList<string> StopwatchNames { get; } = ["Digital", "Analog"];
 
     public double MinThickness => ClockStyle.MinThickness;
     public double MaxThickness => ClockStyle.MaxThickness;
@@ -68,6 +70,20 @@ public partial class ClockSettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial int HandIndex { get; set; }
+
+    // The dial: standard 12-hour, 24-hour, or a chronograph with sub-dials; a minute track; a tachymeter ring.
+    [ObservableProperty]
+    public partial int KindIndex { get; set; }
+
+    [ObservableProperty]
+    public partial bool MinuteTrack { get; set; }
+
+    [ObservableProperty]
+    public partial bool Tachymeter { get; set; }
+
+    // How the stopwatch tool shows the time: digits or an analog dial.
+    [ObservableProperty]
+    public partial int StopwatchIndex { get; set; }
 
     [ObservableProperty]
     public partial double HourThickness { get; set; }
@@ -166,6 +182,10 @@ public partial class ClockSettingsViewModel : ViewModelBase
             nameof(EmphasizeQuarters) => s => s with { EmphasizeQuarters = EmphasizeQuarters },
             nameof(NumeralIndex) => s => s with { Numerals = (NumeralStyle)NumeralIndex },
             nameof(HandIndex) => s => s with { Hands = (HandStyle)HandIndex },
+            nameof(KindIndex) => s => s with { Kind = (DialKind)KindIndex },
+            nameof(MinuteTrack) => s => s with { MinuteTrack = MinuteTrack },
+            nameof(Tachymeter) => s => s with { Tachymeter = Tachymeter },
+            nameof(StopwatchIndex) => s => s with { Stopwatch = (StopwatchDisplay)StopwatchIndex },
             nameof(HourThickness) => s => s with { HourThickness = HourThickness },
             nameof(MinuteThickness) => s => s with { MinuteThickness = MinuteThickness },
             nameof(SecondThickness) => s => s with { SecondThickness = SecondThickness },
@@ -207,6 +227,10 @@ public partial class ClockSettingsViewModel : ViewModelBase
         EmphasizeQuarters = s.EmphasizeQuarters;
         NumeralIndex = (int)s.Numerals;
         HandIndex = (int)s.Hands;
+        KindIndex = (int)s.Kind;
+        MinuteTrack = s.MinuteTrack;
+        Tachymeter = s.Tachymeter;
+        StopwatchIndex = (int)s.Stopwatch;
         HourThickness = s.HourThickness;
         MinuteThickness = s.MinuteThickness;
         SecondThickness = s.SecondThickness;

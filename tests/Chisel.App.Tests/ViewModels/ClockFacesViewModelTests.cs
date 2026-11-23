@@ -251,4 +251,26 @@ public class ClockFacesViewModelTests
         Assert.True(other.Import(text)); // a second copy gets its own name
         Assert.Equal(new[] { "Share", "Share copy" }, Titles(other.Custom));
     }
+
+    [Fact]
+    public void ANewDialFace_CanBeSavedAsACustomFace_AndComesBackWithEverythingItHad()
+    {
+        var rig = new Rig();
+        var faces = rig.Faces;
+        rig.Settings.PresetIndex = ClockPresets.All.ToList().FindIndex(p => p.Id == "chrono");
+        rig.Settings.StopwatchIndex = (int)StopwatchDisplay.Analog;
+        faces.NewName = "My chrono";
+        faces.SaveAsNewCommand.Execute(null);
+
+        faces.ApplyCommand.Execute(faces.BuiltIn.Single(f => f.Title == "Roman"));
+        Assert.Equal(DialKind.Standard, rig.Settings.Style.Kind);
+        faces.ApplyCommand.Execute(faces.Custom.Single());
+
+        var style = rig.Settings.Style;
+        Assert.Equal(DialKind.Chronograph, style.Kind);
+        Assert.True(style.Tachymeter && style.MinuteTrack);
+        Assert.Equal("#101216", style.DialFill);
+        Assert.Equal(StopwatchDisplay.Analog, style.Stopwatch);
+        Assert.Equal("#FF8A3D", style.Colors.Second);
+    }
 }

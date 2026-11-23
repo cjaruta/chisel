@@ -15,6 +15,13 @@ public static class ClockLabels
         _ => [],
     };
 
+    // The labels of a 24-hour dial: every three hours, midnight ("24") at the top.
+    public static IReadOnlyList<ClockLabel> TwentyFour() =>
+        new ClockLabel[] { new(0, "24"), new(3, "3"), new(6, "6"), new(9, "9"), new(12, "12"), new(15, "15"), new(18, "18"), new(21, "21") };
+
     // Degrees clockwise from 12 for an hour label.
     public static double AngleOf(int hour) => hour % 12 * 30;
+
+    // The same on a 24-hour dial.
+    public static double AngleOf24(int hour) => hour % 24 * 15;
 }

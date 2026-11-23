@@ -12,6 +12,7 @@ public static class ClockStyleMapper
         HourThickness = style.HourThickness, MinuteThickness = style.MinuteThickness, SecondThickness = style.SecondThickness,
         ShowSeconds = style.ShowSeconds, DialColor = style.Colors.Dial, MarkerColor = style.Colors.Markers,
         NumeralColor = style.Colors.Numerals, HourColor = style.Colors.Hour, MinuteColor = style.Colors.Minute, SecondColor = style.Colors.Second,
+        Kind = (int)style.Kind, DialFill = style.DialFill, MinuteTrack = style.MinuteTrack, Tachymeter = style.Tachymeter, Stopwatch = (int)style.Stopwatch,
     };
 
     public static ClockStyle ToDomain(this ClockStyleEntity e) => new ClockStyle
@@ -21,5 +22,8 @@ public static class ClockStyleMapper
         HourThickness = e.HourThickness, MinuteThickness = e.MinuteThickness, SecondThickness = e.SecondThickness,
         ShowSeconds = e.ShowSeconds,
         Colors = new ClockColors(e.DialColor, e.MarkerColor, e.NumeralColor, e.HourColor, e.MinuteColor, e.SecondColor),
+        Kind = Enum.IsDefined((DialKind)e.Kind) ? (DialKind)e.Kind : DialKind.Standard, DialFill = e.DialFill,
+        MinuteTrack = e.MinuteTrack, Tachymeter = e.Tachymeter,
+        Stopwatch = Enum.IsDefined((StopwatchDisplay)e.Stopwatch) ? (StopwatchDisplay)e.Stopwatch : StopwatchDisplay.Digital,
     }.Normalized();
 }

@@ -13,4 +13,7 @@ public static class ClockMath
         var hour = time.Hour % 12 + minute / 60.0;
         return new HandAngles(hour * 30, minute * 6, time.Second * 6);
     }
+
+    // The hour hand of a 24-hour dial: once round a day, midnight at the top.
+    public static double Hour24Angle(TimeOnly time) => (time.Hour + time.Minute / 60.0 + time.Second / 3600.0) * 15;
 }

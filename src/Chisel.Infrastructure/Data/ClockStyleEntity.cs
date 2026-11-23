@@ -21,4 +21,9 @@ public class ClockStyleEntity
     public string? HourColor { get; set; }
     public string? MinuteColor { get; set; }
     public string? SecondColor { get; set; }
+    public int Kind { get; set; }
+    public string? DialFill { get; set; }
+    public bool MinuteTrack { get; set; }
+    public bool Tachymeter { get; set; }
+    public int Stopwatch { get; set; }
 }

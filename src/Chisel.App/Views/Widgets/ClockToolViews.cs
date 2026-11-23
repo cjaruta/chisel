@@ -63,7 +63,7 @@ internal static class ClockToolViews
         {
             ClockTool.Clock => Face(main, disposables),
             ClockTool.Timer => Timer(main.ClockTools, host, disposables, out rescale),
-            ClockTool.Stopwatch => Stopwatch(main.ClockTools, out rescale),
+            ClockTool.Stopwatch => Stopwatch(main, disposables, out rescale),
             ClockTool.Alarm => Alarm(main.Alarms, disposables, out rescale),
             _ => new Panel { Name = "ClockEmpty" },
         };
@@ -76,6 +76,8 @@ internal static class ClockToolViews
         disposables.Add(face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = main.AnalogClock }));
+        disposables.Add(face.Bind(ClockFace.Hour24AngleProperty, new Binding(nameof(AnalogClockViewModel.Hour24Angle)) { Source = main.AnalogClock }));
+        disposables.Add(face.Bind(Avalonia.Automation.AutomationProperties.NameProperty, new Binding(nameof(AnalogClockViewModel.Description)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = main.ClockSettings }));
         return face;
     }
@@ -130,8 +132,10 @@ internal static class ClockToolViews
         return Centered("ClockTimerPanel", stack);
     }
 
-    private static Control Stopwatch(ClockToolsViewModel tools, out Action<ClockTypeScale> rescale)
+    private static Control Stopwatch(MainViewModel main, List<IDisposable> disposables, out Action<ClockTypeScale> rescale)
     {
+        var tools = main.ClockTools;
+        var settings = main.ClockSettings;
         var text = Display("ClockStopwatchText");
         text.Bind(TextBlock.TextProperty, new Binding(nameof(ClockToolsViewModel.StopwatchText)) { Source = tools });
         var start = Primary("ClockStopwatchStart");
@@ -144,9 +148,49 @@ internal static class ClockToolViews
         var lapList = new ItemsControl { Name = "ClockLaps", ItemsSource = tools.LapTexts };
         var laps = new ScrollViewer { Content = lapList, HorizontalAlignment = HorizontalAlignment.Center };
 
-        var stack = Stack(text, actions, laps);
+        // The analog face (when the look asks for it and there is room): a dial above the readout. Hidden, it costs nothing.
+        var face = new StopwatchFace { Name = "ClockStopwatchFace", IsHitTestVisible = false, IsVisible = false, ElapsedSource = tools.StopwatchElapsedSeconds, HorizontalAlignment = HorizontalAlignment.Center };
+        disposables.Add(face.Bind(StopwatchFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = settings }));
+        var automation = new Binding(nameof(ClockToolsViewModel.StopwatchText)) { Source = tools, StringFormat = "Stopwatch, {0}" };
+        disposables.Add(face.Bind(Avalonia.Automation.AutomationProperties.NameProperty, automation));
+        disposables.Add(text.Bind(Avalonia.Automation.AutomationProperties.NameProperty, automation));
+        var analogWanted = false;
+        var room = 0.0;
+        void ShowFace()
+        {
+            face.IsVisible = analogWanted && room > 0;
+            face.Width = face.Height = room;
+        }
+        void OnTools(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ClockToolsViewModel.StopwatchRunning))
+            {
+                face.IsRunning = tools.StopwatchRunning;
+            }
+            if (e.PropertyName is nameof(ClockToolsViewModel.StopwatchText) or nameof(ClockToolsViewModel.StopwatchRunning) && face.IsVisible && !tools.StopwatchRunning)
+            {
+                face.InvalidateVisual(); // stopped: draw the time it stopped at, once
+            }
+        }
+        void OnSettings(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ClockSettingsViewModel.Style))
+            {
+                analogWanted = settings.Style.Stopwatch == StopwatchDisplay.Analog;
+                ShowFace();
+            }
+        }
+        tools.PropertyChanged += OnTools;
+        settings.PropertyChanged += OnSettings;
+        disposables.Add(new ActionDisposable(() => { tools.PropertyChanged -= OnTools; settings.PropertyChanged -= OnSettings; }));
+        analogWanted = settings.Style.Stopwatch == StopwatchDisplay.Analog;
+        face.IsRunning = tools.StopwatchRunning;
+
+        var stack = Stack(face, text, actions, laps);
         rescale = s =>
         {
+            room = s.DialSize;
+            ShowFace();
             text.FontSize = s.Display;
             Fit(stack, s);
             Fit(start, s, true);
@@ -155,7 +199,8 @@ internal static class ClockToolViews
             Fit(actions, s);
             lapList.FontSize = s.Caption;
             laps.MaxHeight = s.Caption * 5;
-            laps.IsVisible = !s.Compact; // the lap list needs room; the time and buttons come first
+            // The lap list needs room; the time and buttons come first, then the dial, then the laps.
+            laps.IsVisible = !s.Compact && (!analogWanted || s.DialSize >= 160);
         };
         return Centered("ClockStopwatchPanel", stack);
     }

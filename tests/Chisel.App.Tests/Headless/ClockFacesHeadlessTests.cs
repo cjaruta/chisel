@@ -117,4 +117,47 @@ public class ClockFacesHeadlessTests
         Assert.Contains("name", error.Text, StringComparison.OrdinalIgnoreCase);
         window.Close();
     }
+
+    [AvaloniaTheory]
+    [InlineData("classic")]
+    [InlineData("slim")]
+    [InlineData("chrono")]
+    [InlineData("hours24")]
+    [InlineData("railway")]
+    [InlineData("pilot")]
+    public void TheNewDials_AreInThePickerWithPreviews_AndChoosingOneAppliesIt(string id)
+    {
+        var (window, main) = OpenFaceTab();
+
+        var card = Named<Button>(window, "ClockPreset_" + id);
+        Assert.NotNull(Named<Image>(window, "ClockPresetThumb_" + id).Source);
+        card.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var preset = ClockPresets.All.Single(p => p.Id == id);
+        Assert.Equal(preset.Style.Kind, main.ClockSettings.Style.Kind);
+        Assert.Equal(preset.Style.Markers, main.ClockSettings.Style.Markers);
+        Assert.Equal(preset.Style.DialFill, main.ClockSettings.Style.DialFill);
+        Assert.Contains("selected", card.Classes);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheDialOptionsAndTheStopwatchChoice_AreOnThePage()
+    {
+        var (window, main) = OpenFaceTab();
+        Named<Expander>(window, "ClockCustomize_Dial").IsExpanded = true; // the options sit in the collapsed Dial group
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotNull(Named<ComboBox>(window, "ClockKind"));
+        Assert.NotNull(Named<CheckBox>(window, "ClockMinuteTrack"));
+        Assert.NotNull(Named<CheckBox>(window, "ClockTachymeter"));
+        main.ClockSettings.SelectTabCommand.Execute(ClockSettingsTab.Behavior);
+        Dispatcher.UIThread.RunJobs();
+        var stopwatch = Named<ComboBox>(window, "ClockStopwatchDisplay");
+        Assert.Equal(0, stopwatch.SelectedIndex);
+        stopwatch.SelectedIndex = 1;
+        Assert.Equal(StopwatchDisplay.Analog, main.ClockSettings.Style.Stopwatch);
+        window.Close();
+    }
 }

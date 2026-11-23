@@ -163,7 +163,8 @@ public partial class ClockSettingsPage : UserControl
     }
 
     private static Bitmap Thumbnail(ClockPreset preset, ClockSettingsViewModel settings) =>
-        ClockThumbnail.Render(preset.Style with { Alignment = ClockAlignment.Center, ShowSeconds = false, Colors = settings.Style.Colors });
+        // A face with a solid dial wears its own colors (they read on it); the others wear the colors chosen now.
+        ClockThumbnail.Render(preset.Style with { Alignment = ClockAlignment.Center, ShowSeconds = false, Colors = preset.Colors ?? settings.Style.Colors });
 
     private void MarkCurrent()
     {

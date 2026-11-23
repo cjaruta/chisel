@@ -50,6 +50,9 @@ public partial class ClockToolsViewModel : ViewModelBase
         _ => "Start",
     };
 
+    // The stopwatch's elapsed time in seconds right now, for the analog face to read at every frame (no allocation).
+    public double StopwatchElapsedSeconds() => _stopwatch.Elapsed(_time.GetUtcNow()).TotalSeconds;
+
     public string StopwatchButtonText => StopwatchRunning ? "Pause" : _stopwatch.Banked > TimeSpan.Zero ? "Resume" : "Start";
 
     // The timer's length can only change while it is idle.
