@@ -94,7 +94,7 @@ public class StopwatchFaceHeadlessTests : IDisposable
         var analog = Session(StopwatchDisplay.Analog);
 
         Assert.Equal(digital, analog);
-        Assert.Equal("01:25.5", analog.Text);
+        Assert.Equal("01:25.4", analog.Text);
         Assert.Equal("Resume", analog.Button);
         Assert.Equal(1, analog.Laps);
         Assert.Equal("00:00.0", analog.AfterReset);

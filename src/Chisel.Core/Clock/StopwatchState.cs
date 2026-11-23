@@ -15,8 +15,13 @@ public sealed record StopwatchState(TimeSpan Banked, DateTimeOffset? StartedAt, 
 
     public StopwatchState Pause(DateTimeOffset now) => IsRunning ? this with { Banked = Elapsed(now), StartedAt = null } : this;
 
+    // The same with the elapsed time given (read from a monotonic clock by the caller, which is not moved by changes to the wall clock).
+    public StopwatchState PauseAt(TimeSpan elapsed) => IsRunning ? this with { Banked = elapsed, StartedAt = null } : this;
+
     // Records the total elapsed time so far; only while running.
     public StopwatchState Lap(DateTimeOffset now) => IsRunning ? this with { Laps = [.. Laps, Elapsed(now)] } : this;
+
+    public StopwatchState LapAt(TimeSpan elapsed) => IsRunning ? this with { Laps = [.. Laps, elapsed] } : this;
 
     public StopwatchState Reset() => Idle;
 

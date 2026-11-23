@@ -18,6 +18,11 @@ public partial class ClockToolsViewModel : ViewModelBase
     private readonly TimeProvider _time;
     private TimerState _timer;
     private StopwatchState _stopwatch;
+    // The running stopwatch is timed with the monotonic clock (a wall-clock change cannot move it): the elapsed time when it was last
+    // anchored, and the monotonic timestamp of that moment. The saved state keeps wall-clock times so it survives a restart; the
+    // anchor is taken again from them whenever the state is loaded or the stopwatch starts.
+    private TimeSpan _anchorElapsed;
+    private long _anchorStamp;
     private bool _announced;
     private (string, string, bool) _buttons;
 
@@ -51,7 +56,17 @@ public partial class ClockToolsViewModel : ViewModelBase
     };
 
     // The stopwatch's elapsed time in seconds right now, for the analog face to read at every frame (no allocation).
-    public double StopwatchElapsedSeconds() => _stopwatch.Elapsed(_time.GetUtcNow()).TotalSeconds;
+    public double StopwatchElapsedSeconds() => StopwatchElapsed().TotalSeconds;
+
+    // The elapsed time now: what was banked, or (while running) the anchor plus the monotonic time since it.
+    private TimeSpan StopwatchElapsed() =>
+        _stopwatch.IsRunning ? _anchorElapsed + _time.GetElapsedTime(_anchorStamp) : _stopwatch.Banked;
+
+    private void Anchor()
+    {
+        _anchorElapsed = _stopwatch.Elapsed(_time.GetUtcNow());
+        _anchorStamp = _time.GetTimestamp();
+    }
 
     public string StopwatchButtonText => StopwatchRunning ? "Pause" : _stopwatch.Banked > TimeSpan.Zero ? "Resume" : "Start";
 
@@ -66,6 +81,7 @@ public partial class ClockToolsViewModel : ViewModelBase
         Slots = state.Slots.Normalized();
         _timer = state.Timer;
         _stopwatch = state.Stopwatch;
+        Anchor();
         _announced = _timer.Status(_time.GetUtcNow()) == TimerStatus.Finished;
         Refresh(false);
     }
@@ -119,15 +135,22 @@ public partial class ClockToolsViewModel : ViewModelBase
     [RelayCommand]
     private void StopwatchStartPause()
     {
-        var now = _time.GetUtcNow();
-        _stopwatch = _stopwatch.IsRunning ? _stopwatch.Pause(now) : _stopwatch.Start(now);
+        if (_stopwatch.IsRunning)
+        {
+            _stopwatch = _stopwatch.PauseAt(StopwatchElapsed());
+        }
+        else
+        {
+            _stopwatch = _stopwatch.Start(_time.GetUtcNow());
+            Anchor();
+        }
         Changed();
     }
 
     [RelayCommand]
     private void StopwatchLap()
     {
-        _stopwatch = _stopwatch.Lap(_time.GetUtcNow());
+        _stopwatch = _stopwatch.LapAt(StopwatchElapsed());
         Changed();
     }
 
@@ -162,7 +185,7 @@ public partial class ClockToolsViewModel : ViewModelBase
             TimerFinished?.Invoke();
         }
 
-        StopwatchText = ClockToolsFormat.Stopwatch(_stopwatch.Elapsed(now));
+        StopwatchText = ClockToolsFormat.Stopwatch(StopwatchElapsed());
         StopwatchRunning = _stopwatch.IsRunning;
         SyncLaps();
 
