@@ -10,7 +10,7 @@
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
         x:Class="Chisel.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/chiselIcon.ico"
         Background="{StaticResource WindowBackgroundBrush}"
         Title="Chisel">
 
