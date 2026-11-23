@@ -274,4 +274,22 @@ public class NotepadWidgetHeadlessTests
         UiSnapshot.Render(window, $"notepad-{width}x{height}-{(headerShown ? "header" : "noheader")}");
         window.Close();
     }
+
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheEditor_HasRoomAroundItsText_AndTheSwitcherClearsTheTopEdge(bool headerShown)
+    {
+        var window = Show(640, 560);
+        SetHeader(window, headerShown);
+        Dispatcher.UIThread.RunJobs();
+
+        var root = Named<DockPanel>(window, "NotepadRoot");
+        Assert.True(root.Margin.Top >= 12 && root.Margin.Left >= 16 && root.Margin.Bottom >= 16, root.Margin.ToString());
+        Assert.True(root.Margin.Top >= (headerShown ? 12 : 20));
+        var editor = Named<TextBox>(window, "PadEditor");
+        Assert.True(editor.Padding.Left >= 12 && editor.Padding.Right >= 12 && editor.Padding.Top >= 10 && editor.Padding.Bottom >= 10, editor.Padding.ToString());
+        Assert.Equal("Start typing…", editor.PlaceholderText);
+        window.Close();
+    }
 }

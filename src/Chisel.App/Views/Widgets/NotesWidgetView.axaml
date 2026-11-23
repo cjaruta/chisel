@@ -15,8 +15,30 @@
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="MinHeight" Value="0" />
+            <!-- A quiet surface with room to breathe; colors come from the theme tokens, so every mode follows. -->
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineHeight" Value="22" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="SelectionBrush" Value="{DynamicResource DragPreviewBrush}" />
+            <Setter Property="SelectionForegroundBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource DimTextBrush}" />
             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        </Style>
+        <Style Selector="TextBox.padEditor /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="TextBox.padEditor:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="TextBox.padEditor:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
         </Style>
         <Style Selector="TextBox.padEditor.nowrap">
             <Setter Property="TextWrapping" Value="NoWrap" />
@@ -27,9 +49,9 @@
         </Style>
     </w:WidgetView.Styles>
 
-    <DockPanel Name="NotepadRoot" Margin="16,0,16,16">
+    <DockPanel Name="NotepadRoot" Margin="16,14,16,16">
         <!-- Pad switcher: always shown, with or without the card's title bar -->
-        <Grid DockPanel.Dock="Top" Name="PadBar" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8">
+        <Grid DockPanel.Dock="Top" Name="PadBar" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,10">
             <TextBlock Classes="dim" Text="Pad" VerticalAlignment="Center" />
             <ComboBox Name="PadPicker" Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="60"
                       ItemsSource="{Binding Notes.Pads}" SelectedItem="{Binding Notes.SelectedPad}"
@@ -59,7 +81,7 @@
         </Grid>
 
         <!-- Rename: one line under the switcher; Enter keeps the name, Esc cancels -->
-        <Grid DockPanel.Dock="Top" Name="RenameBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+        <Grid DockPanel.Dock="Top" Name="RenameBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,10"
               IsVisible="{Binding Notes.IsRenaming}">
             <TextBox Name="RenameBox" Text="{Binding Notes.RenameText}" PlaceholderText="Pad name">
                 <TextBox.KeyBindings>
@@ -72,7 +94,7 @@
         </Grid>
 
         <!-- Delete confirmation -->
-        <Grid DockPanel.Dock="Top" Name="DeleteBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+        <Grid DockPanel.Dock="Top" Name="DeleteBar" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,10"
               IsVisible="{Binding Notes.IsConfirmingDelete}">
             <TextBlock Name="DeleteQuestion" VerticalAlignment="Center" TextWrapping="Wrap"
                        Text="{Binding Notes.SelectedPad.Title, StringFormat='Delete “{0}” for good?'}" />
@@ -81,7 +103,7 @@
         </Grid>
 
         <!-- A file action failed: nothing was lost -->
-        <Grid DockPanel.Dock="Top" Name="NoticeBar" ColumnDefinitions="*,Auto" ColumnSpacing="6" Margin="0,0,0,8"
+        <Grid DockPanel.Dock="Top" Name="NoticeBar" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,10"
               IsVisible="{Binding Notes.HasNotice}">
             <TextBlock Name="NoticeText" Text="{Binding Notes.Notice}" TextWrapping="Wrap" VerticalAlignment="Center" />
             <Button Name="NoticeDismissButton" Grid.Column="1" Classes="iconButton" Content="x" Command="{Binding Notes.DismissNoticeCommand}" />
