@@ -5,9 +5,15 @@ Chisel is a desktop daily planner for Windows, written in C# with .NET 10. It sh
 It started as a single HTML page I used as a browser homepage. This repo is a rewrite of that idea as a proper desktop application with a tested domain layer and a local SQLite database.
  
 ## Current state
- 
-v0.1 is feature-complete: a window with a live clock, today's schedule with the current block highlighted, a task list, notes, and quick links, all stored in a local SQLite database. The domain logic, persistence layer, view models, and Avalonia main window are all implemented and covered by unit tests.
- 
+
+v0.1 is done and development has continued well past it. Chisel is a customizable dashboard: a live clock, a schedule grid with the current block highlighted, tasks, notes, quick links, and more, all stored in a local SQLite database.
+
+- **Widgets:** clock (styles, timer, stopwatch, alarms), schedule, tasks, notes, quick links, weather, media controls, picture frames (slideshows), calculator, verse, and a notepad. A widget library lets you add more than one of some widgets.
+- **Layout editor:** drag, resize, and rearrange widgets into columns, hide or show widget titles, and combine widgets into tabbed or split-view groups.
+- **Settings:** schedule editing, palettes, themes with an accent color, 12/24-hour time, weather location and units, and per-widget options.
+
+The domain logic, persistence layer, view models, and Avalonia UI are covered by unit tests and headless render tests.
+
 ## Built with
  
 - C# / .NET 10
@@ -16,13 +22,14 @@ v0.1 is feature-complete: a window with a live clock, today's schedule with the 
 - xUnit for testing
 - GitHub Actions for CI
 - Weather data by [Open-Meteo](https://open-meteo.com/), licensed under CC BY 4.0
+- Verse text from the King James Version (1769 standard text), bundled with the app so it works offline. The KJV is public domain in the United States; in the United Kingdom it is subject to the Crown's letters patent. Source: [midvash/bible-data](https://github.com/midvash/bible-data) (public domain), with every bundled verse checked against two other KJV sources.
 ## Project structure
  
 ```
 src/
   Chisel.Core/              Domain models and business rules
   Chisel.Infrastructure/    EF Core DbContext, SQLite persistence, seeding
-  Chisel.App/               Avalonia desktop app: view models, main window, startup wiring
+  Chisel.App/               Avalonia desktop app: view models, widgets, main window, startup wiring
 tests/
   Chisel.Core.Tests/
   Chisel.Infrastructure.Tests/
@@ -80,14 +87,13 @@ The test suite fails if a pending model change is missing a migration. Pull requ
 build and test suite via GitHub Actions.
 
 ## Roadmap
- 
-v0.1 scope is done. Possible future additions, cut from v0.1:
- 
-- A layout editor for rearranging widgets
-- A settings screen for editing the schedule, wake/bed times, and markers
-- Media controls using the Windows media session API
-- Weather widget using Open-Meteo
+
+Done since v0.1: layout editor, settings screen, weather, media controls, themes, widget groups, picture frames, and the clock, calculator, verse, and notepad widgets.
+
+Possible future additions:
+
 - Optional sync server with ASP.NET Core and SQL Server
+- More widgets and settings pages
 
 ## License
 MIT
