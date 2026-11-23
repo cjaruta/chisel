@@ -125,7 +125,7 @@ public class WidgetGroupHeadlessTests
     {
         var window = Open(NotesAndTasks);
         var group = Frame(window, "tasks");
-        var plain = Frame(window, "links");
+        var plain = Frame(window, "scripture");
         plain.ShowHeader = true;
         Settle();
 
@@ -155,7 +155,7 @@ public class WidgetGroupHeadlessTests
         Main(window).Layout.EnterEditCommand.Execute(null);
         Settle();
         Assert.False(group.HeaderButton.IsVisible);
-        Assert.True(Frame(window, "links").HeaderButton.IsVisible);
+        Assert.True(Frame(window, "scripture").HeaderButton.IsVisible);
         window.Close();
     }
 
@@ -347,7 +347,7 @@ public class WidgetGroupHeadlessTests
         var window = Open(l => l);
         Main(window).Layout.EnterEditCommand.Execute(null);
         Settle();
-        var from = Center(Frame(window, "links").EditBar, window);
+        var from = Center(Frame(window, "scripture").EditBar, window);
         var tasks = InWindow(Frame(window, "tasks"), window);
         var onHeader = new Point(tasks.Center.X, tasks.Top + WidgetFrame.HeaderHeight / 2 + 8);
 
@@ -367,7 +367,7 @@ public class WidgetGroupHeadlessTests
         var window = Open(l => l);
         Main(window).Layout.EnterEditCommand.Execute(null);
         Settle();
-        var from = Center(Frame(window, "links").EditBar, window);
+        var from = Center(Frame(window, "scripture").EditBar, window);
         var edge = Within(window, "tasks", 0.05);
 
         Press(window, from);
@@ -460,7 +460,7 @@ public class WidgetGroupHeadlessTests
     [AvaloniaFact]
     public void FiveTabsAtTheMinimumWidth_ShareTheSpaceEvenly_AndTruncateWithAnEllipsis()
     {
-        var ids = new[] { "tasks", "notes", "links", "schedule", "clock" };
+        var ids = new[] { "tasks", "notes", "scripture", "schedule", "clock" };
         var window = Open(_ => new WidgetLayout(new[]
         {
             new LayoutColumn(1, new[]
@@ -476,7 +476,7 @@ public class WidgetGroupHeadlessTests
         Assert.All(cells, c => Assert.InRange(c.Bounds.Width, cells[0].Bounds.Width - 1, cells[0].Bounds.Width + 1));
         Assert.True(cells.Sum(c => c.Bounds.Width) <= group.Header.Bounds.Width + 1);
 
-        var links = group.TabButton("links").GetVisualDescendants().OfType<TextBlock>().Single();
+        var links = group.TabButton("scripture").GetVisualDescendants().OfType<TextBlock>().Single();
         Assert.Equal(TextTrimming.CharacterEllipsis, links.TextTrimming);
         links.Measure(new Size(double.PositiveInfinity, 100));
         Assert.True(links.DesiredSize.Width > cells[0].Bounds.Width - 20, "the long title does not fit its tab, so it is cut");

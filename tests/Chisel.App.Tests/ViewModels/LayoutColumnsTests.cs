@@ -9,7 +9,7 @@ public class LayoutColumnsTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -42,9 +42,9 @@ public class LayoutColumnsTests
 
         Assert.True(layout.DropWidgetInNewColumn(2));
 
-        Assert.Equal("schedule | tasks,links | notes", Order(layout.Layout));
+        Assert.Equal("schedule | tasks,scripture | notes", Order(layout.Layout));
         Assert.False(layout.IsDraggingWidget);
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Snapshot!.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Snapshot!.Describe());
         Assert.Equal(saves, _repository.SaveCalls);
     }
 
@@ -55,7 +55,7 @@ public class LayoutColumnsTests
 
         Assert.False(layout.DropWidgetInNewColumn(0));
 
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Layout.Describe());
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class LayoutColumnsTests
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal("schedule,tasks,notes,links", Order(layout.Layout));
+        Assert.Equal("schedule,tasks,notes,scripture", Order(layout.Layout));
         Assert.Equal(layout.Layout.Describe(), _repository.Saved!.Describe());
         Assert.Equal(layout.Layout.Describe(), new LayoutViewModel(_repository).Layout.Describe());
     }
@@ -76,20 +76,20 @@ public class LayoutColumnsTests
     public void Done_WithThreeColumns_PersistsThem()
     {
         var layout = Editing();
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropWidgetInNewColumn(0);
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal("links | schedule | tasks,notes", Order(_repository.Saved!));
-        Assert.Equal("links | schedule | tasks,notes", Order(new LayoutViewModel(_repository).Layout));
+        Assert.Equal("scripture | schedule | tasks,notes", Order(_repository.Saved!));
+        Assert.Equal("scripture | schedule | tasks,notes", Order(new LayoutViewModel(_repository).Layout));
     }
 
     [Fact]
     public void Cancel_RestoresTheSnapshotsColumns()
     {
         var layout = Editing();
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropWidgetInNewColumn(2);
         layout.BeginWidgetDrag("tasks");
         layout.DropWidgetInNewColumn(0);
@@ -97,14 +97,14 @@ public class LayoutColumnsTests
 
         layout.CancelCommand.Execute(null);
 
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Layout.Describe());
     }
 
     [Fact]
     public void Reset_RestoresTheDefaultTwoColumns()
     {
         var layout = Editing();
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropWidgetInNewColumn(2);
 
         layout.ResetCommand.Execute(null);
@@ -147,12 +147,12 @@ public class LayoutColumnsTests
         layout.DropWidgetInNewColumn(3);
         Assert.Equal(LayoutLimits.MaximumColumns, layout.Layout.Columns.Count);
 
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         Assert.True(layout.CanOfferNewColumn(1100, Gap));
         layout.DropWidgetInNewColumn(0);
 
         Assert.Equal(LayoutLimits.MaximumColumns, layout.Layout.Columns.Count);
-        Assert.Equal("links | schedule | tasks | notes", Order(layout.Layout));
+        Assert.Equal("scripture | schedule | tasks | notes", Order(layout.Layout));
     }
 
     [Fact]
@@ -168,6 +168,6 @@ public class LayoutColumnsTests
 
         Assert.True(layout.CanOfferNewColumn(1100, Gap));
         Assert.True(layout.DropWidgetInNewColumn(4));
-        Assert.Equal("links | tasks | notes | schedule", Order(layout.Layout));
+        Assert.Equal("scripture | tasks | notes | schedule", Order(layout.Layout));
     }
 }

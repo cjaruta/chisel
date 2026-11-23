@@ -60,7 +60,7 @@ public class DropPreviewHeadlessTests
     [AvaloniaTheory]
     [InlineData("tasks", 0.5, "Tab with Tasks")]
     [InlineData("tasks", 0.03, "Above Tasks")]
-    [InlineData("links", 0.97, "Below Quick links")]
+    [InlineData("scripture", 0.97, "Below Daily verse")]
     public void EachZone_ShowsTheOnePreview_WithItsCaption(string target, double fraction, string caption)
     {
         var window = Dragging("notes");
@@ -76,7 +76,7 @@ public class DropPreviewHeadlessTests
     [AvaloniaFact]
     public void AMergePreview_CoversTheWholeCard()
     {
-        var window = Dragging("links");
+        var window = Dragging("scripture");
 
         MoveTo(window, Within(window, "tasks", 0.5));
 
@@ -118,7 +118,7 @@ public class DropPreviewHeadlessTests
     [AvaloniaFact]
     public void ABoundaryJitterOfAFewPixels_DoesNotSwitchTheZone()
     {
-        var window = Dragging("links");
+        var window = Dragging("scripture");
         var card = InWindow(Frame(window, "tasks"), window);
         var x = card.Center.X;
 

@@ -82,7 +82,7 @@ public class LayoutResizeHeadlessTests
     private static double Height(Window window, string id) => InWindow(Frame(window, id), window).Height;
 
     private static double ColumnHeight(Window window) =>
-        InWindow(Frame(window, "links"), window).Bottom - InWindow(Frame(window, "tasks"), window).Top;
+        InWindow(Frame(window, "scripture"), window).Bottom - InWindow(Frame(window, "tasks"), window).Top;
 
     [AvaloniaFact]
     public void Handles_SitOnlyBetweenStackedWidgets()
@@ -138,7 +138,7 @@ public class LayoutResizeHeadlessTests
         var window = ShowEditing();
         var tasks = Height(window, "tasks");
         var notes = Height(window, "notes");
-        var links = Height(window, "links");
+        var links = Height(window, "scripture");
         var column = ColumnHeight(window);
         var widths = Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window).Width).ToArray();
 
@@ -146,7 +146,7 @@ public class LayoutResizeHeadlessTests
 
         Assert.Equal(tasks + 40, Height(window, "tasks"), 0);
         Assert.Equal(notes - 40, Height(window, "notes"), 0);
-        Assert.Equal(links, Height(window, "links"), 0);
+        Assert.Equal(links, Height(window, "scripture"), 0);
         Assert.Equal(column, ColumnHeight(window), 0);
         Assert.Equal(widths, Host(window).Frames.SelectMany(c => c).Select(f => InWindow(f, window).Width).ToArray());
         Assert.False(ViewModel(window).Layout.IsResizing);
@@ -159,12 +159,12 @@ public class LayoutResizeHeadlessTests
     {
         var window = ShowEditing();
         var notes = Height(window, "notes");
-        var links = Height(window, "links");
+        var links = Height(window, "scripture");
 
         DragHandle(window, "notes", -30);
 
         Assert.Equal(notes - 30, Height(window, "notes"), 0);
-        Assert.Equal(links + 30, Height(window, "links"), 0);
+        Assert.Equal(links + 30, Height(window, "scripture"), 0);
         window.Close();
     }
 
@@ -190,14 +190,14 @@ public class LayoutResizeHeadlessTests
     public void TheDragStopsAtTheMinimumAndPushesNothingElse(double dy)
     {
         var window = ShowEditing(1904, 984);
-        var links = Height(window, "links");
+        var links = Height(window, "scripture");
         var schedule = InWindow(Frame(window, "schedule"), window);
 
         DragHandle(window, "tasks", dy);
 
         var shrunk = dy > 0 ? "notes" : "tasks";
         Assert.Equal(WidgetRegistry.MinimumHeight, Height(window, shrunk), 0);
-        Assert.Equal(links, Height(window, "links"), 0);
+        Assert.Equal(links, Height(window, "scripture"), 0);
         Assert.Equal(schedule, InWindow(Frame(window, "schedule"), window));
         window.Close();
     }

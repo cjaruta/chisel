@@ -133,11 +133,11 @@ public class GroupSplitViewHeadlessTests
         Main(window).Layout.Apply(new WidgetLayout(new[]
         {
             new LayoutColumn(2, new[] { Card(GroupViewMode.Split, ClockWeather) }),
-            new LayoutColumn(1, new[] { new WidgetPlacement("links", 1, true) }),
-        }, WidgetRegistry.All.Select(w => w.Id).Where(id => id != "links" && !ClockWeather.Contains(id))));
+            new LayoutColumn(1, new[] { new WidgetPlacement("scripture", 1, true) }),
+        }, WidgetRegistry.All.Select(w => w.Id).Where(id => id != "scripture" && !ClockWeather.Contains(id))));
         Settle();
         var frame = Frame(window, WidgetRegistry.Clock);
-        var plain = Frame(window, "links");
+        var plain = Frame(window, "scripture");
 
         foreach (var id in ClockWeather)
         {

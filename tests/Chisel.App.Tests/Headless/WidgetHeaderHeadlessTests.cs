@@ -35,12 +35,12 @@ public class WidgetHeaderHeadlessTests
     }
 
     [AvaloniaFact]
-    public void ClockScheduleWeatherAndLinks_ShowNoTitleByDefault_TasksAndNotesDo()
+    public void ClockScheduleAndWeather_ShowNoTitleByDefault_TasksNotesAndTheVerseDo()
     {
         var window = ShowWithEveryWidget();
 
-        Assert.All(new[] { "clock", "schedule", "weather", "links" }, id => Assert.False(TitleShown(Frame(window, id)), id));
-        Assert.All(new[] { "tasks", "notes" }, id => Assert.True(TitleShown(Frame(window, id)), id));
+        Assert.All(new[] { "clock", "schedule", "weather" }, id => Assert.False(TitleShown(Frame(window, id)), id));
+        Assert.All(new[] { "tasks", "notes", "scripture" }, id => Assert.True(TitleShown(Frame(window, id)), id));
         window.Close();
     }
 
@@ -74,7 +74,7 @@ public class WidgetHeaderHeadlessTests
         Layout(window).EnterEditCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Quick links", ToolTip.GetTip(Frame(window, "links").EditBar));
+        Assert.Equal("Daily verse", ToolTip.GetTip(Frame(window, "scripture").EditBar));
         window.Close();
     }
 

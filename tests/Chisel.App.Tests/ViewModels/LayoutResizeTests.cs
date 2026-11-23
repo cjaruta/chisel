@@ -15,7 +15,7 @@ public class LayoutResizeTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -75,7 +75,7 @@ public class LayoutResizeTests
         layout.Layout.Columns[1].Widgets.Select(w => w.HeightWeight).ToArray();
 
     private static readonly double[] DefaultRight =
-        WidgetRegistry.DefaultLayout.Columns[1].Widgets.Select(w => w.HeightWeight).ToArray();
+        TestLayouts.Classic.Columns[1].Widgets.Select(w => w.HeightWeight).ToArray();
 
     private LayoutViewModel Editing()
     {
@@ -143,7 +143,7 @@ public class LayoutResizeTests
 
         Assert.False(layout.IsResizing);
         Assert.NotEqual(DefaultRight, RightHeights(layout));
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Snapshot!.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Snapshot!.Describe());
         Assert.Equal(saves, _repository.SaveCalls);
     }
 

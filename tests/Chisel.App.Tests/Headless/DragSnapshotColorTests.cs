@@ -74,7 +74,7 @@ public class DragSnapshotColorTests
         window.MouseUp(c, MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
         var host = window.GetVisualDescendants().OfType<LayoutHost>().Single();
-        var frame = host.Frames.SelectMany(f => f).Single(f => f.WidgetId == "links");
+        var frame = host.Frames.SelectMany(f => f).Single(f => f.WidgetId == "scripture");
         var floating = Named<Border>(window, "DragFloat");
         await Task.Delay(400);
         for (var round = 0; round < 2; round++)
@@ -109,7 +109,7 @@ public class DragSnapshotColorTests
         Dispatcher.UIThread.RunJobs();
 
         var host = window.GetVisualDescendants().OfType<LayoutHost>().Single();
-        var frame = host.Frames.SelectMany(f => f).Single(f => f.WidgetId == "links");
+        var frame = host.Frames.SelectMany(f => f).Single(f => f.WidgetId == "scripture");
         await Task.Delay(400); // let edit mode settle
         Dispatcher.UIThread.RunJobs();
         using var card = Render(frame);

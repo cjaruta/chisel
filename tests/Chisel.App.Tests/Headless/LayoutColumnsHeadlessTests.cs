@@ -151,7 +151,7 @@ public class LayoutColumnsHeadlessTests
         Assert.True(phantom.Left < ZoneCenter(window, 1).X && ZoneCenter(window, 1).X < phantom.Right);
         UiSnapshot.Render(window, "layout-new-column-drag");
         Release(window, ZoneCenter(window, 1));
-        Assert.Equal("schedule | notes | tasks,links", Order(window));
+        Assert.Equal("schedule | notes | tasks,scripture", Order(window));
         window.Close();
     }
 
@@ -164,7 +164,7 @@ public class LayoutColumnsHeadlessTests
         DragToNewColumn(window, "notes", 2);
 
         Assert.Equal(3, Host(window).Frames.Count);
-        Assert.Equal("schedule | tasks,links | notes", Order(window));
+        Assert.Equal("schedule | tasks,scripture | notes", Order(window));
         Assert.True(InWindow(Frame(window, "notes"), window).Left > InWindow(Frame(window, "tasks"), window).Right);
         Assert.False(Phantom(window).IsVisible);
         UiSnapshot.Render(window, "layout-three-columns-1200x760");
@@ -176,9 +176,9 @@ public class LayoutColumnsHeadlessTests
     {
         var window = ShowEditing();
 
-        DragToNewColumn(window, "links", 0);
+        DragToNewColumn(window, "scripture", 0);
 
-        Assert.Equal("links | schedule | tasks,notes", Order(window));
+        Assert.Equal("scripture | schedule | tasks,notes", Order(window));
         window.Close();
     }
 
@@ -225,14 +225,14 @@ public class LayoutColumnsHeadlessTests
 
         // Notes is alone in the third column; drop it under Quick links.
         PickUp(window, "notes");
-        var links = InWindow(Frame(window, "links"), window);
+        var links = InWindow(Frame(window, "scripture"), window);
         var below = new Point(links.Center.X, links.Bottom - 10);
         MoveTo(window, below);
         Assert.Equal(3, Host(window).Frames.Count); // only dimmed while dragging
         Release(window, below);
 
         Assert.Equal(2, Host(window).Frames.Count);
-        Assert.Equal("schedule | tasks,links,notes", Order(window));
+        Assert.Equal("schedule | tasks,scripture,notes", Order(window));
         var schedule = InWindow(Frame(window, "schedule"), window);
         var right = InWindow(Frame(window, "tasks"), window);
         var host = InWindow(Host(window), window);

@@ -199,14 +199,13 @@ public class MainWindowHeadlessTests
     }
 
     [AvaloniaFact]
-    public void Lists_ShowTheSeededTasksNotesAndLinks()
+    public void Lists_ShowTheSeededTasksAndNotes()
     {
         var window = UiSnapshot.ShowMainWindow();
 
         var texts = Texts(window).ToList();
         Assert.Contains("Write the weekly plan", texts);
         Assert.Contains("Groceries", texts);
-        Assert.Contains("Docs", texts);
         window.Close();
     }
 

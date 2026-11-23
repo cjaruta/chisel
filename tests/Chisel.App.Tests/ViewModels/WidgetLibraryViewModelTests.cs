@@ -23,7 +23,7 @@ public class WidgetLibraryViewModelTests
 
         Assert.Equal(WidgetRegistry.AllTypes.Select(w => w.Id).Order(), rows.Select(r => r.Id).Order());
         Assert.Equal(new[] { "Calculator", "Clock", "Daily verse", "Media", "Picture frame", "Weather" }, library.Available.Select(r => r.Title));
-        Assert.Equal(new[] { "Notes", "Quick links", "Tasks", "Today" }, library.OnDashboard.Select(r => r.Title));
+        Assert.Equal(new[] { "Notes", "Tasks", "Today" }, library.OnDashboard.Select(r => r.Title));
         Assert.All(rows, r =>
         {
             Assert.NotEmpty(r.Icon);

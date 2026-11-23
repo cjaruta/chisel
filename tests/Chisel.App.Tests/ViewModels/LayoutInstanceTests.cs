@@ -9,13 +9,13 @@ public class LayoutInstanceTests : IDisposable
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout) => Saved = layout;
     }
 
     private readonly IDisposable _registration = TestMultiWidget.Register();
-    private readonly FakeLayoutRepository _repository = new() { Saved = WidgetRegistry.DefaultLayout };
+    private readonly FakeLayoutRepository _repository = new() { Saved = TestLayouts.Classic };
 
     public void Dispose() => _registration.Dispose();
 
@@ -161,7 +161,7 @@ public class LayoutInstanceTests : IDisposable
 
         Assert.Equal(Instances(layout), Instances(reloaded));
         Assert.Equal(new[] { "Test frame", "Test frame 2" }, Titles(reloaded));
-        Assert.Equal(WidgetRegistry.DefaultLayout.HiddenWidgetIds, reloaded.Layout.HiddenWidgetIds);
+        Assert.Equal(TestLayouts.Classic.HiddenWidgetIds, reloaded.Layout.HiddenWidgetIds);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class LayoutInstanceTests : IDisposable
         {
             new WidgetPlacement("gone:k1"), new WidgetPlacement("notes:k1"), new WidgetPlacement(TestMultiWidget.Id("ok")),
         });
-        _repository.Saved = new WidgetLayout(WidgetRegistry.DefaultLayout.Columns.Append(extra), WidgetRegistry.DefaultLayout.HiddenWidgetIds);
+        _repository.Saved = new WidgetLayout(TestLayouts.Classic.Columns.Append(extra), TestLayouts.Classic.HiddenWidgetIds);
 
         var layout = new LayoutViewModel(_repository);
 

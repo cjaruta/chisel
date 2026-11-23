@@ -29,16 +29,13 @@ public class LayoutScrollTests
 
     [AvaloniaTheory]
     [InlineData("tasks")]
-    [InlineData("links")]
     public void ListWidget_ScrollsInsideItsCard(string id)
     {
         var window = UiSnapshot.ShowMainWindow(1000, 650);
 
         var frame = Frame(window, id);
-        // Quick links is wrapped by the card; Tasks keeps its add box pinned and scrolls its list inside the view.
-        var scroller = id == "tasks"
-            ? frame.View.GetVisualDescendants().OfType<ScrollViewer>().First()
-            : frame.View.FindAncestorOfType<ScrollViewer>()!;
+        // Tasks keeps its add box pinned and scrolls its list inside the view.
+        var scroller = frame.View.GetVisualDescendants().OfType<ScrollViewer>().First();
 
         Assert.Same(frame, scroller.FindAncestorOfType<WidgetFrame>());
         Assert.True(scroller.Bounds.Height <= frame.Bounds.Height);
@@ -50,10 +47,10 @@ public class LayoutScrollTests
     {
         var window = UiSnapshot.ShowMainWindow(1000, 420);
 
-        var column = Frame(window, "links").FindAncestorOfType<ScrollViewer>()!;
+        var column = Frame(window, "scripture").FindAncestorOfType<ScrollViewer>()!;
         Assert.Contains("layoutColumnScroller", column.Classes);
         Assert.True(column.Extent.Height > column.Viewport.Height);
-        foreach (var id in new[] { "tasks", "notes", "links" })
+        foreach (var id in new[] { "tasks", "notes", "scripture" })
         {
             Assert.True(Frame(window, id).Bounds.Height >= Frame(window, id).MinHeight - 0.5, id);
         }

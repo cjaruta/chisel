@@ -30,7 +30,6 @@ public static class WidgetRegistry
     public const string Schedule = "schedule";
     public const string Tasks = "tasks";
     public const string Notes = "notes";
-    public const string Links = "links";
     public const string Clock = "clock";
     public const string Weather = "weather";
     public const string Media = "media";
@@ -50,8 +49,6 @@ public static class WidgetRegistry
             DefaultHeight: 1.05, MinimumHeight, ScrollsContent: false, typeof(TasksWidgetView), MinWidth: 240, Description: "Things to do, with a quick box to add more, due dates and drag to reorder."),
         new WidgetDefinition(Notes, "Notes", Icon: "M6,3 H15 L19,7 V21 H6 Z M9,11 H16 M9,15 H16 M9,18 H13",
             DefaultHeight: 1.1, MinimumHeight, ScrollsContent: false, typeof(NotesWidgetView), MinWidth: 240, Description: "Quick notes you can jot down and keep."),
-        new WidgetDefinition(Links, "Quick links", Icon: "M10,14 L14,10 M8,12 L6,14 A3,3 0 0 0 10,18 L12,16 M16,12 L18,10 A3,3 0 0 0 14,6 L12,8",
-            DefaultHeight: 0.85, MinimumHeight, ScrollsContent: true, typeof(LinksWidgetView), DefaultShowHeader: false, MinWidth: 220, Description: "Shortcuts to the sites and folders you open most."),
         new WidgetDefinition(Clock, "Clock", Icon: "M12,3 A9,9 0 1 0 12,21 A9,9 0 1 0 12,3 M12,7 V12 L15,14",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ClockWidgetView), DefaultShowHeader: false, MinWidth: 190, Description: "Clock faces, a timer, a stopwatch and alarms."),
         new WidgetDefinition(Weather, "Weather", Icon: "M7,18 H17 A4,4 0 0 0 17,10 A6,6 0 0 0 6,12 A3,3 0 0 0 7,18",
@@ -66,12 +63,13 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ScriptureWidgetView), MinWidth: 220, Description: "A short Bible passage that changes every day."),
     };
 
-    // Schedule on the left at full height; Tasks, Notes and Quick links stacked on the right.
+    // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
+    // top bar and is set up in Settings. A saved layout that still has a "links" card loses it when it is normalized.)
     // Widths keep the old 1.3 : 1 split. Heights favour Tasks so its "New task" box stays in view at common sizes.
     public static WidgetLayout DefaultLayout { get; } = new(new[]
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
-        new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes), Placement(Links) }),
+        new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
     }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.

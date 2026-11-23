@@ -15,7 +15,7 @@ public class LayoutEditModeTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -72,15 +72,15 @@ public class LayoutEditModeTests
     // A saved layout that differs from the default: three columns.
     private static readonly WidgetLayout Custom = new(new[]
     {
-        new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("links") }),
+        new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("scripture") }),
         new LayoutColumn(2, new[] { new WidgetPlacement("schedule") }),
         new LayoutColumn(1, new[] { new WidgetPlacement("notes") }),
-    }, new[] { "clock", "weather", "media", "calculator", "scripture" });
+    }, new[] { "clock", "weather", "media", "calculator" });
 
     private static readonly WidgetLayout Changed = new(new[]
     {
-        new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"), new WidgetPlacement("links") }),
-    }, new[] { "clock", "weather", "media", "calculator", "scripture" });
+        new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"), new WidgetPlacement("scripture") }),
+    }, new[] { "clock", "weather", "media", "calculator" });
 
     private readonly FakeLayoutRepository _repository = new() { Saved = Custom };
 

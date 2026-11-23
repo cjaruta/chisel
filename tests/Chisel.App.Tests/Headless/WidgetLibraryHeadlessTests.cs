@@ -101,8 +101,8 @@ public class WidgetLibraryHeadlessTests
         Remove(window, "tasks");
         Remove(window, "notes");
 
-        Assert.Equal("links", Order(window));
-        Assert.False(Frame(window, "links").RemoveButton.IsEffectivelyEnabled);
+        Assert.Equal("scripture", Order(window));
+        Assert.False(Frame(window, "scripture").RemoveButton.IsEffectivelyEnabled);
         window.Close();
     }
 
@@ -118,8 +118,8 @@ public class WidgetLibraryHeadlessTests
 
         Assert.True(LibraryShown(window));
         Assert.Equal(before, Positions());
-        Assert.Equal(new[] { "Calculator", "Clock", "Daily verse", "Media", "Picture frame", "Weather" }, RowTitles(window, "LibraryAvailable"));
-        Assert.Equal(new[] { "Notes", "Quick links", "Tasks", "Today" }, RowTitles(window, "LibraryOnDashboard"));
+        Assert.Equal(new[] { "Calculator", "Clock", "Media", "Picture frame", "Weather" }, RowTitles(window, "LibraryAvailable"));
+        Assert.Equal(new[] { "Daily verse", "Notes", "Tasks", "Today" }, RowTitles(window, "LibraryOnDashboard"));
         window.Close();
     }
 
@@ -132,7 +132,7 @@ public class WidgetLibraryHeadlessTests
         ClickControl(window, AddButton(window, WidgetRegistry.Clock));
 
         Assert.True(LibraryShown(window));
-        Assert.Equal("schedule,clock | tasks,notes,links", Order(window));
+        Assert.Equal("schedule,clock | tasks,notes,scripture", Order(window));
         Assert.DoesNotContain("Clock", RowTitles(window, "LibraryAvailable"));
         Assert.Contains("Clock", RowTitles(window, "LibraryOnDashboard"));
         window.Close();
@@ -192,7 +192,7 @@ public class WidgetLibraryHeadlessTests
         EnterEditMode(reopened);
         OpenLibrary(reopened);
 
-        Assert.Equal("schedule | tasks,links", Order(reopened));
+        Assert.Equal("schedule | tasks", Order(reopened));
         Assert.Contains("Notes", RowTitles(reopened, "LibraryAvailable"));
         reopened.Close();
     }

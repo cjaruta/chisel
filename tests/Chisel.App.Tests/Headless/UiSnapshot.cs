@@ -63,7 +63,7 @@ public static class UiSnapshot
         userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette, themeMode: themeMode, accentColor: accent));
         var kit = pictures ?? new Chisel.App.Tests.Support.PictureKit();
         kit.Attach(context, time, userSettings);
-        var layout = new LayoutViewModel(layoutRepository, kit.Catalog);
+        var layout = new LayoutViewModel(layoutRepository ?? new ClassicLayoutRepository(), kit.Catalog);
         var notepadSettings = new NotepadSettingsRepository(context);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
@@ -168,5 +168,23 @@ public static class UiSnapshot
         }
 
         return dir?.FullName ?? throw new InvalidOperationException("Couldn't find Chisel.slnx above the test output folder.");
+    }
+
+    // A layout store with nothing saved, so the window starts from the app's real default layout.
+    public static Chisel.Core.Layout.IWidgetLayoutRepository FactoryDefaultLayout() => new FactoryDefaultLayoutRepository();
+
+    private sealed class FactoryDefaultLayoutRepository : Chisel.Core.Layout.IWidgetLayoutRepository
+    {
+        private Chisel.Core.Layout.WidgetLayout? _saved;
+        public Chisel.Core.Layout.WidgetLayout? Get() => _saved;
+        public void Save(Chisel.Core.Layout.WidgetLayout layout) => _saved = layout;
+    }
+
+    // The layout store the windows start with: the classic three-card right column (see TestLayouts), kept in memory.
+    private sealed class ClassicLayoutRepository : Chisel.Core.Layout.IWidgetLayoutRepository
+    {
+        private Chisel.Core.Layout.WidgetLayout? _saved = TestLayouts.Classic;
+        public Chisel.Core.Layout.WidgetLayout? Get() => _saved;
+        public void Save(Chisel.Core.Layout.WidgetLayout layout) => _saved = layout;
     }
 }
