@@ -22,8 +22,9 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
     private MediaSessionInfo? _current;
     private int _version;
     private bool _disposed;
-    private string? _artKey;
-    private byte[]? _art;
+    private readonly TrackArtLoader _art = new();
+
+    public WindowsMediaService() => _art.ArtChanged += (_, _) => _ = RefreshAsync();
 
     public MediaSessionInfo? Current => Volatile.Read(ref _current);
 
@@ -85,8 +86,7 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
             _manager = null;
         }
         Attach(null);
-        _art = null;
-        _artKey = null;
+        _art.Clear();
         Interlocked.Increment(ref _version);
         Interlocked.Exchange(ref _current, null);
     }
@@ -96,14 +96,14 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
     {
         if (_session is { } old)
         {
-            old.MediaPropertiesChanged -= OnSessionEvent;
+            old.MediaPropertiesChanged -= OnPropertiesChanged;
             old.PlaybackInfoChanged -= OnSessionEvent;
             old.TimelinePropertiesChanged -= OnSessionEvent;
         }
         _session = session;
         if (session is not null)
         {
-            session.MediaPropertiesChanged += OnSessionEvent;
+            session.MediaPropertiesChanged += OnPropertiesChanged;
             session.PlaybackInfoChanged += OnSessionEvent;
             session.TimelinePropertiesChanged += OnSessionEvent;
         }
@@ -126,12 +126,14 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
                 Attach(null);
             }
         }
-        _ = RefreshAsync();
+        _ = RefreshAsync(propertiesChanged: true);
     }
 
     private void OnSessionEvent(GlobalSystemMediaTransportControlsSession sender, object args) => _ = RefreshAsync();
 
-    private async Task RefreshAsync()
+    private void OnPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, object args) => _ = RefreshAsync(propertiesChanged: true);
+
+    private async Task RefreshAsync(bool propertiesChanged = false)
     {
         var version = Interlocked.Increment(ref _version);
         MediaSessionInfo? info = null;
@@ -144,7 +146,7 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
             }
             if (session is not null)
             {
-                info = await ReadAsync(session);
+                info = await ReadAsync(session, propertiesChanged);
             }
         }
         catch (Exception)
@@ -177,7 +179,7 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
             }
         });
 
-    private async Task<MediaSessionInfo?> ReadAsync(GlobalSystemMediaTransportControlsSession session)
+    private async Task<MediaSessionInfo?> ReadAsync(GlobalSystemMediaTransportControlsSession session, bool propertiesChanged)
     {
         var playback = session.GetPlaybackInfo();
         if (playback is null || playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed)
@@ -227,6 +229,7 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
         var title = props?.Title ?? "";
         var artist = props?.Artist ?? "";
         var album = props?.AlbumTitle ?? "";
+        var identity = new TrackIdentity(session.SourceAppUserModelId ?? "", title, artist, album);
         return new MediaSessionInfo
         {
             Title = title, Artist = artist, AlbumTitle = album,
@@ -237,42 +240,42 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
             Controls = (controls.IsPlayEnabled ? MediaControls.Play : 0) | (controls.IsPauseEnabled ? MediaControls.Pause : 0)
                 | (controls.IsNextEnabled ? MediaControls.Next : 0) | (controls.IsPreviousEnabled ? MediaControls.Previous : 0),
             Position = position, Duration = duration,
-            AlbumArt = await ArtAsync(props, $"{session.SourceAppUserModelId}|{title}|{artist}|{album}"),
+            AlbumArt = ArtFor(session, identity, propertiesChanged),
         };
     }
 
-    // The thumbnail as bytes, read once per track (the same bytes are handed back until the track changes).
-    private async Task<byte[]?> ArtAsync(GlobalSystemMediaTransportControlsSessionMediaProperties? props, string key)
+    // The art for this exact track, or null until it has loaded (never another track's). The loader keeps looking in
+    // the background and raises ArtChanged when it arrives.
+    private byte[]? ArtFor(GlobalSystemMediaTransportControlsSession session, TrackIdentity identity, bool propertiesChanged)
     {
-        if (props?.Thumbnail is not { } thumbnail)
-        {
-            _art = null;
-            _artKey = null;
-            return null;
-        }
-        if (key == _artKey)
-        {
-            return _art;
-        }
-        try
-        {
-            using var stream = await thumbnail.OpenReadAsync();
-            if (stream.Size is 0 or > 16 * 1024 * 1024)
-            {
-                return null;
-            }
-            var bytes = new byte[stream.Size];
-            using var reader = new DataReader(stream);
-            await reader.LoadAsync((uint)stream.Size);
-            reader.ReadBytes(bytes);
-            _art = bytes;
-            _artKey = key;
-            return bytes;
-        }
-        catch (Exception)
+        if (identity.Title.Length == 0 && identity.Artist.Length == 0)
         {
             return null;
         }
+        _art.Observe(identity, ct => ReadThumbnailAsync(session, identity, ct), propertiesChanged);
+        return _art.ArtFor(identity);
+    }
+
+    // Asks the session again for its properties (the thumbnail it had a moment ago may be the previous track's) and
+    // reads the picture, but only if the session still reports this track.
+    private static async Task<byte[]?> ReadThumbnailAsync(GlobalSystemMediaTransportControlsSession session, TrackIdentity identity, CancellationToken ct)
+    {
+        var props = await session.TryGetMediaPropertiesAsync().AsTask(ct);
+        if (props is null || (props.Title ?? "") != identity.Title || (props.Artist ?? "") != identity.Artist
+            || (props.AlbumTitle ?? "") != identity.Album || props.Thumbnail is not { } thumbnail)
+        {
+            return null;
+        }
+        using var stream = await thumbnail.OpenReadAsync().AsTask(ct);
+        if (stream.Size is 0 or > 16 * 1024 * 1024)
+        {
+            return null;
+        }
+        var bytes = new byte[stream.Size];
+        using var reader = new DataReader(stream);
+        await reader.LoadAsync((uint)stream.Size).AsTask(ct);
+        reader.ReadBytes(bytes);
+        return bytes;
     }
 
     public Task PlayAsync() => Send(s => s.TryPlayAsync().AsTask());
@@ -309,6 +312,7 @@ public sealed class WindowsMediaService : IMediaService, IDisposable
             _changed = null;
             _subscribers = 0;
             Stop();
+            _art.Dispose();
         }
     }
 }
