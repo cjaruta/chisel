@@ -35,7 +35,10 @@ public class LayoutScrollTests
         var window = UiSnapshot.ShowMainWindow(1000, 650);
 
         var frame = Frame(window, id);
-        var scroller = frame.View.FindAncestorOfType<ScrollViewer>()!;
+        // Quick links is wrapped by the card; Tasks keeps its add box pinned and scrolls its list inside the view.
+        var scroller = id == "tasks"
+            ? frame.View.GetVisualDescendants().OfType<ScrollViewer>().First()
+            : frame.View.FindAncestorOfType<ScrollViewer>()!;
 
         Assert.Same(frame, scroller.FindAncestorOfType<WidgetFrame>());
         Assert.True(scroller.Bounds.Height <= frame.Bounds.Height);

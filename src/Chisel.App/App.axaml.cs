@@ -63,7 +63,7 @@ public partial class App : Application
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
-                    new TaskListViewModel(_services.Tasks),
+                    new TaskListViewModel(_services.Tasks, _services.Time),
                     new NotesViewModel(_services.Notes, _services.Time, _services.NotepadSettings, new NotepadFileService(() => mainWindow?.StorageProvider)),
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,

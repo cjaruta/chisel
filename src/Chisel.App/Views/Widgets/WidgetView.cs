@@ -37,5 +37,10 @@ public class WidgetView : UserControl
 
     protected virtual void OnHeaderShownChanged() { }
 
+    // Inner room for a widget that lays out its own body (not wrapped in the card's scroller): 16 at the sides and
+    // bottom; at the top 14 under the title bar, or 24 with no title bar (room for the edit-mode badges).
+    protected static Thickness BodyMargin(bool headerShown) =>
+        headerShown ? new Thickness(16, 14, 16, 16) : new Thickness(16, 24, 16, 16);
+
     protected override Type StyleKeyOverride => typeof(UserControl);
 }

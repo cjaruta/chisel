@@ -47,7 +47,7 @@ public static class WidgetRegistry
         new WidgetDefinition(Schedule, "Today", Icon: "M4,5 H20 V20 H4 Z M4,9 H20 M8,3 V6 M16,3 V6",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ScheduleWidgetView), DefaultShowHeader: false, MinWidth: 260, Description: "Your schedule for the day, with the current block highlighted."),
         new WidgetDefinition(Tasks, "Tasks", Icon: "M4,6 L6,8 L9,4 M12,6 H20 M4,13 L6,15 L9,11 M12,13 H20 M5,19 H8 M12,19 H20",
-            DefaultHeight: 1.05, MinimumHeight, ScrollsContent: true, typeof(TasksWidgetView), MinWidth: 240, Description: "Things to do, with a quick box to add more."),
+            DefaultHeight: 1.05, MinimumHeight, ScrollsContent: false, typeof(TasksWidgetView), MinWidth: 240, Description: "Things to do, with a quick box to add more, due dates and drag to reorder."),
         new WidgetDefinition(Notes, "Notes", Icon: "M6,3 H15 L19,7 V21 H6 Z M9,11 H16 M9,15 H16 M9,18 H13",
             DefaultHeight: 1.1, MinimumHeight, ScrollsContent: false, typeof(NotesWidgetView), MinWidth: 240, Description: "Quick notes you can jot down and keep."),
         new WidgetDefinition(Links, "Quick links", Icon: "M10,14 L14,10 M8,12 L6,14 A3,3 0 0 0 10,18 L12,16 M16,12 L18,10 A3,3 0 0 0 14,6 L12,8",

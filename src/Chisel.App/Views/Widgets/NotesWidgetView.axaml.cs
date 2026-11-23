@@ -20,15 +20,10 @@ public partial class NotesWidgetView : WidgetView
         DataContextChanged += (_, _) => Attach();
     }
 
-    // Inner room around the pad: 16 at the sides and bottom; at the top 14 under the title bar (clear of the header row),
-    // or 24 with no title bar.
-    private static readonly Thickness WithHeader = new(16, 14, 16, 16);
-    private static readonly Thickness WithoutHeader = new(16, 24, 16, 16);
-
     // Like the other widgets: side margins always, and with no title bar extra room at the top for the edit-mode badges,
     // so entering edit mode moves nothing.
     protected override void OnHeaderShownChanged() =>
-        NotepadRoot.Margin = HeaderShown ? WithHeader : WithoutHeader;
+        NotepadRoot.Margin = BodyMargin(HeaderShown);
 
 
     private void Attach()

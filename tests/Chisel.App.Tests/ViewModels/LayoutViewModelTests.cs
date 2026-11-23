@@ -42,9 +42,9 @@ public class LayoutViewModelTests
     }
 
     [Fact]
-    public void Registry_OnlyTheScheduleAndTheNotepadScrollThemselves()
+    public void Registry_OnlyTheScheduleTheTasksAndTheNotepadScrollThemselves()
     {
-        Assert.Equal(new[] { "schedule", "notes", "clock", "weather", "media", "pictureframe", "scripture" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "clock", "weather", "media", "pictureframe", "scripture" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
     }
 
     [Fact]

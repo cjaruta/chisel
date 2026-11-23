@@ -126,7 +126,7 @@ public class LayoutEditModeHeadlessTests
     public void Entering_TakesKeyboardFocusOutOfAWidget()
     {
         var window = Show();
-        var newTask = window.GetVisualDescendants().OfType<TextBox>().Single(t => t.PlaceholderText == "New task");
+        var newTask = window.GetVisualDescendants().OfType<TextBox>().Single(t => t.PlaceholderText == "Add a task…");
         newTask.Focus();
         Dispatcher.UIThread.RunJobs();
         Assert.True(newTask.IsFocused);
@@ -213,16 +213,17 @@ public class LayoutEditModeHeadlessTests
     public void InEditMode_ListButtonsAndHeaderButtonsDoNothing()
     {
         var window = Show();
-        var tasksBefore = ViewModel(window).Tasks.Tasks.Count;
+        var doneBefore = ViewModel(window).Tasks.Done.Count;
+        Assert.True(doneBefore > 0);
         EnterEditMode(window);
 
         var add = Named<Button>(window, "AddBlockButton");
         ClickControl(window, add);
         Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);
 
-        var clear = window.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == "Clear completed");
+        var clear = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "ClearDoneButton");
         ClickControl(window, clear);
-        Assert.Equal(tasksBefore, ViewModel(window).Tasks.Tasks.Count);
+        Assert.Equal(doneBefore, ViewModel(window).Tasks.Done.Count);
         window.Close();
     }
 

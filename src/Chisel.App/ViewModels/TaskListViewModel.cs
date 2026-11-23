@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using Chisel.Core.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,74 +8,152 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
 
+// The task list: open tasks in their saved order, then a collapsible Completed section. Every change is saved at once,
+// and only the rows that changed are touched (nothing is rebuilt), so typing, focus and scroll position stay put.
 public partial class TaskListViewModel : ViewModelBase
 {
     private readonly ITaskRepository _repository;
+    private readonly TimeProvider _time;
+    private int _nextOrder;
 
-    public ObservableCollection<TaskItem> Tasks { get; } = new();
+    public ObservableCollection<TaskRowViewModel> Open { get; } = new();
+
+    public ObservableCollection<TaskRowViewModel> Done { get; } = new();
 
     [ObservableProperty]
     public partial string NewTaskText { get; set; } = string.Empty;
 
-    public TaskListViewModel(ITaskRepository repository)
+    [ObservableProperty]
+    public partial bool IsDoneExpanded { get; set; }
+
+    public bool IsEmpty => Open.Count == 0 && Done.Count == 0;
+
+    public bool HasDone => Done.Count > 0;
+
+    public string DoneHeader => $"Completed ({Done.Count})";
+
+    public TaskListViewModel(ITaskRepository repository, TimeProvider? time = null)
     {
         _repository = repository;
-        Refresh();
-    }
-
-    public void Refresh()
-    {
-        Tasks.Clear();
+        _time = time ?? TimeProvider.System;
+        var today = Today();
         foreach (var task in _repository.GetAll())
         {
-            Tasks.Add(task);
+            var row = new TaskRowViewModel(this, task, _nextOrder++, today);
+            (task.IsDone ? Done : Open).Add(row);
         }
+        Open.CollectionChanged += OnSectionsChanged;
+        Done.CollectionChanged += OnSectionsChanged;
+    }
+
+    public DateOnly Today() => DateOnly.FromDateTime(_time.GetLocalNow().DateTime);
+
+    private void OnSectionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(HasDone));
+        OnPropertyChanged(nameof(DoneHeader));
     }
 
     [RelayCommand]
     private void AddTask()
     {
-        if (string.IsNullOrWhiteSpace(NewTaskText))
+        var text = NewTaskText.Trim();
+        if (text.Length == 0)
         {
             return;
         }
 
-        _repository.Add(new TaskItem(NewTaskText));
+        var task = new TaskItem(text);
+        _repository.Add(task);
+        Open.Add(new TaskRowViewModel(this, task, _nextOrder++, Today()));
         NewTaskText = string.Empty;
-        Refresh();
     }
 
     [RelayCommand]
-    private void ToggleComplete(TaskItem task)
-    {
-        if (task.IsDone)
-        {
-            task.Reopen();
-        }
-        else
-        {
-            task.Complete();
-        }
-
-        _repository.Update(task);
-        Refresh();
-    }
-
-    [RelayCommand]
-    private void RemoveTask(TaskItem task)
-    {
-        _repository.Remove(task.Id);
-        Refresh();
-    }
+    private void ToggleDoneExpanded() => IsDoneExpanded = !IsDoneExpanded;
 
     [RelayCommand]
     private void ClearCompleted()
     {
-        foreach (var task in Tasks.Where(t => t.IsDone).ToList())
+        foreach (var row in Done)
         {
-            _repository.Remove(task.Id);
+            _repository.Remove(row.Id);
+        }
+        Done.Clear();
+    }
+
+    internal void Toggle(TaskRowViewModel row)
+    {
+        if (row.Item.IsDone)
+        {
+            row.Item.Reopen();
+        }
+        else
+        {
+            row.Item.Complete();
+        }
+        _repository.Update(row.Item);
+        row.Sync(Today());
+
+        (row.IsDone ? Open : Done).Remove(row);
+        InsertByOrder(row.IsDone ? Done : Open, row);
+    }
+
+    internal void Delete(TaskRowViewModel row)
+    {
+        _repository.Remove(row.Id);
+        Open.Remove(row);
+        Done.Remove(row);
+    }
+
+    internal void Save(TaskItem task) => _repository.Update(task);
+
+    public void SetDueDate(TaskRowViewModel row, DateOnly? date)
+    {
+        row.Item.SetDueDate(date);
+        _repository.Update(row.Item);
+        row.Sync(Today());
+    }
+
+    // Moves an open task up (-1) or down (+1) one place; stops at the ends.
+    public void MoveBy(TaskRowViewModel row, int delta)
+    {
+        var index = Open.IndexOf(row);
+        if (index < 0)
+        {
+            return;
+        }
+        MoveTo(row, index + delta);
+    }
+
+    // Puts an open task at the given place in the open list (clamped) and saves the order.
+    public void MoveTo(TaskRowViewModel row, int newIndex)
+    {
+        var index = Open.IndexOf(row);
+        newIndex = Math.Clamp(newIndex, 0, Open.Count - 1);
+        if (index < 0 || index == newIndex)
+        {
+            return;
         }
 
-        Refresh();
+        Open.Move(index, newIndex);
+        var order = 0;
+        foreach (var r in Open.Concat(Done))
+        {
+            r.Order = order++;
+        }
+        _nextOrder = order;
+        _repository.Reorder(Open.Concat(Done).Select(r => r.Id).ToList());
+    }
+
+    private static void InsertByOrder(ObservableCollection<TaskRowViewModel> list, TaskRowViewModel row)
+    {
+        var i = 0;
+        while (i < list.Count && list[i].Order < row.Order)
+        {
+            i++;
+        }
+        list.Insert(i, row);
     }
 }
