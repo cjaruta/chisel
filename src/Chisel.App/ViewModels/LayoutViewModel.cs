@@ -33,6 +33,43 @@ public sealed record WidgetSlot(
     public double SplitMinWidth => GroupSplit.MinimumWidth(Members.Select(m => m.MinWidth));
 }
 
+// One of the saved layout profiles in the edit toolbar's menu: a numbered slot that is either empty or holds a layout.
+public sealed partial class ProfileSlot : ViewModelBase
+{
+    private readonly Action<int> _save, _load, _delete;
+
+    public ProfileSlot(int slot, string? name, Action<int> save, Action<int> load, Action<int> delete)
+    {
+        Slot = slot;
+        Name = name;
+        _save = save;
+        _load = load;
+        _delete = delete;
+    }
+
+    [RelayCommand]
+    private void Save() => _save(Slot);
+
+    [RelayCommand(CanExecute = nameof(IsSaved))]
+    private void Load() => _load(Slot);
+
+    [RelayCommand(CanExecute = nameof(IsSaved))]
+    private void Delete() => _delete(Slot);
+
+    public int Slot { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSaved), nameof(Title), nameof(Status))]
+    [NotifyCanExecuteChangedFor(nameof(LoadCommand), nameof(DeleteCommand))]
+    public partial string? Name { get; set; }
+
+    public bool IsSaved => Name is not null;
+
+    public string Title => Name ?? LayoutProfiles.DefaultName(Slot);
+
+    public string Status => IsSaved ? "Saved" : "Empty";
+}
+
 // Where a drop of pictures goes: into a gap between cards, a new column, or onto a card's middle.
 public enum PictureDropKind { Gap, NewColumn, Card }
 
@@ -51,6 +88,7 @@ public partial class LayoutViewModel : ViewModelBase
 {
     private readonly IWidgetLayoutRepository? _repository;
     private readonly PictureCatalog? _pictureCatalog;
+    private readonly ILayoutProfileRepository? _profileRepository;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Columns), nameof(TrayWidgets), nameof(HasHiddenWidgets), nameof(CanRemoveWidgets))]
@@ -264,10 +302,17 @@ public partial class LayoutViewModel : ViewModelBase
     }
 
     // repository: where the layout is saved; null keeps it in memory only.
-    public LayoutViewModel(IWidgetLayoutRepository? repository = null, PictureCatalog? pictures = null)
+    // profiles: where the saved layout profiles are kept; null keeps them in memory only.
+    public LayoutViewModel(IWidgetLayoutRepository? repository = null, PictureCatalog? pictures = null, ILayoutProfileRepository? profiles = null)
     {
         _repository = repository;
         _pictureCatalog = pictures;
+        _profileRepository = profiles;
+        var savedProfiles = (profiles?.GetAll() ?? []).ToDictionary(p => p.Slot);
+        Profiles = Enumerable.Range(1, LayoutProfiles.MaximumProfiles)
+            .Select(slot => new ProfileSlot(slot, savedProfiles.TryGetValue(slot, out var found) ? found.Name : null, SaveProfile, LoadProfile, DeleteProfile))
+            .ToList();
+        _profileLayouts = savedProfiles.ToDictionary(p => p.Key, p => p.Value.Layout);
         Pictures = pictures?.Load() ?? PictureFrameSet.Empty;
         var saved = repository?.Get();
         if (saved is null)
@@ -286,6 +331,47 @@ public partial class LayoutViewModel : ViewModelBase
                 repository!.Save(Layout);
             }
         }
+    }
+
+    // The layout profiles: always LayoutProfiles.MaximumProfiles slots, each empty or saved.
+    public IReadOnlyList<ProfileSlot> Profiles { get; }
+
+    private readonly Dictionary<int, WidgetLayout> _profileLayouts;
+
+    // Saves the layout being arranged into a profile slot, replacing what was there. Saved at once (it is not part of
+    // Done or Cancel). Edit mode only.
+    private void SaveProfile(int slot)
+    {
+        if (!IsEditing || !LayoutProfiles.IsValidSlot(slot))
+        {
+            return;
+        }
+        var layout = Layout.RemoveEmptyColumns();
+        var name = Profiles[slot - 1].Title;
+        _profileLayouts[slot] = layout;
+        _profileRepository?.Save(new LayoutProfile(slot, name, layout));
+        Profiles[slot - 1].Name = name;
+    }
+
+    // Arranges the dashboard as a saved profile. Part of the working copy like any other edit: Done keeps it, Cancel
+    // puts the old arrangement back. Edit mode only.
+    private void LoadProfile(int slot)
+    {
+        if (IsEditing && _profileLayouts.TryGetValue(slot, out var layout))
+        {
+            Apply(layout);
+        }
+    }
+
+    // Empties a profile slot. Edit mode only.
+    private void DeleteProfile(int slot)
+    {
+        if (!IsEditing || !LayoutProfiles.IsValidSlot(slot) || !_profileLayouts.Remove(slot))
+        {
+            return;
+        }
+        _profileRepository?.Delete(slot);
+        Profiles[slot - 1].Name = null;
     }
 
     // Every picture frame's options and pictures. Part of the working copy: in edit mode a change is kept here until

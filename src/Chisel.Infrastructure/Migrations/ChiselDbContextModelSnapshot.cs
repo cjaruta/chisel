@@ -274,6 +274,24 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("LayoutColumns");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.LayoutProfileEntity", b =>
+                {
+                    b.Property<int>("Slot")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LayoutJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Slot");
+
+                    b.ToTable("LayoutProfiles");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.MarkerEntity", b =>
                 {
                     b.Property<Guid>("Id")

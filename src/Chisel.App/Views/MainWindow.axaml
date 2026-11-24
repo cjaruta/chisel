@@ -99,6 +99,31 @@
                         Content="Widget Library" Command="{Binding Library.ToggleCommand}"
                         ToolTip.Tip="Browse and add widgets" />
                 <Border Classes="toolbarDivider" />
+                <Button Name="ProfilesButton" Content="Profiles" ToolTip.Tip="Save this layout as a profile, or switch to one you saved">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <StackPanel Spacing="8" MinWidth="300">
+                                <TextBlock Classes="settingsSection" Text="LAYOUT PROFILES" />
+                                <ItemsControl Name="ProfileList" ItemsSource="{Binding Layout.Profiles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ProfileSlot">
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,3">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" />
+                                                    <TextBlock Classes="dim" Text="{Binding Status}" />
+                                                </StackPanel>
+                                                <Button Name="ProfileSave" Grid.Column="1" Content="Save Profile" Command="{Binding SaveCommand}"
+                                                        ToolTip.Tip="Save the current layout here" />
+                                                <Button Name="ProfileLoad" Grid.Column="2" Content="Load" Command="{Binding LoadCommand}" />
+                                                <Button Name="ProfileDelete" Grid.Column="3" Content="Delete" Command="{Binding DeleteCommand}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
                 <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
                 <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
                 <Button Name="LayoutDoneButton" Classes="editPrimary" Content="Done" Command="{Binding Layout.DoneCommand}" />

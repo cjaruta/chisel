@@ -27,6 +27,8 @@ public class ChiselDbContext : DbContext
 
     public DbSet<HiddenWidgetEntity> HiddenWidgets => Set<HiddenWidgetEntity>();
 
+    public DbSet<LayoutProfileEntity> LayoutProfiles => Set<LayoutProfileEntity>();
+
     public DbSet<PictureAssetEntity> PictureAssets => Set<PictureAssetEntity>();
 
     public DbSet<FramePictureEntity> FramePictures => Set<FramePictureEntity>();
@@ -65,6 +67,10 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<WidgetPlacementEntity>()
             .Property(p => p.HeightWeight)
             .HasDefaultValue(1.0);
+
+        // Saved layout profiles are keyed by their slot (1 to 3).
+        modelBuilder.Entity<LayoutProfileEntity>().HasKey(p => p.Slot);
+        modelBuilder.Entity<LayoutProfileEntity>().Property(p => p.Slot).ValueGeneratedNever();
 
         // One row per widget taken off the dashboard.
         modelBuilder.Entity<HiddenWidgetEntity>().HasKey(h => h.WidgetId);

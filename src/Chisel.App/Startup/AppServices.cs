@@ -29,6 +29,7 @@ public sealed class AppServices : IDisposable
     public IScheduleRepository Schedule { get; }
     public IUserSettingsRepository UserSettings { get; }
     public IWidgetLayoutRepository WidgetLayout { get; }
+    public ILayoutProfileRepository LayoutProfiles { get; }
     public IWeatherStore Weather { get; }
     public Chisel.Core.Clock.IClockStyleRepository ClockStyles { get; }
     public Chisel.Core.Clock.IClockFaceStore ClockFaces { get; }
@@ -69,6 +70,7 @@ public sealed class AppServices : IDisposable
         Schedule = new ScheduleRepository(DbContext);
         UserSettings = new UserSettingsRepository(DbContext);
         WidgetLayout = new WidgetLayoutRepository(DbContext);
+        LayoutProfiles = new LayoutProfileRepository(DbContext);
         Weather = new WeatherRepository(DbContext);
         ClockStyles = new ClockStyleRepository(DbContext);
         ClockFaces = new ClockFaceRepository(DbContext);

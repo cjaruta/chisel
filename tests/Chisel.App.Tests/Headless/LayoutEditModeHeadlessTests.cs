@@ -156,15 +156,15 @@ public class LayoutEditModeHeadlessTests
     }
 
     [AvaloniaFact]
-    public void Toolbar_HasLibraryDoneCancelAndReset()
+    public void Toolbar_HasLibraryProfilesDoneCancelAndReset()
     {
-        var window = Show();
+        var window = Show(1400, 760); // wide enough to center the toolbar beside the clock and date
         EnterEditMode(window);
 
         var toolbar = Named<Border>(window, "LayoutToolbar");
         var buttons = toolbar.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Content as string).Where(c => c is not null).ToList();
 
-        Assert.Equal(new[] { "Widget Library", "Reset layout", "Cancel", "Done" }, buttons);
+        Assert.Equal(new[] { "Widget Library", "Profiles", "Reset layout", "Cancel", "Done" }, buttons);
         var bounds = InWindow(toolbar, window);
         Assert.True(Math.Abs(bounds.Center.X - window.ClientSize.Width / 2) < 2, "toolbar is centered");
         Assert.True(bounds.Top < 40, "toolbar is at the top");
