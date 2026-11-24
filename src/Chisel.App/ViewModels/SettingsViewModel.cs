@@ -98,6 +98,7 @@ public partial class SettingsViewModel : ViewModelBase
         var accent = ThemeModes.ResolveAccent(stored?.AccentColor);
         SelectedThemeMode = ThemeModeOptions.Single(o => o.Id == mode.Id);
         ShowAccent(accent);
+        _palette.UseMode(mode);
         Theme?.Apply(mode, accent);
         UpdateAccentInfo();
     }
@@ -137,7 +138,12 @@ public partial class SettingsViewModel : ViewModelBase
 
     partial void OnSelectedThemeModeChanged(ThemeModeOption value)
     {
-        if (value is null || Theme is null)
+        if (value is null)
+        {
+            return;
+        }
+        _palette.UseMode(ThemeModes.ById(value.Id));
+        if (Theme is null)
         {
             return;
         }

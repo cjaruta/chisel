@@ -829,7 +829,7 @@
         </Style>
 
         <Style Selector="Border.gridBlock.past">
-            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="Opacity" Value="0.6" />
         </Style>
 
         <Style Selector="TextBlock.blockTitle">
@@ -883,7 +883,7 @@
         </Style>
 
         <Style Selector="Grid.markerRow.past">
-            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Opacity" Value="0.6" />
         </Style>
 
         <!-- A marker not saved yet: same look, a little softer -->

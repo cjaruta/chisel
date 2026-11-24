@@ -163,3 +163,37 @@ public class SchedulePaletteTests
         Assert.Same(BlockPalettes.Minimal, _palette.Palette);
     }
 }
+
+public class LightModeBlockBrushTests
+{
+    private static Color ColorOf(IBrush brush) => ((ISolidColorBrush)brush).Color;
+
+    [Fact]
+    public void InALightMode_BlocksAreSoftTintsWithDarkText_AndInADarkModeTheyAreUnchanged()
+    {
+        var display = new PaletteDisplay();
+        var dark = display.Brushes(BlockColor.Slate);
+
+        display.UseMode(Chisel.Core.Theme.ThemeModes.ById("light"));
+        var light = display.Brushes(BlockColor.Slate);
+
+        Assert.True(ColorOf(light.Fill).R > ColorOf(dark.Fill).R + 60, "the light fill is not much lighter");
+        Assert.True(ColorOf(light.Text).R < 90, "the light mode title is not dark");
+        Assert.True(ColorOf(dark.Text).R > 200, "the dark mode title changed");
+
+        display.UseMode(Chisel.Core.Theme.ThemeModes.Default);
+        Assert.Equal(ColorOf(dark.Fill), ColorOf(display.Brushes(BlockColor.Slate).Fill));
+    }
+
+    [Fact]
+    public void ChangingTheMode_TellsTheViewsToResolveTheirBrushesAgain()
+    {
+        var display = new PaletteDisplay();
+        var raised = 0;
+        display.PropertyChanged += (_, _) => raised++;
+
+        display.UseMode(Chisel.Core.Theme.ThemeModes.ById("light"));
+
+        Assert.True(raised > 0);
+    }
+}

@@ -19,6 +19,8 @@ public static class ThemeModes
         new(id, name, light, Rgb.Parse(window), Rgb.Parse(card), Rgb.Parse(raised), Rgb.Parse(border), Rgb.Parse(controlBorder),
             Rgb.Parse(divider), Rgb.Parse(text), Rgb.Parse(secondary), Rgb.Parse(disabled), light ? AccentDerivation.Black : AccentDerivation.White);
 
+    // Light is a soft warm paper rather than white: the window, cards and raised controls are all a step or two below white, and
+    // the text is a deep warm gray rather than black, so it is easy on the eyes but still reads at high contrast.
     public static readonly ThemeDefinition Default = Make("default", "Default", false,
         "#14161A", "#1F222A", "#2B2E36", "#2A2E37", "#7A8190", "#3D4350", "#ECEEF2", "#9AA0AA", "#5A5F69");
 
@@ -26,7 +28,7 @@ public static class ThemeModes
     [
         Default,
         Make("light", "Light", true,
-            "#F3F4F6", "#FFFFFF", "#EBEDF1", "#E1E4E8", "#6F7785", "#D3D7DE", "#14161A", "#4B5260", "#9AA1AC"),
+            "#E4E2DD", "#EFEDE9", "#DAD7D1", "#CFCBC4", "#6E6A63", "#C3BFB7", "#1F1D1A", "#4D4944", "#7A766F"),
         Make("ultra-dark", "Ultra dark", false,
             "#000000", "#0B0B0C", "#161618", "#1E1E21", "#74747D", "#2A2A2E", "#F2F2F4", "#A0A0A8", "#5C5C63"),
         Make("ocean", "Ocean", false,

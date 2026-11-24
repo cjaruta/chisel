@@ -169,10 +169,15 @@ public sealed class WeatherWidgetView : WidgetView
             WeatherState.Offline => "Weather is offline.",
             _ => "Loading weather…",
         };
-        panel.Children.Add(Text(message, 14, dim: true, name: "WeatherMessage"));
+        // No backdrop is drawn behind a message, so it is theme text on the plain card (the backdrop's light text would vanish on a light mode).
+        var note = Text(message, 14, name: "WeatherMessage");
+        note.Foreground = Brush("TextBrush");
+        panel.Children.Add(note);
         if (_weather.State == WeatherState.Offline && _weather.UpdatedText != "")
         {
-            panel.Children.Add(Text(_weather.UpdatedText, 12, dim: true, name: "WeatherUpdated"));
+            var updated = Text(_weather.UpdatedText, 12, name: "WeatherUpdated");
+            updated.Foreground = Brush("DimTextBrush");
+            panel.Children.Add(updated);
         }
         Content = panel;
     }
