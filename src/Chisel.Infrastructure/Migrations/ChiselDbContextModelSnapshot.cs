@@ -534,6 +534,11 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<TimeOnly>("WakeTime")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("WidgetSpacing")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(16);
+
                     b.HasKey("Id");
 
                     b.ToTable("UserSettings");

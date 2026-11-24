@@ -80,6 +80,9 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<FramePictureEntity>().HasIndex(p => p.FrameId);
         modelBuilder.Entity<FrameOptionsEntity>().HasKey(o => o.FrameId);
 
+        // Settings saved before the spacing option keep the spacing the app always had.
+        modelBuilder.Entity<UserSettingsEntity>().Property(s => s.WidgetSpacing).HasDefaultValue(Core.Settings.UserSettings.DefaultWidgetSpacing);
+
         // Settings saved before picture frames keep original files and make one slideshow of several pictures.
         modelBuilder.Entity<UserSettingsEntity>().Property(s => s.PictureKeepOriginals).HasDefaultValue(true);
         modelBuilder.Entity<UserSettingsEntity>().Property(s => s.PictureMultiDrop).HasDefaultValue(0);

@@ -87,6 +87,7 @@ public partial class SettingsViewModel : ViewModelBase
         var saved = stored?.ClockFormat ?? ClockFormat.TwentyFourHour;
         _display.Format = saved;
         UseTwelveHour = saved == ClockFormat.TwelveHour;
+        WidgetSpacing = stored?.WidgetSpacing ?? UserSettings.DefaultWidgetSpacing;
 
         // Unknown ids resolve to Default Minimal.
         _palette.Use(stored?.SchedulePalette);
@@ -196,6 +197,28 @@ public partial class SettingsViewModel : ViewModelBase
         if (settings is not null && settings.SchedulePalette != value.Id)
         {
             _repository.Save(settings.WithSchedulePalette(value.Id));
+        }
+    }
+
+    // The space between widgets in pixels (a slider, so a number); applied to the dashboard as it moves and saved.
+    [ObservableProperty]
+    public partial double WidgetSpacing { get; set; } = UserSettings.DefaultWidgetSpacing;
+
+    public double MinimumWidgetSpacing => UserSettings.MinimumWidgetSpacing;
+    public double MaximumWidgetSpacing => UserSettings.MaximumWidgetSpacing;
+
+    partial void OnWidgetSpacingChanged(double value)
+    {
+        var spacing = (int)System.Math.Clamp(System.Math.Round(value), UserSettings.MinimumWidgetSpacing, UserSettings.MaximumWidgetSpacing);
+        if (spacing != value)
+        {
+            WidgetSpacing = spacing;
+            return;
+        }
+        var settings = _repository.Get();
+        if (settings is not null && settings.WidgetSpacing != spacing)
+        {
+            _repository.Save(settings.WithWidgetSpacing(spacing));
         }
     }
 

@@ -88,7 +88,7 @@
         </StackPanel>
 
         <!-- Widgets in columns, built from the saved layout -->
-        <views:LayoutHost Grid.Row="1" Name="LayoutHost" Layout="{Binding Layout}" />
+        <views:LayoutHost Grid.Row="1" Name="LayoutHost" Layout="{Binding Layout}" Spacing="{Binding Settings.WidgetSpacing}" />
 
         <!-- Layout edit mode toolbar: floats at the top center; Esc is the same as Cancel -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="LayoutToolbar" Classes="layoutToolbar" ZIndex="20"
@@ -247,6 +247,14 @@
                             <TextBlock Classes="settingsSection" Text="CLOCK FORMAT" />
                             <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
                             <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
+
+                            <TextBlock Classes="settingsSection" Text="WIDGET SPACING" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Slider Name="WidgetSpacingSlider" Minimum="{Binding Settings.MinimumWidgetSpacing}" Maximum="{Binding Settings.MaximumWidgetSpacing}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Settings.WidgetSpacing}" />
+                                <TextBlock Name="WidgetSpacingValue" Grid.Column="1" Classes="dim" VerticalAlignment="Center" MinWidth="36" TextAlignment="Right"
+                                           Text="{Binding Settings.WidgetSpacing, StringFormat='{}{0:0} px'}" />
+                            </Grid>
 
                             <TextBlock Classes="settingsSection" Text="MODE" />
                             <!-- Each mode shows its window, card, raised, secondary text and text colors; choosing one restyles the app right away -->

@@ -19,7 +19,8 @@ public class UserSettingsEntity
     public bool MediaAnimateGradient { get; set; } = true;
     public bool PictureKeepOriginals { get; set; } = true;
     public int PictureMultiDrop { get; set; }
+    public int WidgetSpacing { get; set; } = UserSettings.DefaultWidgetSpacing;
     public string ThemeMode { get; set; } = UserSettings.DefaultThemeMode;
     public string? AccentColor { get; set; }
     public string SchedulePalette { get; set; } = UserSettings.DefaultSchedulePalette;
-}
+}
