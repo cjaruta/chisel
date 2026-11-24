@@ -18,37 +18,37 @@ public class ClockToolsFormatTests
     public void Countdown_RoundsPartialSecondsUp_SoItHitsZeroOnlyAtZero() =>
         Assert.Equal("00:01", ClockToolsFormat.Countdown(TimeSpan.FromMilliseconds(100)));
 
-    // The stopwatch moves in steps of 0.2 s, and the step is the one the time has reached (rounded down): the display never runs
+    // The stopwatch moves in steps of 0.1 s, and the step is the one the time has reached (rounded down): the display never runs
     // ahead of real time.
     [Theory]
     [InlineData(0, "00:00.0")]
-    [InlineData(199, "00:00.0")]
+    [InlineData(99, "00:00.0")]
+    [InlineData(100, "00:00.1")]
+    [InlineData(199, "00:00.1")]
     [InlineData(200, "00:00.2")]
-    [InlineData(399, "00:00.2")]
-    [InlineData(400, "00:00.4")]
-    [InlineData(999, "00:00.8")]
+    [InlineData(999, "00:00.9")]
     [InlineData(1000, "00:01.0")]
     [InlineData(1234, "00:01.2")]
-    [InlineData(1999, "00:01.8")]
-    [InlineData(61999, "01:01.8")]
-    [InlineData(3599999, "59:59.8")]
+    [InlineData(1999, "00:01.9")]
+    [InlineData(61999, "01:01.9")]
+    [InlineData(3599999, "59:59.9")]
     [InlineData(3600000, "1:00:00.0")]
-    [InlineData(3600199, "1:00:00.0")]
-    public void Stopwatch_ShowsStepsOfTwoTenths_RoundedDown(int milliseconds, string expected) =>
+    [InlineData(3600199, "1:00:00.1")]
+    public void Stopwatch_ShowsStepsOfOneTenth_RoundedDown(int milliseconds, string expected) =>
         Assert.Equal(expected, ClockToolsFormat.Stopwatch(TimeSpan.FromMilliseconds(milliseconds)));
 
     [Fact]
-    public void Stopwatch_OnlyEverShowsEvenTenths_AndNeverRunsAhead()
+    public void Stopwatch_ShowsEveryTenth_AndNeverRunsAhead()
     {
         for (var ms = 0; ms < 200_000; ms += 7)
         {
             var text = ClockToolsFormat.Stopwatch(TimeSpan.FromMilliseconds(ms));
 
-            Assert.Contains(text[^1], "02468");
+            Assert.True(char.IsDigit(text[^1]));
             Assert.Equal('.', text[^2]);
             var shown = Shown(text);
             Assert.True(shown <= ms, $"{text} is ahead of {ms} ms");
-            Assert.True(ms - shown < 200, $"{text} is more than a step behind {ms} ms");
+            Assert.True(ms - shown < 100, $"{text} is more than a step behind {ms} ms");
         }
     }
 

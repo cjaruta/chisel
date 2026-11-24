@@ -190,10 +190,10 @@ public class ClockToolsViewModelTests
         Assert.Equal(saves, repo.Saves);
     }
 
-    // 0.2 s steps, the same rule for the running time, the stopped time and every lap and split.
+    // 0.1 s steps, the same rule for the running time, the stopped time and every lap and split.
 
     [Fact]
-    public void TheDisplay_StepsByTwoTenths_AndNeverRunsAheadOfTheRealTime()
+    public void TheDisplay_StepsByOneTenth_AndNeverRunsAheadOfTheRealTime()
     {
         var (vm, time, _) = Make();
         vm.StopwatchStartPauseCommand.Execute(null);
@@ -206,11 +206,11 @@ public class ClockToolsViewModelTests
             seen.Add(vm.StopwatchText);
             var real = i * 100;
             var shown = int.Parse(vm.StopwatchText[3..5]) * 1000 + int.Parse(vm.StopwatchText[^1..]) * 100;
-            Assert.True(shown <= real && real - shown < 200, $"{vm.StopwatchText} at {real} ms");
+            Assert.True(shown <= real && real - shown < 100, $"{vm.StopwatchText} at {real} ms");
         }
 
-        Assert.All(seen, text => Assert.Contains(text[^1], "02468"));
-        Assert.Equal("00:02.4", seen[^1]);
+        Assert.Equal(25, seen.Distinct().Count()); // every tenth shows, none is skipped
+        Assert.Equal("00:02.5", seen[^1]);
     }
 
     [Fact]
@@ -219,13 +219,13 @@ public class ClockToolsViewModelTests
         var (vm, time, _) = Make();
         vm.StopwatchStartPauseCommand.Execute(null);
         time.Advance(TimeSpan.FromMilliseconds(10_390));
-        vm.StopwatchLapCommand.Execute(null); // 10.39 s: shows 10.2
+        vm.StopwatchLapCommand.Execute(null); // 10.39 s: shows 10.3
         time.Advance(TimeSpan.FromMilliseconds(3_110));
-        vm.StopwatchLapCommand.Execute(null); // total 13.5 s: shows 13.4; the split 3.11 s shows 3.0
+        vm.StopwatchLapCommand.Execute(null); // total 13.5 s: shows 13.5; the split 3.11 s shows 3.1
         time.Advance(TimeSpan.FromMilliseconds(750));
         vm.StopwatchStartPauseCommand.Execute(null); // stops at 14.25 s: shows 14.2
 
-        Assert.Equal(["Lap 2   00:03.0   00:13.4", "Lap 1   00:10.2   00:10.2"], vm.LapTexts);
+        Assert.Equal(["Lap 2   00:03.1   00:13.5", "Lap 1   00:10.3   00:10.3"], vm.LapTexts);
         Assert.Equal("00:14.2", vm.StopwatchText);
     }
 
@@ -256,11 +256,11 @@ public class ClockToolsViewModelTests
         time.WallJump = TimeSpan.FromHours(-2); // and then back past the start
         time.Advance(TimeSpan.FromSeconds(2.5));
         vm.StopwatchStartPauseCommand.Execute(null);
-        Assert.Equal("00:12.4", vm.StopwatchText); // 12.5 s, rounded down to 12.4
+        Assert.Equal("00:12.5", vm.StopwatchText); // 12.5 s
 
         time.WallJump = TimeSpan.FromHours(1);
         vm.Tick();
-        Assert.Equal("00:12.4", vm.StopwatchText); // paused: still the same
+        Assert.Equal("00:12.5", vm.StopwatchText); // paused: still the same
     }
 
     [Fact]

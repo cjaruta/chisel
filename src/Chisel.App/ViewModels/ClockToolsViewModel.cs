@@ -10,7 +10,7 @@ namespace Chisel.App.ViewModels;
 public readonly record struct ToolIndicator(bool Active, string Text);
 
 // The timer and stopwatch, and which slots the clock widget has. The timer and stopwatch are Core state (absolute timestamps); this
-// only reads them against the TimeProvider on Tick (about every 200 ms), so a restart or a sleep needs no special handling.
+// only reads them against the TimeProvider on Tick (about every 200 ms, every 100 ms while the stopwatch runs), so a restart or a sleep needs no special handling.
 // State is saved when it changes, never on Tick.
 public partial class ClockToolsViewModel : ViewModelBase
 {

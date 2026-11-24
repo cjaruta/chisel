@@ -17,7 +17,7 @@ using Microsoft.Extensions.Time.Testing;
 namespace Chisel.App.Tests.Headless;
 
 // The analog stopwatch has to work where people really put the clock: a normal card in the right-hand column among other widgets,
-// where the room is modest. The dial must be there, its hands must move, the readout beneath must follow in 0.2 s steps, the
+// where the room is modest. The dial must be there, its hands must move, the readout beneath must follow in 0.1 s steps, the
 // buttons must drive it exactly like the digital face, and switching between the two must not disturb the time or leak anything.
 public class AnalogStopwatchWorksTests : IDisposable
 {
@@ -114,7 +114,7 @@ public class AnalogStopwatchWorksTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void TheReadoutBeneath_UpdatesInStepsOfTwoTenths_WhileTheHandsSweep()
+    public void TheReadoutBeneath_UpdatesInStepsOfOneTenth_WhileTheHandsSweep()
     {
         var (window, main, clock, _) = Show(1200, 760);
         var readout = Named<TextBlock>(window, "ClockStopwatchText");
@@ -130,8 +130,7 @@ public class AnalogStopwatchWorksTests : IDisposable
         }
 
         Assert.Equal("00:01.2", seen[^1]);
-        Assert.All(seen, text => Assert.Contains(text![^1], "02468"));
-        Assert.Equal(7, seen.Distinct().Count()); // 0.0, 0.2 ... 1.2: seven steps for twelve ticks of 0.1 s
+        Assert.Equal(12, seen.Distinct().Count()); // 0.1, 0.2 ... 1.2: a new tenth for every tick
         Assert.True(Face(window).IsAnimating);
         window.Close();
     }
@@ -190,7 +189,7 @@ public class AnalogStopwatchWorksTests : IDisposable
         main.ClockTools.Tick();
 
         Assert.True(main.ClockTools.StopwatchRunning);
-        Assert.Equal("00:16.4", main.ClockTools.StopwatchText); // 16.5 s: never reset, never behind
+        Assert.Equal("00:16.5", main.ClockTools.StopwatchText); // 16.5 s: never reset, never behind
         Assert.Equal(16.5, main.ClockTools.StopwatchElapsedSeconds(), 3);
         Assert.True(face.IsAnimating);
         window.Close();

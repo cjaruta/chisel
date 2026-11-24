@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
+using Chisel.Core.Clock;
 using Chisel.Core.Media;
 using Chisel.App.Views.Widgets;
 
@@ -66,7 +67,20 @@ public partial class MainWindow : Window
             }
         };
 
-        _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
+        _timer.Tick += (_, _) =>
+        {
+            if (DataContext is not MainViewModel main)
+            {
+                return;
+            }
+            main.Tick();
+            // While the stopwatch runs the tick is fast enough to show every tenth; otherwise it stays gentle.
+            var interval = TimeSpan.FromMilliseconds(main.ClockTools.StopwatchRunning ? ClockToolsFormat.StopwatchStepMilliseconds : 200);
+            if (_timer.Interval != interval)
+            {
+                _timer.Interval = interval;
+            }
+        };
         Loaded += (_, _) =>
         {
             _timer.Start();
