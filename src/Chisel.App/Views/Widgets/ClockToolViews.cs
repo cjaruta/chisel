@@ -99,8 +99,20 @@ internal static class ClockToolViews
             Secondary("ClockTimerClear", "Clear", () => tools.ClearTimerCommand.Execute(null)),
         };
         var setters = Wrap(presets);
-        disposables.Add(setters.Bind(Visual.IsVisibleProperty, new Binding(nameof(ClockToolsViewModel.CanSetTimer)) { Source = tools }));
         var actions = Wrap(start, reset);
+        var fit = new TimerFit(0, TimerFit.AllPresets, true, true, 0);
+        // The presets are for setting the time, so they show only when it can be set and the slot has room for them.
+        void ShowParts()
+        {
+            setters.IsVisible = tools.CanSetTimer && fit.Presets > 0;
+            for (var i = 0; i < presets.Length; i++)
+            {
+                presets[i].IsVisible = i < fit.Presets;
+            }
+            start.IsVisible = fit.ShowStart;
+            reset.IsVisible = fit.ShowReset;
+            actions.IsVisible = fit.ShowStart || fit.ShowReset;
+        }
 
         // The time takes the accent colour when the timer is done.
         void Recolor() => text.Foreground = Theming.ThemeService.Brush(host, tools.TimerStatus == TimerStatus.Finished ? "AccentBrush" : "TextBrush");
@@ -110,6 +122,10 @@ internal static class ClockToolViews
             {
                 Recolor();
             }
+            if (e.PropertyName == nameof(ClockToolsViewModel.CanSetTimer))
+            {
+                ShowParts();
+            }
         }
         tools.PropertyChanged += OnChanged;
         disposables.Add(new ActionDisposable(() => tools.PropertyChanged -= OnChanged));
@@ -118,7 +134,9 @@ internal static class ClockToolViews
         var stack = Stack(text, setters, actions);
         rescale = s =>
         {
-            text.FontSize = s.Display;
+            fit = ClockTimerLayout.For(s);
+            text.FontSize = fit.Display;
+            ShowParts();
             Fit(stack, s);
             foreach (var button in presets)
             {

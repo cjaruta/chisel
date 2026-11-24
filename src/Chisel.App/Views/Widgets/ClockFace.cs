@@ -297,7 +297,8 @@ public sealed class ClockFace : Control
             }
         }
 
-        if (style.Numerals != NumeralStyle.None)
+        // Numerals crowd a small dial, so they go and leave the marks and the hands (see ClockDialLayout).
+        if (style.Numerals != NumeralStyle.None && ClockDialLayout.ShowsNumerals(radius * 2))
         {
             var twentyFour = style.Kind == DialKind.TwentyFourHour;
             var big = style.Numerals is NumeralStyle.Twelve or NumeralStyle.Four;
