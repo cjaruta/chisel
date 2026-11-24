@@ -29,6 +29,10 @@ public static class ThemeModes
         Default,
         Make("light", "Light", true,
             "#E4E2DD", "#EFEDE9", "#DAD7D1", "#CFCBC4", "#6E6A63", "#C3BFB7", "#1F1D1A", "#4D4944", "#7A766F"),
+        Make("mist", "Mist", true,
+            "#DEE3E9", "#EBEEF2", "#D2D8E0", "#C4CBD4", "#66707D", "#BAC2CC", "#171B21", "#424B57", "#727B87"),
+        Make("sage", "Sage", true,
+            "#E0E4DC", "#ECEFE8", "#D4D9CF", "#C6CCC0", "#66705F", "#BCC3B5", "#1A1F18", "#444C41", "#757D71"),
         Make("ultra-dark", "Ultra dark", false,
             "#000000", "#0B0B0C", "#161618", "#1E1E21", "#74747D", "#2A2A2E", "#F2F2F4", "#A0A0A8", "#5C5C63"),
         Make("ocean", "Ocean", false,
@@ -39,6 +43,10 @@ public static class ThemeModes
             "#17101C", "#231A2B", "#31243D", "#3A2B49", "#9C80B1", "#4A3860", "#F3EAF8", "#BBA3CA", "#7A6488"),
         Make("slate", "Slate", false,
             "#1B2028", "#252B35", "#313845", "#3A4250", "#8D99AC", "#4A5463", "#EEF1F5", "#A9B4C3", "#6C7787"),
+        Make("midnight", "Midnight", false,
+            "#0A0E1F", "#111833", "#1A2347", "#1E294F", "#7482B8", "#2B386B", "#E9ECFA", "#A0A9CC", "#5E688F"),
+        Make("ember", "Ember", false,
+            "#181210", "#241A17", "#33251F", "#3A2B25", "#A68C7E", "#4D3A31", "#F6EDE8", "#C2AB9F", "#7F6A5E"),
     ];
 
     // Swatches offered next to the picker; the first is the default accent.

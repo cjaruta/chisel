@@ -14,8 +14,8 @@ public class ThemeModesTests
     [Fact]
     public void HasDefaultLightUltraDarkAndFourSchemes()
     {
-        Assert.Equal(new[] { "default", "light", "ultra-dark", "ocean", "forest", "plum", "slate" }, ThemeModes.All.Select(m => m.Id));
-        Assert.Equal(new[] { "Default", "Light", "Ultra dark", "Ocean", "Forest", "Plum", "Slate" }, ThemeModes.All.Select(m => m.Name));
+        Assert.Equal(new[] { "default", "light", "mist", "sage", "ultra-dark", "ocean", "forest", "plum", "slate", "midnight", "ember" }, ThemeModes.All.Select(m => m.Id));
+        Assert.Equal(new[] { "Default", "Light", "Mist", "Sage", "Ultra dark", "Ocean", "Forest", "Plum", "Slate", "Midnight", "Ember" }, ThemeModes.All.Select(m => m.Name));
     }
 
     [Fact]
