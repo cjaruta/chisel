@@ -104,11 +104,11 @@ public class SchedulePaletteTests
     }
 
     [Fact]
-    public void Settings_OffersBothPalettesWithAPreviewOfTheirEightColors()
+    public void Settings_OffersEveryPaletteWithAPreviewOfTheirEightColors()
     {
         var settings = new SettingsViewModel(new FakeSettingsRepository(Defaults), _display, _palette);
 
-        Assert.Equal(new[] { "Default Minimal", "Default Saturated" }, settings.PaletteOptions.Select(o => o.Name));
+        Assert.Equal(new[] { "Default Minimal", "Default Saturated", "Pastel", "Earth", "Coastal", "Jewel" }, settings.PaletteOptions.Select(o => o.Name));
         var saturated = settings.PaletteOptions[1];
         Assert.Equal(BlockPalettes.Saturated.Swatches.Select(s => s.Stripe), saturated.Preview.Select(ColorOf));
     }
