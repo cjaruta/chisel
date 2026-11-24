@@ -329,6 +329,53 @@
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
         </Style>
 
+        <!-- Clock tool buttons: three quiet kinds, all pills with hairline outlines. Chips set the time, ghost buttons act,
+             the primary button (Start) is the one filled in the accent. -->
+        <Style Selector="Button.clockChip /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+        </Style>
+        <Style Selector="Button.clockChip /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.clockGhost /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+        <Style Selector="Button.clockPrimary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.clockPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.clockPrimary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentPressedBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentPressedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+
         <!-- The one header bar shared by every widget card -->
         <Style Selector="Border.widgetHeader">
             <Setter Property="Background" Value="{StaticResource HeaderBackgroundBrush}" />

@@ -47,7 +47,7 @@ public sealed record ClockTypeScale(double Factor, double Display, double Title,
     {
         get
         {
-            var buttons = Caption * 1.3 + 2 * ButtonPadY + 6;
+            var buttons = Body * 1.3 + 2 * ButtonPadY + 6;
             var reserved = AnalogReadout * 1.3 + buttons + 2 * Gap + 2 * Pad;
             var room = Math.Min(CellHeight - reserved, CellWidth * 0.85);
             return room < MinDial ? 0 : Math.Min(room, MaxDial);

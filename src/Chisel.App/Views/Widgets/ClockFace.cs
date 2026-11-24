@@ -300,19 +300,42 @@ public sealed class ClockFace : Control
         // Numerals crowd a small dial, so they go and leave the marks and the hands (see ClockDialLayout).
         if (style.Numerals != NumeralStyle.None && ClockDialLayout.ShowsNumerals(radius * 2))
         {
-            var twentyFour = style.Kind == DialKind.TwentyFourHour;
-            var big = style.Numerals is NumeralStyle.Twelve or NumeralStyle.Four;
-            var fontSize = Math.Max(9, radius * (twentyFour ? 0.15 : big ? 0.24 : 0.17));
-            var reach = (style.Markers == MarkerStyle.None ? 0.77 : 0.68) - (style.Tachymeter ? 0.08 : 0);
-            var labels = twentyFour ? ClockLabels.TwentyFour() : ClockLabels.For(style.Numerals);
-            foreach (var label in labels)
-            {
-                var angle = twentyFour ? ClockLabels.AngleOf24(label.Hour) : ClockLabels.AngleOf(label.Hour);
-                var text = new FormattedText(label.Text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-                    new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold), fontSize, numeralBrush);
-                var at = PointAt(center, angle, Edge(style.Shape, radius, angle) * reach);
-                context.DrawText(text, new Point(at.X - text.Width / 2, at.Y - text.Height / 2));
-            }
+            PaintNumerals(context, style, center, radius, markerEdge, numeralBrush);
+        }
+    }
+
+    // How far a marker reaches in from the dial's edge.
+    private static double MarkerDepth(ClockStyle style, double radius, bool quarter) => style.Markers switch
+    {
+        MarkerStyle.None => 0,
+        MarkerStyle.Dots => 2 * (quarter ? 4.0 : 2.5),
+        MarkerStyle.Bars => radius * (quarter ? 0.17 : 0.1),
+        MarkerStyle.Lume => radius * (quarter ? 0.15 : 0.1),
+        _ => radius * (quarter ? 0.15 : 0.08),
+    };
+
+    // The numerals sit evenly between the marks and the middle: each is set back from its mark by the same gap, measured to the
+    // nearest corner of its own box (so wide and narrow numbers, and the ones on the diagonals, all clear the marks the same),
+    // and centered on the height of its digits rather than on the line box, so none looks high or crowded against a tick.
+    private static void PaintNumerals(DrawingContext context, ClockStyle style, Point center, double radius, double markerEdge, IBrush brush)
+    {
+        var twentyFour = style.Kind == DialKind.TwentyFourHour;
+        var roman = style.Numerals == NumeralStyle.Roman;
+        var big = style.Numerals is NumeralStyle.Twelve or NumeralStyle.Four;
+        var fontSize = Math.Max(9, radius * (twentyFour ? 0.13 : roman ? 0.13 : big ? 0.2 : 0.15));
+        var gap = Math.Max(4, radius * 0.07);
+        var capHeight = fontSize * 0.72;
+        var typeface = new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium);
+        foreach (var label in twentyFour ? ClockLabels.TwentyFour() : ClockLabels.For(style.Numerals))
+        {
+            var angle = twentyFour ? ClockLabels.AngleOf24(label.Hour) : ClockLabels.AngleOf(label.Hour);
+            var text = new FormattedText(label.Text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, typeface, fontSize, brush);
+            var quarter = style.EmphasizeQuarters && label.Hour % (twentyFour ? 6 : 3) == 0;
+            var radians = angle * Math.PI / 180;
+            var extent = Math.Abs(Math.Sin(radians)) * text.Width / 2 + Math.Abs(Math.Cos(radians)) * capHeight / 2;
+            var inner = Edge(style.Shape, radius, angle) - markerEdge - MarkerDepth(style, radius, quarter);
+            var at = PointAt(center, angle, inner - gap - extent);
+            context.DrawText(text, new Point(at.X - text.Width / 2, at.Y - text.Baseline + capHeight / 2));
         }
     }
 

@@ -93,10 +93,10 @@ internal static class ClockToolViews
 
         var presets = new[]
         {
-            Secondary("ClockTimerAdd1m", "+1m", () => tools.AddTimerSecondsCommand.Execute(60)),
-            Secondary("ClockTimerAdd5m", "+5m", () => tools.AddTimerSecondsCommand.Execute(300)),
-            Secondary("ClockTimerAdd10m", "+10m", () => tools.AddTimerSecondsCommand.Execute(600)),
-            Secondary("ClockTimerClear", "Clear", () => tools.ClearTimerCommand.Execute(null)),
+            Secondary("ClockTimerAdd1m", "+1m", () => tools.AddTimerSecondsCommand.Execute(60), true),
+            Secondary("ClockTimerAdd5m", "+5m", () => tools.AddTimerSecondsCommand.Execute(300), true),
+            Secondary("ClockTimerAdd10m", "+10m", () => tools.AddTimerSecondsCommand.Execute(600), true),
+            Secondary("ClockTimerClear", "Clear", () => tools.ClearTimerCommand.Execute(null), true),
         };
         var setters = Wrap(presets);
         var actions = Wrap(start, reset);
@@ -142,7 +142,7 @@ internal static class ClockToolViews
             {
                 Fit(button, s, false);
             }
-            Fit(reset, s, false);
+            Fit(reset, s, true);
             Fit(start, s, true);
             Fit(setters, s);
             Fit(actions, s);
@@ -220,8 +220,9 @@ internal static class ClockToolViews
             text.FontSize = analogWanted && room > 0 ? s.AnalogReadout : s.Display;
             Fit(stack, s);
             Fit(start, s, true);
-            Fit(lap, s, false);
-            Fit(reset, s, false);
+            Fit(lap, s, true);
+            Fit(reset, s, true);
+            start.MinWidth = lap.MinWidth = reset.MinWidth = s.Body * 4; // three actions share one narrower width
             Fit(actions, s);
             lapList.FontSize = s.Caption;
             laps.MaxHeight = s.Caption * 5;
@@ -371,13 +372,21 @@ internal static class ClockToolViews
         return panel;
     }
 
-    private static TextBlock Display(string name) => new() { Name = name, HorizontalAlignment = HorizontalAlignment.Center };
+    // Digits of equal width, so the time does not shift sideways as it counts.
+    private static TextBlock Display(string name) =>
+        new() { Name = name, HorizontalAlignment = HorizontalAlignment.Center, FontWeight = FontWeight.Light, FontFeatures = FontFeatureCollection.Parse("tnum") };
 
-    private static Button Primary(string name) => new() { Name = name, HorizontalContentAlignment = HorizontalAlignment.Center };
+    private static Button Primary(string name) =>
+        new() { Name = name, Classes = { "clockPrimary" }, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center };
 
-    private static Button Secondary(string name, string text, Action click)
+    // A ghost button acts (Reset, Lap, Manage); a chip (small and dim) sets the time.
+    private static Button Secondary(string name, string text, Action click, bool chip = false)
     {
-        var button = new Button { Name = name, Content = text, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var button = new Button
+        {
+            Name = name, Content = text, Classes = { chip ? "clockChip" : "clockGhost" },
+            HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center,
+        };
         button.Click += (_, _) => click();
         return button;
     }
@@ -420,6 +429,7 @@ internal static class ClockToolViews
     {
         button.FontSize = primary ? s.Body : s.Caption;
         button.Padding = new Thickness(s.ButtonPadX, s.ButtonPadY);
-        button.MinWidth = primary ? s.ButtonMinWidth : 0;
+        // Every button of a kind is the same size: actions share the primary one's width, chips the widest chip's.
+        button.MinWidth = primary ? s.ButtonMinWidth : ClockTimerLayout.ChipWidth(s);
     }
 }

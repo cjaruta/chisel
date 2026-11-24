@@ -26,6 +26,9 @@ public static class ClockTimerLayout
     // The label lengths of the four presets: +1m, +5m, +10m and Clear.
     private static readonly int[] PresetChars = [3, 3, 4, 5];
 
+    // The one width every preset chip has (the widest label, Clear), so the row is even.
+    public static double ChipWidth(ClockTypeScale s) => PresetChars.Max() * s.Caption * ButtonChar + 2 * s.ButtonPadX + 2;
+
     public static TimerFit For(ClockTypeScale s)
     {
         var width = Math.Max(0, s.CellWidth - 2 * s.Pad);
@@ -49,9 +52,9 @@ public static class ClockTimerLayout
             }
             return lines;
         }
-        double PresetWidth(int index) => PresetChars[index] * s.Caption * ButtonChar + 2 * s.ButtonPadX + 2;
+        double PresetWidth(int index) => ChipWidth(s);
         var startW = Math.Max(s.ButtonMinWidth, 5 * s.Body * ButtonChar + 2 * s.ButtonPadX + 2);
-        var resetW = 5 * s.Caption * ButtonChar + 2 * s.ButtonPadX + 2;
+        var resetW = startW; // Reset is as big as Start
 
         // The levels, most to least: the buttons each takes (height used besides the time, the gaps counted).
         var levels = new List<(int Presets, bool Reset, bool Start, double Other)>();
