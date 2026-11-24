@@ -165,6 +165,8 @@ internal static class ClockToolViews
             if (lastScale is { } scale)
             {
                 text.FontSize = face.IsVisible ? scale.AnalogReadout : scale.Display;
+                // On the smallest dial the readout is left out; it keeps its place so nothing moves while resizing.
+                text.Opacity = !face.IsVisible || StopwatchLayout.For(StopwatchLayout.DiameterFor(room)).ShowReadout ? 1 : 0;
                 laps.IsVisible = !scale.Compact && (!face.IsVisible || room >= 160);
             }
         }

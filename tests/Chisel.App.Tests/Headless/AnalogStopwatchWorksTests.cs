@@ -103,14 +103,17 @@ public class AnalogStopwatchWorksTests : IDisposable
         var later = Picture(face);
         Assert.False(start.SequenceEqual(later), "the seconds hand did not move");
 
-        // 5 s and 65 s put the seconds hand in the same place: only the minutes sub-dial tells them apart.
-        face.ElapsedSource = () => 5;
-        var five = Picture(face);
-        face.ElapsedSource = () => 65;
-        var sixtyFive = Picture(face);
-        Assert.False(five.SequenceEqual(sixtyFive), "the minutes sub-dial did not advance");
-        face.ElapsedSource = main.ClockTools.StopwatchElapsedSeconds;
         window.Close();
+
+        // 5 s and 65 s put the seconds hand in the same place: only the minutes sub-dial (on a large dial) tells them apart.
+        var large = new StopwatchFace { Width = 300, Height = 300 };
+        large.Measure(new Size(300, 300));
+        large.Arrange(new Rect(0, 0, 300, 300));
+        large.ElapsedSource = () => 5;
+        var five = Picture(large);
+        large.ElapsedSource = () => 65;
+        var sixtyFive = Picture(large);
+        Assert.False(five.SequenceEqual(sixtyFive), "the minutes sub-dial did not advance");
     }
 
     [AvaloniaFact]

@@ -19,13 +19,12 @@ public sealed class StopwatchFace : Control
 {
     public static readonly StyledProperty<ClockStyle> StyleProperty = AvaloniaProperty.Register<StopwatchFace, ClockStyle>(nameof(Style), ClockStyle.Default);
 
-    private const double EdgeGap = 6;
     private const double Pad = 6;
-    private const double SubOffset = 0.36;
-    private const double SubRadius = 0.26;
+    private static readonly Typeface NumberFace = new(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold);
+    private static readonly Typeface SubFace = new(FontFamily.Default);
     private static readonly TimeSpan FrameGap = TimeSpan.FromMilliseconds(30);
 
-    private sealed record BuiltFor(ClockStyle Style, double Radius, double Scale, IBrush Text, IBrush Dim, IBrush Grid, IBrush Accent);
+    private sealed record BuiltFor(ClockStyle Style, double Radius, StopwatchMetrics Metrics, double Scale, IBrush Text, IBrush Dim, IBrush Grid, IBrush Accent);
 
     private readonly Action<TimeSpan> _frame;
     private BuiltFor? _built;
@@ -71,7 +70,10 @@ public sealed class StopwatchFace : Control
     // The elapsed time, to read aloud.
     public static string Describe(TimeSpan elapsed) => $"Stopwatch, {ClockToolsFormat.Stopwatch(elapsed)}";
 
-    public double FaceRadius => Math.Min(Bounds.Width, Bounds.Height) / 2 - EdgeGap;
+    // The face is the largest circle in the space, kept off the edges; the level of detail follows its diameter.
+    public double FaceRadius => (Math.Min(Bounds.Width, Bounds.Height) - 2 * StopwatchLayout.EdgeGap) / 2;
+
+    public StopwatchMetrics Metrics => _built?.Metrics ?? StopwatchLayout.For(2 * Math.Max(0, FaceRadius));
 
     private IBrush Brush(string key) => Theming.ThemeService.Brush(this, key);
 
@@ -164,7 +166,7 @@ public sealed class StopwatchFace : Control
     public void Draw(DrawingContext context)
     {
         var radius = FaceRadius;
-        if (radius <= 8)
+        if (radius * 2 < StopwatchLayout.MinDiameter)
         {
             return;
         }
@@ -175,9 +177,13 @@ public sealed class StopwatchFace : Control
         context.DrawImage(_dial!, new Rect(center.X - radius - Pad, center.Y - radius - Pad, side, side));
 
         var angles = StopwatchDial.Angles(ElapsedSource?.Invoke() ?? 0);
-        ClockFace.DrawHand(context, new Point(center.X, center.Y + radius * SubOffset), angles.Minutes, _minutes!);
+        var m = _built!.Metrics;
+        if (m.SubDial)
+        {
+            ClockFace.DrawHand(context, new Point(center.X, center.Y + m.SubOffset), angles.Minutes, _minutes!);
+        }
         ClockFace.DrawHand(context, center, angles.Seconds, _seconds!);
-        var cap = Math.Max(3, style.SecondThickness * 2.2);
+        var cap = Math.Max(2, m.Stroke(style.SecondThickness) * 2.2);
         context.DrawEllipse(_capBrush, null, center, cap, cap);
     }
 
@@ -193,78 +199,87 @@ public sealed class StopwatchFace : Control
         {
             return;
         }
-        _built = new BuiltFor(style, radius, scale, text, dim, grid, accent);
+        var m = StopwatchLayout.For(2 * radius);
+        _built = new BuiltFor(style, radius, m, scale, text, dim, grid, accent);
         var shades = style.Colors;
         var secondBrush = ClockFace.Part(shades.Second, accent);
         var minuteBrush = ClockFace.Part(shades.Hour, text);
-        BuildDial(style, radius, scale, ClockFace.Part(shades.Dial, grid), ClockFace.Part(shades.Markers, dim), ClockFace.Part(shades.Numerals, text),
+        BuildDial(style, radius, m, scale, ClockFace.Part(shades.Dial, grid), ClockFace.Part(shades.Markers, dim), ClockFace.Part(shades.Numerals, text),
             style.DialFill is { } fill ? ClockFace.Part(fill, text) : null);
-        _seconds = new ClockFace.Hand(null, new Pen(secondBrush, Math.Max(1.2, style.SecondThickness), lineCap: PenLineCap.Round),
-            new Point(0, radius * 0.18), new Point(0, -radius * 0.88), secondBrush);
-        var sub = radius * SubRadius;
-        _minutes = new ClockFace.Hand(null, new Pen(minuteBrush, Math.Max(1.6, style.MinuteThickness * 0.6), lineCap: PenLineCap.Round),
-            new Point(0, sub * 0.15), new Point(0, -sub * 0.85), minuteBrush);
+        _seconds = new ClockFace.Hand(null, new Pen(secondBrush, m.Stroke(Math.Max(1.2, style.SecondThickness)), lineCap: PenLineCap.Round),
+            new Point(0, m.SecondTail), new Point(0, -m.SecondLength), secondBrush);
+        _minutes = new ClockFace.Hand(null, new Pen(minuteBrush, m.Stroke(Math.Max(1.6, style.MinuteThickness * 0.6)), lineCap: PenLineCap.Round),
+            new Point(0, m.MinuteTail), new Point(0, -m.MinuteLength), minuteBrush);
         _capBrush = secondBrush;
     }
 
-    private void BuildDial(ClockStyle style, double radius, double scale, IBrush rimBrush, IBrush markerBrush, IBrush numeralBrush, IBrush? fillBrush)
+    private void BuildDial(ClockStyle style, double radius, StopwatchMetrics m, double scale, IBrush rimBrush, IBrush markerBrush, IBrush numeralBrush, IBrush? fillBrush)
     {
         var side = 2 * (radius + Pad);
         _dial?.Dispose();
         _dial = new RenderTargetBitmap(new PixelSize((int)Math.Ceiling(side * scale), (int)Math.Ceiling(side * scale)), new Vector(96 * scale, 96 * scale));
         using var context = _dial.CreateDrawingContext();
         var center = new Point(side / 2, side / 2);
-        ClockFace.PaintShape(context, style, center, radius, fillBrush, style.BorderWidth > 0 ? new Pen(rimBrush, style.BorderWidth) : null);
+        ClockFace.PaintShape(context, style, center, radius, fillBrush, style.BorderWidth > 0 ? new Pen(rimBrush, m.Stroke(style.BorderWidth)) : null);
 
-        // 60 second marks, a longer one every five; the style's marker shape (ticks when it has none).
-        var inset = style.BorderWidth / 2 + 3;
-        var thin = new Pen(markerBrush, 1, lineCap: PenLineCap.Round);
-        var thick = new Pen(markerBrush, style.Markers == MarkerStyle.Bars ? 4 : 2.5, lineCap: PenLineCap.Round);
+        // The marks: a longer one every five, and the minor ones only when there is room for them.
+        var inset = m.Stroke(style.BorderWidth) / 2 + m.TickInset;
+        var thin = new Pen(markerBrush, m.MinorTickWidth, lineCap: PenLineCap.Round);
+        var thick = new Pen(markerBrush, m.MajorTickWidth * (style.Markers == MarkerStyle.Bars ? 1.6 : 1), lineCap: PenLineCap.Round);
         for (var i = 0; i < 60; i++)
         {
-            var angle = i * 6;
             var five = i % 5 == 0;
+            if (!five && !m.MinorTicks)
+            {
+                continue;
+            }
+            var angle = i * 6;
             var outer = ClockFace.Edge(style.Shape, radius, angle) - inset;
             if (style.Markers == MarkerStyle.Dots)
             {
-                var dot = five ? 3.0 : 1.4;
+                var dot = five ? m.MajorTickLength * 0.4 + 0.6 : m.MinorTickLength * 0.4 + 0.6;
                 context.DrawEllipse(markerBrush, null, ClockFace.PointAt(center, angle, outer - dot), dot, dot);
             }
             else
             {
-                var length = radius * (five ? 0.1 : 0.04);
+                var length = five ? m.MajorTickLength : m.MinorTickLength;
                 context.DrawLine(five ? thick : thin, ClockFace.PointAt(center, angle, outer - length), ClockFace.PointAt(center, angle, outer));
             }
         }
 
-        // The seconds, numbered every ten (the top one reads 60).
-        var fontSize = Math.Max(8, radius * 0.13);
-        for (var s = 10; s <= 60; s += 10)
+        // The seconds: the four main positions (60, 15, 30, 45) when medium, every five when large; none when smaller.
+        if (m.Numbers != StopwatchNumbers.None)
         {
-            var angle = s % 60 * 6;
-            var label = new FormattedText(s.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-                new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold), fontSize, numeralBrush);
-            var at = ClockFace.PointAt(center, angle, ClockFace.Edge(style.Shape, radius, angle) * 0.75);
-            context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+            var step = m.Numbers == StopwatchNumbers.All ? 5 : 15;
+            for (var s = step; s <= 60; s += step)
+            {
+                var angle = s % 60 * 6;
+                var label = new FormattedText(s.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                    NumberFace, m.NumberFont, numeralBrush);
+                var at = ClockFace.PointAt(center, angle, ClockFace.Edge(style.Shape, radius, angle) * StopwatchLayout.NumberRadiusFactor);
+                context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+            }
         }
 
-        // The minutes sub-dial below the middle: 30 marks (one turn is half an hour), numbered 10, 20 and 30.
-        var sub = radius * SubRadius;
-        var subCenter = new Point(center.X, center.Y + radius * SubOffset);
-        context.DrawEllipse(null, thin, subCenter, sub, sub);
-        for (var m = 0; m < 30; m++)
+        // The minutes sub-dial below the middle (large only): 30 marks (one turn is half an hour), numbered 10, 20 and 30.
+        if (m.SubDial)
         {
-            var angle = m * 12;
-            var longMark = m % 5 == 0;
-            context.DrawLine(thin, ClockFace.PointAt(subCenter, angle, sub * (longMark ? 0.74 : 0.86)), ClockFace.PointAt(subCenter, angle, sub * 0.95));
-        }
-        var subFont = Math.Max(6, sub * 0.34);
-        foreach (var m in new[] { 10, 20, 30 })
-        {
-            var label = new FormattedText(m.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-                new Typeface(FontFamily.Default), subFont, numeralBrush);
-            var at = ClockFace.PointAt(subCenter, m % 30 * 12, sub * 0.52);
-            context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+            var sub = m.SubRadius;
+            var subCenter = new Point(center.X, center.Y + m.SubOffset);
+            context.DrawEllipse(null, thin, subCenter, sub, sub);
+            for (var k = 0; k < 30; k++)
+            {
+                var angle = k * 12;
+                var longMark = k % 5 == 0;
+                context.DrawLine(thin, ClockFace.PointAt(subCenter, angle, sub * (longMark ? 0.74 : 0.86)), ClockFace.PointAt(subCenter, angle, sub * 0.95));
+            }
+            foreach (var k in new[] { 10, 20, 30 })
+            {
+                var label = new FormattedText(k.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                    SubFace, m.SubFont, numeralBrush);
+                var at = ClockFace.PointAt(subCenter, k % 30 * 12, sub * 0.52);
+                context.DrawText(label, new Point(at.X - label.Width / 2, at.Y - label.Height / 2));
+            }
         }
     }
 }
