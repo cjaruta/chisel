@@ -91,6 +91,31 @@ public class AnalogStopwatchWorksTests : IDisposable
         window.Close();
     }
 
+    // The time is always readable: at every card size, with or without a dial, the readout is shown, in the card, and not faded.
+    [AvaloniaTheory]
+    [InlineData(1200, 760)]
+    [InlineData(1000, 700)]
+    [InlineData(1000, 660)]
+    [InlineData(1000, 630)]
+    [InlineData(1000, 600)]
+    [InlineData(1000, 570)]
+    [InlineData(1000, 540)]
+    [InlineData(1000, 500)]
+    public void TheTime_IsAlwaysShown_AtEveryCardSize(double width, double height)
+    {
+        var (window, _, _, frame) = Show(width, height);
+        var readout = Named<TextBlock>(window, "ClockStopwatchText");
+        var slot = readout.GetVisualAncestors().OfType<ClockSlotView>().First();
+
+        Assert.True(readout.IsVisible && readout.IsEffectivelyVisible, $"the time is hidden in a {frame.Bounds.Height:0} px card");
+        Assert.Equal(1, readout.Opacity);
+        Assert.Equal("00:00.0", readout.Text);
+        Assert.True(readout.FontSize >= 14, $"the time is only {readout.FontSize} px high");
+        var bottom = readout.TranslatePoint(new Point(0, readout.Bounds.Height), slot)!.Value.Y;
+        Assert.True(bottom <= slot.Bounds.Height + 1, "the time is pushed out of the card");
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void TheSecondsHandSweeps_AndTheMinutesSubDialAdvances()
     {

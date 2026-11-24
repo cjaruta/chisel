@@ -8,20 +8,18 @@ public class StopwatchLayoutTests
     private static readonly double[] Sizes = Enumerable.Range(16, 400).Select(d => (double)d).ToArray();
 
     [Theory]
-    [InlineData(20, StopwatchDetail.Minimal, StopwatchNumbers.None, false, false)]
-    [InlineData(71, StopwatchDetail.Minimal, StopwatchNumbers.None, false, false)]
-    [InlineData(72, StopwatchDetail.Small, StopwatchNumbers.None, true, false)]
-    [InlineData(95, StopwatchDetail.Small, StopwatchNumbers.None, true, false)]
-    [InlineData(96, StopwatchDetail.Medium, StopwatchNumbers.Main, true, false)]
-    [InlineData(139, StopwatchDetail.Medium, StopwatchNumbers.Main, true, false)]
-    [InlineData(140, StopwatchDetail.Medium, StopwatchNumbers.All, true, false)]
-    [InlineData(179, StopwatchDetail.Medium, StopwatchNumbers.All, true, false)]
-    [InlineData(180, StopwatchDetail.Large, StopwatchNumbers.All, true, true)]
-    [InlineData(400, StopwatchDetail.Large, StopwatchNumbers.All, true, true)]
-    public void EachSize_ChoosesItsLevelOfDetail(double diameter, StopwatchDetail detail, StopwatchNumbers numbers, bool readout, bool subDial)
+    [InlineData(20, StopwatchDetail.Minimal, StopwatchNumbers.None, false)]
+    [InlineData(95, StopwatchDetail.Minimal, StopwatchNumbers.None, false)]
+    [InlineData(96, StopwatchDetail.Medium, StopwatchNumbers.Main, false)]
+    [InlineData(139, StopwatchDetail.Medium, StopwatchNumbers.Main, false)]
+    [InlineData(140, StopwatchDetail.Medium, StopwatchNumbers.All, false)]
+    [InlineData(179, StopwatchDetail.Medium, StopwatchNumbers.All, false)]
+    [InlineData(180, StopwatchDetail.Large, StopwatchNumbers.All, true)]
+    [InlineData(400, StopwatchDetail.Large, StopwatchNumbers.All, true)]
+    public void EachSize_ChoosesItsLevelOfDetail(double diameter, StopwatchDetail detail, StopwatchNumbers numbers, bool subDial)
     {
         var m = StopwatchLayout.For(diameter);
-        Assert.Equal((detail, numbers, readout, subDial), (m.Detail, m.Numbers, m.ShowReadout, m.SubDial));
+        Assert.Equal((detail, numbers, subDial), (m.Detail, m.Numbers, m.SubDial));
         Assert.Equal(detail >= StopwatchDetail.Medium, m.MinorTicks);
     }
 
@@ -38,8 +36,7 @@ public class StopwatchLayoutTests
     [Fact]
     public void TheThresholds_AreOrdered_AndEverythingOnlyEverGrowsWithTheDiameter()
     {
-        Assert.True(StopwatchLayout.MinDiameter < StopwatchLayout.SmallFrom);
-        Assert.True(StopwatchLayout.SmallFrom < StopwatchLayout.NumbersFrom);
+        Assert.True(StopwatchLayout.MinDiameter < StopwatchLayout.NumbersFrom);
         Assert.True(StopwatchLayout.NumbersFrom < StopwatchLayout.AllNumbersFrom);
         Assert.True(StopwatchLayout.AllNumbersFrom < StopwatchLayout.LargeFrom);
 
@@ -48,7 +45,6 @@ public class StopwatchLayoutTests
         {
             var m = StopwatchLayout.For(d);
             Assert.True(m.Detail >= before.Detail && m.Numbers >= before.Numbers, $"detail drops going up to {d}");
-            Assert.True(m.ShowReadout || !before.ShowReadout);
             Assert.True(m.MinorTicks || !before.MinorTicks);
             Assert.True(m.SubDial || !before.SubDial);
             Assert.True(m.NumberFont >= before.NumberFont && m.MajorTickWidth >= before.MajorTickWidth && m.MinorTickWidth >= before.MinorTickWidth, $"a size shrinks going up to {d}");

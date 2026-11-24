@@ -5,7 +5,6 @@ namespace Chisel.Core.Clock;
 public enum StopwatchDetail
 {
     Minimal, // the rim, the major ticks and the seconds hand
-    Small,   // and the digital readout beneath
     Medium,  // and the minor ticks and numbers (the four main ones, then all twelve as the dial grows)
     Large,   // and the minutes sub-dial
 }
@@ -14,7 +13,7 @@ public enum StopwatchNumbers { None, Main, All }
 
 public sealed record StopwatchMetrics(
     StopwatchDetail Detail, double Diameter, double Scale,
-    bool ShowReadout, bool MinorTicks, StopwatchNumbers Numbers, bool SubDial,
+    bool MinorTicks, StopwatchNumbers Numbers, bool SubDial,
     double TickInset, double MajorTickLength, double MinorTickLength, double MajorTickWidth, double MinorTickWidth,
     double NumberFont, double NumberRadius,
     double SubOffset, double SubRadius, double SubFont,
@@ -33,9 +32,8 @@ public sealed record StopwatchMetrics(
 
 public static class StopwatchLayout
 {
-    // The smallest diameter at which each level starts. Numerals follow their own two thresholds inside these: the numbers stay
+    // The smallest diameter at which each level starts. The digital time under the dial is not a level: it is always shown. Numerals follow their own two thresholds inside these: the numbers stay
     // until the dial is too small to show them legibly (NumbersFrom), thinning from twelve to the four main ones on the way down.
-    public const double SmallFrom = 72;
     public const double NumbersFrom = 96;      // below this no numerals at all (the smallest size that keeps them readable)
     public const double AllNumbersFrom = 140;  // from here all twelve; between the two only the four at 12, 3, 6 and 9
     public const double LargeFrom = 180;       // from here the minutes sub-dial too
@@ -59,7 +57,7 @@ public static class StopwatchLayout
     public static double DiameterFor(double room) => Math.Max(0, room - 2 * EdgeGap);
 
     public static StopwatchDetail DetailFor(double diameter) =>
-        diameter >= LargeFrom ? StopwatchDetail.Large : diameter >= MediumFrom ? StopwatchDetail.Medium : diameter >= SmallFrom ? StopwatchDetail.Small : StopwatchDetail.Minimal;
+        diameter >= LargeFrom ? StopwatchDetail.Large : diameter >= MediumFrom ? StopwatchDetail.Medium : StopwatchDetail.Minimal;
 
     public static double Stroke(double styleWidth, double diameter) =>
         styleWidth <= 0 ? 0 : Math.Max(1, styleWidth * Math.Clamp(diameter / ReferenceDiameter, 0, MaxStrokeScale));
@@ -73,7 +71,6 @@ public static class StopwatchLayout
         var sub = r * 0.22;
         return new StopwatchMetrics(
             detail, diameter, scale,
-            ShowReadout: detail >= StopwatchDetail.Small,
             MinorTicks: detail >= StopwatchDetail.Medium,
             Numbers: diameter >= AllNumbersFrom ? StopwatchNumbers.All : diameter >= NumbersFrom ? StopwatchNumbers.Main : StopwatchNumbers.None,
             SubDial: detail == StopwatchDetail.Large,
