@@ -20,6 +20,8 @@ public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly string? _windowPlacementPath;
+    private readonly WindowPlacementTracker _placement = new();
+    private readonly DebouncedSaver<WindowPlacement>? _placementSaver;
     private bool _spaceDown;
 
     // Choosing a link in the "more" menu opens it (its own command) and closes the menu.
@@ -34,11 +36,17 @@ public partial class MainWindow : Window
     {
         _windowPlacementPath = windowPlacementPath;
         InitializeComponent();
+        if (windowPlacementPath is not null)
+        {
+            _placementSaver = new DebouncedSaver<WindowPlacement>(TimeProvider.System, TimeSpan.FromMilliseconds(500), SavePlacement);
+            ApplySavedPlacement();
+            PositionChanged += (_, _) => TrackPlacement();
+        }
 
         // Keep the layout toolbar centered, but clear of the clock and date on narrow windows.
         LayoutToolbar.SizeChanged += (_, _) => PlaceLayoutToolbar();
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
-        SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); };
+        SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); TrackPlacement(); };
         DataContextChanged += (_, _) =>
         {
             if (DataContext is MainViewModel main)
@@ -66,6 +74,10 @@ public partial class MainWindow : Window
         PropertyChanged += (_, e) =>
         {
             // Picture frames stop their timers and animations while the window is minimized.
+            if (e.Property == WindowStateProperty)
+            {
+                TrackPlacement();
+            }
             if (e.Property == WindowStateProperty && DataContext is MainViewModel main)
             {
                 main.PictureFrames.WindowMinimized = WindowState == WindowState.Minimized;
@@ -89,7 +101,6 @@ public partial class MainWindow : Window
         Loaded += (_, _) =>
         {
             _timer.Start();
-            ApplySavedPlacement();
             // Wait for layout so the grid has its size before scrolling to the current time.
             Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
@@ -97,7 +108,8 @@ public partial class MainWindow : Window
         Closing += (_, _) =>
         {
             (DataContext as MainViewModel)?.Notes.Flush();
-            SavePlacement();
+            TrackPlacement();
+            _placementSaver?.Flush();
         };
     }
 
@@ -243,6 +255,8 @@ public partial class MainWindow : Window
     // One step of schedule auto-scroll while dragging near its top or bottom edge.
     public void AutoScrollTick() => ScheduleView?.AutoScrollTick();
 
+    // Puts the window where it was (same monitor, size and maximized state) if that is still on a connected screen, else a
+    // default window centered on the primary screen. Runs before the window is shown, so it never flashes elsewhere first.
     private void ApplySavedPlacement()
     {
         if (_windowPlacementPath is null)
@@ -250,33 +264,42 @@ public partial class MainWindow : Window
             return;
         }
 
-        var placement = WindowPlacementStore.Load(_windowPlacementPath);
-        if (placement is null)
+        var screens = Screens.All.Select(s => new ScreenArea(s.WorkingArea, s.Scaling, s.IsPrimary)).ToList();
+        if (WindowPlacementPolicy.Restore(WindowPlacementStore.Load(_windowPlacementPath), screens) is not { } plan)
         {
             return;
         }
 
-        Width = placement.Width;
-        Height = placement.Height;
-
-        var workingAreas = Screens.All.Select(s => s.WorkingArea);
-        if (placement.X is { } x && placement.Y is { } y && WindowPlacementPolicy.IsOnScreen(placement, workingAreas))
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Position = plan.Position;
+        Width = plan.Width;
+        Height = plan.Height;
+        _placement.Observe(WindowState.Normal, plan.Width, plan.Height, plan.Position);
+        if (plan.Maximized)
         {
-            Position = new PixelPoint((int)x, (int)y);
+            WindowState = WindowState.Maximized;
         }
     }
 
-    private void SavePlacement()
+    // Moving, resizing or maximizing: saved half a second after it settles, and again when the window closes.
+    private void TrackPlacement()
     {
-        var placement = WindowPlacementPolicy.ForSave(WindowState, ClientSize.Width, ClientSize.Height, Position);
-        if (placement is null || _windowPlacementPath is null)
+        if (_placementSaver is null)
         {
             return;
         }
+        _placement.Observe(WindowState, ClientSize.Width, ClientSize.Height, Position);
+        if (_placement.Current is { } current)
+        {
+            _placementSaver.Note(current);
+        }
+    }
 
+    private void SavePlacement(WindowPlacement placement)
+    {
         try
         {
-            WindowPlacementStore.Save(_windowPlacementPath, placement);
+            WindowPlacementStore.Save(_windowPlacementPath!, placement);
         }
         catch (Exception)
         {
