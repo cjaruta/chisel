@@ -18,6 +18,7 @@ public partial class MainViewModel : ViewModelBase
     public CalendarViewModel Calendar { get; }
     public SystemMonitorSettingsViewModel SystemMonitorSettings { get; }
     public SystemMonitorViewModel SystemMonitor { get; }
+    public CountdownViewModel Countdown { get; private set; } = null!;
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -72,7 +73,8 @@ public partial class MainViewModel : ViewModelBase
         CalendarSettingsViewModel? calendarSettings = null,
         Action<Action>? dispatch = null,
         SystemMonitorSettingsViewModel? systemMonitorSettings = null,
-        Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null)
+        Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
+        Chisel.Core.Countdown.ICountdownRepository? countdown = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -91,6 +93,7 @@ public partial class MainViewModel : ViewModelBase
         Scripture = scripture ?? new ScriptureViewModel(time ?? TimeProvider.System);
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
+        Countdown = new CountdownViewModel(countdown, time ?? TimeProvider.System, Alerts, dispatch);
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
         ClockSlotsSettings = new ClockSlotsSettingsViewModel(ClockTools);
         Spectrum = spectrum;

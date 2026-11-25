@@ -91,7 +91,8 @@ public static class UiSnapshot
             pictureCatalog: kit.Catalog,
             scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })),
             systemMonitorSettings: new SystemMonitorSettingsViewModel(new SystemMonitorSettingsRepository(context)),
-            systemStats: systemStats);
+            systemStats: systemStats,
+            countdown: new CountdownRepository(context));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

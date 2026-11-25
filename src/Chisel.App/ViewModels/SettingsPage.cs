@@ -28,5 +28,6 @@ public static class SettingsPages
         new SettingsPage("calculator", "Calculator", typeof(Views.Pages.CalculatorSettingsPage)),
         new SettingsPage("calendar", "Calendar", typeof(Views.Pages.CalendarSettingsPage)),
         new SettingsPage("sysmonitor", "System monitor", typeof(Views.Pages.SystemMonitorSettingsPage)),
+        new SettingsPage("countdown", "Countdown", typeof(Views.Pages.CountdownSettingsPage)),
     };
 }

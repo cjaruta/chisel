@@ -38,6 +38,7 @@ public static class WidgetRegistry
     public const string Scripture = "scripture";
     public const string Calendar = "calendar";
     public const string SystemMonitor = "sysmonitor";
+    public const string Countdown = "countdown";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -67,6 +68,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: true, typeof(CalendarWidgetView), MinWidth: 180, Description: "A month view with today highlighted. Mark days with a dot."),
         new WidgetDefinition(SystemMonitor, "System monitor", Icon: "M4,16 A8,8 0 1 1 20,16 M12,16 L16,10 M4,20 H20",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(SystemMonitorWidgetView), MinWidth: 180, Description: "Live CPU, memory, disk, network and battery gauges."),
+        new WidgetDefinition(Countdown, "Countdown", Icon: "M7,3 H17 M7,21 H17 M8,3 C8,8 16,9 16,12 C16,15 8,16 8,21 M16,3 C16,8 8,9 8,12 C8,15 16,16 16,21",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(CountdownWidgetView), MinWidth: 180, Description: "Days until the things you are looking forward to."),
     };
 
     // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
@@ -76,7 +79,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();

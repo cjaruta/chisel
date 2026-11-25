@@ -38,6 +38,7 @@ public sealed class AppServices : IDisposable
     public Chisel.Core.Calculator.ICalculatorSettingsRepository CalculatorSettings { get; }
     public Chisel.Core.Calendar.ICalendarSettingsRepository CalendarSettings { get; }
     public Chisel.Core.SystemMonitor.ISystemMonitorSettingsRepository SystemMonitorSettings { get; }
+    public Chisel.Core.Countdown.ICountdownRepository Countdown { get; }
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
@@ -81,6 +82,7 @@ public sealed class AppServices : IDisposable
         CalculatorSettings = new CalculatorSettingsRepository(DbContext);
         CalendarSettings = new CalendarSettingsRepository(DbContext);
         SystemMonitorSettings = new SystemMonitorSettingsRepository(DbContext);
+        Countdown = new CountdownRepository(DbContext);
 
         var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
         var files = new PictureFileStore(folder);

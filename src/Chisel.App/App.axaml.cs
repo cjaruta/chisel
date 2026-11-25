@@ -86,6 +86,7 @@ public partial class App : Application
                     dispatch: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
                     systemMonitorSettings: new SystemMonitorSettingsViewModel(_services.SystemMonitorSettings),
                     systemStats: new WindowsSystemStats(),
+                    countdown: _services.Countdown,
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
@@ -107,6 +108,7 @@ public partial class App : Application
                 {
                     mainViewModel.Notes.Flush();
                     mainViewModel.SystemMonitor.Dispose();
+                    mainViewModel.Countdown.Dispose();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();

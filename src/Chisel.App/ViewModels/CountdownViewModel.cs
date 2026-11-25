@@ -262,6 +262,8 @@ public sealed class CountdownViewModel : ViewModelBase, IDisposable
 
     // Updating -------------------------------------------------------------------------------------------------------------
 
+    public bool IsWatched => _watchers.Count > 0;
+
     // A widget showing the countdown; while one is, hours and minutes are kept current.
     public void Attach(object watcher)
     {

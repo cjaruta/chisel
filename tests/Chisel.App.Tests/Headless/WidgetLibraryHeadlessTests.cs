@@ -118,7 +118,7 @@ public class WidgetLibraryHeadlessTests
 
         Assert.True(LibraryShown(window));
         Assert.Equal(before, Positions());
-        Assert.Equal(new[] { "Calculator", "Calendar", "Clock", "Media", "Picture frame", "System monitor", "Weather" }, RowTitles(window, "LibraryAvailable"));
+        Assert.Equal(new[] { "Calculator", "Calendar", "Clock", "Countdown", "Media", "Picture frame", "System monitor", "Weather" }, RowTitles(window, "LibraryAvailable"));
         Assert.Equal(new[] { "Daily verse", "Notes", "Tasks", "Today" }, RowTitles(window, "LibraryOnDashboard"));
         window.Close();
     }

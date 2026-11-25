@@ -31,7 +31,8 @@ public sealed record CountdownLayout(
     public const double MaxLabelFont = 20;
     public const double MinRowFont = 11;
     public const double MaxRowFont = 16;
-    public const double LineHeight = 1.35;
+    public const double LineHeight = 1.35;     // a line of text, as a multiple of its font (TextBlock lines run about 1.33)
+    public const double HeroPadding = 8;       // the hero button's own padding, top and bottom together
 
     public bool ShowRows => Size != CountdownSize.Single;
     public bool ShowProgress => ProgressHeight > 0;
@@ -41,23 +42,24 @@ public sealed record CountdownLayout(
         : width >= ListMinWidth && height >= ListMinHeight ? CountdownSize.List
         : CountdownSize.Single;
 
-    // otherEvents: how many events there are besides the hero.
-    public static CountdownLayout For(double width, double height, int otherEvents)
+    // otherEvents: how many events there are besides the hero. size: the level to use when the caller decided it from another
+    // height (the widget decides with its "+ Add" row counted, so hiding that row in Single does not flip the size back).
+    public static CountdownLayout For(double width, double height, int otherEvents, CountdownSize? size = null)
     {
         width = Math.Max(width, 1);
         height = Math.Max(height, 1);
-        var size = SizeFor(width, height);
+        var level = size ?? SizeFor(width, height);
         var pad = Math.Clamp(Math.Round(Math.Min(width, height) * 0.04), 4, 14);
         var innerWidth = Math.Max(1, width - 2 * pad);
         var innerHeight = Math.Max(1, height - 2 * pad);
 
         var rowFont = Math.Clamp(Math.Round(Math.Min(innerWidth * 0.045, innerHeight * 0.06)), MinRowFont, MaxRowFont);
         var smallFont = Math.Round(rowFont * 0.8);
-        var progress = size == CountdownSize.Detailed ? Math.Max(3, Math.Round(rowFont * 0.3)) : 0;
+        var progress = level == CountdownSize.Detailed ? Math.Max(3, Math.Round(rowFont * 0.3)) : 0;
         var gap = Math.Round(rowFont * 0.6);
 
         // The hero: a number, then the label and the date under it, and in Detailed its progress bar.
-        var single = size == CountdownSize.Single;
+        var single = level == CountdownSize.Single;
         var cap = Math.Clamp(Math.Min(innerHeight * (single ? SingleNumberHeight : ListNumberHeight), innerWidth * (single ? SingleNumberWidth : ListNumberWidth)),
             MinNumberFont, MaxNumberFont);
         var heroRoom = single ? innerHeight : innerHeight * 0.45;
@@ -83,12 +85,12 @@ public sealed record CountdownLayout(
                 more = room >= moreHeight;
             }
         }
-        return new CountdownLayout(size, pad, gap, number, label, heroHeight, rowFont, smallFont, rowHeight, progress, rows, more, moreHeight);
+        return new CountdownLayout(level, pad, gap, number, label, heroHeight, rowFont, smallFont, rowHeight, progress, rows, more, moreHeight);
     }
 
     private static double LabelFor(double number) => Math.Clamp(number * LabelFraction, Math.Min(MinLabelFont, number * 0.6), MaxLabelFont);
 
-    private static double HeroHeightFor(double number) => number * 1.15 + 2 * LabelFor(number) * LineHeight;
+    private static double HeroHeightFor(double number) => Math.Ceiling(number * LineHeight + 2 * LabelFor(number) * LineHeight + HeroPadding);
 
     // The largest size up to `cap` that `fits`, to a tenth of a point (or the smallest tried when nothing fits).
     private static double Largest(double cap, Func<double, bool> fits)
