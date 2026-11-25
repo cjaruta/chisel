@@ -40,6 +40,7 @@ public static class WidgetRegistry
     public const string SystemMonitor = "sysmonitor";
     public const string Countdown = "countdown";
     public const string FocusTimer = "focus";
+    public const string Habits = "habits";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -73,6 +74,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(CountdownWidgetView), MinWidth: 180, Description: "Days until the things you are looking forward to."),
         new WidgetDefinition(FocusTimer, "Focus timer", Icon: "M12,4 A8,8 0 1 1 4,12 M12,4 A8,8 0 0 0 4,12 M12,12 L12,7 M10,2 H14",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(FocusTimerWidgetView), MinWidth: 180, Description: "Pomodoro focus sessions and breaks with a draining ring."),
+        new WidgetDefinition(Habits, "Habits", Icon: "M4,4 H11 V11 H4 Z M6,7.5 L7.5,9 L10,6 M14,7.5 H20 M4,14 H11 V21 H4 Z M14,17.5 H20",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(HabitsWidgetView), MinWidth: 180, Description: "Daily habits with check-ins, streaks and a short history."),
     };
 
     // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
@@ -82,7 +85,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();

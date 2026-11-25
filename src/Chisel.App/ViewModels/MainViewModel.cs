@@ -22,6 +22,7 @@ public partial class MainViewModel : ViewModelBase
     public SystemMonitorViewModel SystemMonitor { get; }
     public CountdownViewModel Countdown { get; private set; } = null!;
     public FocusTimerViewModel FocusTimer { get; private set; } = null!;
+    public HabitsViewModel Habits { get; private set; } = null!;
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -79,7 +80,8 @@ public partial class MainViewModel : ViewModelBase
         Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
         Chisel.Core.Countdown.ICountdownRepository? countdown = null,
         Chisel.Core.Focus.IFocusTimerRepository? focusTimer = null,
-        Services.IChime? chime = null)
+        Services.IChime? chime = null,
+        Chisel.Core.Habits.IHabitRepository? habits = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -99,6 +101,7 @@ public partial class MainViewModel : ViewModelBase
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
         Countdown = new CountdownViewModel(countdown, time ?? TimeProvider.System, Alerts, dispatch);
+        Habits = new HabitsViewModel(habits, time ?? TimeProvider.System, dispatch);
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
         ClockSlotsSettings = new ClockSlotsSettingsViewModel(ClockTools);
         Spectrum = spectrum;

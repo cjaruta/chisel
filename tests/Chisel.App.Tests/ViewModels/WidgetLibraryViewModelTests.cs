@@ -22,7 +22,7 @@ public class WidgetLibraryViewModelTests
         var rows = library.Available.Concat(library.OnDashboard).ToList();
 
         Assert.Equal(WidgetRegistry.AllTypes.Select(w => w.Id).Order(), rows.Select(r => r.Id).Order());
-        Assert.Equal(new[] { "Calculator", "Calendar", "Clock", "Countdown", "Daily verse", "Focus timer", "Media", "Picture frame", "System monitor", "Weather" }, library.Available.Select(r => r.Title));
+        Assert.Equal(new[] { "Calculator", "Calendar", "Clock", "Countdown", "Daily verse", "Focus timer", "Habits", "Media", "Picture frame", "System monitor", "Weather" }, library.Available.Select(r => r.Title));
         Assert.Equal(new[] { "Notes", "Tasks", "Today" }, library.OnDashboard.Select(r => r.Title));
         Assert.All(rows, r =>
         {

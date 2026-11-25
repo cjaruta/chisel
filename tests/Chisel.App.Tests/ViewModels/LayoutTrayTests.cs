@@ -28,9 +28,9 @@ public class LayoutTrayTests
         + (Hidden(layout).Any() ? $" (hidden: {string.Join(",", Hidden(layout))})" : "");
 
     // The clock waits in the tray from the start; these tests are about the four original widgets.
-    private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer);
+    private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits);
 
-    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.PictureFrame).ToArray();
+    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits && id != WidgetRegistry.PictureFrame).ToArray();
 
     private LayoutViewModel Editing()
     {
@@ -44,7 +44,7 @@ public class LayoutTrayTests
     {
         Assert.All(WidgetRegistry.All, w => Assert.False(string.IsNullOrWhiteSpace(w.Icon), w.Id));
         var defaults = WidgetRegistry.DefaultLayout.Columns.SelectMany(c => c.Widgets).ToDictionary(p => p.WidgetId, p => p.HeightWeight);
-        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media && w.Id != WidgetRegistry.Calculator && w.Id != WidgetRegistry.Scripture && w.Id != WidgetRegistry.Calendar && w.Id != WidgetRegistry.SystemMonitor && w.Id != WidgetRegistry.Countdown && w.Id != WidgetRegistry.FocusTimer && w.Id != WidgetRegistry.PictureFrame).ToList();
+        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media && w.Id != WidgetRegistry.Calculator && w.Id != WidgetRegistry.Scripture && w.Id != WidgetRegistry.Calendar && w.Id != WidgetRegistry.SystemMonitor && w.Id != WidgetRegistry.Countdown && w.Id != WidgetRegistry.FocusTimer && w.Id != WidgetRegistry.Habits && w.Id != WidgetRegistry.PictureFrame).ToList();
         Assert.All(placed, w => Assert.Equal(w.DefaultHeight, defaults[w.Id]));
         Assert.Equal(placed.Select(w => w.Id).OrderBy(x => x), defaults.Keys.OrderBy(x => x));
     }
@@ -107,7 +107,7 @@ public class LayoutTrayTests
         layout.RemoveWidget("schedule");
 
         Assert.Equal(new[] { "schedule", "notes" }, Tray(layout));
-        Assert.Equal(new[] { "Today", "Notes" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator" && t != "Daily verse" && t != "Calendar" && t != "System monitor" && t != "Countdown" && t != "Focus timer"));
+        Assert.Equal(new[] { "Today", "Notes" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator" && t != "Daily verse" && t != "Calendar" && t != "System monitor" && t != "Countdown" && t != "Focus timer" && t != "Habits"));
         Assert.True(layout.HasHiddenWidgets);
     }
 
@@ -197,7 +197,7 @@ public class LayoutTrayTests
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer));
+        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits));
         var restarted = new LayoutViewModel(_repository);
         Assert.Equal("schedule | tasks,scripture (hidden: notes)", Order(restarted.Layout));
         Assert.Equal(new[] { "notes" }, Tray(restarted));

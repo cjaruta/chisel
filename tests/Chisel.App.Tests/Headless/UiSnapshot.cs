@@ -93,7 +93,8 @@ public static class UiSnapshot
             systemMonitorSettings: new SystemMonitorSettingsViewModel(new SystemMonitorSettingsRepository(context)),
             systemStats: systemStats,
             countdown: new CountdownRepository(context),
-            focusTimer: new FocusTimerRepository(context));
+            focusTimer: new FocusTimerRepository(context),
+            habits: new HabitRepository(context));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

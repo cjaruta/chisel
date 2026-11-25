@@ -90,6 +90,8 @@ public class LayoutRemovalGhostTests
         Click(window, Frame(window, "notes").RemoveButton);
         Click(window, window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "LibraryButton"));
         var add = window.GetVisualDescendants().OfType<Button>().Single(b => b.Classes.Contains("libraryAdd") && (string?)b.CommandParameter == "notes");
+        add.BringIntoView(); // the library list is taller than the window
+        Dispatcher.UIThread.RunJobs();
         Click(window, add);
         AssertClean(window, "none", "");
         Assert.Equal(4, Host(window).GetVisualDescendants().OfType<WidgetFrame>().Count());

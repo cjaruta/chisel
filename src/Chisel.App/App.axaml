@@ -771,6 +771,20 @@
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
         </Style>
 
+        <!-- Habits: sizes come from the widget (HabitLayout); rows and swatches reuse the countdown styles -->
+        <Style Selector="CheckBox.habitCheck">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ToggleButton.habitDay">
+            <Setter Property="MinWidth" Value="34" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
         <!-- Focus timer: sizes come from the widget (FocusLayout); these set only colors and shape -->
         <Style Selector="Button.focusButton">
             <Setter Property="MinWidth" Value="0" />

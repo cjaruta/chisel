@@ -88,6 +88,7 @@ public partial class App : Application
                     systemStats: new WindowsSystemStats(),
                     countdown: _services.Countdown,
                     focusTimer: _services.FocusTimer,
+                    habits: _services.Habits,
                     chime: new SoftChime(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
@@ -112,6 +113,7 @@ public partial class App : Application
                     mainViewModel.SystemMonitor.Dispose();
                     mainViewModel.Countdown.Dispose();
                     mainViewModel.FocusTimer.Dispose();
+                    mainViewModel.Habits.Dispose();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();
