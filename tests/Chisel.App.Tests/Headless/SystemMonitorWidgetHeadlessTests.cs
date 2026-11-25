@@ -55,8 +55,23 @@ public class SystemMonitorWidgetHeadlessTests
             "Network down 10 megabits per second, up 1 megabits per second",
         }, Shown(window));
         var view = View(window);
-        Assert.Equal(SystemMonitorLayout.SizeFor(view.Bounds.Width, view.Bounds.Height), view.Layout.Size);
+        Assert.Equal(SystemMonitorLayout.For(view.Bounds.Width, view.Bounds.Height, SystemStats.All, false).Ring, view.Layout.Ring);
         UiSnapshot.Render(window, "system-monitor");
+        window.Close();
+    }
+
+    // A short, wide widget keeps all four rings and shrinks them, with their text, to the height.
+    [AvaloniaFact]
+    public void SquishedHeight_KeepsEveryRing_ScaledDown()
+    {
+        var window = Open(weight: 0.3);
+        Tick();
+
+        var view = View(window);
+        Assert.True(view.Bounds.Height < 150, $"widget is {view.Bounds.Height} tall");
+        Assert.Equal(4, Shown(window).Length);
+        Assert.True(view.Layout.Ring < view.Bounds.Height);
+        UiSnapshot.Render(window, "system-monitor-squished");
         window.Close();
     }
 

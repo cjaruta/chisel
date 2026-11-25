@@ -4,15 +4,48 @@ namespace Chisel.Core.Tests.SystemMonitor;
 
 public class SystemMonitorLayoutTests
 {
+    // Squishing the height keeps every stat: the rings, their strokes, the values and the labels all shrink together.
+    [Fact]
+    public void SquishedHeight_KeepsEveryStat_AndScalesEverythingDown()
+    {
+        var roomy = SystemMonitorLayout.For(645, 200, SystemStats.All, hasBattery: false);
+        var squished = SystemMonitorLayout.For(645, 120, SystemStats.All, hasBattery: false);
+        var flat = SystemMonitorLayout.For(645, 80, SystemStats.All, hasBattery: false);
+
+        Assert.Equal(4, squished.Stats.Count);
+        Assert.Equal(4, flat.Stats.Count);
+        Assert.True(squished.Ring < roomy.Ring && flat.Ring < squished.Ring);
+        Assert.True(squished.Stroke < roomy.Stroke);
+        Assert.True(squished.ValueFont < roomy.ValueFont && flat.ValueFont < squished.ValueFont);
+        Assert.True(squished.LabelFont < roomy.LabelFont);
+        Assert.Equal(squished.Ring * SystemMonitorLayout.ValueFontFraction, squished.ValueFont, 3);
+    }
+
+    // Losing height never makes the rings bigger (as dropping to two larger rings once did).
     [Theory]
-    [InlineData(150, 120, MonitorSize.Compact)]
-    [InlineData(SystemMonitorLayout.StandardMinWidth - 1, 600, MonitorSize.Compact)]
-    [InlineData(600, SystemMonitorLayout.StandardMinHeight - 1, MonitorSize.Compact)]
-    [InlineData(SystemMonitorLayout.StandardMinWidth, SystemMonitorLayout.StandardMinHeight, MonitorSize.Standard)]
-    [InlineData(SystemMonitorLayout.FullMinWidth - 1, 600, MonitorSize.Standard)]
-    [InlineData(SystemMonitorLayout.FullMinWidth, SystemMonitorLayout.FullMinHeight, MonitorSize.Full)]
-    public void SizeFor_UsesTheNamedThresholds(double width, double height, MonitorSize expected) =>
-        Assert.Equal(expected, SystemMonitorLayout.SizeFor(width, height));
+    [InlineData(645)]
+    [InlineData(400)]
+    [InlineData(260)]
+    public void ShrinkingTheHeight_NeverGrowsTheRings(double width)
+    {
+        var previous = double.MaxValue;
+        for (var height = 400.0; height >= 60; height -= 5)
+        {
+            var layout = SystemMonitorLayout.For(width, height, SystemStats.All, hasBattery: true);
+            Assert.True(layout.Ring <= previous + 0.01, $"{width}x{height}: ring {layout.Ring} > {previous}");
+            previous = layout.Ring;
+        }
+    }
+
+    [Fact]
+    public void Labels_GoBeforeTheyGetTooSmallToRead()
+    {
+        for (var height = 400.0; height >= 60; height -= 5)
+        {
+            var layout = SystemMonitorLayout.For(645, height, SystemStats.All, hasBattery: true);
+            Assert.True(!layout.ShowLabels || layout.LabelFont >= SystemMonitorLayout.MinLabelFont, $"height {height}: {layout.LabelFont}");
+        }
+    }
 
     [Fact]
     public void Compact_ShowsOnlyCpuAndRam_WithoutLabelsOrSparklines()
@@ -49,8 +82,9 @@ public class SystemMonitorLayoutTests
     {
         Assert.Equal(new[] { SystemStat.Disk, SystemStat.Network },
             SystemMonitorLayout.For(400, 300, SystemStats.Disk | SystemStats.Network, hasBattery: true).Stats);
-        // Compact with neither CPU nor RAM chosen still shows something: the first chosen stat.
-        Assert.Equal(new[] { SystemStat.Disk }, SystemMonitorLayout.For(150, 120, SystemStats.Disk | SystemStats.Network, true).Stats);
+        // Two stats fit a small widget; a tiny one with neither CPU nor RAM chosen still shows something: the first chosen stat.
+        Assert.Equal(new[] { SystemStat.Disk, SystemStat.Network }, SystemMonitorLayout.For(150, 120, SystemStats.Disk | SystemStats.Network, true).Stats);
+        Assert.Equal(new[] { SystemStat.Disk }, SystemMonitorLayout.For(90, 60, SystemStats.Disk | SystemStats.Network | SystemStats.Battery, true).Stats);
         Assert.Empty(SystemMonitorLayout.For(400, 300, SystemStats.None, true).Stats);
     }
 
