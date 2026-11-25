@@ -320,7 +320,7 @@
                                 <RadioButton Name="CloseQuitsOption" GroupName="CloseBehavior" Content="Quit the app" IsChecked="{Binding Settings.SystemOptions.QuitOnClose}" />
                                 <RadioButton Name="CloseToTrayOption" GroupName="CloseBehavior" Content="Keep running in the tray" IsChecked="{Binding Settings.SystemOptions.CloseToTray}" />
                                 <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
-                                           Text="Chisel's tray icon is always next to the clock. Use its menu's Quit to really exit." />
+                                           Text="Chisel's icon stays in the taskbar's notification area. Use its menu's Quit to really exit." />
                                 <CheckBox Name="StartMinimizedOption" Content="Start minimized to tray" IsChecked="{Binding Settings.SystemOptions.StartMinimized}" />
                                 <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
                                            Text="When Chisel starts with Windows, it waits in the tray instead of opening the window." />
@@ -331,6 +331,19 @@
                                 <TextBlock Name="StartupError" Foreground="{DynamicResource AccentTextBrush}" FontSize="12" TextWrapping="Wrap"
                                            Text="{Binding Settings.SystemOptions.StartupError}"
                                            IsVisible="{Binding Settings.SystemOptions.StartupError, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+
+                                <TextBlock Text="Show or hide Chisel from anywhere" Margin="0,6,0,0" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBox Name="HotkeyBox" Width="220" IsReadOnly="True" Cursor="Hand"
+                                             Text="{Binding Settings.SystemOptions.HotkeyText, Mode=OneWay}" />
+                                    <Button Name="HotkeyOffButton" Content="Turn off" Command="{Binding Settings.SystemOptions.TurnOffHotkeyCommand}"
+                                            IsEnabled="{Binding Settings.SystemOptions.HotkeyOn}" />
+                                </StackPanel>
+                                <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
+                                           Text="Click the box, then press the new shortcut (Ctrl, Alt or Win plus a key). Esc cancels." />
+                                <TextBlock Name="HotkeyError" Foreground="{DynamicResource AccentTextBrush}" FontSize="12" TextWrapping="Wrap"
+                                           Text="{Binding Settings.SystemOptions.HotkeyError}"
+                                           IsVisible="{Binding Settings.SystemOptions.HotkeyError, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
                             </StackPanel>
                         </StackPanel>
                         </ScrollViewer>

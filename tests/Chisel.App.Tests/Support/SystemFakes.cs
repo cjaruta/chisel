@@ -1,3 +1,4 @@
+using Chisel.App.Services;
 using Chisel.App.Startup;
 using Chisel.Core.Settings;
 
@@ -57,4 +58,34 @@ public sealed class FakeStartupRegistry : IStartupRegistry
             throw new UnauthorizedAccessException("blocked");
         }
     }
+}
+
+// RegisterHotKey stand-in: shortcuts in Taken are "used by another app".
+public sealed class FakeHotkeyService : IHotkeyService
+{
+    public Hotkey? Registered { get; private set; }
+    public HashSet<string> Taken { get; } = new();
+    public int Unregisters { get; private set; }
+    public event Action? Pressed;
+
+    public HotkeyRegistration Register(Hotkey hotkey)
+    {
+        Registered = null;
+        if (Taken.Contains(hotkey.ToString()))
+        {
+            return HotkeyRegistration.InUse;
+        }
+        Registered = hotkey;
+        return HotkeyRegistration.Registered;
+    }
+
+    public void Unregister()
+    {
+        Registered = null;
+        Unregisters++;
+    }
+
+    public void Press() => Pressed?.Invoke();
+
+    public void Dispose() => Unregister();
 }

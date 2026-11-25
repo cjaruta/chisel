@@ -53,6 +53,11 @@ public partial class MainWindow : Window
 
         DataContextChanged += (_, _) => (DataContext as MainViewModel)?.Settings.Theme?.Track(this);
 
+        // The show/hide shortcut box: while focused, the next shortcut pressed becomes the new one.
+        HotkeyBox.GotFocus += (_, _) => (DataContext as MainViewModel)?.Settings.SystemOptions?.BeginHotkeyCapture();
+        HotkeyBox.LostFocus += (_, _) => (DataContext as MainViewModel)?.Settings.SystemOptions?.EndHotkeyCapture();
+        HotkeyBox.AddHandler(KeyDownEvent, OnHotkeyBoxKeyDown, RoutingStrategies.Tunnel);
+
         // Pictures dragged in from Explorer or a browser: accepted in edit mode only.
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, OnPictureDragOver);
@@ -153,6 +158,34 @@ public partial class MainWindow : Window
         {
             e.Handled = true;
             _ = main.Media.ToggleFromShortcut();
+        }
+    }
+
+    // Only reads the keys pressed while the shortcut box has focus. Tab still moves on; Esc gives up.
+    private void OnHotkeyBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel { Settings.SystemOptions: { } system } || (e.Key == Key.Tab && e.KeyModifiers == KeyModifiers.None))
+        {
+            return;
+        }
+        e.Handled = true;
+        if (e.Key == Key.Escape)
+        {
+            LeaveHotkeyBox();
+            return;
+        }
+        if (!HotkeyKeys.IsModifier(e.Key) && system.CaptureHotkey(HotkeyKeys.Modifiers(e.KeyModifiers), HotkeyKeys.NameOf(e.Key)))
+        {
+            LeaveHotkeyBox();
+        }
+    }
+
+    // Moves focus on from the shortcut box, which ends the capture.
+    private void LeaveHotkeyBox()
+    {
+        if (!HotkeyOffButton.IsEffectivelyEnabled || !HotkeyOffButton.Focus())
+        {
+            GeneralTab.Focus();
         }
     }
 

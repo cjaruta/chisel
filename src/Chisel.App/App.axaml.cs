@@ -139,6 +139,14 @@ public partial class App : Application
                     }
                 };
                 mainWindow.Deactivated += (_, _) => shell.NoteDeactivated();
+
+                // The show/hide shortcut (RegisterHotKey on the main window; no keyboard hooks).
+                var hotkeys = scenario is null ? new Win32HotkeyService(mainWindow) : null;
+                if (hotkeys is not null)
+                {
+                    hotkeys.Pressed += shell.Toggle;
+                    system.AttachHotkeys(hotkeys, message => alerts.Show("Shortcut not available", message, sound: false));
+                }
                 AppDomain.CurrentDomain.UnhandledException += (_, _) => DisposeTray();
 
                 // Started with Windows and set to wait in the tray: the window is made but not shown until asked for.
@@ -155,6 +163,8 @@ public partial class App : Application
                 desktop.Exit += (_, _) =>
                 {
                     DisposeTray();
+                    system.ReleaseHotkey();
+                    hotkeys?.Dispose();
                     mainViewModel.Notes.Flush();
                     mainViewModel.SystemMonitor.Dispose();
                     mainViewModel.Countdown.Dispose();
