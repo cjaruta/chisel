@@ -6,6 +6,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using Avalonia.Markup.Xaml;
 using Chisel.App.Startup;
+using Chisel.Infrastructure.Startup;
 using Chisel.App.ViewModels;
 using Chisel.App.Views;
 using Chisel.App.Services;
@@ -43,8 +44,9 @@ public partial class App : Application
             _volume = scenario is null ? new WindowsVolumeService() : new FakeVolumeService();
             var isolated = scenario is "weather-motion" or "media-visualizer" or "media-gradient";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
-            var startup = AppStartup.Run(() => new AppServices(databasePath), AppPaths.GetErrorLogPath());
-            _services = startup.Value;
+            // A damaged database is kept as chisel.db.<date-time>.bad and Chisel starts with a fresh one (said once it is up).
+            var startup = AppStartup.Run(() => DatabaseRecovery.Open(databasePath, () => new AppServices(databasePath)), AppPaths.GetErrorLogPath());
+            _services = startup.Value?.Value;
 
             if (_services is null)
             {
@@ -88,6 +90,12 @@ public partial class App : Application
                     system.StartWelcome();
                 }
                 var alerts = new AlertsViewModel(new WindowsAlertSound());
+                if (startup.Value?.KeptAs is { } kept)
+                {
+                    alerts.Show("Chisel started fresh",
+                        $"Chisel's data file was damaged and couldn't be read, so Chisel started with a fresh one. The damaged file was kept as {kept} in the Chisel data folder.",
+                        sound: false);
+                }
                 var clipboardLog = new DebugClipboardLog();
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
