@@ -33,6 +33,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            Program.Crashes.InstallUiHandler();
             // The weather-motion capture never touches real data: a temp database, a fake weather service and an in-memory store.
             var scenario = Dev.CaptureMode.Scenario(desktop.Args);
             // The media capture plays sample metadata from a fake service; otherwise the real system media session is used.
@@ -45,7 +46,7 @@ public partial class App : Application
             var isolated = scenario is "weather-motion" or "media-visualizer" or "media-gradient";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
             // A damaged database is kept as chisel.db.<date-time>.bad and Chisel starts with a fresh one (said once it is up).
-            var startup = AppStartup.Run(() => DatabaseRecovery.Open(databasePath, () => new AppServices(databasePath)), AppPaths.GetErrorLogPath());
+            var startup = AppStartup.Run(() => DatabaseRecovery.Open(databasePath, () => new AppServices(databasePath)), Program.Crashes.Log);
             _services = startup.Value?.Value;
 
             if (_services is null)
@@ -184,7 +185,10 @@ public partial class App : Application
                     hotkeys.Pressed += shell.Toggle;
                     system.AttachHotkeys(hotkeys, message => alerts.Show("Shortcut not available", message, sound: false));
                 }
-                AppDomain.CurrentDomain.UnhandledException += (_, _) => DisposeTray();
+                // An error nothing else caught: save the open note, explain, and never leave a ghost tray icon behind.
+                Program.Crashes.Save = mainViewModel.Notes.Flush;
+                Program.Crashes.ShowMessage = (title, message) => alerts.Show(title, message, sound: false);
+                Program.Crashes.CleanUp = DisposeTray;
 
                 // Started with Windows and set to wait in the tray: the window is made but not shown until asked for.
                 if (!shell.ShouldStartHidden(StartupArguments.Parse(desktop.Args).Minimized))

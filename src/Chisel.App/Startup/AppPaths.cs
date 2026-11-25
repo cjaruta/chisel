@@ -16,8 +16,9 @@ public static class AppPaths
     public static string GetDropLogPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "logs", "picture-drop.log");
 
-    public static string GetErrorLogPath() =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "error.log");
+    // Crash reports and other diagnostics: %AppData%\Chisel\logs
+    public static string GetLogsFolder() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "logs");
 
     // Clipboard history, only while "Keep history between sessions" is on: %AppData%\Chisel\clipboard-history.json
     public static string GetClipboardHistoryPath() =>

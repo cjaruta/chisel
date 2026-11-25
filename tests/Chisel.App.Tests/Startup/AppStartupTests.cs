@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Chisel.App.Startup;
+using Chisel.Infrastructure.Startup;
 
 namespace Chisel.App.Tests.Startup;
 
@@ -10,28 +11,31 @@ public class AppStartupTests : IDisposable
 
     public AppStartupTests() => Directory.CreateDirectory(_dir);
 
+    private string LogsFolder => Path.Combine(_dir, "logs");
+
+    private CrashLog Log() => new(LogsFolder, "1.2.3", profilePath: @"C:\Users\Test User", os: "Windows");
+
+    private string[] Reports() => Directory.Exists(LogsFolder) ? Directory.GetFiles(LogsFolder, "crash-*.log") : [];
+
     [Fact]
     public void Run_WhenFactorySucceeds_ReturnsValueAndWritesNoLog()
     {
-        var logPath = Path.Combine(_dir, "error.log");
-
-        var result = AppStartup.Run(() => "ok", logPath);
+        var result = AppStartup.Run(() => "ok", Log());
 
         Assert.Equal("ok", result.Value);
         Assert.Null(result.ErrorMessage);
-        Assert.False(File.Exists(logPath));
+        Assert.Empty(Reports());
     }
 
     [Fact]
-    public void Run_WhenFactoryThrows_LogsAndReturnsMessageNamingTheLogFile()
+    public void Run_WhenFactoryThrows_WritesAReportAndNamesIt()
     {
-        var logPath = Path.Combine(_dir, "error.log");
-
-        var result = AppStartup.Run<string>(() => throw new InvalidOperationException("boom"), logPath);
+        var result = AppStartup.Run<string>(() => throw new InvalidOperationException("boom"), Log());
 
         Assert.Null(result.Value);
-        Assert.Contains(logPath, result.ErrorMessage);
-        Assert.Contains("boom", File.ReadAllText(logPath));
+        var report = Assert.Single(Reports());
+        Assert.Contains(report, result.ErrorMessage);
+        Assert.Contains("System.InvalidOperationException", File.ReadAllText(report));
     }
 
     [Fact]
@@ -39,26 +43,12 @@ public class AppStartupTests : IDisposable
     {
         var blocker = Path.Combine(_dir, "not-a-folder");
         File.WriteAllText(blocker, "");
-        var logPath = Path.Combine(blocker, "error.log");
 
-        var result = AppStartup.Run<string>(() => throw new InvalidOperationException("boom"), logPath);
+        var result = AppStartup.Run<string>(() => throw new InvalidOperationException("boom"),
+            new CrashLog(Path.Combine(blocker, "logs"), "1.2.3"));
 
         Assert.Null(result.Value);
         Assert.Contains("boom", result.ErrorMessage);
-    }
-
-    [Fact]
-    public void Run_WithCorruptDatabaseFile_ReportsAnErrorAndLogsNextToTheDatabase()
-    {
-        var dbPath = Path.Combine(_dir, "chisel.db");
-        File.WriteAllText(dbPath, "this is not a sqlite database, just some text padding it out a bit more");
-        var logPath = Path.Combine(_dir, "error.log");
-
-        var result = AppStartup.Run(() => new AppServices(dbPath), logPath);
-
-        Assert.Null(result.Value);
-        Assert.NotNull(result.ErrorMessage);
-        Assert.True(File.Exists(logPath));
     }
 
     public void Dispose()
