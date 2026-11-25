@@ -29,5 +29,6 @@ public static class SettingsPages
         new SettingsPage("calendar", "Calendar", typeof(Views.Pages.CalendarSettingsPage)),
         new SettingsPage("sysmonitor", "System monitor", typeof(Views.Pages.SystemMonitorSettingsPage)),
         new SettingsPage("countdown", "Countdown", typeof(Views.Pages.CountdownSettingsPage)),
+        new SettingsPage("focus", "Focus timer", typeof(Views.Pages.FocusTimerSettingsPage)),
     };
 }

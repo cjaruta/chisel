@@ -771,6 +771,35 @@
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
         </Style>
 
+        <!-- Focus timer: sizes come from the widget (FocusLayout); these set only colors and shape -->
+        <Style Selector="Button.focusButton">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.focusDim">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.focusTask">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.focusTask /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.focusTask:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
         <Style Selector="Button.gearButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6" />

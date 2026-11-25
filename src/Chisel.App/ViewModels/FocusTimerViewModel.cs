@@ -172,6 +172,15 @@ public sealed class FocusTimerViewModel : ViewModelBase, IDisposable
 
     public IReadOnlyList<FocusPreset> Presets => FocusPresets.All;
 
+    // The chime at the chosen volume, to try it.
+    public void PlayChime()
+    {
+        if (Settings.ChimeVolume > 0)
+        {
+            _chime.Play(Settings.ChimeVolume);
+        }
+    }
+
     public void ApplyPreset(FocusPreset preset) => Apply(preset.ApplyTo(Settings));
 
     private void Apply(FocusSettings settings)
@@ -310,7 +319,7 @@ public sealed class FocusTimerViewModel : ViewModelBase, IDisposable
         foreach (var name in new[]
         {
             nameof(Phase), nameof(Run), nameof(IsRunning), nameof(PhaseText), nameof(TimeText), nameof(Fraction), nameof(AutomationName),
-            nameof(PrimaryText), nameof(SessionsToday), nameof(SessionsText), nameof(DotsTotal), nameof(DotsDone), nameof(LongTime), nameof(IsFlashing),
+            nameof(PrimaryText), nameof(SessionsToday), nameof(SessionsText), nameof(DotsTotal), nameof(DotsDone), nameof(LongTime), nameof(IsFlashing), nameof(Updates),
         })
         {
             OnPropertyChanged(name);

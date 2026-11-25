@@ -31,6 +31,14 @@ public static class ThemeColors
         _ => Color.FromArgb(0, 0, 0, 0),
     };
 
+    // The focus timer's ring for each phase: red for focus, green for a short break, blue for a long one (the countdown's tags).
+    public static Color FocusPhase(Chisel.Core.Focus.FocusPhase phase, bool dark) => CountdownTag(phase switch
+    {
+        Chisel.Core.Focus.FocusPhase.ShortBreak => Chisel.Core.Countdown.CountdownColor.Green,
+        Chisel.Core.Focus.FocusPhase.LongBreak => Chisel.Core.Countdown.CountdownColor.Blue,
+        _ => Chisel.Core.Countdown.CountdownColor.Red,
+    }, dark);
+
     public static Color Mix(Color a, Color b, double t) => Color.FromArgb(
         (byte)Math.Round(a.A + (b.A - a.A) * t), (byte)Math.Round(a.R + (b.R - a.R) * t),
         (byte)Math.Round(a.G + (b.G - a.G) * t), (byte)Math.Round(a.B + (b.B - a.B) * t));

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
@@ -19,6 +21,7 @@ public partial class MainViewModel : ViewModelBase
     public SystemMonitorSettingsViewModel SystemMonitorSettings { get; }
     public SystemMonitorViewModel SystemMonitor { get; }
     public CountdownViewModel Countdown { get; private set; } = null!;
+    public FocusTimerViewModel FocusTimer { get; private set; } = null!;
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -74,7 +77,9 @@ public partial class MainViewModel : ViewModelBase
         Action<Action>? dispatch = null,
         SystemMonitorSettingsViewModel? systemMonitorSettings = null,
         Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
-        Chisel.Core.Countdown.ICountdownRepository? countdown = null)
+        Chisel.Core.Countdown.ICountdownRepository? countdown = null,
+        Chisel.Core.Focus.IFocusTimerRepository? focusTimer = null,
+        Services.IChime? chime = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -103,6 +108,12 @@ public partial class MainViewModel : ViewModelBase
         MediaBackground = new MediaBackgroundViewModel(Media, MediaSettings, settings.Theme, artSampler ?? new Services.AvaloniaArtSampler());
         Schedule = schedule;
         Tasks = tasks;
+        // The focus timer reads the task list (never changes it). A change is looked at after it settles, so a task moving from
+        // open to done is not taken for a deleted one.
+        FocusTimer = new FocusTimerViewModel(focusTimer, time ?? TimeProvider.System, chime, dispatch, FocusTasks);
+        var post = dispatch ?? (action => action());
+        Tasks.Open.CollectionChanged += (_, _) => post(FocusTimer.RefreshTask);
+        Tasks.Done.CollectionChanged += (_, _) => post(FocusTimer.RefreshTask);
         Notes = notes;
         QuickLinks = quickLinks;
         Settings = settings;
@@ -216,4 +227,7 @@ public partial class MainViewModel : ViewModelBase
         Settings.IsOpen = false;
         Schedule.CloseEditorsCommand.Execute(null);
     }
+
+    private IReadOnlyList<FocusTaskOption> FocusTasks() =>
+        Tasks.Open.Select(r => new FocusTaskOption(r.Id, r.Text, false)).Concat(Tasks.Done.Select(r => new FocusTaskOption(r.Id, r.Text, true))).ToList();
 }
