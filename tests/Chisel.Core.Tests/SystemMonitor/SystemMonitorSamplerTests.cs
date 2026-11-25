@@ -226,4 +226,35 @@ public class SystemMonitorSamplerTests
         }
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
+
+    // A day of one-second samples: the history stays at its fixed size and the steady state allocates nothing per tick,
+    // so memory does not grow over a long run.
+    [Fact]
+    public void ADayOfTicks_KeepsHistoryBounded_AndAllocatesNothingPerTick()
+    {
+        using var sampler = Sampler();
+        sampler.Interval = TimeSpan.FromSeconds(1);
+        sampler.Attach(new object());
+        ulong idle = 0, total = 0, received = 0;
+        void Step()
+        {
+            idle += 50; total += 100; received += 1000;
+            _source.Next = Everything(idle, total, received, received);
+            _time.Advance(TimeSpan.FromSeconds(1));
+        }
+        for (var i = 0; i < 1000; i++)
+        {
+            Step();
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 86_400; i++)
+        {
+            Step();
+        }
+        var perTick = (GC.GetAllocatedBytesForCurrentThread() - before) / 86_400.0;
+
+        Assert.All(Enum.GetValues<SystemStat>(), s => Assert.Equal(SystemMonitorSampler.HistoryCapacity, sampler.History(s).Count));
+        Assert.True(perTick < 64, $"{perTick:F1} bytes per tick");
+    }
 }
