@@ -56,7 +56,14 @@ public partial class App : Application
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format, palette and theme (applying the theme) before anything is shown.
                 var theme = new Theming.ThemeService();
-                var system = new SystemSettingsViewModel(_services.SystemSettings);
+                // Start with Windows: the Run entry follows Chisel if it was moved (only when it is already on). Captures never touch it.
+                StartWithWindows? startWithWindows = null;
+                if (scenario is null)
+                {
+                    startWithWindows = new StartWithWindows(new WindowsStartupRegistry(), ProgramPath());
+                    startWithWindows.Revalidate();
+                }
+                var system = new SystemSettingsViewModel(_services.SystemSettings, startWithWindows);
                 var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
@@ -168,6 +175,13 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    // The running Chisel.App.exe, or null when started some other way (through dotnet.exe), which can't be put in the Run key.
+    private static string? ProgramPath()
+    {
+        var path = Environment.ProcessPath;
+        return path is not null && !Path.GetFileName(path).Equals("dotnet.exe", StringComparison.OrdinalIgnoreCase) ? path : null;
     }
 
     // The tray icon with the app icon and its menu; null when Windows would not give us one (the window then never hides).

@@ -324,6 +324,13 @@
                                 <CheckBox Name="StartMinimizedOption" Content="Start minimized to tray" IsChecked="{Binding Settings.SystemOptions.StartMinimized}" />
                                 <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
                                            Text="When Chisel starts with Windows, it waits in the tray instead of opening the window." />
+                                <CheckBox Name="StartWithWindowsOption" Content="Start with Windows" IsChecked="{Binding Settings.SystemOptions.StartWithWindows}"
+                                          IsEnabled="{Binding Settings.SystemOptions.CanStartWithWindows}" />
+                                <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
+                                           Text="Opens Chisel when you sign in. Only for your account; no admin rights needed." />
+                                <TextBlock Name="StartupError" Foreground="{DynamicResource AccentTextBrush}" FontSize="12" TextWrapping="Wrap"
+                                           Text="{Binding Settings.SystemOptions.StartupError}"
+                                           IsVisible="{Binding Settings.SystemOptions.StartupError, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
                             </StackPanel>
                         </StackPanel>
                         </ScrollViewer>

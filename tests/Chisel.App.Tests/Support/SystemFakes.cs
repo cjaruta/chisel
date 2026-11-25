@@ -23,3 +23,38 @@ public sealed class FakeShellWindow : IShellWindow
     public void Hide() { IsVisible = false; IsActive = false; }
     public void Minimize() { IsMinimized = true; IsActive = false; }
 }
+
+// The Run key as a dictionary. Blocked makes every read and write fail the way a policy does.
+public sealed class FakeStartupRegistry : IStartupRegistry
+{
+    public Dictionary<string, string> Values { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public bool Blocked { get; set; }
+    public int Writes { get; private set; }
+
+    public string? Read(string name)
+    {
+        Check();
+        return Values.GetValueOrDefault(name);
+    }
+
+    public void Write(string name, string value)
+    {
+        Check();
+        Writes++;
+        Values[name] = value;
+    }
+
+    public void Delete(string name)
+    {
+        Check();
+        Values.Remove(name);
+    }
+
+    private void Check()
+    {
+        if (Blocked)
+        {
+            throw new UnauthorizedAccessException("blocked");
+        }
+    }
+}
