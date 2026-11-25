@@ -77,6 +77,9 @@ public partial class SettingsViewModel : ViewModelBase
     // Export and import; null where there is no real database to back up (tests, captures).
     public BackupViewModel? Backup { get; }
 
+    // Settings > Help: version, project links, logs and diagnostic info.
+    public AboutViewModel? About { get; }
+
     // Widgets that have options, and the one shown on the right of the Widgets tab.
     public IReadOnlyList<SettingsPage> WidgetPages { get; }
 
@@ -85,11 +88,12 @@ public partial class SettingsViewModel : ViewModelBase
 
     public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null,
         IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null, SystemSettingsViewModel? system = null,
-        BackupViewModel? backup = null)
+        BackupViewModel? backup = null, AboutViewModel? about = null)
     {
         Theme = theme;
         SystemOptions = system;
         Backup = backup;
+        About = about;
         _repository = repository;
         WidgetPages = pages ?? SettingsPages.Widgets;
         SelectedWidgetPage = WidgetPages.FirstOrDefault();

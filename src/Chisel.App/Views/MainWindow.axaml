@@ -435,6 +435,20 @@
                                            Text="Edit the dashboard with the grid button at the top right. While editing, the Widget Library adds widgets." />
                                 <Button Name="ShowWelcomeButton" Content="Show the welcome tips" HorizontalAlignment="Left"
                                         Command="{Binding Settings.ShowWelcomeCommand}" />
+
+                                <!-- About: version, project links, logs and diagnostic info (no personal data) -->
+                                <StackPanel Name="AboutSection" Spacing="10" IsVisible="{Binding Settings.About, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <TextBlock Classes="settingsSection" Text="ABOUT" />
+                                    <TextBlock Name="AboutVersion" Text="{Binding Settings.About.Version}" />
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Name="OpenProjectButton" Content="Project page" Margin="0,0,8,8" Command="{Binding Settings.About.OpenProjectCommand}" />
+                                        <Button Name="OpenIssuesButton" Content="Report a problem" Margin="0,0,8,8" Command="{Binding Settings.About.OpenIssuesCommand}" />
+                                        <Button Name="OpenLogsButton" Content="Open logs folder" Margin="0,0,8,8" Command="{Binding Settings.About.OpenLogsCommand}" />
+                                        <Button Name="CopyDiagnosticsButton" Content="Copy diagnostic info" Margin="0,0,8,8" Command="{Binding Settings.About.CopyDiagnosticsCommand}" />
+                                    </WrapPanel>
+                                    <TextBlock Name="AboutStatus" Classes="dim" TextWrapping="Wrap" Text="{Binding Settings.About.Status}"
+                                               IsVisible="{Binding Settings.About.Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
 

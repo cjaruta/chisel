@@ -73,7 +73,8 @@ public static class UiSnapshot
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService(),
-            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)), backup: backup?.Invoke(context));
+            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)), backup: backup?.Invoke(context),
+            about: new AboutViewModel("1.2.3", () => "", _ => { }, () => { }, _ => Task.CompletedTask));
         if (layout.IsFirstRun)
         {
             settings.SystemOptions!.StartWelcome();

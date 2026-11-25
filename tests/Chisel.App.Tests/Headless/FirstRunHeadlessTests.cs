@@ -42,4 +42,20 @@ public class FirstRunHeadlessTests
         Assert.False(settings.IsOpen);
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void HelpInSettings_ShowsTheVersionAndDiagnosticsButtons()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        var settings = ((MainViewModel)window.DataContext!).Settings;
+        settings.IsOpen = true;
+        settings.SelectTabCommand.Execute(SettingsTab.Help);
+        Dispatcher.UIThread.RunJobs();
+        UiSnapshot.Render(window, "help-about");
+
+        Assert.True(Named(window, "AboutSection").IsVisible);
+        Assert.Equal("Chisel 1.2.3", ((TextBlock)Named(window, "AboutVersion")).Text);
+        Assert.True(Named(window, "CopyDiagnosticsButton").IsEffectivelyVisible);
+        window.Close();
+    }
 }

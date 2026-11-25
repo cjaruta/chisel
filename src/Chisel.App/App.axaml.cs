@@ -78,12 +78,25 @@ public partial class App : Application
                         beforeImport: () => flushBeforeImport?.Invoke(),
                         afterImport: () => restartAfterImport?.Invoke())
                     : null;
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system, backup: backup);
+                MainWindow? mainWindow = null;
+                // Settings > Help > About: the diagnostic info lists versions, scaling and widget types only.
+                var about = new AboutViewModel(AppVersion(),
+                    () => DiagnosticInfo.Build(AppVersion(), Environment.OSVersion.VersionString, Environment.Version.ToString(),
+                        mainWindow?.RenderScaling ?? 1, mainWindow?.Screens.ScreenCount ?? 1, _services.WidgetLayout.Get()?.WidgetIds ?? []),
+                    url => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }),
+                    () =>
+                    {
+                        Directory.CreateDirectory(AppPaths.GetLogsFolder());
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppPaths.GetLogsFolder()) { UseShellExecute = true });
+                    },
+                    text => mainWindow?.Clipboard is { } clipboard
+                        ? Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(clipboard, text) : System.Threading.Tasks.Task.CompletedTask);
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system, backup: backup,
+                    about: about);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
-                MainWindow? mainWindow = null;
                 var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures, _services.LayoutProfiles,
                     firstRunLayout: WidgetRegistry.FirstRunLayout);
                 if (layout.IsFirstRun && scenario is null)
