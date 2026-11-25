@@ -578,6 +578,26 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("SystemMonitorSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.SystemSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CloseToTray")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hotkey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("StartMinimized")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.TaskEntity", b =>
                 {
                     b.Property<Guid>("Id")

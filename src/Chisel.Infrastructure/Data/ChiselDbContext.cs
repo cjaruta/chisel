@@ -45,6 +45,7 @@ public class ChiselDbContext : DbContext
     public DbSet<CalculatorSettingsEntity> CalculatorSettings => Set<CalculatorSettingsEntity>();
     public DbSet<ConverterSettingsEntity> ConverterSettings => Set<ConverterSettingsEntity>();
     public DbSet<ClipboardHistorySettingsEntity> ClipboardHistorySettings => Set<ClipboardHistorySettingsEntity>();
+    public DbSet<SystemSettingsEntity> SystemSettings => Set<SystemSettingsEntity>();
     public DbSet<CalendarSettingsEntity> CalendarSettings => Set<CalendarSettingsEntity>();
     public DbSet<SystemMonitorSettingsEntity> SystemMonitorSettings => Set<SystemMonitorSettingsEntity>();
     public DbSet<CountdownSettingsEntity> CountdownSettings => Set<CountdownSettingsEntity>();
@@ -103,6 +104,7 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<CalculatorSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ConverterSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClipboardHistorySettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<SystemSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalendarSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<SystemMonitorSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
         modelBuilder.Entity<CountdownSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
