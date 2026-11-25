@@ -300,6 +300,23 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("FramePictures");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.HabitsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Habits");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.HiddenWidgetEntity", b =>
                 {
                     b.Property<string>("WidgetId")
