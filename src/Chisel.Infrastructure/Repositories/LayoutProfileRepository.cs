@@ -15,10 +15,17 @@ public class LayoutProfileRepository : ILayoutProfileRepository
 
     public IReadOnlyList<LayoutProfile> GetAll() =>
         _context.LayoutProfiles.OrderBy(p => p.Slot).AsEnumerable()
-            .Select(p => (p, Layout: LayoutProfileMapper.ToLayout(p.LayoutJson)))
+            .Select(p => (p, Layout: LayoutProfileMapper.ToLayout(p.LayoutJson) ?? Damaged(p)))
             .Where(x => x.Layout is not null && LayoutProfiles.IsValidSlot(x.p.Slot))
             .Select(x => new LayoutProfile(x.p.Slot, x.p.Name, x.Layout!))
             .ToList();
+
+    // A profile that can't be read is kept as a .bad copy and left out of the list.
+    private WidgetLayout? Damaged(LayoutProfileEntity row)
+    {
+        DamagedData.Keep(_context, $"layout-profile-{row.Slot}", row.LayoutJson);
+        return null;
+    }
 
     public void Save(LayoutProfile profile)
     {

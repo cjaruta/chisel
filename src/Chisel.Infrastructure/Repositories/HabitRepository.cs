@@ -33,12 +33,16 @@ public class HabitRepository : IHabitRepository
         }
         try
         {
-            return JsonNode.Parse(row.Json) is JsonObject { } root && root["habits"] is JsonArray list ? Read(list) : HabitData.Empty;
+            if (JsonNode.Parse(row.Json) is JsonObject { } root && root["habits"] is JsonArray list)
+            {
+                return Read(list);
+            }
         }
         catch (JsonException)
         {
-            return HabitData.Empty;
         }
+        DamagedData.Keep(_context, "habits", row.Json);
+        return HabitData.Empty;
     }
 
     public void Save(HabitData data)

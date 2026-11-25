@@ -30,12 +30,16 @@ public class CountdownRepository : ICountdownRepository
         }
         try
         {
-            return JsonNode.Parse(row.Json) is JsonObject root ? Read(root) : CountdownSettings.Default;
+            if (JsonNode.Parse(row.Json) is JsonObject root)
+            {
+                return Read(root);
+            }
         }
         catch (JsonException)
         {
-            return CountdownSettings.Default;
         }
+        DamagedData.Keep(_context, "countdown", row.Json);
+        return CountdownSettings.Default;
     }
 
     public void Save(CountdownSettings settings)
