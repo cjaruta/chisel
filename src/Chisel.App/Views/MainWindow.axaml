@@ -312,6 +312,19 @@
                             </Border>
                             <TextBlock Name="AccentAdjustedNote" Classes="dim" IsVisible="{Binding Settings.AccentAdjusted}"
                                        Text="Adjusted slightly so it stays readable in this mode." />
+
+                            <!-- System: what closing does, starting with Windows, and the show/hide shortcut -->
+                            <StackPanel Name="SystemSection" Spacing="10" IsVisible="{Binding Settings.SystemOptions, Converter={x:Static convA:ObjectConverters.IsNotNull}}">
+                                <TextBlock Classes="settingsSection" Text="SYSTEM" />
+                                <TextBlock Text="When I close the window" />
+                                <RadioButton Name="CloseQuitsOption" GroupName="CloseBehavior" Content="Quit the app" IsChecked="{Binding Settings.SystemOptions.QuitOnClose}" />
+                                <RadioButton Name="CloseToTrayOption" GroupName="CloseBehavior" Content="Keep running in the tray" IsChecked="{Binding Settings.SystemOptions.CloseToTray}" />
+                                <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
+                                           Text="Chisel's tray icon is always next to the clock. Use its menu's Quit to really exit." />
+                                <CheckBox Name="StartMinimizedOption" Content="Start minimized to tray" IsChecked="{Binding Settings.SystemOptions.StartMinimized}" />
+                                <TextBlock Classes="dim" FontSize="12" TextWrapping="Wrap"
+                                           Text="When Chisel starts with Windows, it waits in the tray instead of opening the window." />
+                            </StackPanel>
                         </StackPanel>
                         </ScrollViewer>
 

@@ -36,6 +36,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial PaletteOption SelectedPalette { get; set; }
 
+    // The System section (closing, starting with Windows, the show/hide shortcut); null hides it.
+    public SystemSettingsViewModel? SystemOptions { get; }
+
     // The theme service this panel drives; null in tests that only care about settings storage.
     public ThemeService? Theme { get; }
 
@@ -74,9 +77,10 @@ public partial class SettingsViewModel : ViewModelBase
     public partial SettingsPage? SelectedWidgetPage { get; set; }
 
     public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null,
-        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null)
+        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null, SystemSettingsViewModel? system = null)
     {
         Theme = theme;
+        SystemOptions = system;
         _repository = repository;
         WidgetPages = pages ?? SettingsPages.Widgets;
         SelectedWidgetPage = WidgetPages.FirstOrDefault();

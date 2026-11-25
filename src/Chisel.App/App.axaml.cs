@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform;
 using Avalonia.Markup.Xaml;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
@@ -19,6 +21,7 @@ public partial class App : Application
     private Chisel.Core.Media.IMediaService? _mediaService;
     private Chisel.Core.Media.ISpectrumSource? _spectrum;
     private Chisel.Core.Media.IVolumeService? _volume;
+    private TrayIcon? _tray;
 
     public override void Initialize()
     {
@@ -53,7 +56,8 @@ public partial class App : Application
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format, palette and theme (applying the theme) before anything is shown.
                 var theme = new Theming.ThemeService();
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme);
+                var system = new SystemSettingsViewModel(_services.SystemSettings);
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
@@ -93,7 +97,7 @@ public partial class App : Application
                     habits: _services.Habits,
                     converter: _services.ConverterSettings,
                     clipboardHistory: new ClipboardHistoryViewModel(
-                        new WindowsClipboardService(() => (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow?.Clipboard, clipboardLog),
+                        new WindowsClipboardService(() => mainWindow?.Clipboard, clipboardLog),
                         _services.ClipboardSettings, new ClipboardHistoryFileStore(AppPaths.GetClipboardHistoryPath()), log: clipboardLog),
                     chime: new SoftChime(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
@@ -106,15 +110,44 @@ public partial class App : Application
                 {
                     DataContext = mainViewModel,
                 };
-                desktop.MainWindow = mainWindow;
+
+                // The tray icon, closing to it and the show/hide shortcut. Captures run without them.
+                AppShell? shell = null;
+                _tray = scenario is null ? CreateTray(() => shell, settings) : null;
+                shell = new AppShell(new WindowShell(mainWindow, desktop), () => system.Current, _tray is not null, () => desktop.Shutdown());
+                // The app ends when the main window really closes, not when it hides to the tray (or never showed).
+                desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                mainWindow.Closing += (_, e) =>
+                {
+                    if (shell.HandleClosing(userClose: e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic))
+                    {
+                        e.Cancel = true;
+                    }
+                };
+                mainWindow.Closed += (_, _) =>
+                {
+                    if (!shell.IsQuitting)
+                    {
+                        shell.Quit();
+                    }
+                };
+                mainWindow.Deactivated += (_, _) => shell.NoteDeactivated();
+                AppDomain.CurrentDomain.UnhandledException += (_, _) => DisposeTray();
+
+                // Started with Windows and set to wait in the tray: the window is made but not shown until asked for.
+                if (!shell.ShouldStartHidden(StartupArguments.Parse(desktop.Args).Minimized))
+                {
+                    desktop.MainWindow = mainWindow;
+                }
 
                 if (scenario is not null)
                 {
-                    Dev.CaptureMode.Run((MainWindow)desktop.MainWindow, scenario, () => desktop.Shutdown());
+                    Dev.CaptureMode.Run(mainWindow, scenario, () => desktop.Shutdown());
                 }
 
                 desktop.Exit += (_, _) =>
                 {
+                    DisposeTray();
                     mainViewModel.Notes.Flush();
                     mainViewModel.SystemMonitor.Dispose();
                     mainViewModel.Countdown.Dispose();
@@ -135,5 +168,52 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    // The tray icon with the app icon and its menu; null when Windows would not give us one (the window then never hides).
+    private TrayIcon? CreateTray(Func<AppShell?> shell, SettingsViewModel settings)
+    {
+        try
+        {
+            using var iconStream = AssetLoader.Open(new Uri("avares://Chisel.App/Assets/chiselIcon.ico"));
+            var showHide = new NativeMenuItem("Show/Hide");
+            showHide.Click += (_, _) => shell()?.MenuShowHide();
+            var openSettings = new NativeMenuItem("Settings");
+            openSettings.Click += (_, _) =>
+            {
+                shell()?.Show();
+                settings.SelectedTab = SettingsTab.General;
+                settings.IsOpen = true;
+            };
+            var quit = new NativeMenuItem("Quit");
+            quit.Click += (_, _) => shell()?.Quit();
+            var tray = new TrayIcon
+            {
+                Icon = new WindowIcon(iconStream),
+                ToolTipText = "Chisel",
+                Menu = new NativeMenu { showHide, openSettings, new NativeMenuItemSeparator(), quit },
+                IsVisible = true,
+            };
+            tray.Clicked += (_, _) => shell()?.TrayClicked();
+            TrayIcon.SetIcons(this, new TrayIcons { tray });
+            return tray;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    // Removes the tray icon right away so no ghost icon is left behind after exit.
+    private void DisposeTray()
+    {
+        var tray = _tray;
+        _tray = null;
+        if (tray is null)
+        {
+            return;
+        }
+        tray.IsVisible = false;
+        tray.Dispose();
     }
 }

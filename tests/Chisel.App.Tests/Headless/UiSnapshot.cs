@@ -68,7 +68,8 @@ public static class UiSnapshot
         var notepadSettings = new NotepadSettingsRepository(context);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
-        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService());
+        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService(),
+            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)));
 
         var store = weatherStore ?? new WeatherRepository(context);
         var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store, timeDisplay);

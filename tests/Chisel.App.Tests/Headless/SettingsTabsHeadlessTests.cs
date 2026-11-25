@@ -48,7 +48,7 @@ public class SettingsTabsHeadlessTests
         var window = UiSnapshot.ShowMainWindow();
         var settings = Open(window);
 
-        var radios = Named<Control>(window, "GeneralPage").GetVisualDescendants().OfType<RadioButton>().ToList();
+        var radios = Named<Control>(window, "GeneralPage").GetVisualDescendants().OfType<RadioButton>().Where(r => r.GroupName == "ClockFormat").ToList();
         Assert.Equal(2, radios.Count);
         radios[0].IsChecked = false;
         radios[1].IsChecked = true;
