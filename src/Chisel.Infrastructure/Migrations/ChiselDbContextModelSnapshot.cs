@@ -80,6 +80,25 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("CalendarSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClipboardHistorySettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("KeepHistory")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxItems")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxLength")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClipboardHistorySettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockFaceLibraryEntity", b =>
                 {
                     b.Property<int>("Id")
