@@ -60,6 +60,26 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("CalculatorSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.CalendarSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FirstDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MarkedDays")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ShowWeekNumbers")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CalendarSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockFaceLibraryEntity", b =>
                 {
                     b.Property<int>("Id")
