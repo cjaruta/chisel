@@ -43,7 +43,9 @@ public partial class SettingsViewModel : ViewModelBase
     public ThemeService? Theme { get; }
 
     // Theme modes, each with a strip previewing its surfaces and text.
-    public IReadOnlyList<ThemeModeOption> ThemeModeOptions { get; } = ThemeModes.All.Select(m => new ThemeModeOption(m)).ToList();
+    // System comes first: it follows the Windows light/dark setting.
+    public IReadOnlyList<ThemeModeOption> ThemeModeOptions { get; } =
+        ThemeModes.All.Select(m => new ThemeModeOption(m)).Prepend(ThemeModeOption.System()).ToList();
 
     [ObservableProperty]
     public partial ThemeModeOption SelectedThemeMode { get; set; }
@@ -99,12 +101,17 @@ public partial class SettingsViewModel : ViewModelBase
 
         // Theme: applied here, before the first window exists, so nothing flashes in the wrong colors.
         AccentSwatches = ThemeModes.AccentPresets.Select(p => new ColorSwatchOption(p.Hex, p.Name, Rgb.Parse(p.Hex).ToBrush())).ToList();
-        var mode = ThemeModes.ById(stored?.ThemeMode);
+        var choice = stored?.ThemeMode == ThemeModes.SystemId ? ThemeModes.SystemId : ThemeModes.ById(stored?.ThemeMode).Id;
         var accent = ThemeModes.ResolveAccent(stored?.AccentColor);
-        SelectedThemeMode = ThemeModeOptions.Single(o => o.Id == mode.Id);
+        SelectedThemeMode = ThemeModeOptions.Single(o => o.Id == choice);
         ShowAccent(accent);
-        _palette.UseMode(mode);
-        Theme?.Apply(mode, accent);
+        Theme?.Apply(choice, accent);
+        _palette.UseMode(Theme?.Mode ?? ThemeModes.Resolve(choice, false));
+        // System mode can switch between light and dark at any time: the schedule colors follow.
+        if (Theme is not null)
+        {
+            Theme.Changed += () => _palette.UseMode(Theme.Mode);
+        }
         UpdateAccentInfo();
     }
 
@@ -123,7 +130,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void UpdateAccentInfo()
     {
-        var mode = ThemeModes.ById(SelectedThemeMode?.Id);
+        var mode = Theme?.Mode ?? ThemeModes.ById(SelectedThemeMode?.Id);
         AccentAdjusted = Theme is not null && ThemeModes.Accent(mode, Theme.Accent).Fill != Theme.Accent;
     }
 
@@ -131,7 +138,7 @@ public partial class SettingsViewModel : ViewModelBase
     private void ChooseAccent(Rgb accent, bool isDefault)
     {
         ShowAccent(accent);
-        Theme?.Apply(Theme.Mode, accent);
+        Theme?.Apply(Theme.Choice, accent);
         UpdateAccentInfo();
         var settings = _repository.Get();
         var saved = isDefault ? null : accent.ToHex();
@@ -147,12 +154,13 @@ public partial class SettingsViewModel : ViewModelBase
         {
             return;
         }
-        _palette.UseMode(ThemeModes.ById(value.Id));
         if (Theme is null)
         {
+            _palette.UseMode(ThemeModes.Resolve(value.Id, false));
             return;
         }
-        Theme.Apply(ThemeModes.ById(value.Id), Theme.Accent);
+        Theme.Apply(value.Id, Theme.Accent);
+        _palette.UseMode(Theme.Mode);
         UpdateAccentInfo();
         var settings = _repository.Get();
         if (settings is not null && settings.ThemeMode != value.Id)

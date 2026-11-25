@@ -20,11 +20,45 @@ public sealed class ThemeService
     public Rgb Accent { get; private set; } = ThemeModes.ResolveAccent(null);
     public AccentTokens Tokens { get; private set; } = ThemeModes.Accent(ThemeModes.Default, ThemeModes.ResolveAccent(null));
 
+    // The saved choice: a mode id, or System (Mode is then Light or Default, following Windows).
+    public string Choice { get; private set; } = ThemeModes.DefaultId;
+
     public event Action? Changed;
 
-    public void Apply(string? modeId, string? accentHex) => Apply(ThemeModes.ById(modeId), ThemeModes.ResolveAccent(accentHex));
+    private readonly IPlatformTheme? _platform;
+
+    // platform: the Windows light/dark setting that System follows; without it System is dark.
+    public ThemeService(IPlatformTheme? platform = null)
+    {
+        _platform = platform;
+        if (platform is not null)
+        {
+            platform.Changed += () =>
+            {
+                if (Choice == ThemeModes.SystemId)
+                {
+                    Apply(Choice, Accent);
+                }
+            };
+        }
+    }
+
+    public void Apply(string? modeId, string? accentHex) => Apply(modeId, ThemeModes.ResolveAccent(accentHex));
+
+    public void Apply(string? choice, Rgb accent)
+    {
+        var mode = ThemeModes.Resolve(choice, _platform?.IsLight ?? false);
+        Set(mode, accent);
+        Choice = choice == ThemeModes.SystemId ? choice : mode.Id;
+    }
 
     public void Apply(ThemeDefinition mode, Rgb accent)
+    {
+        Choice = mode.Id;
+        Set(mode, accent);
+    }
+
+    private void Set(ThemeDefinition mode, Rgb accent)
     {
         Mode = mode;
         Accent = accent;

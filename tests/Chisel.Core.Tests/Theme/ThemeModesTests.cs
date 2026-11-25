@@ -77,4 +77,18 @@ public class ThemeModesTests
         }
         Assert.True(Rgb.Contrast(t.OnAccent, t.Fill) >= 4.5, $"{id} {accent} on-accent");
     }
+
+    [Theory]
+    [InlineData(true, "light")]
+    [InlineData(false, "default")]
+    public void System_FollowsTheWindowsSetting(bool windowsIsLight, string expected)
+    {
+        Assert.Equal(expected, ThemeModes.Resolve(ThemeModes.SystemId, windowsIsLight).Id);
+    }
+
+    [Fact]
+    public void AChosenMode_IgnoresTheWindowsSetting()
+    {
+        Assert.Equal("plum", ThemeModes.Resolve("plum", systemIsLight: true).Id);
+    }
 }

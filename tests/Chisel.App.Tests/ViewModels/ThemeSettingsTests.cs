@@ -107,4 +107,63 @@ public class ThemeSettingsTests
         vm.SelectAccentCommand.Execute("#F5A524");
         Assert.False(vm.AccentAdjusted);
     }
+
+    private sealed class FakePlatformTheme(bool isLight) : IPlatformTheme
+    {
+        public bool IsLight { get; private set; } = isLight;
+        public event Action? Changed;
+
+        public void Set(bool light)
+        {
+            IsLight = light;
+            Changed?.Invoke();
+        }
+    }
+
+    private static (SettingsViewModel Vm, MemoryRepository Repo, ThemeService Theme, FakePlatformTheme Windows) CreateWithWindows(
+        UserSettings stored, bool windowsIsLight)
+    {
+        var repo = new MemoryRepository(stored);
+        var windows = new FakePlatformTheme(windowsIsLight);
+        var theme = new ThemeService(windows);
+        return (new SettingsViewModel(repo, new TimeDisplay(), theme: theme), repo, theme, windows);
+    }
+
+    [AvaloniaFact]
+    public void SystemMode_UsesTheWindowsSettingAndFollowsItLive()
+    {
+        var (vm, _, theme, windows) = CreateWithWindows(Stored().WithThemeMode("system"), windowsIsLight: true);
+
+        Assert.Equal("system", vm.SelectedThemeMode.Id);
+        Assert.Equal("light", theme.Mode.Id);
+
+        windows.Set(light: false);
+
+        Assert.Equal("default", theme.Mode.Id);
+        Avalonia.Application.Current!.Resources.TryGetResource("WindowBackgroundBrush", null, out var brush);
+        Assert.Equal(theme.Mode.Window.ToColor(), ((SolidColorBrush)brush!).Color);
+    }
+
+    [AvaloniaFact]
+    public void AnExistingChoice_IsKeptWhenWindowsChanges()
+    {
+        var (vm, repo, theme, windows) = CreateWithWindows(Stored().WithThemeMode("ocean"), windowsIsLight: false);
+
+        windows.Set(light: true);
+
+        Assert.Equal("ocean", vm.SelectedThemeMode.Id);
+        Assert.Equal("ocean", theme.Mode.Id);
+        Assert.Equal("ocean", repo.Current!.ThemeMode);
+    }
+
+    [AvaloniaFact]
+    public void ChoosingSystem_SavesItAndAppliesTheWindowsLook()
+    {
+        var (vm, repo, theme, _) = CreateWithWindows(Stored().WithThemeMode("plum"), windowsIsLight: true);
+
+        vm.SelectedThemeMode = vm.ThemeModeOptions.Single(o => o.Id == "system");
+
+        Assert.Equal("system", repo.Current!.ThemeMode);
+        Assert.Equal("light", theme.Mode.Id);
+    }
 }

@@ -6,7 +6,7 @@ namespace Chisel.Infrastructure.Seeding;
 public static class SeedData
 {
     public static UserSettings CreateUserSettings() =>
-        new("User", new TimeOnly(6, 30), new TimeOnly(23, 0));
+        new("User", new TimeOnly(6, 30), new TimeOnly(23, 0), themeMode: Core.Theme.ThemeModes.SystemId);
 
     public static DaySchedule CreateSchedule() =>
         new(new[]

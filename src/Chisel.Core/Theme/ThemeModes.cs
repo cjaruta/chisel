@@ -13,6 +13,9 @@ public static class ThemeModes
     // The accent the app has always used for its edit-mode and now markers.
     public const string DefaultAccent = "#F5A524";
     public const string DefaultId = "default";
+    // Not a palette: follows the Windows light/dark setting, as Light or Default.
+    public const string SystemId = "system";
+    public const string SystemLightId = "light";
 
     private static ThemeDefinition Make(string id, string name, bool light, string window, string card, string raised, string border,
         string controlBorder, string divider, string text, string secondary, string disabled) =>
@@ -58,6 +61,10 @@ public static class ThemeModes
 
     // Unknown or missing ids give Default.
     public static ThemeDefinition ById(string? id) => All.FirstOrDefault(m => m.Id == id) ?? Default;
+
+    // The palette for a saved choice: System picks Light or Default from the Windows setting; anything else as ById.
+    public static ThemeDefinition Resolve(string? id, bool systemIsLight) =>
+        id == SystemId ? (systemIsLight ? ById(SystemLightId) : Default) : ById(id);
 
     // A saved accent that is missing or not a color gives the default orange.
     public static Rgb ResolveAccent(string? hex) => Rgb.TryParse(hex, out var c) ? c : Rgb.Parse(DefaultAccent);

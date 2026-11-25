@@ -71,6 +71,18 @@ public class ThemeHeadlessTests
     }
 
     [AvaloniaFact]
+    public void TheModeList_OffersSystemFirst()
+    {
+        var window = UiSnapshot.ShowMainWindow();
+        Settings(window).IsOpen = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("System", Settings(window).ThemeModeOptions[0].Name);
+        UiSnapshot.Render(window, "theme-system-option");
+        Finish(window);
+    }
+
+    [AvaloniaFact]
     public void SwitchingMode_RestylesTokensAndFluentControlsLive()
     {
         var window = UiSnapshot.ShowMainWindow();

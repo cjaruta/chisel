@@ -55,7 +55,7 @@ public partial class App : Application
                 var timeDisplay = new TimeDisplay();
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format, palette and theme (applying the theme) before anything is shown.
-                var theme = new Theming.ThemeService();
+                var theme = new Theming.ThemeService(new Theming.AvaloniaPlatformTheme(PlatformSettings));
                 // Start with Windows: the Run entry follows Chisel if it was moved (only when it is already on). Captures never touch it.
                 StartWithWindows? startWithWindows = null;
                 if (scenario is null)
