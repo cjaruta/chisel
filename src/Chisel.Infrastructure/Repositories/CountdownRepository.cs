@@ -52,6 +52,19 @@ public class CountdownRepository : ICountdownRepository
         _context.SaveChanges();
     }
 
+    // Reads saved countdown JSON the same forgiving way Get does (used to merge an imported backup).
+    public static CountdownSettings Parse(string json)
+    {
+        try
+        {
+            return JsonNode.Parse(json) is JsonObject root ? Read(root) : CountdownSettings.Default;
+        }
+        catch (JsonException)
+        {
+            return CountdownSettings.Default;
+        }
+    }
+
     private static JsonObject Write(CountdownEntry e)
     {
         var o = new JsonObject

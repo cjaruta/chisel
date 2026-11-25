@@ -64,7 +64,18 @@ public partial class App : Application
                     startWithWindows.Revalidate();
                 }
                 var system = new SystemSettingsViewModel(_services.SystemSettings, startWithWindows);
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system);
+                // Backup: set up before the rest exists, so the steps it needs later (save a pending note, restart) are filled in below.
+                Action? flushBeforeImport = null;
+                Action? restartAfterImport = null;
+                var backup = scenario is null
+                    ? new BackupViewModel(
+                        new Chisel.Infrastructure.Transfer.BackupService(_services.DbContext, new Chisel.Infrastructure.Transfer.FileSystemBackupFiles(),
+                            AppPaths.GetBackupsFolder(), AppPaths.GetPicturesFolder(), AppVersion(), _services.Time),
+                        new BackupDialogs(() => desktop.MainWindow?.StorageProvider),
+                        beforeImport: () => flushBeforeImport?.Invoke(),
+                        afterImport: () => restartAfterImport?.Invoke())
+                    : null;
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system, backup: backup);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
@@ -145,6 +156,19 @@ public partial class App : Application
                 };
                 mainWindow.Deactivated += (_, _) => shell.NoteDeactivated();
 
+                // After an import or undo Chisel starts again, so every widget reads the new data and nothing still in memory saves
+                // the old data back on top of it.
+                flushBeforeImport = mainViewModel.Notes.Flush;
+                restartAfterImport = () =>
+                {
+                    var start = ProgramPath() is { } exe
+                        ? new System.Diagnostics.ProcessStartInfo(exe)
+                        : new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath ?? "dotnet", $"\"{typeof(App).Assembly.Location}\"");
+                    start.UseShellExecute = false;
+                    System.Diagnostics.Process.Start(start);
+                    shell.Quit();
+                };
+
                 // The show/hide shortcut (RegisterHotKey on the main window; no keyboard hooks).
                 var hotkeys = scenario is null ? new Win32HotkeyService(mainWindow) : null;
                 if (hotkeys is not null)
@@ -191,6 +215,8 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    private static string AppVersion() => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
     // The running Chisel.App.exe, or null when started some other way (through dotnet.exe), which can't be put in the Run key.
     private static string? ProgramPath()

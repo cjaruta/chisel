@@ -23,6 +23,10 @@ public static class AppPaths
     public static string GetClipboardHistoryPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "clipboard-history.json");
 
+    // Undo points taken before each import: %AppData%\Chisel\backups
+    public static string GetBackupsFolder() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "backups");
+
     public static string GetWindowPlacementPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "window.json");
 }

@@ -8,6 +8,7 @@ public enum SettingsTab
     General,
     Widgets,
     QuickLinks,
+    Backup,
     Help,
 }
 

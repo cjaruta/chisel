@@ -78,6 +78,19 @@ public class HabitRepository : IHabitRepository
         _context.SaveChanges();
     }
 
+    // Reads saved habit JSON the same forgiving way Get does (used to merge an imported backup).
+    public static HabitData Parse(string json)
+    {
+        try
+        {
+            return JsonNode.Parse(json) is JsonObject { } root && root["habits"] is JsonArray list ? Read(list) : HabitData.Empty;
+        }
+        catch (JsonException)
+        {
+            return HabitData.Empty;
+        }
+    }
+
     private static HabitData Read(JsonArray list)
     {
         var habits = new List<Habit>();

@@ -251,6 +251,9 @@
                             <Button Name="QuickLinksTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsQuickLinksTab}"
                                     Content="Quick links" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.QuickLinks}" />
+                            <Button Name="BackupTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsBackupTab}"
+                                    Content="Backup" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.Backup}" />
                             <Button Name="HelpTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsHelpTab}"
                                     Content="Help" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.Help}" />
@@ -385,6 +388,43 @@
                         <!-- Quick links: the shortcuts in the top bar -->
                         <ScrollViewer Name="QuickLinksPage" IsVisible="{Binding Settings.IsQuickLinksTab}">
                             <pages:QuickLinksSettingsPage />
+                        </ScrollViewer>
+
+                        <!-- Backup: everything to one file and back -->
+                        <ScrollViewer Name="BackupPage" IsVisible="{Binding Settings.IsBackupTab}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Classes="cardHeading" Text="Backup" />
+                                <TextBlock TextWrapping="Wrap" Classes="dim"
+                                           Text="Export saves your settings, dashboard and the data of every widget to one file. Clipboard history is never included. Picture files stay on this computer; the backup only lists them." />
+                                <StackPanel Orientation="Horizontal" Spacing="8" IsEnabled="{Binding Settings.Backup, Converter={x:Static convA:ObjectConverters.IsNotNull}}">
+                                    <Button Name="BackupExportButton" Content="Export…" Command="{Binding Settings.Backup.ExportCommand, FallbackValue={x:Null}}" />
+                                    <Button Name="BackupImportButton" Content="Import…" Command="{Binding Settings.Backup.ImportCommand, FallbackValue={x:Null}}" />
+                                    <Button Name="BackupUndoButton" Content="Undo last import" Command="{Binding Settings.Backup.UndoCommand, FallbackValue={x:Null}}"
+                                            IsVisible="{Binding Settings.Backup.CanUndo, FallbackValue=False}" />
+                                </StackPanel>
+                                <Border Name="BackupConfirm" Classes="card" Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource ControlBorderBrush}"
+                                        IsVisible="{Binding Settings.Backup.IsConfirming, FallbackValue=False}">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Name="BackupSummary" TextWrapping="Wrap" Text="{Binding Settings.Backup.Summary, FallbackValue=''}" />
+                                        <ItemsControl Name="BackupWarnings" ItemsSource="{Binding Settings.Backup.Warnings, FallbackValue={x:Null}}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ReminderBrush}" Text="{Binding StringFormat='⚠ {0}'}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock TextWrapping="Wrap" Classes="dim"
+                                                   Text="Replace makes Chisel match the backup. Merge adds its tasks, notes pads, quick links, alarms, habits, countdown events, clock faces and layout profiles to yours. Your data is backed up first so you can undo, and Chisel restarts to load it." />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button Name="BackupReplaceButton" Classes="accent" Content="Replace everything" Command="{Binding Settings.Backup.ReplaceCommand, FallbackValue={x:Null}}" />
+                                            <Button Name="BackupMergeButton" Content="Merge" Command="{Binding Settings.Backup.MergeCommand, FallbackValue={x:Null}}"
+                                                    IsVisible="{Binding Settings.Backup.CanMerge, FallbackValue=False}" />
+                                            <Button Name="BackupCancelButton" Content="Cancel" Command="{Binding Settings.Backup.CancelCommand, FallbackValue={x:Null}}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Name="BackupStatus" TextWrapping="Wrap" Text="{Binding Settings.Backup.Status, FallbackValue=''}" />
+                            </StackPanel>
                         </ScrollViewer>
 
                         <!-- Help: the welcome tips again -->

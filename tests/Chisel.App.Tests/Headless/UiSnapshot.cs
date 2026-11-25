@@ -34,7 +34,8 @@ public static class UiSnapshot
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
         Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
-        Chisel.App.Services.IClipboardService? clipboard = null, bool firstRun = false)
+        Chisel.App.Services.IClipboardService? clipboard = null, bool firstRun = false,
+        Func<ChiselDbContext, BackupViewModel>? backup = null)
     {
         // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
         // Closing it here releases its timers, database and bitmaps even when that test forgot to.
@@ -72,7 +73,7 @@ public static class UiSnapshot
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService(),
-            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)));
+            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)), backup: backup?.Invoke(context));
         if (layout.IsFirstRun)
         {
             settings.SystemOptions!.StartWelcome();

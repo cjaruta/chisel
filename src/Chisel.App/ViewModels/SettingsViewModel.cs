@@ -65,13 +65,17 @@ public partial class SettingsViewModel : ViewModelBase
     public partial bool AccentAdjusted { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsHelpTab))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsBackupTab), nameof(IsHelpTab))]
     public partial SettingsTab SelectedTab { get; set; }
 
     public bool IsGeneralTab => SelectedTab == SettingsTab.General;
     public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
     public bool IsQuickLinksTab => SelectedTab == SettingsTab.QuickLinks;
+    public bool IsBackupTab => SelectedTab == SettingsTab.Backup;
     public bool IsHelpTab => SelectedTab == SettingsTab.Help;
+
+    // Export and import; null where there is no real database to back up (tests, captures).
+    public BackupViewModel? Backup { get; }
 
     // Widgets that have options, and the one shown on the right of the Widgets tab.
     public IReadOnlyList<SettingsPage> WidgetPages { get; }
@@ -80,10 +84,12 @@ public partial class SettingsViewModel : ViewModelBase
     public partial SettingsPage? SelectedWidgetPage { get; set; }
 
     public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null,
-        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null, SystemSettingsViewModel? system = null)
+        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null, SystemSettingsViewModel? system = null,
+        BackupViewModel? backup = null)
     {
         Theme = theme;
         SystemOptions = system;
+        Backup = backup;
         _repository = repository;
         WidgetPages = pages ?? SettingsPages.Widgets;
         SelectedWidgetPage = WidgetPages.FirstOrDefault();
