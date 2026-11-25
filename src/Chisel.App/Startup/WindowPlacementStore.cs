@@ -26,12 +26,6 @@ public static class WindowPlacementStore
 
     public static void Save(string path, WindowPlacement placement)
     {
-        var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        File.WriteAllText(path, JsonSerializer.Serialize(placement));
+        Chisel.Infrastructure.Files.AtomicFile.WriteAllText(path, JsonSerializer.Serialize(placement));
     }
 }

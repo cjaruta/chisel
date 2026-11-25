@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using Chisel.Core.Pictures;
 
@@ -59,6 +60,6 @@ public sealed class FilePictureDropLog : IPictureDropLog
             kept.Add(lines[i]);
         }
         kept.Reverse();
-        File.WriteAllLines(_path, kept, Encoding.UTF8);
+        Files.AtomicFile.WriteAllText(_path, string.Concat(kept.Select(line => line + Environment.NewLine)));
     }
 }
