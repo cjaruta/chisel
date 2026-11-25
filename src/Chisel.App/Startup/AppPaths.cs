@@ -19,6 +19,10 @@ public static class AppPaths
     public static string GetErrorLogPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "error.log");
 
+    // Clipboard history, only while "Keep history between sessions" is on: %AppData%\Chisel\clipboard-history.json
+    public static string GetClipboardHistoryPath() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "clipboard-history.json");
+
     public static string GetWindowPlacementPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chisel", "window.json");
 }

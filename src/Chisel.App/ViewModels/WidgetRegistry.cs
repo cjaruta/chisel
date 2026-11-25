@@ -42,6 +42,7 @@ public static class WidgetRegistry
     public const string FocusTimer = "focus";
     public const string Habits = "habits";
     public const string Converter = "converter";
+    public const string ClipboardHistory = "clipboard";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -79,6 +80,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(HabitsWidgetView), MinWidth: 180, Description: "Daily habits with check-ins, streaks and a short history."),
         new WidgetDefinition(Converter, "Converter", Icon: "M4,8 H18 M14,4 L18,8 L14,12 M20,16 H6 M10,12 L6,16 L10,20",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ConverterWidgetView), MinWidth: 200, Description: "Converts length, weight, temperature, volume, area, speed, data size and time. Works offline, so currency is not included."),
+        new WidgetDefinition(ClipboardHistory, "Clipboard history", Icon: "M8,4 H16 V7 H8 Z M6,5.5 H5 V21 H19 V5.5 H18 M8,11 H16 M8,14.5 H16 M8,18 H13",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ClipboardHistoryWidgetView), MinWidth: 180, Description: "Text you copy, to copy again. Off until you press Start recording; kept in memory only unless you choose to save it."),
     };
 
     // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
@@ -88,7 +91,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits, Converter });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits, Converter, ClipboardHistory });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();

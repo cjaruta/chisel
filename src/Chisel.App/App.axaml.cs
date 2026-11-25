@@ -8,6 +8,7 @@ using Chisel.App.ViewModels;
 using Chisel.App.Views;
 using Chisel.App.Services;
 using Chisel.Core.Weather;
+using Chisel.Infrastructure.Repositories;
 using Chisel.Infrastructure.Weather;
 
 namespace Chisel.App;
@@ -60,6 +61,7 @@ public partial class App : Application
                 MainWindow? mainWindow = null;
                 var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures, _services.LayoutProfiles);
                 var alerts = new AlertsViewModel(new WindowsAlertSound());
+                var clipboardLog = new DebugClipboardLog();
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
@@ -90,6 +92,9 @@ public partial class App : Application
                     focusTimer: _services.FocusTimer,
                     habits: _services.Habits,
                     converter: _services.ConverterSettings,
+                    clipboardHistory: new ClipboardHistoryViewModel(
+                        new WindowsClipboardService(() => (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow?.Clipboard, clipboardLog),
+                        _services.ClipboardSettings, new ClipboardHistoryFileStore(AppPaths.GetClipboardHistoryPath()), log: clipboardLog),
                     chime: new SoftChime(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
@@ -115,6 +120,7 @@ public partial class App : Application
                     mainViewModel.Countdown.Dispose();
                     mainViewModel.FocusTimer.Dispose();
                     mainViewModel.Habits.Dispose();
+                    mainViewModel.ClipboardHistory.Dispose();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();

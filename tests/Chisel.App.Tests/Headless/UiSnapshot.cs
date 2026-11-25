@@ -33,7 +33,8 @@ public static class UiSnapshot
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
-        Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null)
+        Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
+        Chisel.App.Services.IClipboardService? clipboard = null)
     {
         // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
         // Closing it here releases its timers, database and bitmaps even when that test forgot to.
@@ -95,7 +96,9 @@ public static class UiSnapshot
             countdown: new CountdownRepository(context),
             focusTimer: new FocusTimerRepository(context),
             habits: new HabitRepository(context),
-            converter: new ConverterSettingsRepository(context));
+            converter: new ConverterSettingsRepository(context),
+            clipboardHistory: new ClipboardHistoryViewModel(clipboard ?? new Chisel.App.Tests.Support.FakeClipboard(),
+                new ClipboardHistorySettingsRepository(context), new Chisel.App.Tests.Support.FakeClipboardStore(), time));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

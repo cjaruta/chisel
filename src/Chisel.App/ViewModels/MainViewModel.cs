@@ -24,6 +24,7 @@ public partial class MainViewModel : ViewModelBase
     public FocusTimerViewModel FocusTimer { get; private set; } = null!;
     public HabitsViewModel Habits { get; private set; } = null!;
     public ConverterViewModel Converter { get; }
+    public ClipboardHistoryViewModel ClipboardHistory { get; }
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -83,7 +84,8 @@ public partial class MainViewModel : ViewModelBase
         Chisel.Core.Focus.IFocusTimerRepository? focusTimer = null,
         Services.IChime? chime = null,
         Chisel.Core.Habits.IHabitRepository? habits = null,
-        Chisel.Core.Converter.IConverterSettingsRepository? converter = null)
+        Chisel.Core.Converter.IConverterSettingsRepository? converter = null,
+        ClipboardHistoryViewModel? clipboardHistory = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -95,6 +97,7 @@ public partial class MainViewModel : ViewModelBase
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
         Converter = new ConverterViewModel(converter);
+        ClipboardHistory = clipboardHistory ?? new ClipboardHistoryViewModel(null, null, null, time, dispatch);
         CalendarSettings = calendarSettings ?? new CalendarSettingsViewModel(null);
         Calendar = new CalendarViewModel(CalendarSettings, time ?? TimeProvider.System, dispatch: dispatch);
         SystemMonitorSettings = systemMonitorSettings ?? new SystemMonitorSettingsViewModel(null);
@@ -146,6 +149,7 @@ public partial class MainViewModel : ViewModelBase
             else if (e.PropertyName == nameof(LayoutViewModel.Layout))
             {
                 UpdateMediaActive();
+                UpdateClipboardActive();
                 // A notepad taken off the dashboard keeps what was just typed.
                 if (!System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Notes))
                 {
@@ -199,6 +203,10 @@ public partial class MainViewModel : ViewModelBase
         Weather.Refresh();
         UpdateMediaActive();
     }
+
+    // Taking the clipboard history off the dashboard stops its recording at once.
+    private void UpdateClipboardActive() =>
+        ClipboardHistory.IsOnDashboard = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.ClipboardHistory);
 
     // The media widget only listens to the system while it is on the dashboard.
     private void UpdateMediaActive() =>
