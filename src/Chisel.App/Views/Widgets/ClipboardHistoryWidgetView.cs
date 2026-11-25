@@ -63,7 +63,7 @@ public sealed class ClipboardHistoryWidgetView : WidgetView
     private readonly TextBlock _count = new() { Name = "ClipCount", TextTrimming = TextTrimming.CharacterEllipsis };
 
     private readonly DockPanel _listArea = new() { Name = "ClipListArea", LastChildFill = true };
-    private readonly TextBox _search = new() { Name = "ClipSearch", Watermark = "Search" };
+    private readonly TextBox _search = new() { Name = "ClipSearch", PlaceholderText = "Search" };
     private readonly ListBox _list = new() { Name = "ClipList", SelectionMode = SelectionMode.Single };
     private readonly TextBlock _empty = new() { Name = "ClipEmpty", Text = "Copy some text and it shows up here.", TextWrapping = TextWrapping.Wrap };
 

@@ -54,7 +54,7 @@
                 <ComboBox Name="PictureIntervalBox" ItemsSource="{Binding PictureSettings.IntervalChoices}"
                           SelectedIndex="{Binding PictureSettings.IntervalIndex}" MinWidth="220" HorizontalAlignment="Left" />
                 <StackPanel Spacing="4" IsVisible="{Binding PictureSettings.IsCustomInterval}">
-                    <TextBox Name="PictureCustomInterval" Watermark="For example 90 s, 20 min or 2 h" MinWidth="220" HorizontalAlignment="Left"
+                    <TextBox Name="PictureCustomInterval" PlaceholderText="For example 90 s, 20 min or 2 h" MinWidth="220" HorizontalAlignment="Left"
                              Text="{Binding PictureSettings.CustomIntervalText}" />
                     <TextBlock Text="Use a number and s, min or h (5 seconds to 24 hours)." Foreground="{StaticResource DimTextBrush}"
                                FontSize="11" IsVisible="{Binding PictureSettings.CustomIntervalInvalid}" />

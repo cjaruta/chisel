@@ -51,8 +51,8 @@ public sealed class HabitsWidgetView : WidgetView
 
     // The inline form.
     private readonly ScrollViewer _form = new() { Name = "HabitForm", IsVisible = false };
-    private readonly TextBox _name = new() { Name = "HabitName", Watermark = "Habit name", MaxLength = HabitValidation.MaxNameLength };
-    private readonly TextBox _emoji = new() { Name = "HabitEmoji", Watermark = "Emoji (optional)", Width = 130 };
+    private readonly TextBox _name = new() { Name = "HabitName", PlaceholderText = "Habit name", MaxLength = HabitValidation.MaxNameLength };
+    private readonly TextBox _emoji = new() { Name = "HabitEmoji", PlaceholderText = "Emoji (optional)", Width = 130 };
     private readonly StackPanel _swatches = new() { Name = "HabitColors", Orientation = Orientation.Horizontal, Spacing = 4 };
     private readonly StackPanel _weekdays = new() { Name = "HabitDays", Orientation = Orientation.Horizontal, Spacing = 4 };
     private readonly TextBlock _error = new() { Name = "HabitError", TextWrapping = TextWrapping.Wrap };

@@ -144,7 +144,7 @@
                     <TextBlock Classes="cardHeading" Text="Widget Library" VerticalAlignment="Center" />
                     <Button Name="LibraryCloseButton" Grid.Column="1" Content="Close" Command="{Binding Library.CloseCommand}" />
                 </Grid>
-                <TextBox Name="LibrarySearch" Grid.Row="1" Watermark="Search widgets" Text="{Binding Library.Query, Mode=TwoWay}" />
+                <TextBox Name="LibrarySearch" Grid.Row="1" PlaceholderText="Search widgets" Text="{Binding Library.Query, Mode=TwoWay}" />
                 <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="6">
                         <TextBlock Name="LibraryEmpty" Classes="dim" Text="No widgets match your search." IsVisible="{Binding Library.IsEmpty}" />
@@ -320,7 +320,7 @@
                             </ItemsControl>
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <ColorPicker Name="AccentPicker" Color="{Binding Settings.AccentValue, Mode=TwoWay}" />
-                                <TextBox Name="AccentHexBox" Width="104" MaxLength="7" Watermark="#RRGGBB" Text="{Binding Settings.AccentHex, Mode=TwoWay}" />
+                                <TextBox Name="AccentHexBox" Width="104" MaxLength="7" PlaceholderText="#RRGGBB" Text="{Binding Settings.AccentHex, Mode=TwoWay}" />
                                 <Button Name="AccentResetButton" Content="Reset to default" Command="{Binding Settings.ResetAccentCommand}" />
                             </StackPanel>
                             <!-- Live preview: real controls in the current mode and accent -->

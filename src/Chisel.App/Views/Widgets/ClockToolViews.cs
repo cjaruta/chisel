@@ -318,9 +318,9 @@ internal static class ClockToolViews
     private static Control AlarmEditor(AlarmsViewModel alarms, List<IDisposable> disposables)
     {
         var scale = ClockTypeScale.For(ClockTypeScale.Reference, ClockTypeScale.Reference);
-        var time = new TextBox { Name = "ClockAlarmTime", MinWidth = scale.Body * 6, Watermark = "HH:MM", FontSize = scale.Body };
+        var time = new TextBox { Name = "ClockAlarmTime", MinWidth = scale.Body * 6, PlaceholderText = "HH:MM", FontSize = scale.Body };
         disposables.Add(time.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewTime)) { Source = alarms, Mode = BindingMode.TwoWay }));
-        var label = new TextBox { Name = "ClockAlarmLabel", Watermark = "Label", MinWidth = scale.Body * 8, FontSize = scale.Body, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var label = new TextBox { Name = "ClockAlarmLabel", PlaceholderText = "Label", MinWidth = scale.Body * 8, FontSize = scale.Body, HorizontalAlignment = HorizontalAlignment.Stretch };
         disposables.Add(label.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewLabel)) { Source = alarms, Mode = BindingMode.TwoWay }));
         var add = new Button { Name = "ClockAlarmAdd", Content = "Add", Command = alarms.AddCommand, FontSize = scale.Body };
 

@@ -38,10 +38,10 @@ public sealed class CountdownWidgetView : WidgetView
     };
 
     private readonly ScrollViewer _form = new() { Name = "CountdownForm", IsVisible = false };
-    private readonly TextBox _name = new() { Name = "CountdownName", Watermark = "Event name", MaxLength = CountdownValidation.MaxNameLength };
-    private readonly CalendarDatePicker _date = new() { Name = "CountdownDate", HorizontalAlignment = HorizontalAlignment.Stretch, Watermark = "Date" };
-    private readonly TextBox _time = new() { Name = "CountdownTime", Watermark = "Time (optional), e.g. 14:30" };
-    private readonly TextBox _emoji = new() { Name = "CountdownEmoji", Watermark = "Emoji (optional)" };
+    private readonly TextBox _name = new() { Name = "CountdownName", PlaceholderText = "Event name", MaxLength = CountdownValidation.MaxNameLength };
+    private readonly CalendarDatePicker _date = new() { Name = "CountdownDate", HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Date" };
+    private readonly TextBox _time = new() { Name = "CountdownTime", PlaceholderText = "Time (optional), e.g. 14:30" };
+    private readonly TextBox _emoji = new() { Name = "CountdownEmoji", PlaceholderText = "Emoji (optional)" };
     private readonly StackPanel _swatches = new() { Name = "CountdownColors", Orientation = Orientation.Horizontal, Spacing = 4 };
     private readonly CheckBox _yearly = new() { Name = "CountdownYearly", Content = "Repeats every year" };
     private readonly TextBlock _error = new() { Name = "CountdownError", TextWrapping = TextWrapping.Wrap };
