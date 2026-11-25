@@ -220,6 +220,23 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("CountdownSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.FocusTimerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FocusTimer");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.FrameOptionsEntity", b =>
                 {
                     b.Property<string>("FrameId")

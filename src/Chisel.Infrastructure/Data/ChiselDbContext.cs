@@ -46,6 +46,7 @@ public class ChiselDbContext : DbContext
     public DbSet<CalendarSettingsEntity> CalendarSettings => Set<CalendarSettingsEntity>();
     public DbSet<SystemMonitorSettingsEntity> SystemMonitorSettings => Set<SystemMonitorSettingsEntity>();
     public DbSet<CountdownSettingsEntity> CountdownSettings => Set<CountdownSettingsEntity>();
+    public DbSet<FocusTimerEntity> FocusTimer => Set<FocusTimerEntity>();
     public DbSet<NotepadSettingsEntity> NotepadSettings => Set<NotepadSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -100,6 +101,7 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<CalendarSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<SystemMonitorSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
         modelBuilder.Entity<CountdownSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<FocusTimerEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<NotepadSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
     }
 }
