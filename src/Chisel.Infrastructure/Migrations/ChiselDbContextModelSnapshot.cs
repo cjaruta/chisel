@@ -203,6 +203,28 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("ClockTools");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ConverterSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConverterSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.CountdownSettingsEntity", b =>
                 {
                     b.Property<int>("Id")

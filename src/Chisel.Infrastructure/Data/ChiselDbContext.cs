@@ -43,6 +43,7 @@ public class ChiselDbContext : DbContext
     public DbSet<ClockToolsEntity> ClockTools => Set<ClockToolsEntity>();
     public DbSet<AlarmEntity> Alarms => Set<AlarmEntity>();
     public DbSet<CalculatorSettingsEntity> CalculatorSettings => Set<CalculatorSettingsEntity>();
+    public DbSet<ConverterSettingsEntity> ConverterSettings => Set<ConverterSettingsEntity>();
     public DbSet<CalendarSettingsEntity> CalendarSettings => Set<CalendarSettingsEntity>();
     public DbSet<SystemMonitorSettingsEntity> SystemMonitorSettings => Set<SystemMonitorSettingsEntity>();
     public DbSet<CountdownSettingsEntity> CountdownSettings => Set<CountdownSettingsEntity>();
@@ -99,6 +100,7 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<ClockFaceLibraryEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockToolsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalculatorSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<ConverterSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalendarSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<SystemMonitorSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
         modelBuilder.Entity<CountdownSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
