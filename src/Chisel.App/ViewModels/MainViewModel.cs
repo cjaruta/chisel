@@ -14,6 +14,8 @@ public partial class MainViewModel : ViewModelBase
     public ClockToolsViewModel ClockTools { get; }
     public CalculatorSettingsViewModel CalculatorSettings { get; }
     public CalculatorViewModel Calculator { get; }
+    public CalendarSettingsViewModel CalendarSettings { get; }
+    public CalendarViewModel Calendar { get; }
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -64,7 +66,9 @@ public partial class MainViewModel : ViewModelBase
         AlertsViewModel? alerts = null,
         CalculatorSettingsViewModel? calculatorSettings = null,
         ScriptureViewModel? scripture = null,
-        Chisel.Core.Clock.IClockFaceStore? clockFaces = null)
+        Chisel.Core.Clock.IClockFaceStore? clockFaces = null,
+        CalendarSettingsViewModel? calendarSettings = null,
+        Action<Action>? dispatch = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -75,6 +79,8 @@ public partial class MainViewModel : ViewModelBase
         ClockFaces = new ClockFacesViewModel(clockFaces, ClockSettings, ClockTools);
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
+        CalendarSettings = calendarSettings ?? new CalendarSettingsViewModel(null);
+        Calendar = new CalendarViewModel(CalendarSettings, time ?? TimeProvider.System, dispatch: dispatch);
         Alerts = alerts ?? new AlertsViewModel();
         Scripture = scripture ?? new ScriptureViewModel(time ?? TimeProvider.System);
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);

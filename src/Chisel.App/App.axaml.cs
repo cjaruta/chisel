@@ -82,6 +82,8 @@ public partial class App : Application
                     alerts: alerts,
                     calculatorSettings: new CalculatorSettingsViewModel(_services.CalculatorSettings),
                     scripture: new ScriptureViewModel(_services.Time),
+                    calendarSettings: new CalendarSettingsViewModel(_services.CalendarSettings),
+                    dispatch: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));

@@ -75,12 +75,12 @@ public class LayoutEditModeTests
         new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("scripture") }),
         new LayoutColumn(2, new[] { new WidgetPlacement("schedule") }),
         new LayoutColumn(1, new[] { new WidgetPlacement("notes") }),
-    }, new[] { "clock", "weather", "media", "calculator" });
+    }, new[] { "clock", "weather", "media", "calculator", "calendar" });
 
     private static readonly WidgetLayout Changed = new(new[]
     {
         new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"), new WidgetPlacement("scripture") }),
-    }, new[] { "clock", "weather", "media", "calculator" });
+    }, new[] { "clock", "weather", "media", "calculator", "calendar" });
 
     private readonly FakeLayoutRepository _repository = new() { Saved = Custom };
 

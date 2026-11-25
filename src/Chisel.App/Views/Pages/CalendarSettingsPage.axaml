@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.CalendarSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="FIRST DAY OF THE WEEK" />
+        <RadioButton Name="CalendarSunday" GroupName="CalendarFirstDay" Content="Sunday"
+                     IsChecked="{Binding CalendarSettings.IsSunday}" />
+        <RadioButton Name="CalendarMonday" GroupName="CalendarFirstDay" Content="Monday"
+                     IsChecked="{Binding CalendarSettings.IsMonday}" />
+        <TextBlock Classes="settingsSection" Text="WEEK NUMBERS" Margin="0,10,0,0" />
+        <CheckBox Name="CalendarWeekNumbersToggle" Content="Show week numbers"
+                  IsChecked="{Binding CalendarSettings.ShowWeekNumbers}" />
+        <TextBlock Text="Shown when the widget is large enough." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Classes="settingsSection" Text="MARKED DAYS" Margin="0,10,0,0" />
+        <TextBlock Text="Right-click a day, or press M, to put a dot on it. Do it again to take the dot off." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

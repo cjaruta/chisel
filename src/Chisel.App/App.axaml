@@ -647,6 +647,74 @@
             <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
         </Style>
 
+        <!-- Calendar: sizes come from the widget (CalendarLayout); these set only the colors and the shape -->
+        <Style Selector="Button.calDay, Button.calNav, Button.calTitle">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.calDay">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Button.calNav">
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.calTitle">
+            <Setter Property="Padding" Value="6,0" />
+        </Style>
+        <Style Selector="Button.calDay /template/ ContentPresenter#PART_ContentPresenter, Button.calNav /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.calDay:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.calNav:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+        </Style>
+        <Style Selector="Button.calNav:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="Button.calNav Path">
+            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.calNav:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.muted /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.today /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.calDay.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Button.calDay.today.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.calDay Ellipse.calDot">
+            <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.today.selected Ellipse.calDot">
+            <Setter Property="Fill" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="TextBlock.calWeekday">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.calWeekNumber">
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+
         <Style Selector="Button.gearButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6" />

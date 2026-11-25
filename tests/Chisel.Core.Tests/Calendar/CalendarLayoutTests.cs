@@ -58,6 +58,17 @@ public class CalendarLayoutTests
     }
 
     [Fact]
+    public void ATooShortWidget_IsLaidOutAtItsMinimum_SoTheDatesStayReadable()
+    {
+        var layout = CalendarLayout.For(400, 60, weekNumbers: false);
+
+        Assert.Equal(CalendarSize.Compact, layout.Size);
+        Assert.True(layout.CellHeight >= CalendarLayout.MinCellHeight - 0.01);
+        Assert.True(layout.MinHeight > 60);
+        Assert.True(CalendarLayout.For(400, layout.MinHeight, weekNumbers: false).MinHeight <= layout.MinHeight + 0.01);
+    }
+
+    [Fact]
     public void WeekNumbers_TakeAColumnOfTheWidth()
     {
         var with = CalendarLayout.For(420, 360, weekNumbers: true);

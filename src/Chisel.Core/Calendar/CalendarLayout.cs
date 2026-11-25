@@ -6,13 +6,17 @@ public enum CalendarSize { Compact, Standard, Full }
 
 // The calendar's layout for the room it has: what it shows (see CalendarSize) and the sizes of its parts, all from the widget's
 // actual size, so text and cells grow and shrink with it like the clock's dial. The thresholds live here and nowhere else.
+// A widget too short for readable dates is laid out at MinHeight instead (the card scrolls the rest), like the calculator.
 public sealed record CalendarLayout(CalendarSize Size, double Pad, double HeaderHeight, double WeekdayHeight, double WeekNumberWidth,
-    double CellWidth, double CellHeight, double TitleFont, double DayFont, double SmallFont, double ButtonSize)
+    double CellWidth, double CellHeight, double TitleFont, double DayFont, double SmallFont, double ButtonSize, double MinHeight)
 {
     public const double StandardMinWidth = 220;
     public const double StandardMinHeight = 200;
     public const double FullMinWidth = 300;
     public const double FullMinHeight = 270;
+
+    // The shortest a row of dates may get before the widget scrolls instead.
+    public const double MinCellHeight = 16;
 
     public bool ShowWeekdayNames => Size >= CalendarSize.Standard;
     public bool ShowNavigation => Size >= CalendarSize.Standard;
@@ -26,6 +30,17 @@ public sealed record CalendarLayout(CalendarSize Size, double Pad, double Header
         : CalendarSize.Compact;
 
     public static CalendarLayout For(double width, double height, bool weekNumbers)
+    {
+        var layout = Compute(width, height, weekNumbers);
+        for (var i = 0; i < 8 && layout.MinHeight > height + 0.01; i++)
+        {
+            height = layout.MinHeight;
+            layout = Compute(width, height, weekNumbers);
+        }
+        return layout;
+    }
+
+    private static CalendarLayout Compute(double width, double height, bool weekNumbers)
     {
         width = Math.Max(width, 1);
         height = Math.Max(height, 1);
@@ -45,8 +60,9 @@ public sealed record CalendarLayout(CalendarSize Size, double Pad, double Header
 
         var cellWidth = (innerWidth - weekColumn) / MonthGrid.Columns;
         var cellHeight = Math.Max(1, (innerHeight - header - weekday) / MonthGrid.Rows);
-        var day = Math.Clamp(Math.Round(Math.Min(cellWidth, cellHeight) * 0.42), 8, 26);
+        var day = Math.Clamp(Math.Round(Math.Min(cellWidth, cellHeight) * 0.42), 10, 26);
         day = Math.Min(day, Math.Max(1, cellHeight - 2));
-        return new CalendarLayout(size, pad, header, weekday, weekColumn, cellWidth, cellHeight, title, day, small, button);
+        var minHeight = 2 * pad + header + weekday + MonthGrid.Rows * MinCellHeight;
+        return new CalendarLayout(size, pad, header, weekday, weekColumn, cellWidth, cellHeight, title, day, small, button, minHeight);
     }
 }

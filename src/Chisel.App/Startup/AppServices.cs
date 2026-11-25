@@ -36,6 +36,7 @@ public sealed class AppServices : IDisposable
     public Chisel.Core.Clock.IClockToolsRepository ClockTools { get; }
     public Chisel.Core.Clock.IAlarmRepository Alarms { get; }
     public Chisel.Core.Calculator.ICalculatorSettingsRepository CalculatorSettings { get; }
+    public Chisel.Core.Calendar.ICalendarSettingsRepository CalendarSettings { get; }
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
@@ -77,6 +78,7 @@ public sealed class AppServices : IDisposable
         ClockTools = new ClockToolsRepository(DbContext);
         Alarms = new AlarmRepository(DbContext);
         CalculatorSettings = new CalculatorSettingsRepository(DbContext);
+        CalendarSettings = new CalendarSettingsRepository(DbContext);
 
         var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
         var files = new PictureFileStore(folder);

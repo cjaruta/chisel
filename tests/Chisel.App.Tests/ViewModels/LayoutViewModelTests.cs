@@ -30,8 +30,8 @@ public class LayoutViewModelTests
     [Fact]
     public void Registry_HasTheWidgetsWithStableIdsTitlesAndViews()
     {
-        Assert.Equal(new[] { "schedule", "tasks", "notes", "clock", "weather", "media", "pictureframe", "calculator", "scripture" }, WidgetRegistry.All.Select(w => w.Id));
-        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Daily verse" }, WidgetRegistry.All.Select(w => w.Title));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "clock", "weather", "media", "pictureframe", "calculator", "scripture", "calendar" }, WidgetRegistry.All.Select(w => w.Id));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Daily verse", "Calendar" }, WidgetRegistry.All.Select(w => w.Title));
         Assert.All(WidgetRegistry.All, w =>
         {
             Assert.True(w.MinHeight > 0);
@@ -50,7 +50,7 @@ public class LayoutViewModelTests
     [Fact]
     public void DefaultLayout_IsScheduleOnTheLeftAndTheListsStackedOnTheRight()
     {
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture)", WidgetRegistry.DefaultLayout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture, calendar)", WidgetRegistry.DefaultLayout.Describe());
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, scripture:0.5] (hidden: clock, weather, media, calculator)", layout.Layout.Describe());
+        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, scripture:0.5] (hidden: clock, weather, media, calculator, calendar)", layout.Layout.Describe());
         Assert.Equal(1, repository.SaveCalls);
         Assert.Equal(layout.Layout.Describe(), repository.Saved!.Describe());
 
@@ -102,7 +102,7 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, scripture:1] (hidden: notes, clock, weather, media, calculator)", layout.Layout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, scripture:1] (hidden: notes, clock, weather, media, calculator, calendar)", layout.Layout.Describe());
         Assert.Equal(0, repository.SaveCalls);
     }
 
@@ -139,7 +139,7 @@ public class LayoutViewModelTests
         layout.Apply(Layout(Col(1, ("schedule", 0), ("forecast", 1))));
 
         // Forecast is dropped, schedule raised to the minimum, and the widgets never seen join the first column.
-        Assert.Equal("1[schedule:0.133, tasks:1.4, notes:1.467] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1[schedule:0.133, tasks:1.4, notes:1.467] (hidden: clock, weather, media, calculator, scripture, calendar)", layout.Layout.Describe());
     }
 
     // Quick links used to be a dashboard widget; it now lives in the top bar. A saved layout that still has it must load
@@ -165,7 +165,7 @@ public class LayoutViewModelTests
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture, calendar)", layout.Layout.Describe());
         Assert.Equal(new[] { 1, 2 }, layout.Columns.Select(c => c.Widgets.Count).ToArray());
         Assert.DoesNotContain("links", layout.Layout.WidgetIds);
     }
@@ -182,7 +182,7 @@ public class LayoutViewModelTests
         var layout = new LayoutViewModel(repository);
 
         Assert.Equal(2, layout.Columns.Count);
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1] (hidden: clock, weather, media, calculator, scripture, calendar)", layout.Layout.Describe());
     }
 
     [Fact]
