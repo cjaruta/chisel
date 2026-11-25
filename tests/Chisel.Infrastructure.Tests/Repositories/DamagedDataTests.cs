@@ -81,4 +81,21 @@ public class DamagedDataTests : IDisposable
 
         Assert.False(Directory.Exists(Path.Combine(_folder, "damaged")));
     }
+
+    // Chisel says once at startup which widgets started empty, so the user knows a copy was kept.
+    [Fact]
+    public void KeptSince_NamesTheWidgetsWhoseDataWasKeptThisRun()
+    {
+        var damaged = Path.Combine(_folder, "damaged");
+        Directory.CreateDirectory(damaged);
+        var old = Path.Combine(damaged, "countdown-aaaa.bad");
+        File.WriteAllText(old, "");
+        File.SetLastWriteTimeUtc(old, new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var since = DateTime.UtcNow.AddSeconds(-5);
+        File.WriteAllText(Path.Combine(damaged, "habits-bbbb.bad"), "");
+        File.WriteAllText(Path.Combine(damaged, "layout-profile-2-cccc.bad"), "");
+
+        Assert.Equal(["habits", "layout profile 2"], DamagedData.KeptSince(Path.Combine(_folder, "chisel.db"), since));
+        Assert.Empty(DamagedData.KeptSince(Path.Combine(_folder, "missing", "chisel.db"), since));
+    }
 }

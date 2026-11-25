@@ -45,6 +45,7 @@ public partial class App : Application
             _volume = scenario is null ? new WindowsVolumeService() : new FakeVolumeService();
             var isolated = scenario is "weather-motion" or "media-visualizer" or "media-gradient";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
+            var startedUtc = DateTime.UtcNow;
             // A damaged database is kept as chisel.db.<date-time>.bad and Chisel starts with a fresh one (said once it is up).
             var startup = AppStartup.Run(() => DatabaseRecovery.Open(databasePath, () => new AppServices(databasePath)), Program.Crashes.Log);
             _services = startup.Value?.Value;
@@ -202,6 +203,13 @@ public partial class App : Application
                 Program.Crashes.Save = mainViewModel.Notes.Flush;
                 Program.Crashes.ShowMessage = (title, message) => alerts.Show(title, message, sound: false);
                 Program.Crashes.CleanUp = DisposeTray;
+                // Widget data that couldn't be read was kept as a .bad copy while the widgets loaded: say so once.
+                if (DamagedData.KeptSince(databasePath, startedUtc) is { Count: > 0 } damaged)
+                {
+                    alerts.Show("Some data couldn't be read",
+                        $"Saved data for {string.Join(", ", damaged)} was damaged, so it started empty. A copy was kept in the \"damaged\" folder in Chisel's data folder.",
+                        sound: false);
+                }
 
                 // Started with Windows and set to wait in the tray: the window is made but not shown until asked for.
                 if (!shell.ShouldStartHidden(StartupArguments.Parse(desktop.Args).Minimized))

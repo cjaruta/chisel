@@ -9,9 +9,34 @@ namespace Chisel.Infrastructure.Repositories;
 // Saved widget data that can't be read is copied to "damaged\<name>-<hash>.bad" next to the database before the widget
 // starts empty, so its next save never silently throws the only copy away. The same text is kept once; an in-memory
 // database has nowhere to keep it, and a failure to keep it never breaks the widget.
-internal static class DamagedData
+public static class DamagedData
 {
-    public static void Keep(ChiselDbContext context, string name, string text)
+    // The widgets ("habits", "layout profile 2") whose data was kept since the given time, for a message at startup.
+    public static IReadOnlyList<string> KeptSince(string databasePath, DateTime sinceUtc)
+    {
+        try
+        {
+            var folder = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(databasePath)) ?? "", "damaged");
+            if (!Directory.Exists(folder))
+            {
+                return [];
+            }
+            return Directory.GetFiles(folder, "*.bad")
+                .Where(f => File.GetLastWriteTimeUtc(f) >= sinceUtc)
+                .Select(f => Path.GetFileNameWithoutExtension(f))
+                .Select(name => name[..Math.Max(0, name.LastIndexOf('-'))].Replace('-', ' '))
+                .Where(name => name.Length > 0)
+                .Distinct()
+                .Order(StringComparer.Ordinal)
+                .ToList();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return [];
+        }
+    }
+
+    internal static void Keep(ChiselDbContext context, string name, string text)
     {
         try
         {
