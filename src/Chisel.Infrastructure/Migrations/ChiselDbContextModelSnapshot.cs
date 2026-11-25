@@ -470,6 +470,22 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("ScheduleBlocks");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.SystemMonitorSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RefreshSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Shown")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemMonitorSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.TaskEntity", b =>
                 {
                     b.Property<Guid>("Id")
