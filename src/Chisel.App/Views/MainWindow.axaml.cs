@@ -82,6 +82,11 @@ public partial class MainWindow : Window
             {
                 main.PictureFrames.WindowMinimized = WindowState == WindowState.Minimized;
             }
+            // Back on screen: tick at the visible rate straight away rather than after the next slow tick.
+            if (e.Property == WindowStateProperty || e.Property == IsVisibleProperty)
+            {
+                UpdateTickInterval();
+            }
         };
 
         _timer.Tick += (_, _) =>
@@ -91,12 +96,7 @@ public partial class MainWindow : Window
                 return;
             }
             main.Tick();
-            // While the stopwatch runs the tick is fast enough to show every tenth; otherwise it stays gentle.
-            var interval = TimeSpan.FromMilliseconds(main.ClockTools.StopwatchRunning ? ClockToolsFormat.StopwatchStepMilliseconds : 200);
-            if (_timer.Interval != interval)
-            {
-                _timer.Interval = interval;
-            }
+            UpdateTickInterval();
         };
         Loaded += (_, _) =>
         {
@@ -105,6 +105,17 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
         Unloaded += (_, _) => _timer.Stop();
+
+        // Minimized or in the tray the dashboard ticks once a second; visible it ticks gently, or fast for a running stopwatch.
+        void UpdateTickInterval()
+        {
+            var interval = MainTick.Interval(windowHidden: !IsVisible || WindowState == WindowState.Minimized,
+                stopwatchRunning: DataContext is MainViewModel { ClockTools.StopwatchRunning: true });
+            if (_timer.Interval != interval)
+            {
+                _timer.Interval = interval;
+            }
+        }
         Closing += (_, _) =>
         {
             (DataContext as MainViewModel)?.Notes.Flush();
