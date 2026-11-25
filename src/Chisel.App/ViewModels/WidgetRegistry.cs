@@ -41,6 +41,7 @@ public static class WidgetRegistry
     public const string Countdown = "countdown";
     public const string FocusTimer = "focus";
     public const string Habits = "habits";
+    public const string Converter = "converter";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -76,6 +77,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(FocusTimerWidgetView), MinWidth: 180, Description: "Pomodoro focus sessions and breaks with a draining ring."),
         new WidgetDefinition(Habits, "Habits", Icon: "M4,4 H11 V11 H4 Z M6,7.5 L7.5,9 L10,6 M14,7.5 H20 M4,14 H11 V21 H4 Z M14,17.5 H20",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(HabitsWidgetView), MinWidth: 180, Description: "Daily habits with check-ins, streaks and a short history."),
+        new WidgetDefinition(Converter, "Converter", Icon: "M4,8 H18 M14,4 L18,8 L14,12 M20,16 H6 M10,12 L6,16 L10,20",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ConverterWidgetView), MinWidth: 200, Description: "Converts length, weight, temperature, volume, area, speed, data size and time. Works offline, so currency is not included."),
     };
 
     // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
@@ -85,7 +88,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits, Converter });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();

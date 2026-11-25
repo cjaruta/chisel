@@ -94,7 +94,8 @@ public static class UiSnapshot
             systemStats: systemStats,
             countdown: new CountdownRepository(context),
             focusTimer: new FocusTimerRepository(context),
-            habits: new HabitRepository(context));
+            habits: new HabitRepository(context),
+            converter: new ConverterSettingsRepository(context));
 
         var window = new MainWindow(windowPlacementPath: null)
         {

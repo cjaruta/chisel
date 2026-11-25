@@ -41,6 +41,7 @@ public sealed class AppServices : IDisposable
     public Chisel.Core.Countdown.ICountdownRepository Countdown { get; }
     public Chisel.Core.Focus.IFocusTimerRepository FocusTimer { get; }
     public Chisel.Core.Habits.IHabitRepository Habits { get; }
+    public Chisel.Core.Converter.IConverterSettingsRepository ConverterSettings { get; }
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
@@ -87,6 +88,7 @@ public sealed class AppServices : IDisposable
         Countdown = new CountdownRepository(DbContext);
         FocusTimer = new FocusTimerRepository(DbContext);
         Habits = new HabitRepository(DbContext);
+        ConverterSettings = new ConverterSettingsRepository(DbContext);
 
         var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
         var files = new PictureFileStore(folder);

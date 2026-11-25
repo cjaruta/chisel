@@ -23,6 +23,7 @@ public partial class MainViewModel : ViewModelBase
     public CountdownViewModel Countdown { get; private set; } = null!;
     public FocusTimerViewModel FocusTimer { get; private set; } = null!;
     public HabitsViewModel Habits { get; private set; } = null!;
+    public ConverterViewModel Converter { get; }
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -81,7 +82,8 @@ public partial class MainViewModel : ViewModelBase
         Chisel.Core.Countdown.ICountdownRepository? countdown = null,
         Chisel.Core.Focus.IFocusTimerRepository? focusTimer = null,
         Services.IChime? chime = null,
-        Chisel.Core.Habits.IHabitRepository? habits = null)
+        Chisel.Core.Habits.IHabitRepository? habits = null,
+        Chisel.Core.Converter.IConverterSettingsRepository? converter = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -92,6 +94,7 @@ public partial class MainViewModel : ViewModelBase
         ClockFaces = new ClockFacesViewModel(clockFaces, ClockSettings, ClockTools);
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
+        Converter = new ConverterViewModel(converter);
         CalendarSettings = calendarSettings ?? new CalendarSettingsViewModel(null);
         Calendar = new CalendarViewModel(CalendarSettings, time ?? TimeProvider.System, dispatch: dispatch);
         SystemMonitorSettings = systemMonitorSettings ?? new SystemMonitorSettingsViewModel(null);

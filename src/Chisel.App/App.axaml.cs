@@ -89,6 +89,7 @@ public partial class App : Application
                     countdown: _services.Countdown,
                     focusTimer: _services.FocusTimer,
                     habits: _services.Habits,
+                    converter: _services.ConverterSettings,
                     chime: new SoftChime(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
