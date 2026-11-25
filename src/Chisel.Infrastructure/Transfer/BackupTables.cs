@@ -128,10 +128,4 @@ public static class BackupPaths
         (value.StartsWith(@"\\", StringComparison.Ordinal) ||
          value.StartsWith("file:", StringComparison.OrdinalIgnoreCase) ||
          (value.Length >= 3 && char.IsAsciiLetter(value[0]) && value[1] == ':' && value[2] is '\\' or '/'));
-
-    private static readonly string[] ProgramExtensions = [".exe", ".bat", ".cmd", ".com", ".msi", ".ps1", ".vbs", ".js", ".scr", ".lnk"];
-
-    // A local path that starts a program when opened.
-    public static bool IsProgram(string? value) =>
-        IsLocalPath(value) && ProgramExtensions.Any(e => value!.TrimEnd().EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }

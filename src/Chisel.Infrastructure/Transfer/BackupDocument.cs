@@ -208,9 +208,23 @@ public static class BackupDocument
             return BackupReadResult.Fail("This backup is damaged and can't be read.");
         }
 
+        // Quick links follow the app's own rules: programs, scripts and other kinds of address are left out, as when adding one.
+        var refused = 0;
+        if (tables.TryGetValue(BackupTables.QuickLinks, out var links))
+        {
+            var kept = links.Cast<QuickLinkEntity>().Where(l => Core.Links.QuickLinkTarget.CheckShape(l.Url) is null).ToList();
+            refused = links.Count - kept.Count;
+            tables[BackupTables.QuickLinks] = kept;
+        }
+
         var exportedAt = DateTimeOffset.TryParse(Text(root, "exportedAt"), out var at) ? at : default;
+        var warnings = Warn(tables, pictureExists);
+        if (refused > 0)
+        {
+            warnings.Add($"{refused} quick links were left out: programs, scripts and addresses other than http and https can't be quick links.");
+        }
         return new BackupReadResult(
-            new BackupPackage(version, Text(root, "appVersion") ?? "", exportedAt, tables, Summarize(tables), Warn(tables, pictureExists)),
+            new BackupPackage(version, Text(root, "appVersion") ?? "", exportedAt, tables, Summarize(tables), warnings),
             null);
     }
 
@@ -288,11 +302,6 @@ public static class BackupDocument
             if (local.Count > 0)
             {
                 warnings.Add($"{local.Count} quick links open files or folders that may not exist on this computer.");
-            }
-            var programs = local.Where(l => BackupPaths.IsProgram(l.Url)).Select(l => l.Label).ToList();
-            if (programs.Count > 0)
-            {
-                warnings.Add($"These quick links start programs; check them before using: {string.Join(", ", programs)}.");
             }
         }
         return warnings;

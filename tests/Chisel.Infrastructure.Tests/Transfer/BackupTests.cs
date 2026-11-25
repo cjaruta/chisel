@@ -288,14 +288,20 @@ public class BackupTests
     }
 
     [Fact]
-    public void Read_WarnsAboutQuickLinksThatStartPrograms()
+    public void Read_LeavesOutQuickLinksTheAppWouldRefuse()
     {
-        var row = new JsonObject { ["id"] = Guid.NewGuid().ToString(), ["label"] = "Tool", ["url"] = @"C:\Tools\run.exe" };
-        var json = """{"app":"Chisel","formatVersion":1,"data":{"quickLinks":[""" + row.ToJsonString() + "]}}";
+        JsonObject Link(string label, string url) => new() { ["id"] = Guid.NewGuid().ToString(), ["label"] = label, ["url"] = url };
+        var links = new JsonArray(Link("Tool", @"C:\Tools\run.exe"), Link("Script", "javascript:alert(1)"), Link("Docs", "https://docs.example.com"));
+        var json = """{"app":"Chisel","formatVersion":1,"data":{"quickLinks":""" + links.ToJsonString() + "}}";
+        using var target = Fresh(out var fixture);
 
         var package = BackupDocument.Read(Encoding.UTF8.GetBytes(json)).Package!;
+        BackupImporter.Apply(target, package, ImportMode.Replace);
 
-        Assert.Contains(package.Warnings, w => w.Contains("start programs") && w.Contains("Tool"));
+        Assert.Equal(1, package.Summary.QuickLinks);
+        Assert.Contains(package.Warnings, w => w.StartsWith("2 quick links were left out"));
+        Assert.Equal(["Docs"], new QuickLinkRepository(target).GetAll().Select(l => l.Label));
+        fixture.Dispose();
     }
 
     [Fact]
