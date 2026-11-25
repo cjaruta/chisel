@@ -70,7 +70,12 @@ public partial class App : Application
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
                 MainWindow? mainWindow = null;
-                var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures, _services.LayoutProfiles);
+                var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures, _services.LayoutProfiles,
+                    firstRunLayout: WidgetRegistry.FirstRunLayout);
+                if (layout.IsFirstRun && scenario is null)
+                {
+                    system.StartWelcome();
+                }
                 var alerts = new AlertsViewModel(new WindowsAlertSound());
                 var clipboardLog = new DebugClipboardLog();
                 var mainViewModel = new MainViewModel(

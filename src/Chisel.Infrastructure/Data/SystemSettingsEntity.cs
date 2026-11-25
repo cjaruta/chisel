@@ -7,4 +7,5 @@ public class SystemSettingsEntity
     public bool CloseToTray { get; set; }
     public bool StartMinimized { get; set; }
     public string Hotkey { get; set; } = "";
+    public bool ShowWelcome { get; set; }
 }

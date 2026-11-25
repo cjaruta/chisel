@@ -13,7 +13,7 @@ public class SystemSettingsRepository : ISystemSettingsRepository
     }
 
     public SystemSettings Get() => _context.SystemSettings.FirstOrDefault() is { } e
-        ? new SystemSettings(e.CloseToTray, e.StartMinimized, e.Hotkey ?? "")
+        ? new SystemSettings(e.CloseToTray, e.StartMinimized, e.Hotkey ?? "", e.ShowWelcome)
         : SystemSettings.Default;
 
     public void Save(SystemSettings settings)
@@ -21,7 +21,7 @@ public class SystemSettingsRepository : ISystemSettingsRepository
         _context.SystemSettings.RemoveRange(_context.SystemSettings);
         _context.SystemSettings.Add(new SystemSettingsEntity
         {
-            CloseToTray = settings.CloseToTray, StartMinimized = settings.StartMinimized, Hotkey = settings.Hotkey,
+            CloseToTray = settings.CloseToTray, StartMinimized = settings.StartMinimized, Hotkey = settings.Hotkey, ShowWelcome = settings.ShowWelcome,
         });
         _context.SaveChanges();
     }

@@ -18,12 +18,13 @@ public class SystemSettingsRepositoryTests
         Assert.False(settings.CloseToTray);
         Assert.False(settings.StartMinimized);
         Assert.Equal("Ctrl+Alt+C", settings.Hotkey);
+        Assert.False(settings.ShowWelcome);
     }
 
     [Fact]
     public void Save_ReplacesTheOneRow_AndRoundTrips()
     {
-        var settings = new SystemSettings(CloseToTray: true, StartMinimized: true, Hotkey: "");
+        var settings = new SystemSettings(CloseToTray: true, StartMinimized: true, Hotkey: "", ShowWelcome: true);
         using (var context = _fixture.CreateContext())
         {
             var repository = new SystemSettingsRepository(context);

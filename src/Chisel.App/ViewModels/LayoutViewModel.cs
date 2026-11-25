@@ -303,7 +303,12 @@ public partial class LayoutViewModel : ViewModelBase
 
     // repository: where the layout is saved; null keeps it in memory only.
     // profiles: where the saved layout profiles are kept; null keeps them in memory only.
-    public LayoutViewModel(IWidgetLayoutRepository? repository = null, PictureCatalog? pictures = null, ILayoutProfileRepository? profiles = null)
+    // True when there was no saved layout at all: a fresh install.
+    public bool IsFirstRun { get; }
+
+    // firstRunLayout: the dashboard a fresh install starts with (nothing saved yet); by default the plain default layout.
+    public LayoutViewModel(IWidgetLayoutRepository? repository = null, PictureCatalog? pictures = null, ILayoutProfileRepository? profiles = null,
+        WidgetLayout? firstRunLayout = null)
     {
         _repository = repository;
         _pictureCatalog = pictures;
@@ -317,7 +322,10 @@ public partial class LayoutViewModel : ViewModelBase
         var saved = repository?.Get();
         if (saved is null)
         {
-            Layout = WidgetRegistry.DefaultLayout;
+            IsFirstRun = repository is not null;
+            Layout = firstRunLayout is null
+                ? WidgetRegistry.DefaultLayout
+                : WidgetLayoutNormalizer.Normalize(firstRunLayout, WidgetRegistry.DefaultLayout, WidgetRegistry.Types);
             repository?.Save(Layout);
         }
         else

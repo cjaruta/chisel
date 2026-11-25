@@ -34,7 +34,7 @@ public static class UiSnapshot
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
         Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
-        Chisel.App.Services.IClipboardService? clipboard = null)
+        Chisel.App.Services.IClipboardService? clipboard = null, bool firstRun = false)
     {
         // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
         // Closing it here releases its timers, database and bitmaps even when that test forgot to.
@@ -64,12 +64,19 @@ public static class UiSnapshot
         userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette, themeMode: themeMode, accentColor: accent));
         var kit = pictures ?? new Chisel.App.Tests.Support.PictureKit();
         kit.Attach(context, time, userSettings);
-        var layout = new LayoutViewModel(layoutRepository ?? new ClassicLayoutRepository(), kit.Catalog);
+        // firstRun: a fresh install, with nothing saved: the starter dashboard and the welcome tips, as the app does it.
+        var layout = firstRun
+            ? new LayoutViewModel(new WidgetLayoutRepository(context), kit.Catalog, firstRunLayout: WidgetRegistry.FirstRunLayout)
+            : new LayoutViewModel(layoutRepository ?? new ClassicLayoutRepository(), kit.Catalog);
         var notepadSettings = new NotepadSettingsRepository(context);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
         var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService(),
             system: new SystemSettingsViewModel(new SystemSettingsRepository(context)));
+        if (layout.IsFirstRun)
+        {
+            settings.SystemOptions!.StartWelcome();
+        }
 
         var store = weatherStore ?? new WeatherRepository(context);
         var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store, timeDisplay);

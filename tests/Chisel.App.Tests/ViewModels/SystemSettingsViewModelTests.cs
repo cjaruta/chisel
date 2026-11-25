@@ -24,6 +24,55 @@ public class SystemSettingsViewModelTests
     }
 }
 
+public class WelcomeHintTests
+{
+    [Fact]
+    public void ExistingUsers_DoNotSeeTheWelcome()
+    {
+        Assert.False(new SystemSettingsViewModel(new MemorySystemSettings()).ShowWelcome);
+    }
+
+    [Fact]
+    public void FirstRun_ShowsTheWelcome_UntilItIsDismissedForGood()
+    {
+        var repository = new MemorySystemSettings();
+        var vm = new SystemSettingsViewModel(repository);
+
+        vm.StartWelcome();
+        Assert.True(vm.ShowWelcome);
+        Assert.True(new SystemSettingsViewModel(repository).ShowWelcome);
+
+        vm.DismissWelcomeCommand.Execute(null);
+
+        Assert.False(vm.ShowWelcome);
+        Assert.False(new SystemSettingsViewModel(repository).ShowWelcome);
+    }
+
+    [Fact]
+    public void TheWelcome_CanBeReopenedFromSettings()
+    {
+        var repository = new MemorySystemSettings();
+        var vm = new SystemSettingsViewModel(repository);
+
+        vm.ReopenWelcomeCommand.Execute(null);
+
+        Assert.True(vm.ShowWelcome);
+        Assert.True(repository.Saved!.ShowWelcome);
+    }
+
+    [Fact]
+    public void ChangingAnotherSetting_KeepsTheWelcomeState()
+    {
+        var repository = new MemorySystemSettings();
+        var vm = new SystemSettingsViewModel(repository);
+        vm.StartWelcome();
+
+        vm.CloseToTray = true;
+
+        Assert.True(repository.Saved!.ShowWelcome);
+    }
+}
+
 public class StartWithWindowsSettingTests
 {
     private readonly FakeStartupRegistry _registry = new();

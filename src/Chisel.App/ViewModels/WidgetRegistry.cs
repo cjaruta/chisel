@@ -93,6 +93,15 @@ public static class WidgetRegistry
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
     }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor, Countdown, FocusTimer, Habits, Converter, ClipboardHistory });
 
+    // A fresh install's dashboard, so the first look is not almost empty: the day, the time, tasks and notes, then weather and
+    // the month. Only used when no layout was ever saved.
+    public static WidgetLayout FirstRunLayout { get; } = new(new[]
+    {
+        new LayoutColumn(1.3, new[] { Placement(Schedule) }),
+        new LayoutColumn(1, new[] { new WidgetPlacement(Clock, 0.8), Placement(Tasks), Placement(Notes) }),
+        new LayoutColumn(1, new[] { Placement(Weather), Placement(Calendar) }),
+    }, hiddenWidgetIds: new[] { Media, Calculator, Scripture, SystemMonitor, Countdown, FocusTimer, Habits, Converter, ClipboardHistory });
+
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();
 

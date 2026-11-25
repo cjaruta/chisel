@@ -218,6 +218,21 @@
             </StackPanel>
         </Border>
 
+        <!-- First run: a short welcome until dismissed (Settings > Help shows it again) -->
+        <Border Grid.Row="1" Name="WelcomeHint" Classes="card" ZIndex="20" Padding="18,14" BorderThickness="1"
+                BorderBrush="{DynamicResource AccentBrush}" Width="360"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,16"
+                IsVisible="{Binding Settings.SystemOptions.ShowWelcome, FallbackValue=False}">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="cardHeading" Text="Welcome to Chisel" />
+                <TextBlock TextWrapping="Wrap" Text="Edit the dashboard with the grid button at the top right: drag widgets to move them and drag their edges to resize." />
+                <TextBlock TextWrapping="Wrap" Text="While editing, open the Widget Library to add more widgets." />
+                <TextBlock TextWrapping="Wrap" Text="The gear opens Settings. These tips are under Settings &gt; Help." />
+                <Button Name="WelcomeDismiss" Classes="accent" Content="Got it" HorizontalAlignment="Right"
+                        Command="{Binding Settings.SystemOptions.DismissWelcomeCommand}" />
+            </StackPanel>
+        </Border>
+
         <!-- Settings dialog: a centered 720x520 card over a dimmed page; Esc or Close dismisses it -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="settingsScrim"
                 IsVisible="{Binding Settings.IsOpen}" ZIndex="10" Margin="-20">
@@ -236,6 +251,9 @@
                             <Button Name="QuickLinksTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsQuickLinksTab}"
                                     Content="Quick links" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.QuickLinks}" />
+                            <Button Name="HelpTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsHelpTab}"
+                                    Content="Help" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.Help}" />
                         </StackPanel>
                     </Border>
 
@@ -367,6 +385,17 @@
                         <!-- Quick links: the shortcuts in the top bar -->
                         <ScrollViewer Name="QuickLinksPage" IsVisible="{Binding Settings.IsQuickLinksTab}">
                             <pages:QuickLinksSettingsPage />
+                        </ScrollViewer>
+
+                        <!-- Help: the welcome tips again -->
+                        <ScrollViewer Name="HelpPage" IsVisible="{Binding Settings.IsHelpTab}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Classes="cardHeading" Text="Help" />
+                                <TextBlock TextWrapping="Wrap" Classes="dim"
+                                           Text="Edit the dashboard with the grid button at the top right. While editing, the Widget Library adds widgets." />
+                                <Button Name="ShowWelcomeButton" Content="Show the welcome tips" HorizontalAlignment="Left"
+                                        Command="{Binding Settings.ShowWelcomeCommand}" />
+                            </StackPanel>
                         </ScrollViewer>
 
                         <Button Name="SettingsCloseButton" Grid.Row="1" Content="Close" HorizontalAlignment="Right"

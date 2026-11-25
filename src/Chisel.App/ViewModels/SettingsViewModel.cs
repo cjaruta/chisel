@@ -65,12 +65,13 @@ public partial class SettingsViewModel : ViewModelBase
     public partial bool AccentAdjusted { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsHelpTab))]
     public partial SettingsTab SelectedTab { get; set; }
 
     public bool IsGeneralTab => SelectedTab == SettingsTab.General;
     public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
     public bool IsQuickLinksTab => SelectedTab == SettingsTab.QuickLinks;
+    public bool IsHelpTab => SelectedTab == SettingsTab.Help;
 
     // Widgets that have options, and the one shown on the right of the Widgets tab.
     public IReadOnlyList<SettingsPage> WidgetPages { get; }
@@ -248,6 +249,14 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void SelectTab(SettingsTab tab) => SelectedTab = tab;
+
+    // Help > Show the welcome tips: closes Settings so the tips are in view.
+    [RelayCommand]
+    private void ShowWelcome()
+    {
+        SystemOptions?.ReopenWelcomeCommand.Execute(null);
+        IsOpen = false;
+    }
 
     [RelayCommand]
     private void Toggle() => IsOpen = !IsOpen;

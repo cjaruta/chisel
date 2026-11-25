@@ -590,6 +590,9 @@ namespace Chisel.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("ShowWelcome")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("StartMinimized")
                         .HasColumnType("INTEGER");
 

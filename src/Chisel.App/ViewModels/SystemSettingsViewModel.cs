@@ -26,6 +26,7 @@ public partial class SystemSettingsViewModel : ViewModelBase
         _loading = true;
         CloseToTray = Current.CloseToTray;
         StartMinimized = Current.StartMinimized;
+        ShowWelcome = Current.ShowWelcome;
         ShowStartupState();
         _loading = false;
     }
@@ -193,6 +194,25 @@ public partial class SystemSettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial bool StartMinimized { get; set; }
+
+    // The welcome hint: how to edit the dashboard, add widgets and find Settings.
+    [ObservableProperty]
+    public partial bool ShowWelcome { get; private set; }
+
+    // A fresh install: show the welcome until it is dismissed.
+    public void StartWelcome() => SetWelcome(true);
+
+    [RelayCommand]
+    private void DismissWelcome() => SetWelcome(false);
+
+    [RelayCommand]
+    private void ReopenWelcome() => SetWelcome(true);
+
+    private void SetWelcome(bool show)
+    {
+        ShowWelcome = show;
+        Save(Current with { ShowWelcome = show });
+    }
 
     partial void OnCloseToTrayChanged(bool value) => Save(Current with { CloseToTray = value });
 

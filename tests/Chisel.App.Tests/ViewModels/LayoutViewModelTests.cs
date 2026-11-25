@@ -74,6 +74,31 @@ public class LayoutViewModelTests
     }
 
     [Fact]
+    public void FirstRun_WithNothingSaved_UsesTheStarterDashboard()
+    {
+        var repository = new FakeLayoutRepository();
+
+        var layout = new LayoutViewModel(repository, firstRunLayout: WidgetRegistry.FirstRunLayout);
+
+        Assert.True(layout.IsFirstRun);
+        Assert.Equal(WidgetRegistry.FirstRunLayout.Describe(), repository.Saved!.Describe());
+        Assert.Equal(["schedule", "clock", "tasks", "notes", "weather", "calendar"], layout.Layout.WidgetIds);
+    }
+
+    [Fact]
+    public void FirstRun_WithASavedLayout_NeverTouchesIt()
+    {
+        var saved = Layout(Col(1, ("tasks", 1)));
+        var repository = new FakeLayoutRepository { Saved = saved };
+
+        var layout = new LayoutViewModel(repository, firstRunLayout: WidgetRegistry.FirstRunLayout);
+
+        Assert.False(layout.IsFirstRun);
+        Assert.Equal(["tasks"], layout.Layout.Columns.SelectMany(c => c.Widgets).Select(w => w.WidgetId).Take(1));
+        Assert.DoesNotContain("clock", layout.Layout.Columns.SelectMany(c => c.Widgets).Select(w => w.WidgetId));
+    }
+
+    [Fact]
     public void WithASavedLayout_LoadsItNormalized_AndSavesOnceToPlaceANewWidget()
     {
         // Notes is neither placed nor hidden here, so it is new: it joins the bottom of the first column.
