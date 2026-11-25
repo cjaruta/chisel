@@ -63,7 +63,7 @@ public static partial class ClipboardFilter
         {
             return ClipboardSkip.Excluded;
         }
-        if (snapshot.OwnerProcess is { } owner && PasswordManagers.Contains(owner))
+        if (IsPasswordManager(snapshot.OwnerProcess))
         {
             return ClipboardSkip.PasswordManager;
         }
@@ -81,6 +81,10 @@ public static partial class ClipboardFilter
         }
         return LooksLikeSecret(text) ? ClipboardSkip.LooksLikeSecret : ClipboardSkip.None;
     }
+
+    // True for the process name (no ".exe") of a known password manager.
+    public static bool IsPasswordManager(string? processName) =>
+        processName is not null && PasswordManagers.Contains(processName);
 
     public static bool LooksLikeSecret(string text)
     {
