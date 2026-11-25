@@ -27,5 +27,6 @@ public static class SettingsPages
         new SettingsPage("pictureframe", "Picture frame", typeof(Views.Pages.PictureSettingsPage)),
         new SettingsPage("calculator", "Calculator", typeof(Views.Pages.CalculatorSettingsPage)),
         new SettingsPage("calendar", "Calendar", typeof(Views.Pages.CalendarSettingsPage)),
+        new SettingsPage("sysmonitor", "System monitor", typeof(Views.Pages.SystemMonitorSettingsPage)),
     };
 }

@@ -84,6 +84,8 @@ public partial class App : Application
                     scripture: new ScriptureViewModel(_services.Time),
                     calendarSettings: new CalendarSettingsViewModel(_services.CalendarSettings),
                     dispatch: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
+                    systemMonitorSettings: new SystemMonitorSettingsViewModel(_services.SystemMonitorSettings),
+                    systemStats: new WindowsSystemStats(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
@@ -104,6 +106,7 @@ public partial class App : Application
                 desktop.Exit += (_, _) =>
                 {
                     mainViewModel.Notes.Flush();
+                    mainViewModel.SystemMonitor.Dispose();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();

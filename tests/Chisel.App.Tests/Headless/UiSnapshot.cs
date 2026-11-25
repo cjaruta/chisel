@@ -33,7 +33,7 @@ public static class UiSnapshot
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
-        Chisel.App.Services.INotepadFiles? notepadFiles = null)
+        Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null)
     {
         // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
         // Closing it here releases its timers, database and bitmaps even when that test forgot to.
@@ -89,7 +89,9 @@ public static class UiSnapshot
             pictureSettings: new PictureSettingsViewModel(userSettings, layout, kit.Catalog),
             time: time,
             pictureCatalog: kit.Catalog,
-            scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })));
+            scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })),
+            systemMonitorSettings: new SystemMonitorSettingsViewModel(new SystemMonitorSettingsRepository(context)),
+            systemStats: systemStats);
 
         var window = new MainWindow(windowPlacementPath: null)
         {

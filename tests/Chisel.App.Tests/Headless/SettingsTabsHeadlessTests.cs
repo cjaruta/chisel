@@ -37,7 +37,7 @@ public class SettingsTabsHeadlessTests
         Assert.False(Named<Control>(window, "GeneralPage").IsVisible);
         Assert.True(Named<Control>(window, "WidgetsPage").IsVisible);
         var titles = Named<ListBox>(window, "WidgetPageList").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text);
-        Assert.Equal(new[] { "Schedule", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Calendar" }, titles);
+        Assert.Equal(new[] { "Schedule", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Calendar", "System monitor" }, titles);
         UiSnapshot.Render(window, "settings-widgets");
         window.Close();
     }

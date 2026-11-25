@@ -37,6 +37,7 @@ public static class WidgetRegistry
     public const string Calculator = "calculator";
     public const string Scripture = "scripture";
     public const string Calendar = "calendar";
+    public const string SystemMonitor = "sysmonitor";
 
     // The least height any widget's card gets, in pixels: its title bar plus one readable row of content.
     // Resizing stops here, and a column too short for its widgets' minimums scrolls.
@@ -64,6 +65,8 @@ public static class WidgetRegistry
             DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(ScriptureWidgetView), MinWidth: 220, Description: "A short Bible passage that changes every day."),
         new WidgetDefinition(Calendar, "Calendar", Icon: "M4,5 H20 V20 H4 Z M4,9 H20 M8,3 V6 M16,3 V6 M7.5,12.5 H8.5 M11.5,12.5 H12.5 M15.5,12.5 H16.5 M7.5,16.5 H8.5 M11.5,16.5 H12.5",
             DefaultHeight: 1, MinimumHeight, ScrollsContent: true, typeof(CalendarWidgetView), MinWidth: 180, Description: "A month view with today highlighted. Mark days with a dot."),
+        new WidgetDefinition(SystemMonitor, "System monitor", Icon: "M4,16 A8,8 0 1 1 20,16 M12,16 L16,10 M4,20 H20",
+            DefaultHeight: 1, MinimumHeight, ScrollsContent: false, typeof(SystemMonitorWidgetView), MinWidth: 180, Description: "Live CPU, memory, disk, network and battery gauges."),
     };
 
     // Schedule on the left at full height; Tasks and Notes stacked on the right. (Quick links is not a widget: it lives in the
@@ -73,7 +76,7 @@ public static class WidgetRegistry
     {
         new LayoutColumn(1.3, new[] { Placement(Schedule) }),
         new LayoutColumn(1, new[] { Placement(Tasks), Placement(Notes) }),
-    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar });
+    }, hiddenWidgetIds: new[] { Clock, Weather, Media, Calculator, Scripture, Calendar, SystemMonitor });
 
     // Types added for the lifetime of a test (see Extend). Never used by the app.
     private static readonly List<WidgetDefinition> Added = new();
