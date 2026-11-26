@@ -406,10 +406,12 @@ internal static class ClockToolViews
         return stack;
     }
 
+    // The tool fills its cell; if its time and buttons are ever taller than a small cell, they shrink evenly to fit rather
+    // than letting Reset or Start fall off the bottom.
     private static Grid Centered(string name, Control content)
     {
         var grid = new Grid { Name = name };
-        grid.Children.Add(content);
+        grid.Children.Add(new ShrinkToFit { Child = content, VerticalAlignment = VerticalAlignment.Center });
         return grid;
     }
 
