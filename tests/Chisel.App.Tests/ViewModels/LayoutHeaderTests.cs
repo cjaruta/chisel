@@ -8,26 +8,26 @@ public class LayoutHeaderTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout) => Saved = layout;
     }
 
-    private readonly FakeLayoutRepository _repository = new() { Saved = WidgetRegistry.DefaultLayout };
+    private readonly FakeLayoutRepository _repository = new() { Saved = TestLayouts.Classic };
 
     private static bool Shown(LayoutViewModel layout, string id) =>
         layout.Columns.SelectMany(c => c.Widgets).Single(w => w.Id == id).ShowHeader;
 
     [Fact]
-    public void RegistryDefaults_HideClockScheduleWeatherAndLinks_ShowTasksNotesAndCalculator()
+    public void RegistryDefaults_HideClockScheduleAndWeather_ShowTasksNotesAndCalculator()
     {
         var shown = WidgetRegistry.All.ToDictionary(w => w.Id, w => w.DefaultShowHeader);
 
         Assert.Equal(
             new Dictionary<string, bool>
             {
-                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false, [WidgetRegistry.PictureFrame] = false, [WidgetRegistry.Calculator] = true, [WidgetRegistry.Scripture] = true,
-                [WidgetRegistry.Links] = false, [WidgetRegistry.Tasks] = true, [WidgetRegistry.Notes] = true,
+                [WidgetRegistry.Clock] = false, [WidgetRegistry.Schedule] = false, [WidgetRegistry.Weather] = false, [WidgetRegistry.Media] = false, [WidgetRegistry.PictureFrame] = false, [WidgetRegistry.Calculator] = true, [WidgetRegistry.Scripture] = true, [WidgetRegistry.Calendar] = true, [WidgetRegistry.SystemMonitor] = true, [WidgetRegistry.Countdown] = true, [WidgetRegistry.FocusTimer] = true, [WidgetRegistry.Habits] = true, [WidgetRegistry.Converter] = true, [WidgetRegistry.ClipboardHistory] = true,
+                [WidgetRegistry.Tasks] = true, [WidgetRegistry.Notes] = true,
             },
             shown);
     }

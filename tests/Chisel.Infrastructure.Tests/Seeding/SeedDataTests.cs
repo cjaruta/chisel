@@ -16,6 +16,12 @@ public class SeedDataTests
     }
 
     [Fact]
+    public void CreateUserSettings_FollowsTheSystemTheme()
+    {
+        Assert.Equal("system", SeedData.CreateUserSettings().ThemeMode);
+    }
+
+    [Fact]
     public void CreateSchedule_ReturnsTheDefaultBlocksInOrder()
     {
         var schedule = SeedData.CreateSchedule();

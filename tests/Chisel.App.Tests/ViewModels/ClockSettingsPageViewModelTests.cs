@@ -57,7 +57,7 @@ public class ClockSettingsPageViewModelTests
     }
 
     [Fact]
-    public void ResetToPreset_PutsTheChosenPresetLookBack_KeepingAlignmentSecondsAndColors()
+    public void ResetToPreset_PutsTheWholeChosenFaceBack_KeepingOnlyAlignmentAndSeconds()
     {
         var (vm, repo) = Make(ClockStyle.Default with { Alignment = ClockAlignment.Left, ShowSeconds = false, Colors = new ClockColors("#112233", null, null, null, null, "#445566") });
         vm.PresetIndex = ClockPresets.All.ToList().FindIndex(p => p.Id == "roman");
@@ -72,8 +72,7 @@ public class ClockSettingsPageViewModelTests
         Assert.Equal(NumeralStyle.Roman, repo.Saved.Numerals);
         Assert.Equal(ClockAlignment.Left, repo.Saved.Alignment);
         Assert.False(repo.Saved.ShowSeconds);
-        Assert.Equal("#112233", repo.Saved.Colors.Dial);
-        Assert.Equal("#445566", repo.Saved.Colors.Second);
+        Assert.Equal(ClockColors.Theme, repo.Saved.Colors); // the face is back as defined: the colors from before are not part of it
         Assert.False(vm.ResetToPresetCommand.CanExecute(null)); // already matches
     }
 

@@ -107,11 +107,11 @@ public class LayoutDragHeadlessTests
         var window = ShowEditing();
         await Task.Delay(600); // edit mode has finished easing in
         Dispatcher.UIThread.RunJobs();
-        var card = Frame(window, "links");
+        var card = Frame(window, "scripture");
         var parts = new Visual[] { card }.Concat(card.GetVisualDescendants()).OfType<Animatable>().ToList();
         var before = parts.ToDictionary(p => p, p => p.Transitions?.Select(t => (t, Show(p.GetValue(Prop(t))))).ToList());
 
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X + 10, from.Y + 10));
         var inEffect = parts.ToDictionary(p => p, p => p.Transitions?.ToList());
@@ -153,7 +153,7 @@ public class LayoutDragHeadlessTests
     public void DraggingFromTheBodyOfAWidget_MovesIt()
     {
         var window = ShowEditing();
-        var body = Within(window, "links", 0.97);
+        var body = Within(window, "scripture", 0.97);
         var to = Within(window, "tasks", 0.03);
 
         Press(window, body);
@@ -161,7 +161,7 @@ public class LayoutDragHeadlessTests
         MoveTo(window, to);
         Release(window, to);
 
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(window));
         window.Close();
     }
 
@@ -170,9 +170,9 @@ public class LayoutDragHeadlessTests
     {
         var window = ShowEditing();
 
-        Drag(window, "links", Within(window, "tasks", 0.03));
+        Drag(window, "scripture", Within(window, "tasks", 0.03));
 
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(window));
         Assert.True(ViewModel(window).Layout.IsEditing);
         AssertNoDragVisuals(window);
         window.Close();
@@ -185,7 +185,7 @@ public class LayoutDragHeadlessTests
 
         Drag(window, "tasks", Within(window, "notes", 0.97));
 
-        Assert.Equal("schedule | notes,tasks,links", Order(window));
+        Assert.Equal("schedule | notes,tasks,scripture", Order(window));
         window.Close();
     }
 
@@ -196,7 +196,7 @@ public class LayoutDragHeadlessTests
 
         Drag(window, "tasks", Within(window, "schedule", 0.995));
 
-        Assert.Equal("schedule,tasks | notes,links", Order(window));
+        Assert.Equal("schedule,tasks | notes,scripture", Order(window));
         window.Close();
     }
 
@@ -213,7 +213,7 @@ public class LayoutDragHeadlessTests
         Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Release(window, new Point(bar.X + nudge, bar.Y + nudge));
 
-        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        Assert.Equal("schedule | tasks,notes,scripture", Order(window));
         AssertNoDragVisuals(window);
         window.Close();
     }
@@ -225,7 +225,7 @@ public class LayoutDragHeadlessTests
 
         Drag(window, "notes", new Point(100, 30)); // over the clock
 
-        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        Assert.Equal("schedule | tasks,notes,scripture", Order(window));
         AssertNoDragVisuals(window);
         window.Close();
     }
@@ -235,9 +235,9 @@ public class LayoutDragHeadlessTests
     {
         var window = ShowEditing();
 
-        Drag(window, "schedule", Within(window, "links", 0.97));
+        Drag(window, "schedule", Within(window, "scripture", 0.97));
 
-        Assert.Equal("tasks,notes,links,schedule", Order(window));
+        Assert.Equal("tasks,notes,scripture,schedule", Order(window));
         Assert.True(ViewModel(window).Layout.IsEditing);
         window.Close();
     }
@@ -268,11 +268,11 @@ public class LayoutDragHeadlessTests
         var line = Named<Border>(window, "DropPreview");
         Assert.False(line.IsVisible);
 
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X + 20, from.Y - 20));
         Assert.True(Named<Border>(window, "DragFloat").IsVisible);
-        Assert.Contains("dragSource", Frame(window, "links").Classes);
+        Assert.Contains("dragSource", Frame(window, "scripture").Classes);
 
         MoveTo(window, belowMiddle);
         Assert.True(line.IsVisible);
@@ -290,7 +290,7 @@ public class LayoutDragHeadlessTests
 
     [AvaloniaTheory]
     [InlineData("tasks", 0.97)] // gap above the widget's own slot
-    [InlineData("links", 0.03)] // gap below it
+    [InlineData("scripture", 0.03)] // gap below it
     public void GapsNextToTheWidgetsOwnSlot_ShowNoIndicator(string neighbour, double fraction)
     {
         var window = ShowEditing();
@@ -322,7 +322,7 @@ public class LayoutDragHeadlessTests
         Assert.False(Named<Border>(window, "DropPreview").IsVisible);
         Release(window, home);
 
-        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        Assert.Equal("schedule | tasks,notes,scripture", Order(window));
         AssertNoDragVisuals(window);
         window.Close();
     }
@@ -333,10 +333,10 @@ public class LayoutDragHeadlessTests
         var window = ShowEditing();
         var tasksTop = InWindow(Frame(window, "tasks"), window).Top;
 
-        Drag(window, "links", Within(window, "tasks", 0.03));
+        Drag(window, "scripture", Within(window, "tasks", 0.03));
 
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
-        Assert.Equal(tasksTop, InWindow(Frame(window, "links"), window).Top, 1.5);
+        Assert.Equal("schedule | scripture,tasks,notes", Order(window));
+        Assert.Equal(tasksTop, InWindow(Frame(window, "scripture"), window).Top, 1.5);
         AssertNoDragVisuals(window);
         window.Close();
     }
@@ -345,7 +345,7 @@ public class LayoutDragHeadlessTests
     public void EscapeDuringADrag_CancelsOnlyTheDrag()
     {
         var window = ShowEditing();
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X, from.Y - 30));
         var before = Positions(window);
@@ -360,7 +360,7 @@ public class LayoutDragHeadlessTests
         Assert.False(Named<Border>(window, "DropPreview").IsVisible);
         Release(window, over);
 
-        Assert.Equal("schedule | tasks,notes,links", Order(window));
+        Assert.Equal("schedule | tasks,notes,scripture", Order(window));
         Assert.True(ViewModel(window).Layout.IsEditing);
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
@@ -373,11 +373,11 @@ public class LayoutDragHeadlessTests
     public void DoneKeepsTheNewOrder_CancelRestoresIt()
     {
         var window = ShowEditing();
-        Drag(window, "links", Within(window, "tasks", 0.03));
+        Drag(window, "scripture", Within(window, "tasks", 0.03));
         ViewModel(window).Layout.DoneCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(window));
         AssertNoDragVisuals(window);
         Assert.All(Host(window).Frames.SelectMany(c => c), f => Assert.Equal(1, f.Opacity));
 
@@ -387,7 +387,7 @@ public class LayoutDragHeadlessTests
         ViewModel(window).Layout.CancelCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("schedule | links,tasks,notes", Order(window));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(window));
         window.Close();
     }
 
@@ -396,7 +396,7 @@ public class LayoutDragHeadlessTests
     {
         var window = ShowEditing();
         var floating = Named<Border>(window, "DragFloat");
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         Assert.DoesNotContain("lifted", floating.Classes);
 
@@ -417,9 +417,9 @@ public class LayoutDragHeadlessTests
     public void Drop_ClearsTheSlotAtOnce_AndStartsTheBorderAnimationOnTheAttachedCard()
     {
         var window = ShowEditing();
-        var frame = Frame(window, "links");
+        var frame = Frame(window, "scripture");
         var host = Host(window);
-        Drag(window, "links", Within(window, "tasks", 0.97));
+        Drag(window, "scripture", Within(window, "tasks", 0.97));
 
         Assert.False(Named<Border>(window, "DragFloat").IsVisible);
         Assert.DoesNotContain("dragSource", frame.Classes);
@@ -437,8 +437,8 @@ public class LayoutDragHeadlessTests
     public void RemovingAWidget_RightAfterADrop_DetachesIt()
     {
         var window = ShowEditing();
-        var frame = Frame(window, "links");
-        Drag(window, "links", Within(window, "tasks", 0.97));
+        var frame = Frame(window, "scripture");
+        Drag(window, "scripture", Within(window, "tasks", 0.97));
 
         frame.RemoveButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -463,14 +463,14 @@ public class LayoutDragHeadlessTests
         }
 
         AssertDark();
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X + 20, from.Y - 20));
         AssertDark();
         var over = Within(window, "tasks", 0.03);
         MoveTo(window, over);
         Release(window, over);
-        Assert.True(Frame(window, "links").Bounds.Width > 0);
+        Assert.True(Frame(window, "scripture").Bounds.Width > 0);
         AssertDark();
         Dispatcher.UIThread.RunJobs();
         AssertDark();
@@ -481,7 +481,7 @@ public class LayoutDragHeadlessTests
     public void Snapshot_Drop()
     {
         var window = ShowEditing();
-        Drag(window, "links", Within(window, "tasks", 0.97));
+        Drag(window, "scripture", Within(window, "tasks", 0.97));
         Dispatcher.UIThread.RunJobs();
         UiSnapshot.Render(window, "layout-drop-1200x760");
         window.Close();
@@ -492,7 +492,7 @@ public class LayoutDragHeadlessTests
     {
         var window = ShowEditing();
         var floating = Named<Border>(window, "DragFloat");
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X + 20, from.Y - 20));
         Assert.Contains("lifted", floating.Classes);
@@ -511,7 +511,7 @@ public class LayoutDragHeadlessTests
     public void Snapshot_MidDrag(int width, int height)
     {
         var window = ShowEditing(width, height);
-        var from = Bar(window, "links");
+        var from = Bar(window, "scripture");
         Press(window, from);
         MoveTo(window, new Point(from.X - 20, from.Y - 40));
         MoveTo(window, Within(window, "tasks", 0.97));

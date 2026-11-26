@@ -33,7 +33,9 @@ public static class UiSnapshot
         Chisel.Core.Media.IMediaService? media = null, Chisel.Core.Media.ISpectrumSource? spectrum = null,
         Chisel.Core.Media.IVolumeService? volume = null, string? themeMode = null, string? accent = null,
         Chisel.App.Tests.Support.PictureKit? pictures = null, FakeTimeProvider? clock = null, Action<string>? openUrl = null,
-        Chisel.App.Services.INotepadFiles? notepadFiles = null)
+        Chisel.App.Services.INotepadFiles? notepadFiles = null, Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
+        Chisel.App.Services.IClipboardService? clipboard = null, bool firstRun = false,
+        Func<ChiselDbContext, BackupViewModel>? backup = null)
     {
         // Tests run one at a time on the UI thread, so any window still open belongs to an earlier test.
         // Closing it here releases its timers, database and bitmaps even when that test forgot to.
@@ -63,11 +65,20 @@ public static class UiSnapshot
         userSettings.Save(new UserSettings("Test User", new TimeOnly(6, 30), new TimeOnly(23, 0), schedulePalette: palette, themeMode: themeMode, accentColor: accent));
         var kit = pictures ?? new Chisel.App.Tests.Support.PictureKit();
         kit.Attach(context, time, userSettings);
-        var layout = new LayoutViewModel(layoutRepository, kit.Catalog);
+        // firstRun: a fresh install, with nothing saved: the starter dashboard and the welcome tips, as the app does it.
+        var layout = firstRun
+            ? new LayoutViewModel(new WidgetLayoutRepository(context), kit.Catalog, firstRunLayout: WidgetRegistry.FirstRunLayout)
+            : new LayoutViewModel(layoutRepository ?? new ClassicLayoutRepository(), kit.Catalog);
         var notepadSettings = new NotepadSettingsRepository(context);
         var timeDisplay = new TimeDisplay();
         var paletteDisplay = new PaletteDisplay();
-        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService());
+        var settings = new SettingsViewModel(userSettings, timeDisplay, paletteDisplay, theme: new Chisel.App.Theming.ThemeService(),
+            system: new SystemSettingsViewModel(new SystemSettingsRepository(context)), backup: backup?.Invoke(context),
+            about: new AboutViewModel("1.2.3", () => "", _ => { }, () => { }, _ => Task.CompletedTask));
+        if (layout.IsFirstRun)
+        {
+            settings.SystemOptions!.StartWelcome();
+        }
 
         var store = weatherStore ?? new WeatherRepository(context);
         var weather = new WeatherViewModel(new Chisel.App.Services.FakeWeatherService(), time, store, timeDisplay);
@@ -76,7 +87,7 @@ public static class UiSnapshot
             new ScheduleViewModel(schedule, markers, time, timeDisplay, paletteDisplay),
             new TaskListViewModel(tasks),
             new NotesViewModel(notes, time, notepadSettings, notepadFiles),
-            new QuickLinksViewModel(links, _ => { }),
+            new QuickLinksViewModel(links, openUrl ?? (_ => { })),
             settings,
             layout,
             weather,
@@ -89,7 +100,15 @@ public static class UiSnapshot
             pictureSettings: new PictureSettingsViewModel(userSettings, layout, kit.Catalog),
             time: time,
             pictureCatalog: kit.Catalog,
-            scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })));
+            scripture: new ScriptureViewModel(time, openUrl: openUrl ?? (_ => { })),
+            systemMonitorSettings: new SystemMonitorSettingsViewModel(new SystemMonitorSettingsRepository(context)),
+            systemStats: systemStats,
+            countdown: new CountdownRepository(context),
+            focusTimer: new FocusTimerRepository(context),
+            habits: new HabitRepository(context),
+            converter: new ConverterSettingsRepository(context),
+            clipboardHistory: new ClipboardHistoryViewModel(clipboard ?? new Chisel.App.Tests.Support.FakeClipboard(),
+                new ClipboardHistorySettingsRepository(context), new Chisel.App.Tests.Support.FakeClipboardStore(), time));
 
         var window = new MainWindow(windowPlacementPath: null)
         {
@@ -168,5 +187,23 @@ public static class UiSnapshot
         }
 
         return dir?.FullName ?? throw new InvalidOperationException("Couldn't find Chisel.slnx above the test output folder.");
+    }
+
+    // A layout store with nothing saved, so the window starts from the app's real default layout.
+    public static Chisel.Core.Layout.IWidgetLayoutRepository FactoryDefaultLayout() => new FactoryDefaultLayoutRepository();
+
+    private sealed class FactoryDefaultLayoutRepository : Chisel.Core.Layout.IWidgetLayoutRepository
+    {
+        private Chisel.Core.Layout.WidgetLayout? _saved;
+        public Chisel.Core.Layout.WidgetLayout? Get() => _saved;
+        public void Save(Chisel.Core.Layout.WidgetLayout layout) => _saved = layout;
+    }
+
+    // The layout store the windows start with: the classic three-card right column (see TestLayouts), kept in memory.
+    private sealed class ClassicLayoutRepository : Chisel.Core.Layout.IWidgetLayoutRepository
+    {
+        private Chisel.Core.Layout.WidgetLayout? _saved = TestLayouts.Classic;
+        public Chisel.Core.Layout.WidgetLayout? Get() => _saved;
+        public void Save(Chisel.Core.Layout.WidgetLayout layout) => _saved = layout;
     }
 }

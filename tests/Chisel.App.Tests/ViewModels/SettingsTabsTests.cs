@@ -39,12 +39,24 @@ public class SettingsTabsTests
     }
 
     [Fact]
+    public void SelectTab_ShowsTheQuickLinksTabAlone()
+    {
+        var settings = Create();
+
+        settings.SelectTabCommand.Execute(SettingsTab.QuickLinks);
+
+        Assert.True(settings.IsQuickLinksTab);
+        Assert.False(settings.IsGeneralTab);
+        Assert.False(settings.IsWidgetsTab);
+    }
+
+    [Fact]
     public void DefaultPages_ListScheduleClockWeatherMediaPictureFrameThenCalculator()
     {
         var settings = Create();
 
-        Assert.Equal(new[] { "schedule", "clock", "weather", "media", "pictureframe", "calculator" }, settings.WidgetPages.Select(p => p.Id));
-        Assert.Equal(new[] { "Schedule", "Clock", "Weather", "Media", "Picture frame", "Calculator" }, settings.WidgetPages.Select(p => p.Title));
+        Assert.Equal(new[] { "schedule", "clock", "weather", "media", "pictureframe", "calculator", "calendar", "sysmonitor", "countdown", "focus" }, settings.WidgetPages.Select(p => p.Id));
+        Assert.Equal(new[] { "Schedule", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Calendar", "System monitor", "Countdown", "Focus timer" }, settings.WidgetPages.Select(p => p.Title));
         Assert.Same(settings.WidgetPages[0], settings.SelectedWidgetPage);
     }
 

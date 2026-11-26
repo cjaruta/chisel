@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.FocusTimerSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="PRESETS" />
+        <StackPanel Name="FocusPresetButtons" Orientation="Horizontal" Spacing="8" />
+        <TextBlock Classes="settingsSection" Text="DURATIONS (MINUTES)" Margin="0,10,0,0" />
+        <Grid ColumnDefinitions="Auto,120" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+            <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="Focus" />
+            <NumericUpDown Grid.Row="0" Grid.Column="1" Name="FocusMinutes" Minimum="1" Maximum="180" Increment="1" FormatString="0"
+                           AutomationProperties.Name="Focus minutes" Value="{Binding FocusTimer.FocusMinutes}" />
+            <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="Short break" />
+            <NumericUpDown Grid.Row="1" Grid.Column="1" Name="FocusShortBreak" Minimum="1" Maximum="60" Increment="1" FormatString="0"
+                           AutomationProperties.Name="Short break minutes" Value="{Binding FocusTimer.ShortBreakMinutes}" />
+            <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Long break" />
+            <NumericUpDown Grid.Row="2" Grid.Column="1" Name="FocusLongBreak" Minimum="1" Maximum="120" Increment="1" FormatString="0"
+                           AutomationProperties.Name="Long break minutes" Value="{Binding FocusTimer.LongBreakMinutes}" />
+            <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Sessions before a long break" />
+            <NumericUpDown Grid.Row="3" Grid.Column="1" Name="FocusSessionsBeforeLong" Minimum="1" Maximum="12" Increment="1" FormatString="0"
+                           AutomationProperties.Name="Sessions before a long break" Value="{Binding FocusTimer.SessionsBeforeLongBreak}" />
+        </Grid>
+        <TextBlock Name="FocusSettingsError" Classes="cdError" TextWrapping="Wrap" Text="{Binding FocusTimer.SettingsError}"
+                   IsVisible="{Binding FocusTimer.SettingsError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <CheckBox Name="FocusAutoStart" Content="Start the next phase by itself" IsChecked="{Binding FocusTimer.AutoStartNext}" />
+        <TextBlock Classes="settingsSection" Text="CHIME" Margin="0,10,0,0" />
+        <CheckBox Name="FocusMute" Content="Mute the chime" IsChecked="{Binding FocusTimer.IsMuted}" />
+        <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock VerticalAlignment="Center" Text="Volume" />
+            <Slider Name="FocusVolume" Width="200" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" IsSnapToTickEnabled="True" TickFrequency="5"
+                    AutomationProperties.Name="Chime volume" Value="{Binding FocusTimer.ChimeVolume}" />
+            <Button Name="FocusTestChime" Content="Play" Click="OnPlayChime" />
+        </StackPanel>
+        <TextBlock Classes="settingsSection" Text="FACE" Margin="0,10,0,0" />
+        <CheckBox Name="FocusDigital" Content="Digits only (no ring)" IsChecked="{Binding FocusTimer.IsDigital}" />
+    </StackPanel>
+</UserControl>

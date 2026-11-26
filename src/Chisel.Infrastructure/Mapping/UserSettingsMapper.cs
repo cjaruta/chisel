@@ -22,9 +22,10 @@ public static class UserSettingsMapper
         PictureKeepOriginals = settings.PictureKeepOriginals,
         PictureMultiDrop = (int)settings.PictureMultiDrop,
         ThemeMode = settings.ThemeMode,
-        AccentColor = settings.AccentColor
+        AccentColor = settings.AccentColor,
+        WidgetSpacing = settings.WidgetSpacing
     };
 
     public static UserSettings ToDomain(this UserSettingsEntity entity) =>
-        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume, entity.MediaScrollVolume, entity.ThemeMode, entity.AccentColor, entity.MediaAlbumGradient, entity.MediaAnimateGradient, entity.PictureKeepOriginals, (Chisel.Core.Pictures.MultiDropMode)entity.PictureMultiDrop);
-}
+        new(entity.Name, entity.WakeTime, entity.BedTime, (ClockFormat)entity.ClockFormat, entity.SchedulePalette, (TemperatureUnit)entity.TemperatureUnit, entity.MediaVisualizer, entity.MediaVolume, entity.MediaScrollVolume, entity.ThemeMode, entity.AccentColor, entity.MediaAlbumGradient, entity.MediaAnimateGradient, entity.PictureKeepOriginals, (Chisel.Core.Pictures.MultiDropMode)entity.PictureMultiDrop, entity.WidgetSpacing);
+}

@@ -29,11 +29,21 @@ public sealed class AppServices : IDisposable
     public IScheduleRepository Schedule { get; }
     public IUserSettingsRepository UserSettings { get; }
     public IWidgetLayoutRepository WidgetLayout { get; }
+    public ILayoutProfileRepository LayoutProfiles { get; }
     public IWeatherStore Weather { get; }
     public Chisel.Core.Clock.IClockStyleRepository ClockStyles { get; }
+    public Chisel.Core.Clock.IClockFaceStore ClockFaces { get; }
     public Chisel.Core.Clock.IClockToolsRepository ClockTools { get; }
     public Chisel.Core.Clock.IAlarmRepository Alarms { get; }
     public Chisel.Core.Calculator.ICalculatorSettingsRepository CalculatorSettings { get; }
+    public Chisel.Core.Calendar.ICalendarSettingsRepository CalendarSettings { get; }
+    public Chisel.Core.SystemMonitor.ISystemMonitorSettingsRepository SystemMonitorSettings { get; }
+    public Chisel.Core.Countdown.ICountdownRepository Countdown { get; }
+    public Chisel.Core.Focus.IFocusTimerRepository FocusTimer { get; }
+    public Chisel.Core.Habits.IHabitRepository Habits { get; }
+    public Chisel.Core.Converter.IConverterSettingsRepository ConverterSettings { get; }
+    public Chisel.Core.Clipboard.IClipboardHistorySettingsRepository ClipboardSettings { get; }
+    public Chisel.Core.Settings.ISystemSettingsRepository SystemSettings { get; }
     public PictureCatalog Pictures { get; }
     public PictureImporter PictureImporter { get; }
     public IImageDownloader PictureDownloader { get; }
@@ -68,11 +78,21 @@ public sealed class AppServices : IDisposable
         Schedule = new ScheduleRepository(DbContext);
         UserSettings = new UserSettingsRepository(DbContext);
         WidgetLayout = new WidgetLayoutRepository(DbContext);
+        LayoutProfiles = new LayoutProfileRepository(DbContext);
         Weather = new WeatherRepository(DbContext);
         ClockStyles = new ClockStyleRepository(DbContext);
+        ClockFaces = new ClockFaceRepository(DbContext);
         ClockTools = new ClockToolsRepository(DbContext);
         Alarms = new AlarmRepository(DbContext);
         CalculatorSettings = new CalculatorSettingsRepository(DbContext);
+        CalendarSettings = new CalendarSettingsRepository(DbContext);
+        SystemMonitorSettings = new SystemMonitorSettingsRepository(DbContext);
+        Countdown = new CountdownRepository(DbContext);
+        FocusTimer = new FocusTimerRepository(DbContext);
+        Habits = new HabitRepository(DbContext);
+        ConverterSettings = new ConverterSettingsRepository(DbContext);
+        ClipboardSettings = new ClipboardHistorySettingsRepository(DbContext);
+        SystemSettings = new SystemSettingsRepository(DbContext);
 
         var folder = picturesFolder ?? Path.Combine(Path.GetDirectoryName(dbPath)!, "pictures");
         var files = new PictureFileStore(folder);

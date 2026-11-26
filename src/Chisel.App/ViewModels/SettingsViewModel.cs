@@ -36,11 +36,16 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial PaletteOption SelectedPalette { get; set; }
 
+    // The System section (closing, starting with Windows, the show/hide shortcut); null hides it.
+    public SystemSettingsViewModel? SystemOptions { get; }
+
     // The theme service this panel drives; null in tests that only care about settings storage.
     public ThemeService? Theme { get; }
 
     // Theme modes, each with a strip previewing its surfaces and text.
-    public IReadOnlyList<ThemeModeOption> ThemeModeOptions { get; } = ThemeModes.All.Select(m => new ThemeModeOption(m)).ToList();
+    // System comes first: it follows the Windows light/dark setting.
+    public IReadOnlyList<ThemeModeOption> ThemeModeOptions { get; } =
+        ThemeModes.All.Select(m => new ThemeModeOption(m)).Prepend(ThemeModeOption.System()).ToList();
 
     [ObservableProperty]
     public partial ThemeModeOption SelectedThemeMode { get; set; }
@@ -60,11 +65,21 @@ public partial class SettingsViewModel : ViewModelBase
     public partial bool AccentAdjusted { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsAppearanceTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsBackupTab), nameof(IsHelpTab))]
     public partial SettingsTab SelectedTab { get; set; }
 
     public bool IsGeneralTab => SelectedTab == SettingsTab.General;
+    public bool IsAppearanceTab => SelectedTab == SettingsTab.Appearance;
     public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
+    public bool IsQuickLinksTab => SelectedTab == SettingsTab.QuickLinks;
+    public bool IsBackupTab => SelectedTab == SettingsTab.Backup;
+    public bool IsHelpTab => SelectedTab == SettingsTab.Help;
+
+    // Export and import; null where there is no real database to back up (tests, captures).
+    public BackupViewModel? Backup { get; }
+
+    // Settings > Help: version, project links, logs and diagnostic info.
+    public AboutViewModel? About { get; }
 
     // Widgets that have options, and the one shown on the right of the Widgets tab.
     public IReadOnlyList<SettingsPage> WidgetPages { get; }
@@ -73,9 +88,13 @@ public partial class SettingsViewModel : ViewModelBase
     public partial SettingsPage? SelectedWidgetPage { get; set; }
 
     public SettingsViewModel(IUserSettingsRepository repository, TimeDisplay display, PaletteDisplay? palette = null,
-        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null)
+        IReadOnlyList<SettingsPage>? pages = null, ThemeService? theme = null, SystemSettingsViewModel? system = null,
+        BackupViewModel? backup = null, AboutViewModel? about = null)
     {
         Theme = theme;
+        SystemOptions = system;
+        Backup = backup;
+        About = about;
         _repository = repository;
         WidgetPages = pages ?? SettingsPages.Widgets;
         SelectedWidgetPage = WidgetPages.FirstOrDefault();
@@ -86,6 +105,7 @@ public partial class SettingsViewModel : ViewModelBase
         var saved = stored?.ClockFormat ?? ClockFormat.TwentyFourHour;
         _display.Format = saved;
         UseTwelveHour = saved == ClockFormat.TwelveHour;
+        WidgetSpacing = stored?.WidgetSpacing ?? UserSettings.DefaultWidgetSpacing;
 
         // Unknown ids resolve to Default Minimal.
         _palette.Use(stored?.SchedulePalette);
@@ -93,11 +113,17 @@ public partial class SettingsViewModel : ViewModelBase
 
         // Theme: applied here, before the first window exists, so nothing flashes in the wrong colors.
         AccentSwatches = ThemeModes.AccentPresets.Select(p => new ColorSwatchOption(p.Hex, p.Name, Rgb.Parse(p.Hex).ToBrush())).ToList();
-        var mode = ThemeModes.ById(stored?.ThemeMode);
+        var choice = stored?.ThemeMode == ThemeModes.SystemId ? ThemeModes.SystemId : ThemeModes.ById(stored?.ThemeMode).Id;
         var accent = ThemeModes.ResolveAccent(stored?.AccentColor);
-        SelectedThemeMode = ThemeModeOptions.Single(o => o.Id == mode.Id);
+        SelectedThemeMode = ThemeModeOptions.Single(o => o.Id == choice);
         ShowAccent(accent);
-        Theme?.Apply(mode, accent);
+        Theme?.Apply(choice, accent);
+        _palette.UseMode(Theme?.Mode ?? ThemeModes.Resolve(choice, false));
+        // System mode can switch between light and dark at any time: the schedule colors follow.
+        if (Theme is not null)
+        {
+            Theme.Changed += () => _palette.UseMode(Theme.Mode);
+        }
         UpdateAccentInfo();
     }
 
@@ -116,7 +142,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void UpdateAccentInfo()
     {
-        var mode = ThemeModes.ById(SelectedThemeMode?.Id);
+        var mode = Theme?.Mode ?? ThemeModes.ById(SelectedThemeMode?.Id);
         AccentAdjusted = Theme is not null && ThemeModes.Accent(mode, Theme.Accent).Fill != Theme.Accent;
     }
 
@@ -124,7 +150,7 @@ public partial class SettingsViewModel : ViewModelBase
     private void ChooseAccent(Rgb accent, bool isDefault)
     {
         ShowAccent(accent);
-        Theme?.Apply(Theme.Mode, accent);
+        Theme?.Apply(Theme.Choice, accent);
         UpdateAccentInfo();
         var settings = _repository.Get();
         var saved = isDefault ? null : accent.ToHex();
@@ -136,11 +162,17 @@ public partial class SettingsViewModel : ViewModelBase
 
     partial void OnSelectedThemeModeChanged(ThemeModeOption value)
     {
-        if (value is null || Theme is null)
+        if (value is null)
         {
             return;
         }
-        Theme.Apply(ThemeModes.ById(value.Id), Theme.Accent);
+        if (Theme is null)
+        {
+            _palette.UseMode(ThemeModes.Resolve(value.Id, false));
+            return;
+        }
+        Theme.Apply(value.Id, Theme.Accent);
+        _palette.UseMode(Theme.Mode);
         UpdateAccentInfo();
         var settings = _repository.Get();
         if (settings is not null && settings.ThemeMode != value.Id)
@@ -192,6 +224,28 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    // The space between widgets in pixels (a slider, so a number); applied to the dashboard as it moves and saved.
+    [ObservableProperty]
+    public partial double WidgetSpacing { get; set; } = UserSettings.DefaultWidgetSpacing;
+
+    public double MinimumWidgetSpacing => UserSettings.MinimumWidgetSpacing;
+    public double MaximumWidgetSpacing => UserSettings.MaximumWidgetSpacing;
+
+    partial void OnWidgetSpacingChanged(double value)
+    {
+        var spacing = (int)System.Math.Clamp(System.Math.Round(value), UserSettings.MinimumWidgetSpacing, UserSettings.MaximumWidgetSpacing);
+        if (spacing != value)
+        {
+            WidgetSpacing = spacing;
+            return;
+        }
+        var settings = _repository.Get();
+        if (settings is not null && settings.WidgetSpacing != spacing)
+        {
+            _repository.Save(settings.WithWidgetSpacing(spacing));
+        }
+    }
+
     partial void OnUseTwelveHourChanged(bool value)
     {
         var format = value ? ClockFormat.TwelveHour : ClockFormat.TwentyFourHour;
@@ -206,6 +260,14 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void SelectTab(SettingsTab tab) => SelectedTab = tab;
+
+    // Help > Show the welcome tips: closes Settings so the tips are in view.
+    [RelayCommand]
+    private void ShowWelcome()
+    {
+        SystemOptions?.ReopenWelcomeCommand.Execute(null);
+        IsOpen = false;
+    }
 
     [RelayCommand]
     private void Toggle() => IsOpen = !IsOpen;

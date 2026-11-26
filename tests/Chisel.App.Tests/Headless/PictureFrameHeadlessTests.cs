@@ -432,7 +432,7 @@ public class PictureFrameHeadlessTests
     [AvaloniaTheory]
     [InlineData("tasks", 0.5, "Tab with Tasks")]
     [InlineData("tasks", 0.03, "Above Tasks")]
-    [InlineData("links", 0.97, "Below Quick links")]
+    [InlineData("scripture", 0.97, "Below Daily verse")]
     public void OverAnotherWidget_TheCaptionsSayTabWithAboveAndBelow(string id, double fraction, string caption)
     {
         using var kit = new PictureKit();
@@ -554,7 +554,7 @@ public class PictureFrameHeadlessTests
         var id = Main(window).Layout.Layout.WidgetIds.Single(i => i.StartsWith(WidgetRegistry.PictureFrame));
         Loaded(window, id);
         Assert.Single(Main(window).Layout.Pictures.Get(id).Pictures);
-        Assert.Equal(new[] { "tasks", id, "notes", "links" }, Main(window).Layout.Layout.Columns[1].Widgets.Select(w => w.WidgetId));
+        Assert.Equal(new[] { "tasks", id, "notes", "scripture" }, Main(window).Layout.Layout.Columns[1].Widgets.Select(w => w.WidgetId));
         window.Close();
     }
 

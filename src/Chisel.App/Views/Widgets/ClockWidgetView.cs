@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Chisel.App.ViewModels;
+using Chisel.Core.Clock;
 
 namespace Chisel.App.Views.Widgets;
 
@@ -101,6 +104,7 @@ public sealed class ClockWidgetView : WidgetView
         if (width > 0 && height > 0)
         {
             main.ClockSlots.Resize(width, height);
+            ApplyLayout();
         }
     }
 
@@ -116,29 +120,79 @@ public sealed class ClockWidgetView : WidgetView
         }
     }
 
-    // A resize changes how much room each slot has without changing which slots there are: just resize the columns or rows.
-    private void ApplyExtents()
+    // A resize changes how much room each slot has without changing which slots there are: refit the cells in place (the tools
+    // on screen keep their state).
+    private void ApplyExtents() => ApplyLayout();
+
+    // Gives every slot its cell. A pinned clock is a square (as big as its equal share and the card's height allow), a pinned tool is
+    // as big as its content, and a slot that scrolls through several tools keeps its whole equal share (so cycling never moves
+    // anything). The rest of the room is divided into equal gaps: one between every two slots and one at each end. Each slot's cell
+    // holds half of the gaps beside it, so the wheel and the right-click menu work over the whole cell. A single slot fills the card
+    // and a single clock follows the alignment setting inside it. Fonts are sized from the equal share, not from the slot's own
+    // size, so a tool never shrinks itself.
+    private void ApplyLayout()
     {
-        if (_main is not { } main || main.ClockSlots.Slots.Count != _views.Count)
+        if (_main is not { } main || main.ClockSlots.Slots.Count != _views.Count || _views.Count == 0)
         {
             return;
         }
+        var slots = main.ClockSlots.Slots;
         var extents = main.ClockSlots.Extents;
-        if (main.ClockSlots.Horizontal && _grid.ColumnDefinitions.Count == extents.Count)
+        var horizontal = main.ClockSlots.Horizontal;
+        var room = horizontal ? Bounds.Width - Padding.Left - Padding.Right : Bounds.Height - Padding.Top - Padding.Bottom;
+        var cross = horizontal ? Bounds.Height - Padding.Top - Padding.Bottom : Bounds.Width - Padding.Left - Padding.Right;
+        if (extents.Count != _views.Count || room <= 0 || cross <= 0)
         {
-            for (var i = 0; i < extents.Count; i++)
+            return;
+        }
+
+        var n = _views.Count;
+        var content = new double[n];
+        for (var i = 0; i < n; i++)
+        {
+            var cell = extents[i];
+            _views[i].Fit(horizontal ? cell : cross, horizontal ? cross : cell);
+            if (n == 1)
             {
-                _grid.ColumnDefinitions[i].Width = new GridLength(extents[i], GridUnitType.Star);
+                content[i] = room - 2 * ClockSlotLayout.OuterMargin;
+            }
+            else if (IsClock(slots[i]))
+            {
+                content[i] = Math.Min(cell, cross);
+            }
+            else if (slots[i].Scrolling)
+            {
+                content[i] = cell;
+            }
+            else
+            {
+                _views[i].Measure(horizontal ? new Size(cell, cross) : new Size(cross, cell));
+                var natural = horizontal ? _views[i].DesiredSize.Width : _views[i].DesiredSize.Height;
+                content[i] = Math.Min(cell, Math.Max(natural, 1));
             }
         }
-        else if (!main.ClockSlots.Horizontal && _grid.RowDefinitions.Count == extents.Count)
+
+        // Equal gaps between the slots and at both ends.
+        var gap = n == 1 ? ClockSlotLayout.OuterMargin : Math.Max(0, (room - content.Sum()) / (n + 1));
+        for (var i = 0; i < n; i++)
         {
-            for (var i = 0; i < extents.Count; i++)
+            var before = (i == 0 ? gap : gap / 2);
+            var after = (i == n - 1 ? gap : gap / 2);
+            var size = n == 1 ? new GridLength(1, GridUnitType.Star) : new GridLength(content[i] + before + after);
+            if (horizontal)
             {
-                _grid.RowDefinitions[i].Height = new GridLength(extents[i], GridUnitType.Star);
+                _grid.ColumnDefinitions[i].Width = size;
+                _views[i].Margin = new Thickness(before, 0, after, 0);
+            }
+            else
+            {
+                _grid.RowDefinitions[i].Height = size;
+                _views[i].Margin = new Thickness(0, before, 0, after);
             }
         }
     }
+
+    private static bool IsClock(ClockSlotViewModel slot) => !slot.Scrolling && slot.Tools.Count == 1 && slot.Tools[0] == ClockTool.Clock;
 
     private void Release()
     {
@@ -160,24 +214,23 @@ public sealed class ClockWidgetView : WidgetView
             return;
         }
         var horizontal = main.ClockSlots.Horizontal;
-        var index = 0;
-        foreach (var slot in main.ClockSlots.Slots)
+        var slots = main.ClockSlots.Slots;
+        for (var index = 0; index < slots.Count; index++)
         {
-            var star = new GridLength(slot.Extent, GridUnitType.Star);
-            var view = new ClockSlotView(slot, main);
+            var view = new ClockSlotView(slots[index], main);
             if (horizontal)
             {
-                _grid.ColumnDefinitions.Add(new ColumnDefinition(star));
+                _grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
                 Grid.SetColumn(view, index);
             }
             else
             {
-                _grid.RowDefinitions.Add(new RowDefinition(star));
+                _grid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
                 Grid.SetRow(view, index);
             }
             _views.Add(view);
             _grid.Children.Add(view);
-            index++;
         }
+        ApplyLayout();
     }
 }

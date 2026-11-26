@@ -9,11 +9,15 @@ public static class ClockToolsFormat
         return Clock(seconds);
     }
 
-    // mm:ss.t (tenths, truncated), or h:mm:ss.t from one hour.
+    // The stopwatch moves in steps of this many milliseconds (0.1 s), so it only needs redrawing ten times a second.
+    public const int StopwatchStepMilliseconds = 100;
+
+    // mm:ss.t, or h:mm:ss.t from one hour, where t is the tenth, 0 to 9: the time rounded DOWN (never up) to 0.1 s, so the
+    // display never runs ahead of real time. Every face, every lap and every split shows time this way.
     public static string Stopwatch(TimeSpan elapsed)
     {
-        var tenths = (long)Math.Max(0, elapsed.TotalMilliseconds) / 100;
-        return $"{Clock(tenths / 10)}.{tenths % 10}";
+        var steps = Math.Max(0, elapsed.Ticks) / (TimeSpan.TicksPerMillisecond * StopwatchStepMilliseconds);
+        return $"{Clock(steps / 10)}.{steps % 10}";
     }
 
     private static string Clock(long totalSeconds)

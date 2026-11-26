@@ -17,7 +17,7 @@ public class LayoutDragTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -51,6 +51,7 @@ public class LayoutDragTests
         public void Add(TaskItem task) { }
         public void Update(TaskItem task) { }
         public void Remove(Guid id) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private sealed class FakeNoteRepository : INoteRepository
@@ -66,6 +67,8 @@ public class LayoutDragTests
         public IReadOnlyList<QuickLink> GetAll() => Array.Empty<QuickLink>();
         public void Add(QuickLink link) { }
         public void Remove(Guid id) { }
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private readonly FakeLayoutRepository _repository = new();
@@ -115,13 +118,13 @@ public class LayoutDragTests
         var layout = Editing();
         _repository.Saved = null;
         var saves = _repository.SaveCalls;
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
 
         Assert.True(layout.DropWidget(0, 1));
 
         Assert.False(layout.IsDraggingWidget);
-        Assert.Equal("schedule,links | tasks,notes", Order(layout.Layout));
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Snapshot!.Describe());
+        Assert.Equal("schedule,scripture | tasks,notes", Order(layout.Layout));
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Snapshot!.Describe());
         Assert.Equal(saves, _repository.SaveCalls);
     }
 
@@ -134,7 +137,7 @@ public class LayoutDragTests
 
         layout.DropWidget(1, 0);
 
-        Assert.Equal("schedule,tasks,notes,links", Order(layout.Layout));
+        Assert.Equal("schedule,tasks,notes,scripture", Order(layout.Layout));
         Assert.Single(layout.Columns);
         Assert.True(layout.IsEditing);
         Assert.Equal(saves, _repository.SaveCalls);
@@ -166,7 +169,7 @@ public class LayoutDragTests
 
         layout.CancelCommand.Execute(null);
 
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Layout.Describe());
     }
 
     [Fact]
@@ -189,20 +192,20 @@ public class LayoutDragTests
 
         Assert.False(layout.DropWidget(0, 0));
 
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Layout.Describe());
     }
 
     [Fact]
     public void Done_AfterAMove_PersistsIt()
     {
         var layout = Editing();
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropWidget(1, 0);
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal("schedule | links,tasks,notes", Order(_repository.Saved!));
-        Assert.Equal("schedule | links,tasks,notes", Order(new LayoutViewModel(_repository).Layout));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(_repository.Saved!));
+        Assert.Equal("schedule | scripture,tasks,notes", Order(new LayoutViewModel(_repository).Layout));
     }
 
     [Fact]
@@ -210,12 +213,12 @@ public class LayoutDragTests
     {
         var layout = Editing();
         var saves = _repository.SaveCalls;
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropWidget(1, 0);
 
         layout.CancelCommand.Execute(null);
 
-        Assert.Equal("schedule | tasks,notes,links", Order(layout.Layout));
+        Assert.Equal("schedule | tasks,notes,scripture", Order(layout.Layout));
         Assert.Equal(saves, _repository.SaveCalls);
     }
 
@@ -254,7 +257,7 @@ public class LayoutDragTests
 
         Assert.False(main.Layout.IsDraggingWidget);
         Assert.True(main.Layout.IsEditing);
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), main.Layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), main.Layout.Layout.Describe());
 
         main.CloseOverlaysCommand.Execute(null);
 

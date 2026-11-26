@@ -63,7 +63,7 @@ internal static class ClockToolViews
         {
             ClockTool.Clock => Face(main, disposables),
             ClockTool.Timer => Timer(main.ClockTools, host, disposables, out rescale),
-            ClockTool.Stopwatch => Stopwatch(main.ClockTools, out rescale),
+            ClockTool.Stopwatch => Stopwatch(main, disposables, out rescale),
             ClockTool.Alarm => Alarm(main.Alarms, disposables, out rescale),
             _ => new Panel { Name = "ClockEmpty" },
         };
@@ -76,6 +76,8 @@ internal static class ClockToolViews
         disposables.Add(face.Bind(ClockFace.HourAngleProperty, new Binding(nameof(AnalogClockViewModel.HourAngle)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.MinuteAngleProperty, new Binding(nameof(AnalogClockViewModel.MinuteAngle)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.SecondAngleProperty, new Binding(nameof(AnalogClockViewModel.SecondAngle)) { Source = main.AnalogClock }));
+        disposables.Add(face.Bind(ClockFace.Hour24AngleProperty, new Binding(nameof(AnalogClockViewModel.Hour24Angle)) { Source = main.AnalogClock }));
+        disposables.Add(face.Bind(Avalonia.Automation.AutomationProperties.NameProperty, new Binding(nameof(AnalogClockViewModel.Description)) { Source = main.AnalogClock }));
         disposables.Add(face.Bind(ClockFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = main.ClockSettings }));
         return face;
     }
@@ -83,22 +85,34 @@ internal static class ClockToolViews
     private static Control Timer(ClockToolsViewModel tools, Control host, List<IDisposable> disposables, out Action<ClockTypeScale> rescale)
     {
         var text = Display("ClockTimerText");
-        text.Bind(TextBlock.TextProperty, new Binding(nameof(ClockToolsViewModel.TimerText)) { Source = tools });
+        disposables.Add(text.Bind(TextBlock.TextProperty, new Binding(nameof(ClockToolsViewModel.TimerText)) { Source = tools }));
         var start = Primary("ClockTimerStart");
-        start.Bind(ContentControl.ContentProperty, new Binding(nameof(ClockToolsViewModel.TimerButtonText)) { Source = tools });
+        disposables.Add(start.Bind(ContentControl.ContentProperty, new Binding(nameof(ClockToolsViewModel.TimerButtonText)) { Source = tools }));
         start.Click += (_, _) => tools.TimerStartPauseCommand.Execute(null);
         var reset = Secondary("ClockTimerReset", "Reset", () => tools.TimerResetCommand.Execute(null));
 
         var presets = new[]
         {
-            Secondary("ClockTimerAdd1m", "+1m", () => tools.AddTimerSecondsCommand.Execute(60)),
-            Secondary("ClockTimerAdd5m", "+5m", () => tools.AddTimerSecondsCommand.Execute(300)),
-            Secondary("ClockTimerAdd10m", "+10m", () => tools.AddTimerSecondsCommand.Execute(600)),
-            Secondary("ClockTimerClear", "Clear", () => tools.ClearTimerCommand.Execute(null)),
+            Secondary("ClockTimerAdd1m", "+1m", () => tools.AddTimerSecondsCommand.Execute(60), true),
+            Secondary("ClockTimerAdd5m", "+5m", () => tools.AddTimerSecondsCommand.Execute(300), true),
+            Secondary("ClockTimerAdd10m", "+10m", () => tools.AddTimerSecondsCommand.Execute(600), true),
+            Secondary("ClockTimerClear", "Clear", () => tools.ClearTimerCommand.Execute(null), true),
         };
         var setters = Wrap(presets);
-        setters.Bind(Visual.IsVisibleProperty, new Binding(nameof(ClockToolsViewModel.CanSetTimer)) { Source = tools });
         var actions = Wrap(start, reset);
+        var fit = new TimerFit(0, TimerFit.AllPresets, true, true, 0);
+        // The presets are for setting the time, so they show only when it can be set and the slot has room for them.
+        void ShowParts()
+        {
+            setters.IsVisible = tools.CanSetTimer && fit.Presets > 0;
+            for (var i = 0; i < presets.Length; i++)
+            {
+                presets[i].IsVisible = i < fit.Presets;
+            }
+            start.IsVisible = fit.ShowStart;
+            reset.IsVisible = fit.ShowReset;
+            actions.IsVisible = fit.ShowStart || fit.ShowReset;
+        }
 
         // The time takes the accent colour when the timer is done.
         void Recolor() => text.Foreground = Theming.ThemeService.Brush(host, tools.TimerStatus == TimerStatus.Finished ? "AccentBrush" : "TextBrush");
@@ -108,6 +122,10 @@ internal static class ClockToolViews
             {
                 Recolor();
             }
+            if (e.PropertyName == nameof(ClockToolsViewModel.CanSetTimer))
+            {
+                ShowParts();
+            }
         }
         tools.PropertyChanged += OnChanged;
         disposables.Add(new ActionDisposable(() => tools.PropertyChanged -= OnChanged));
@@ -116,13 +134,15 @@ internal static class ClockToolViews
         var stack = Stack(text, setters, actions);
         rescale = s =>
         {
-            text.FontSize = s.Display;
+            fit = ClockTimerLayout.For(s);
+            text.FontSize = fit.Display;
+            ShowParts();
             Fit(stack, s);
             foreach (var button in presets)
             {
                 Fit(button, s, false);
             }
-            Fit(reset, s, false);
+            Fit(reset, s, true);
             Fit(start, s, true);
             Fit(setters, s);
             Fit(actions, s);
@@ -130,32 +150,84 @@ internal static class ClockToolViews
         return Centered("ClockTimerPanel", stack);
     }
 
-    private static Control Stopwatch(ClockToolsViewModel tools, out Action<ClockTypeScale> rescale)
+    private static Control Stopwatch(MainViewModel main, List<IDisposable> disposables, out Action<ClockTypeScale> rescale)
     {
+        var tools = main.ClockTools;
+        var settings = main.ClockSettings;
         var text = Display("ClockStopwatchText");
-        text.Bind(TextBlock.TextProperty, new Binding(nameof(ClockToolsViewModel.StopwatchText)) { Source = tools });
+        disposables.Add(text.Bind(TextBlock.TextProperty, new Binding(nameof(ClockToolsViewModel.StopwatchText)) { Source = tools }));
         var start = Primary("ClockStopwatchStart");
-        start.Bind(ContentControl.ContentProperty, new Binding(nameof(ClockToolsViewModel.StopwatchButtonText)) { Source = tools });
+        disposables.Add(start.Bind(ContentControl.ContentProperty, new Binding(nameof(ClockToolsViewModel.StopwatchButtonText)) { Source = tools }));
         start.Click += (_, _) => tools.StopwatchStartPauseCommand.Execute(null);
         var lap = Secondary("ClockStopwatchLap", "Lap", () => tools.StopwatchLapCommand.Execute(null));
-        lap.Bind(InputElement.IsEnabledProperty, new Binding(nameof(ClockToolsViewModel.StopwatchRunning)) { Source = tools });
+        disposables.Add(lap.Bind(InputElement.IsEnabledProperty, new Binding(nameof(ClockToolsViewModel.StopwatchRunning)) { Source = tools }));
         var reset = Secondary("ClockStopwatchReset", "Reset", () => tools.StopwatchResetCommand.Execute(null));
         var actions = Wrap(start, lap, reset);
         var lapList = new ItemsControl { Name = "ClockLaps", ItemsSource = tools.LapTexts };
         var laps = new ScrollViewer { Content = lapList, HorizontalAlignment = HorizontalAlignment.Center };
 
-        var stack = Stack(text, actions, laps);
+        // The analog face (when the look asks for it and there is room): a dial above the readout. Hidden, it costs nothing.
+        var face = new StopwatchFace { Name = "ClockStopwatchFace", IsHitTestVisible = false, IsVisible = false, ElapsedSource = tools.StopwatchElapsedSeconds, HorizontalAlignment = HorizontalAlignment.Center };
+        disposables.Add(face.Bind(StopwatchFace.StyleProperty, new Binding(nameof(ClockSettingsViewModel.Style)) { Source = settings }));
+        var automation = new Binding(nameof(ClockToolsViewModel.StopwatchText)) { Source = tools, StringFormat = "Stopwatch, {0}" };
+        disposables.Add(face.Bind(Avalonia.Automation.AutomationProperties.NameProperty, automation));
+        disposables.Add(text.Bind(Avalonia.Automation.AutomationProperties.NameProperty, automation));
+        var analogWanted = false;
+        var room = 0.0;
+        ClockTypeScale? lastScale = null;
+        void ShowFace()
+        {
+            face.IsVisible = analogWanted && room > 0;
+            face.Width = face.Height = room;
+            // The readout is smaller beneath a dial; laps only when there is plenty of room.
+            if (lastScale is { } scale)
+            {
+                text.FontSize = face.IsVisible ? scale.AnalogReadout : scale.Display;
+                laps.IsVisible = !scale.Compact && (!face.IsVisible || room >= 160);
+            }
+        }
+        void OnTools(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ClockToolsViewModel.StopwatchRunning))
+            {
+                face.IsRunning = tools.StopwatchRunning;
+            }
+            if (e.PropertyName is nameof(ClockToolsViewModel.StopwatchText) or nameof(ClockToolsViewModel.StopwatchRunning) && face.IsVisible && !tools.StopwatchRunning)
+            {
+                face.InvalidateVisual(); // stopped: draw the time it stopped at, once
+            }
+        }
+        void OnSettings(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ClockSettingsViewModel.Style))
+            {
+                analogWanted = settings.Style.Stopwatch == StopwatchDisplay.Analog;
+                ShowFace();
+            }
+        }
+        tools.PropertyChanged += OnTools;
+        settings.PropertyChanged += OnSettings;
+        disposables.Add(new ActionDisposable(() => { tools.PropertyChanged -= OnTools; settings.PropertyChanged -= OnSettings; }));
+        analogWanted = settings.Style.Stopwatch == StopwatchDisplay.Analog;
+        face.IsRunning = tools.StopwatchRunning;
+
+        var stack = Stack(face, text, actions, laps);
         rescale = s =>
         {
-            text.FontSize = s.Display;
+            room = s.AnalogDial;
+            lastScale = s;
+            ShowFace();
+            text.FontSize = analogWanted && room > 0 ? s.AnalogReadout : s.Display;
             Fit(stack, s);
             Fit(start, s, true);
-            Fit(lap, s, false);
-            Fit(reset, s, false);
+            Fit(lap, s, true);
+            Fit(reset, s, true);
+            start.MinWidth = lap.MinWidth = reset.MinWidth = s.Body * 4; // three actions share one narrower width
             Fit(actions, s);
             lapList.FontSize = s.Caption;
             laps.MaxHeight = s.Caption * 5;
-            laps.IsVisible = !s.Compact; // the lap list needs room; the time and buttons come first
+            // The lap list needs room; the time and buttons come first, then the dial, then the laps.
+            laps.IsVisible = !s.Compact && (!analogWanted || room >= 160);
         };
         return Centered("ClockStopwatchPanel", stack);
     }
@@ -165,15 +237,15 @@ internal static class ClockToolViews
     private static Control Alarm(AlarmsViewModel alarms, List<IDisposable> disposables, out Action<ClockTypeScale> rescale)
     {
         var time = Display("ClockAlarmNextTime");
-        time.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.NextTimeText)) { Source = alarms });
+        disposables.Add(time.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.NextTimeText)) { Source = alarms }));
         var caption = new TextBlock { Name = "ClockAlarmNextCaption", Opacity = 0.7, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
-        caption.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.NextCaption)) { Source = alarms });
+        disposables.Add(caption.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.NextCaption)) { Source = alarms }));
         var toggle = new ToggleSwitch { Name = "ClockAlarmToggle", HorizontalAlignment = HorizontalAlignment.Center, OnContent = null, OffContent = null };
-        toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(AlarmsViewModel.NextEnabled)) { Source = alarms, Mode = BindingMode.TwoWay });
-        toggle.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.HasAlarms)) { Source = alarms });
+        disposables.Add(toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(AlarmsViewModel.NextEnabled)) { Source = alarms, Mode = BindingMode.TwoWay }));
+        disposables.Add(toggle.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.HasAlarms)) { Source = alarms }));
 
         var manage = Secondary("ClockAlarmManage", "Manage", () => alarms.ManageCommand.Execute(null));
-        var editor = new Flyout { Content = AlarmEditor(alarms), Placement = PlacementMode.Bottom };
+        var editor = new Flyout { Content = AlarmEditor(alarms, disposables), Placement = PlacementMode.Bottom };
         manage.Tag = editor; // the flyout it opens
         void OnManaging(object? sender, PropertyChangedEventArgs e)
         {
@@ -203,12 +275,12 @@ internal static class ClockToolViews
 
         var manageRow = Wrap(manage);
         var compact = Stack(time, caption, toggle, manageRow);
-        compact.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.Ringing)) { Source = alarms, Converter = ObjectConverters.IsNull });
+        disposables.Add(compact.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.Ringing)) { Source = alarms, Converter = ObjectConverters.IsNull }));
 
         var ringingTitle = new TextBlock { Name = "ClockAlarmRingingTitle", FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
-        ringingTitle.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.RingingTitle)) { Source = alarms });
+        disposables.Add(ringingTitle.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.RingingTitle)) { Source = alarms }));
         var ringingTime = new TextBlock { Opacity = 0.7, HorizontalAlignment = HorizontalAlignment.Center };
-        ringingTime.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.RingingTime)) { Source = alarms });
+        disposables.Add(ringingTime.Bind(TextBlock.TextProperty, new Binding(nameof(AlarmsViewModel.RingingTime)) { Source = alarms }));
         var dismiss = Primary("ClockAlarmDismiss");
         dismiss.Content = "Dismiss";
         dismiss.Command = alarms.DismissRingingCommand;
@@ -218,7 +290,7 @@ internal static class ClockToolViews
         var ringingButtons = Wrap(dismiss, snooze);
         var ringing = Stack(ringingTitle, ringingTime, ringingButtons);
         ringing.Name = "ClockAlarmRinging";
-        ringing.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.Ringing)) { Source = alarms, Converter = ObjectConverters.IsNotNull });
+        disposables.Add(ringing.Bind(Visual.IsVisibleProperty, new Binding(nameof(AlarmsViewModel.Ringing)) { Source = alarms, Converter = ObjectConverters.IsNotNull }));
 
         var root = new Grid { Name = "ClockAlarmPanel" };
         root.Children.Add(compact);
@@ -243,20 +315,20 @@ internal static class ClockToolViews
 
     // The full list and editor, opened from the compact display: a form to add an alarm (time as HH:MM, a label, the days) over the
     // list, each row with an on/off box and a delete button. It sits in a flyout, so it has room.
-    private static Control AlarmEditor(AlarmsViewModel alarms)
+    private static Control AlarmEditor(AlarmsViewModel alarms, List<IDisposable> disposables)
     {
         var scale = ClockTypeScale.For(ClockTypeScale.Reference, ClockTypeScale.Reference);
-        var time = new TextBox { Name = "ClockAlarmTime", MinWidth = scale.Body * 6, Watermark = "HH:MM", FontSize = scale.Body };
-        time.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewTime)) { Source = alarms, Mode = BindingMode.TwoWay });
-        var label = new TextBox { Name = "ClockAlarmLabel", Watermark = "Label", MinWidth = scale.Body * 8, FontSize = scale.Body, HorizontalAlignment = HorizontalAlignment.Stretch };
-        label.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewLabel)) { Source = alarms, Mode = BindingMode.TwoWay });
+        var time = new TextBox { Name = "ClockAlarmTime", MinWidth = scale.Body * 6, PlaceholderText = "HH:MM", FontSize = scale.Body };
+        disposables.Add(time.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewTime)) { Source = alarms, Mode = BindingMode.TwoWay }));
+        var label = new TextBox { Name = "ClockAlarmLabel", PlaceholderText = "Label", MinWidth = scale.Body * 8, FontSize = scale.Body, HorizontalAlignment = HorizontalAlignment.Stretch };
+        disposables.Add(label.Bind(TextBox.TextProperty, new Binding(nameof(AlarmsViewModel.NewLabel)) { Source = alarms, Mode = BindingMode.TwoWay }));
         var add = new Button { Name = "ClockAlarmAdd", Content = "Add", Command = alarms.AddCommand, FontSize = scale.Body };
 
         var days = new WrapPanel { ItemSpacing = scale.Gap / 2, LineSpacing = scale.Gap / 2 };
         foreach (var day in alarms.Days)
         {
             var toggle = new ToggleButton { Name = "ClockAlarmDay_" + day.Day, Content = day.Title, FontSize = scale.Caption, Padding = new Thickness(scale.Gap, scale.ButtonPadY) };
-            toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(DayToggle.IsOn)) { Source = day, Mode = BindingMode.TwoWay });
+            disposables.Add(toggle.Bind(ToggleButton.IsCheckedProperty, new Binding(nameof(DayToggle.IsOn)) { Source = day, Mode = BindingMode.TwoWay }));
             days.Children.Add(toggle);
         }
 
@@ -300,13 +372,21 @@ internal static class ClockToolViews
         return panel;
     }
 
-    private static TextBlock Display(string name) => new() { Name = name, HorizontalAlignment = HorizontalAlignment.Center };
+    // Digits of equal width, so the time does not shift sideways as it counts.
+    private static TextBlock Display(string name) =>
+        new() { Name = name, HorizontalAlignment = HorizontalAlignment.Center, FontWeight = FontWeight.Light, FontFeatures = FontFeatureCollection.Parse("tnum") };
 
-    private static Button Primary(string name) => new() { Name = name, HorizontalContentAlignment = HorizontalAlignment.Center };
+    private static Button Primary(string name) =>
+        new() { Name = name, Classes = { "clockPrimary" }, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center };
 
-    private static Button Secondary(string name, string text, Action click)
+    // A ghost button acts (Reset, Lap, Manage); a chip (small and dim) sets the time.
+    private static Button Secondary(string name, string text, Action click, bool chip = false)
     {
-        var button = new Button { Name = name, Content = text, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var button = new Button
+        {
+            Name = name, Content = text, Classes = { chip ? "clockChip" : "clockGhost" },
+            HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center,
+        };
         button.Click += (_, _) => click();
         return button;
     }
@@ -326,10 +406,12 @@ internal static class ClockToolViews
         return stack;
     }
 
+    // The tool fills its cell; if its time and buttons are ever taller than a small cell, they shrink evenly to fit rather
+    // than letting Reset or Start fall off the bottom.
     private static Grid Centered(string name, Control content)
     {
         var grid = new Grid { Name = name };
-        grid.Children.Add(content);
+        grid.Children.Add(new ShrinkToFit { Child = content, VerticalAlignment = VerticalAlignment.Center });
         return grid;
     }
 
@@ -349,6 +431,7 @@ internal static class ClockToolViews
     {
         button.FontSize = primary ? s.Body : s.Caption;
         button.Padding = new Thickness(s.ButtonPadX, s.ButtonPadY);
-        button.MinWidth = primary ? s.ButtonMinWidth : 0;
+        // Every button of a kind is the same size: actions share the primary one's width, chips the widest chip's.
+        button.MinWidth = primary ? s.ButtonMinWidth : ClockTimerLayout.ChipWidth(s);
     }
 }

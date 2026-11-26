@@ -23,7 +23,7 @@ public class TaskRepository : ITaskRepository
     public void Add(TaskItem task)
     {
         var entity = task.ToEntity();
-        entity.Position = _context.Tasks.Any() ? _context.Tasks.Max(t => t.Position) + 1 : 0;
+        entity.Position = (_context.Tasks.Max(t => (int?)t.Position) ?? -1) + 1;
 
         _context.Tasks.Add(entity);
         _context.SaveChanges();
@@ -36,6 +36,26 @@ public class TaskRepository : ITaskRepository
 
         entity.Text = task.Text;
         entity.IsDone = task.IsDone;
+        entity.DueDate = task.DueDate;
+        _context.SaveChanges();
+    }
+
+    public void Reorder(IReadOnlyList<Guid> orderedIds)
+    {
+        var entities = _context.Tasks.ToDictionary(t => t.Id);
+        var position = 0;
+        foreach (var id in orderedIds)
+        {
+            if (entities.Remove(id, out var entity))
+            {
+                entity.Position = position++;
+            }
+        }
+        // Anything not listed keeps its relative order after the listed ones.
+        foreach (var entity in entities.Values.OrderBy(t => t.Position))
+        {
+            entity.Position = position++;
+        }
         _context.SaveChanges();
     }
 

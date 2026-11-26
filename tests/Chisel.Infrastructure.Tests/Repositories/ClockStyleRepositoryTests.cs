@@ -38,4 +38,22 @@ public class ClockStyleRepositoryTests : IDisposable
     }
 
     public void Dispose() => _fixture.Dispose();
+
+    [Fact]
+    public void TheDialOptions_RoundTrip_AndAnOldRowReadsAsAPlainDial()
+    {
+        var style = ClockPresets.Apply("chrono", ClockStyle.Default) with { Stopwatch = StopwatchDisplay.Analog };
+        using (var context = _fixture.CreateContext())
+        {
+            new ClockStyleRepository(context).Save(style);
+        }
+
+        using var read = _fixture.CreateContext();
+        var back = new ClockStyleRepository(read).Get();
+        Assert.Equal(style, back);
+        Assert.Equal(DialKind.Chronograph, back.Kind);
+        Assert.Equal("#101216", back.DialFill);
+        Assert.True(back.Tachymeter && back.MinuteTrack);
+        Assert.Equal(StopwatchDisplay.Analog, back.Stopwatch);
+    }
 }

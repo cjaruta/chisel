@@ -74,7 +74,7 @@ public class GroupSplitContactSheetTests
                 var bounds = InWindow(Frame(id), window);
                 return new Point(bounds.Center.X, bounds.Top + bounds.Height * fraction);
             }
-            var bar = InWindow(Frame("links").EditBar, window).Center;
+            var bar = InWindow(Frame("scripture").EditBar, window).Center;
             window.MouseMove(bar);
             window.MouseDown(bar, MouseButton.Left);
             window.MouseMove(new Point(bar.X + 10, bar.Y + 10), RawInputModifiers.LeftMouseButton);

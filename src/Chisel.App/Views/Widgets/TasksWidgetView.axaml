@@ -1,44 +1,138 @@
 <w:WidgetView xmlns="https://github.com/avaloniaui"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
               xmlns:vm="using:Chisel.App.ViewModels"
-              xmlns:conv="using:Chisel.App.Converters"
               xmlns:ctl="using:Chisel.App.Controls"
-              xmlns:convA="using:Avalonia.Data.Converters"
               xmlns:w="using:Chisel.App.Views.Widgets"
               x:Class="Chisel.App.Views.Widgets.TasksWidgetView"
               x:DataType="vm:MainViewModel">
 
-    <w:WidgetView.BodyActions>
-        <Button Content="Clear completed" Command="{Binding Tasks.ClearCompletedCommand}" />
-    </w:WidgetView.BodyActions>
+    <w:WidgetView.Styles>
+        <!-- A row: quiet until hovered or focused, when its actions appear. The 1px border is always there
+             (transparent) so keyboard focus never moves anything. -->
+        <Style Selector="Border.taskRow">
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Focusable" Value="True" />
+        </Style>
+        <Style Selector="Border.taskRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverWashBrush}" />
+        </Style>
+        <Style Selector="Border.taskRow:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+        </Style>
+        <Style Selector="Border.taskRow Button.rowAction">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.taskRow:pointerover Button.rowAction, Border.taskRow:focus-within Button.rowAction">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="TextBlock.taskText">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="20" />
+        </Style>
+        <Style Selector="Button.dueChip">
+            <Setter Property="Padding" Value="8,1" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Foreground" Value="{DynamicResource DimTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.dueChip.overdue">
+            <Setter Property="Foreground" Value="{DynamicResource CheckpointBrush}" />
+        </Style>
+        <Style Selector="Button.doneHeader">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="4,4" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.doneHeader Path#Chevron">
+            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+        </Style>
+        <Style Selector="Button.doneHeader.expanded Path#Chevron">
+            <Setter Property="RenderTransform" Value="rotate(90deg)" />
+        </Style>
+    </w:WidgetView.Styles>
 
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,10,0,0">
-            <TextBox Text="{Binding Tasks.NewTaskText}" PlaceholderText="New task" Width="160">
-                <TextBox.KeyBindings>
-                    <KeyBinding Gesture="Enter" Command="{Binding Tasks.AddTaskCommand}" />
-                </TextBox.KeyBindings>
-            </TextBox>
-            <Button Content="Add" Command="{Binding Tasks.AddTaskCommand}" />
-        </StackPanel>
-        <StackPanel>
-            <TextBlock Classes="empty" Text="No tasks yet"
-                       IsVisible="{Binding Tasks.Tasks.Count, Converter={x:Static conv:IsZeroConverter.Instance}}" />
-            <ItemsControl Name="TaskItemsControl" ItemsSource="{Binding Tasks.Tasks}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                            <CheckBox IsChecked="{Binding IsDone}"
-                                      Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.ToggleCompleteCommand}"
-                                      CommandParameter="{Binding}" />
-                            <TextBlock Text="{Binding Text}" Classes.done="{Binding IsDone}" VerticalAlignment="Center" />
-                            <Button Classes="iconButton" Content="x"
-                                    Command="{Binding #TaskItemsControl.((vm:MainViewModel)DataContext).Tasks.RemoveTaskCommand}"
-                                    CommandParameter="{Binding}" />
+    <w:WidgetView.Resources>
+        <DataTemplate x:Key="TaskRow" x:DataType="vm:TaskRowViewModel">
+            <Border Classes="taskRow" AutomationProperties.Name="{Binding AutomationLabel}"
+                    DoubleTapped="OnRowDoubleTapped" KeyDown="OnRowKeyDown"
+                    PointerPressed="OnRowPressed" PointerMoved="OnRowMoved" PointerReleased="OnRowReleased"
+                    PointerCaptureLost="OnRowCaptureLost">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                    <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}" Command="{Binding ToggleCommand}"
+                              MinWidth="0" Padding="0" VerticalAlignment="Top" Margin="0,1,0,0" AutomationProperties.Name="Done" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="taskText" Classes.done="{Binding IsDone}" Text="{Binding Text}"
+                                   IsVisible="{Binding !IsEditing}" />
+                        <TextBox Name="EditBox" Text="{Binding EditText}" IsVisible="{Binding IsEditing}"
+                                 ctl:FocusWhen.IsTrue="{Binding IsEditing}" AcceptsReturn="False"
+                                 AutomationProperties.Name="Edit task" LostFocus="OnEditLostFocus">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding CommitEditCommand}" />
+                                <KeyBinding Gesture="Escape" Command="{Binding CancelEditCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Classes="dueChip" Classes.overdue="{Binding IsOverdue}" Content="{Binding DueText}"
+                                IsVisible="{Binding HasDue}" Click="OnDueClick" HorizontalAlignment="Left"
+                                AutomationProperties.Name="Change due date" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                        <Button Classes="iconButton rowAction" IsVisible="{Binding !HasDue}" Click="OnDueClick"
+                                ToolTip.Tip="Set a due date" AutomationProperties.Name="Set due date">
+                            <Path Classes="trayIcon" Data="M3,5 H15 V15 H3 Z M3,8 H15 M6,3 V6 M12,3 V6" />
+                        </Button>
+                        <Button Classes="iconButton rowAction" Command="{Binding DeleteCommand}"
+                                ToolTip.Tip="Delete task" AutomationProperties.Name="Delete task">
+                            <Path Classes="trayIcon" Data="M4,4 L14,14 M14,4 L4,14" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </w:WidgetView.Resources>
+
+    <DockPanel Name="TasksRoot" Margin="16,14,16,16">
+        <!-- Always visible, focus stays here for rapid entry -->
+        <TextBox DockPanel.Dock="Top" Name="NewTaskBox" Text="{Binding Tasks.NewTaskText}" PlaceholderText="Add a task…"
+                 Margin="0,0,0,10" AutomationProperties.Name="New task" KeyDown="OnNewTaskKeyDown">
+            <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding Tasks.AddTaskCommand}" />
+            </TextBox.KeyBindings>
+        </TextBox>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Name="EmptyText" Classes="empty" TextWrapping="Wrap" Margin="2,4"
+                           Text="Nothing to do yet. Add your first task above."
+                           IsVisible="{Binding Tasks.IsEmpty}" />
+
+                <Grid>
+                    <ItemsControl Name="OpenItems" ItemsSource="{Binding Tasks.Open}" ItemTemplate="{StaticResource TaskRow}"
+                                  AutomationProperties.Name="Tasks" />
+                    <Border Name="DropLine" Height="2" CornerRadius="1" VerticalAlignment="Top" IsVisible="False"
+                            IsHitTestVisible="False" Background="{DynamicResource AccentBrush}" />
+                </Grid>
+
+                <Grid Name="DoneBar" ColumnDefinitions="*,Auto" Margin="0,10,0,2" IsVisible="{Binding Tasks.HasDone}">
+                    <Button Name="DoneToggle" Classes="doneHeader" Classes.expanded="{Binding Tasks.IsDoneExpanded}"
+                            Command="{Binding Tasks.ToggleDoneExpandedCommand}" AutomationProperties.Name="Completed tasks">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Path Name="Chevron" Classes="trayIcon" Width="10" Height="10" Data="M3,1 L8,6 L3,11" />
+                            <TextBlock Classes="dim" Text="{Binding Tasks.DoneHeader}" VerticalAlignment="Center" />
                         </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                    </Button>
+                    <Button Name="ClearDoneButton" Grid.Column="1" Content="Clear" Command="{Binding Tasks.ClearCompletedCommand}"
+                            ToolTip.Tip="Delete all completed tasks" AutomationProperties.Name="Clear completed tasks" />
+                </Grid>
+                <ItemsControl Name="DoneItems" ItemsSource="{Binding Tasks.Done}" ItemTemplate="{StaticResource TaskRow}"
+                              IsVisible="{Binding Tasks.IsDoneExpanded}" AutomationProperties.Name="Completed tasks" />
+            </StackPanel>
+        </ScrollViewer>
     </DockPanel>
 </w:WidgetView>

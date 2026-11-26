@@ -27,6 +27,8 @@ public class ChiselDbContext : DbContext
 
     public DbSet<HiddenWidgetEntity> HiddenWidgets => Set<HiddenWidgetEntity>();
 
+    public DbSet<LayoutProfileEntity> LayoutProfiles => Set<LayoutProfileEntity>();
+
     public DbSet<PictureAssetEntity> PictureAssets => Set<PictureAssetEntity>();
 
     public DbSet<FramePictureEntity> FramePictures => Set<FramePictureEntity>();
@@ -37,9 +39,18 @@ public class ChiselDbContext : DbContext
 
     public DbSet<WeatherCacheEntity> WeatherCaches => Set<WeatherCacheEntity>();
     public DbSet<ClockStyleEntity> ClockStyles => Set<ClockStyleEntity>();
+    public DbSet<ClockFaceLibraryEntity> ClockFaceLibraries => Set<ClockFaceLibraryEntity>();
     public DbSet<ClockToolsEntity> ClockTools => Set<ClockToolsEntity>();
     public DbSet<AlarmEntity> Alarms => Set<AlarmEntity>();
     public DbSet<CalculatorSettingsEntity> CalculatorSettings => Set<CalculatorSettingsEntity>();
+    public DbSet<ConverterSettingsEntity> ConverterSettings => Set<ConverterSettingsEntity>();
+    public DbSet<ClipboardHistorySettingsEntity> ClipboardHistorySettings => Set<ClipboardHistorySettingsEntity>();
+    public DbSet<SystemSettingsEntity> SystemSettings => Set<SystemSettingsEntity>();
+    public DbSet<CalendarSettingsEntity> CalendarSettings => Set<CalendarSettingsEntity>();
+    public DbSet<SystemMonitorSettingsEntity> SystemMonitorSettings => Set<SystemMonitorSettingsEntity>();
+    public DbSet<CountdownSettingsEntity> CountdownSettings => Set<CountdownSettingsEntity>();
+    public DbSet<FocusTimerEntity> FocusTimer => Set<FocusTimerEntity>();
+    public DbSet<HabitsEntity> Habits => Set<HabitsEntity>();
     public DbSet<NotepadSettingsEntity> NotepadSettings => Set<NotepadSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,6 +76,10 @@ public class ChiselDbContext : DbContext
             .Property(p => p.HeightWeight)
             .HasDefaultValue(1.0);
 
+        // Saved layout profiles are keyed by their slot (1 to 3).
+        modelBuilder.Entity<LayoutProfileEntity>().HasKey(p => p.Slot);
+        modelBuilder.Entity<LayoutProfileEntity>().Property(p => p.Slot).ValueGeneratedNever();
+
         // One row per widget taken off the dashboard.
         modelBuilder.Entity<HiddenWidgetEntity>().HasKey(h => h.WidgetId);
 
@@ -72,6 +87,9 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<PictureAssetEntity>().HasIndex(a => a.Hash).IsUnique();
         modelBuilder.Entity<FramePictureEntity>().HasIndex(p => p.FrameId);
         modelBuilder.Entity<FrameOptionsEntity>().HasKey(o => o.FrameId);
+
+        // Settings saved before the spacing option keep the spacing the app always had.
+        modelBuilder.Entity<UserSettingsEntity>().Property(s => s.WidgetSpacing).HasDefaultValue(Core.Settings.UserSettings.DefaultWidgetSpacing);
 
         // Settings saved before picture frames keep original files and make one slideshow of several pictures.
         modelBuilder.Entity<UserSettingsEntity>().Property(s => s.PictureKeepOriginals).HasDefaultValue(true);
@@ -81,8 +99,17 @@ public class ChiselDbContext : DbContext
         modelBuilder.Entity<WeatherLocationEntity>().Property(w => w.Id).ValueGeneratedNever();
         modelBuilder.Entity<WeatherCacheEntity>().Property(w => w.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockStyleEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<ClockFaceLibraryEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<ClockToolsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<CalculatorSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<ConverterSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<ClipboardHistorySettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<SystemSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
+        modelBuilder.Entity<CalendarSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<SystemMonitorSettingsEntity>().Property(s => s.Id).ValueGeneratedNever();
+        modelBuilder.Entity<CountdownSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<FocusTimerEntity>().Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<HabitsEntity>().Property(c => c.Id).ValueGeneratedNever();
         modelBuilder.Entity<NotepadSettingsEntity>().Property(c => c.Id).ValueGeneratedNever();
     }
 }

@@ -60,6 +60,59 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("CalculatorSettings");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.CalendarSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FirstDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MarkedDays")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ShowWeekNumbers")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CalendarSettings");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClipboardHistorySettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("KeepHistory")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxItems")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxLength")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClipboardHistorySettings");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ClockFaceLibraryEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClockFaceLibraries");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.ClockStyleEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -74,6 +127,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<string>("DialColor")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DialFill")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("EmphasizeQuarters")
                         .HasColumnType("INTEGER");
 
@@ -86,6 +142,9 @@ namespace Chisel.Infrastructure.Migrations
                     b.Property<double>("HourThickness")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("MarkerColor")
                         .HasColumnType("TEXT");
 
@@ -97,6 +156,9 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.Property<double>("MinuteThickness")
                         .HasColumnType("REAL");
+
+                    b.Property<bool>("MinuteTrack")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("NumeralColor")
                         .HasColumnType("TEXT");
@@ -114,6 +176,12 @@ namespace Chisel.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("ShowSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Stopwatch")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Tachymeter")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -152,6 +220,62 @@ namespace Chisel.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ClockTools");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.ConverterSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConverterSettings");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.CountdownSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CountdownSettings");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.FocusTimerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FocusTimer");
                 });
 
             modelBuilder.Entity("Chisel.Infrastructure.Data.FrameOptionsEntity", b =>
@@ -217,6 +341,23 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("FramePictures");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.HabitsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Json")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Habits");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.HiddenWidgetEntity", b =>
                 {
                     b.Property<string>("WidgetId")
@@ -243,6 +384,24 @@ namespace Chisel.Infrastructure.Migrations
                     b.HasKey("Position");
 
                     b.ToTable("LayoutColumns");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.LayoutProfileEntity", b =>
+                {
+                    b.Property<int>("Slot")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LayoutJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Slot");
+
+                    b.ToTable("LayoutProfiles");
                 });
 
             modelBuilder.Entity("Chisel.Infrastructure.Data.MarkerEntity", b =>
@@ -361,6 +520,9 @@ namespace Chisel.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -400,10 +562,52 @@ namespace Chisel.Infrastructure.Migrations
                     b.ToTable("ScheduleBlocks");
                 });
 
+            modelBuilder.Entity("Chisel.Infrastructure.Data.SystemMonitorSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RefreshSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Shown")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemMonitorSettings");
+                });
+
+            modelBuilder.Entity("Chisel.Infrastructure.Data.SystemSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CloseToTray")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hotkey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ShowWelcome")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("StartMinimized")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("Chisel.Infrastructure.Data.TaskEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("DueDate")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDone")
@@ -480,6 +684,11 @@ namespace Chisel.Infrastructure.Migrations
 
                     b.Property<TimeOnly>("WakeTime")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("WidgetSpacing")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(16);
 
                     b.HasKey("Id");
 

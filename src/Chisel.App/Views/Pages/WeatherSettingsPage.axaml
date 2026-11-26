@@ -7,7 +7,7 @@
     <StackPanel Spacing="10">
         <TextBlock Classes="settingsSection" Text="LOCATION" />
         <TextBlock Name="WeatherChosen" Text="{Binding WeatherSettings.ChosenText}" />
-        <AutoCompleteBox Name="WeatherSearchBox" Watermark="Search for a place"
+        <AutoCompleteBox Name="WeatherSearchBox" PlaceholderText="Search for a place"
                          FilterMode="None" MinimumPrefixLength="3" MinimumPopulateDelay="0"
                          MaxDropDownHeight="240"
                          Text="{Binding WeatherSettings.Query}"

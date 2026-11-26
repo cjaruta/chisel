@@ -9,7 +9,7 @@ using Chisel.App.ViewModels;
 
 namespace Chisel.App.Views.Widgets;
 
-// The daily verse widget: a quiet reading card. The verse comes first at a readable size, with the reference and "WEB"
+// The daily verse widget: a quiet reading card. The verse comes first at a readable size, with the reference and "KJV"
 // underneath and two small text actions (Copy, Read in context). The text is never shrunk to fit: when it does not fit
 // the card it is cut with an ellipsis and a "Read more" action opens an expanded view, the full text in a scrolling area
 // that fills the card ("Show less" goes back). A card too short for even one line scrolls everything instead. While the layout is being edited the card is only a drag handle.
@@ -233,7 +233,7 @@ public sealed class ScriptureWidgetView : WidgetView
     // that is not on screen yet has no template to measure.
     private static double FooterHeight(double width) => width >= FooterRowWidth ? 21 : 38;
 
-    // Reference and "WEB" on the left, the actions on the right; in a narrow card the actions go on a second line.
+    // Reference and "KJV" on the left, the actions on the right; in a narrow card the actions go on a second line.
     private Control BuildFooter(double width, bool canExpand, bool expanded)
     {
         var scripture = _scripture!;

@@ -126,7 +126,7 @@ public class LayoutEditModeHeadlessTests
     public void Entering_TakesKeyboardFocusOutOfAWidget()
     {
         var window = Show();
-        var newTask = window.GetVisualDescendants().OfType<TextBox>().Single(t => t.PlaceholderText == "New task");
+        var newTask = window.GetVisualDescendants().OfType<TextBox>().Single(t => t.PlaceholderText == "Add a task…");
         newTask.Focus();
         Dispatcher.UIThread.RunJobs();
         Assert.True(newTask.IsFocused);
@@ -156,15 +156,15 @@ public class LayoutEditModeHeadlessTests
     }
 
     [AvaloniaFact]
-    public void Toolbar_HasLibraryDoneCancelAndReset()
+    public void Toolbar_HasLibraryProfilesDoneCancelAndReset()
     {
-        var window = Show();
+        var window = Show(1400, 760); // wide enough to center the toolbar beside the clock and date
         EnterEditMode(window);
 
         var toolbar = Named<Border>(window, "LayoutToolbar");
         var buttons = toolbar.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Content as string).Where(c => c is not null).ToList();
 
-        Assert.Equal(new[] { "Widget Library", "Reset layout", "Cancel", "Done" }, buttons);
+        Assert.Equal(new[] { "Widget Library", "Profiles", "Reset layout", "Cancel", "Done" }, buttons);
         var bounds = InWindow(toolbar, window);
         Assert.True(Math.Abs(bounds.Center.X - window.ClientSize.Width / 2) < 2, "toolbar is centered");
         Assert.True(bounds.Top < 40, "toolbar is at the top");
@@ -182,7 +182,7 @@ public class LayoutEditModeHeadlessTests
         var toolbar = InWindow(Named<Border>(window, "LayoutToolbar"), window);
         var clock = InWindow(Named<StackPanel>(window, "ClockPanel"), window);
 
-        Assert.True(toolbar.Left >= clock.Right, $"toolbar starts at {toolbar.Left}, the clock and date end at {clock.Right}");
+        Assert.False(toolbar.Intersects(clock), $"toolbar {toolbar} covers the clock and date {clock}");
         window.Close();
     }
 
@@ -213,16 +213,17 @@ public class LayoutEditModeHeadlessTests
     public void InEditMode_ListButtonsAndHeaderButtonsDoNothing()
     {
         var window = Show();
-        var tasksBefore = ViewModel(window).Tasks.Tasks.Count;
+        var doneBefore = ViewModel(window).Tasks.Done.Count;
+        Assert.True(doneBefore > 0);
         EnterEditMode(window);
 
         var add = Named<Button>(window, "AddBlockButton");
         ClickControl(window, add);
         Assert.False(Named<Border>(window, "BlockEditorPanel").IsVisible);
 
-        var clear = window.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == "Clear completed");
+        var clear = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "ClearDoneButton");
         ClickControl(window, clear);
-        Assert.Equal(tasksBefore, ViewModel(window).Tasks.Tasks.Count);
+        Assert.Equal(doneBefore, ViewModel(window).Tasks.Done.Count);
         window.Close();
     }
 

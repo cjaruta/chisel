@@ -13,10 +13,10 @@ public class ClockStyleTests
     }
 
     [Fact]
-    public void Presets_AreTheSixNamedLooks_WithUniqueIds()
+    public void Presets_AreTheTwelveNamedLooks_WithUniqueIds()
     {
         var ids = ClockPresets.All.Select(p => p.Id).ToList();
-        Assert.Equal(["minimal", "roman", "numbers", "ticks", "modern", "dots"], ids);
+        Assert.Equal(["minimal", "roman", "numbers", "ticks", "modern", "dots", "classic", "slim", "chrono", "hours24", "railway", "pilot"], ids);
         Assert.Equal(ids.Count, ids.Distinct().Count());
     }
 

@@ -1,0 +1,1278 @@
+{
+ "source": {
+  "name": "King James Version",
+  "abbreviation": "KJV",
+  "edition": "King James Version (Authorized Version), 1769 Oxford standard text",
+  "publicDomain": true,
+  "license": "Public domain in the United States. In the United Kingdom the text is subject to the Crown letters patent (the Crown holds the right to print it there).",
+  "origin": "https://github.com/midvash/bible-data/tree/main/versions/en/kjv (public domain, 1769); every bundled verse cross-checked against https://github.com/aruljohn/Bible-kjv",
+  "file": "kjv.json (midvash/bible-data)",
+  "chapterBaseUrl": "https://ebible.org/kjv/"
+ },
+ "passages": [
+  {
+   "book": "GEN",
+   "name": "Genesis",
+   "chapter": 1,
+   "first": 1,
+   "last": 5,
+   "text": "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness. And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day."
+  },
+  {
+   "book": "GEN",
+   "name": "Genesis",
+   "chapter": 1,
+   "first": 27,
+   "last": 28,
+   "text": "So God created man in his own image, in the image of God created he him; male and female created he them. And God blessed them, and God said unto them, Be fruitful, and multiply, and replenish the earth, and subdue it: and have dominion over the fish of the sea, and over the fowl of the air, and over every living thing that moveth upon the earth."
+  },
+  {
+   "book": "GEN",
+   "name": "Genesis",
+   "chapter": 2,
+   "first": 2,
+   "last": 3,
+   "text": "And on the seventh day God ended his work which he had made; and he rested on the seventh day from all his work which he had made. And God blessed the seventh day, and sanctified it: because that in it he had rested from all his work which God created and made."
+  },
+  {
+   "book": "GEN",
+   "name": "Genesis",
+   "chapter": 28,
+   "first": 15,
+   "last": 15,
+   "text": "And, behold, I am with thee, and will keep thee in all places whither thou goest, and will bring thee again into this land; for I will not leave thee, until I have done that which I have spoken to thee of."
+  },
+  {
+   "book": "GEN",
+   "name": "Genesis",
+   "chapter": 50,
+   "first": 20,
+   "last": 20,
+   "text": "But as for you, ye thought evil against me; but God meant it unto good, to bring to pass, as it is this day, to save much people alive."
+  },
+  {
+   "book": "EXO",
+   "name": "Exodus",
+   "chapter": 14,
+   "first": 14,
+   "last": 14,
+   "text": "The LORD shall fight for you, and ye shall hold your peace."
+  },
+  {
+   "book": "EXO",
+   "name": "Exodus",
+   "chapter": 15,
+   "first": 2,
+   "last": 2,
+   "text": "The LORD is my strength and song, and he is become my salvation: he is my God, and I will prepare him an habitation; my father’s God, and I will exalt him."
+  },
+  {
+   "book": "EXO",
+   "name": "Exodus",
+   "chapter": 20,
+   "first": 8,
+   "last": 11,
+   "text": "Remember the sabbath day, to keep it holy. Six days shalt thou labour, and do all thy work: But the seventh day is the sabbath of the LORD thy God: in it thou shalt not do any work, thou, nor thy son, nor thy daughter, thy manservant, nor thy maidservant, nor thy cattle, nor thy stranger that is within thy gates: For in six days the LORD made heaven and earth, the sea, and all that in them is, and rested the seventh day: wherefore the LORD blessed the sabbath day, and hallowed it."
+  },
+  {
+   "book": "EXO",
+   "name": "Exodus",
+   "chapter": 33,
+   "first": 14,
+   "last": 14,
+   "text": "And he said, My presence shall go with thee, and I will give thee rest."
+  },
+  {
+   "book": "NUM",
+   "name": "Numbers",
+   "chapter": 6,
+   "first": 24,
+   "last": 26,
+   "text": "The LORD bless thee, and keep thee: The LORD make his face shine upon thee, and be gracious unto thee: The LORD lift up his countenance upon thee, and give thee peace."
+  },
+  {
+   "book": "DEU",
+   "name": "Deuteronomy",
+   "chapter": 6,
+   "first": 4,
+   "last": 7,
+   "text": "Hear, O Israel: The LORD our God is one LORD: And thou shalt love the LORD thy God with all thine heart, and with all thy soul, and with all thy might. And these words, which I command thee this day, shall be in thine heart: And thou shalt teach them diligently unto thy children, and shalt talk of them when thou sittest in thine house, and when thou walkest by the way, and when thou liest down, and when thou risest up."
+  },
+  {
+   "book": "DEU",
+   "name": "Deuteronomy",
+   "chapter": 31,
+   "first": 6,
+   "last": 6,
+   "text": "Be strong and of a good courage, fear not, nor be afraid of them: for the LORD thy God, he it is that doth go with thee; he will not fail thee, nor forsake thee."
+  },
+  {
+   "book": "DEU",
+   "name": "Deuteronomy",
+   "chapter": 31,
+   "first": 8,
+   "last": 8,
+   "text": "And the LORD, he it is that doth go before thee; he will be with thee, he will not fail thee, neither forsake thee: fear not, neither be dismayed."
+  },
+  {
+   "book": "JOS",
+   "name": "Joshua",
+   "chapter": 1,
+   "first": 9,
+   "last": 9,
+   "text": "Have not I commanded thee? Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest."
+  },
+  {
+   "book": "JOS",
+   "name": "Joshua",
+   "chapter": 24,
+   "first": 15,
+   "last": 15,
+   "text": "And if it seem evil unto you to serve the LORD, choose you this day whom ye will serve; whether the gods which your fathers served that were on the other side of the flood, or the gods of the Amorites, in whose land ye dwell: but as for me and my house, we will serve the LORD."
+  },
+  {
+   "book": "RUT",
+   "name": "Ruth",
+   "chapter": 1,
+   "first": 16,
+   "last": 16,
+   "text": "And Ruth said, Intreat me not to leave thee, or to return from following after thee: for whither thou goest, I will go; and where thou lodgest, I will lodge: thy people shall be my people, and thy God my God:"
+  },
+  {
+   "book": "1SA",
+   "name": "1 Samuel",
+   "chapter": 16,
+   "first": 7,
+   "last": 7,
+   "text": "But the LORD said unto Samuel, Look not on his countenance, or on the height of his stature; because I have refused him: for the LORD seeth not as man seeth; for man looketh on the outward appearance, but the LORD looketh on the heart."
+  },
+  {
+   "book": "2SA",
+   "name": "2 Samuel",
+   "chapter": 22,
+   "first": 31,
+   "last": 31,
+   "text": "As for God, his way is perfect; the word of the LORD is tried: he is a buckler to all them that trust in him."
+  },
+  {
+   "book": "1CH",
+   "name": "1 Chronicles",
+   "chapter": 16,
+   "first": 34,
+   "last": 34,
+   "text": "O give thanks unto the LORD; for he is good; for his mercy endureth for ever."
+  },
+  {
+   "book": "2CH",
+   "name": "2 Chronicles",
+   "chapter": 7,
+   "first": 14,
+   "last": 14,
+   "text": "If my people, which are called by my name, shall humble themselves, and pray, and seek my face, and turn from their wicked ways; then will I hear from heaven, and will forgive their sin, and will heal their land."
+  },
+  {
+   "book": "NEH",
+   "name": "Nehemiah",
+   "chapter": 8,
+   "first": 10,
+   "last": 10,
+   "text": "Then he said unto them, Go your way, eat the fat, and drink the sweet, and send portions unto them for whom nothing is prepared: for this day is holy unto our Lord: neither be ye sorry; for the joy of the LORD is your strength."
+  },
+  {
+   "book": "JOB",
+   "name": "Job",
+   "chapter": 19,
+   "first": 25,
+   "last": 25,
+   "text": "For I know that my redeemer liveth, and that he shall stand at the latter day upon the earth:"
+  },
+  {
+   "book": "JOB",
+   "name": "Job",
+   "chapter": 42,
+   "first": 2,
+   "last": 2,
+   "text": "I know that thou canst do every thing, and that no thought can be withholden from thee."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 1,
+   "first": 1,
+   "last": 3,
+   "text": "Blessed is the man that walketh not in the counsel of the ungodly, nor standeth in the way of sinners, nor sitteth in the seat of the scornful. But his delight is in the law of the LORD; and in his law doth he meditate day and night. And he shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season; his leaf also shall not wither; and whatsoever he doeth shall prosper."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 4,
+   "first": 8,
+   "last": 8,
+   "text": "I will both lay me down in peace, and sleep: for thou, LORD, only makest me dwell in safety."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 16,
+   "first": 11,
+   "last": 11,
+   "text": "Thou wilt shew me the path of life: in thy presence is fulness of joy; at thy right hand there are pleasures for evermore."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 19,
+   "first": 1,
+   "last": 4,
+   "text": "The heavens declare the glory of God; and the firmament sheweth his handywork. Day unto day uttereth speech, and night unto night sheweth knowledge. There is no speech nor language, where their voice is not heard. Their line is gone out through all the earth, and their words to the end of the world. In them hath he set a tabernacle for the sun,"
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 19,
+   "first": 14,
+   "last": 14,
+   "text": "Let the words of my mouth, and the meditation of my heart, be acceptable in thy sight, O LORD, my strength, and my redeemer."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 23,
+   "first": 1,
+   "last": 6,
+   "text": "The LORD is my shepherd; I shall not want. He maketh me to lie down in green pastures: he leadeth me beside the still waters. He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake. Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me. Thou preparest a table before me in the presence of mine enemies: thou anointest my head with oil; my cup runneth over. Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the LORD for ever."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 27,
+   "first": 1,
+   "last": 1,
+   "text": "The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?"
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 27,
+   "first": 14,
+   "last": 14,
+   "text": "Wait on the LORD: be of good courage, and he shall strengthen thine heart: wait, I say, on the LORD."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 28,
+   "first": 7,
+   "last": 7,
+   "text": "The LORD is my strength and my shield; my heart trusted in him, and I am helped: therefore my heart greatly rejoiceth; and with my song will I praise him."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 30,
+   "first": 5,
+   "last": 5,
+   "text": "For his anger endureth but a moment; in his favour is life: weeping may endure for a night, but joy cometh in the morning."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 34,
+   "first": 8,
+   "last": 8,
+   "text": "O taste and see that the LORD is good: blessed is the man that trusteth in him."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 37,
+   "first": 4,
+   "last": 5,
+   "text": "Delight thyself also in the LORD: and he shall give thee the desires of thine heart. Commit thy way unto the LORD; trust also in him; and he shall bring it to pass."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 42,
+   "first": 1,
+   "last": 2,
+   "text": "As the hart panteth after the water brooks, so panteth my soul after thee, O God. My soul thirsteth for God, for the living God: when shall I come and appear before God?"
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 46,
+   "first": 1,
+   "last": 3,
+   "text": "God is our refuge and strength, a very present help in trouble. Therefore will not we fear, though the earth be removed, and though the mountains be carried into the midst of the sea; Though the waters thereof roar and be troubled, though the mountains shake with the swelling thereof. Selah."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 46,
+   "first": 10,
+   "last": 10,
+   "text": "Be still, and know that I am God: I will be exalted among the heathen, I will be exalted in the earth."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 51,
+   "first": 10,
+   "last": 10,
+   "text": "Create in me a clean heart, O God; and renew a right spirit within me."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 55,
+   "first": 22,
+   "last": 22,
+   "text": "Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 62,
+   "first": 1,
+   "last": 2,
+   "text": "Truly my soul waiteth upon God: from him cometh my salvation. He only is my rock and my salvation; he is my defence; I shall not be greatly moved."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 90,
+   "first": 12,
+   "last": 12,
+   "text": "So teach us to number our days, that we may apply our hearts unto wisdom."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 91,
+   "first": 1,
+   "last": 2,
+   "text": "He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty. I will say of the LORD, He is my refuge and my fortress: my God; in him will I trust."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 100,
+   "first": 1,
+   "last": 5,
+   "text": "Make a joyful noise unto the LORD, all ye lands. Serve the LORD with gladness: come before his presence with singing. Know ye that the LORD he is God: it is he that hath made us, and not we ourselves; we are his people, and the sheep of his pasture. Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name. For the LORD is good; his mercy is everlasting; and his truth endureth to all generations."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 103,
+   "first": 1,
+   "last": 5,
+   "text": "Bless the LORD, O my soul: and all that is within me, bless his holy name. Bless the LORD, O my soul, and forget not all his benefits: Who forgiveth all thine iniquities; who healeth all thy diseases; Who redeemeth thy life from destruction; who crowneth thee with lovingkindness and tender mercies; Who satisfieth thy mouth with good things; so that thy youth is renewed like the eagle's."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 118,
+   "first": 24,
+   "last": 24,
+   "text": "This is the day which the LORD hath made; we will rejoice and be glad in it."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 119,
+   "first": 105,
+   "last": 105,
+   "text": "Thy word is a lamp unto my feet, and a light unto my path."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 121,
+   "first": 1,
+   "last": 8,
+   "text": "I will lift up mine eyes unto the hills, from whence cometh my help. My help cometh from the LORD, which made heaven and earth. He will not suffer thy foot to be moved: he that keepeth thee will not slumber. Behold, he that keepeth Israel shall neither slumber nor sleep. The LORD is thy keeper: the LORD is thy shade upon thy right hand. The sun shall not smite thee by day, nor the moon by night. The LORD shall preserve thee from all evil: he shall preserve thy soul. The LORD shall preserve thy going out and thy coming in from this time forth, and even for evermore."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 126,
+   "first": 5,
+   "last": 6,
+   "text": "They that sow in tears shall reap in joy. He that goeth forth and weepeth, bearing precious seed, shall doubtless come again with rejoicing, bringing his sheaves with him."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 127,
+   "first": 1,
+   "last": 1,
+   "text": "Except the LORD build the house, they labour in vain that build it: except the LORD keep the city, the watchman waketh but in vain."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 133,
+   "first": 1,
+   "last": 1,
+   "text": "Behold, how good and how pleasant it is for brethren to dwell together in unity!"
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 139,
+   "first": 1,
+   "last": 4,
+   "text": "O LORD, thou hast searched me, and known me. Thou knowest my downsitting and mine uprising, thou understandest my thought afar off. Thou compassest my path and my lying down, and art acquainted with all my ways. For there is not a word in my tongue, but, lo, O LORD, thou knowest it altogether."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 139,
+   "first": 13,
+   "last": 14,
+   "text": "For thou hast possessed my reins: thou hast covered me in my mother's womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 143,
+   "first": 8,
+   "last": 8,
+   "text": "Cause me to hear thy lovingkindness in the morning; for in thee do I trust: cause me to know the way wherein I should walk; for I lift up my soul unto thee."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 145,
+   "first": 8,
+   "last": 9,
+   "text": "The LORD is gracious, and full of compassion; slow to anger, and of great mercy. The LORD is good to all: and his tender mercies are over all his works."
+  },
+  {
+   "book": "PSA",
+   "name": "Psalm",
+   "chapter": 147,
+   "first": 3,
+   "last": 4,
+   "text": "He healeth the broken in heart, and bindeth up their wounds. He telleth the number of the stars; he calleth them all by their names."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 3,
+   "first": 5,
+   "last": 6,
+   "text": "Trust in the LORD with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 4,
+   "first": 23,
+   "last": 23,
+   "text": "Keep thy heart with all diligence; for out of it are the issues of life."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 10,
+   "first": 12,
+   "last": 12,
+   "text": "Hatred stirreth up strifes: but love covereth all sins."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 11,
+   "first": 25,
+   "last": 25,
+   "text": "The liberal soul shall be made fat: and he that watereth shall be watered also himself."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 15,
+   "first": 1,
+   "last": 1,
+   "text": "A soft answer turneth away wrath: but grievous words stir up anger."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 16,
+   "first": 3,
+   "last": 3,
+   "text": "Commit thy works unto the LORD, and thy thoughts shall be established."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 16,
+   "first": 9,
+   "last": 9,
+   "text": "A man’s heart deviseth his way: but the LORD directeth his steps."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 17,
+   "first": 17,
+   "last": 17,
+   "text": "A friend loveth at all times, and a brother is born for adversity."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 18,
+   "first": 10,
+   "last": 10,
+   "text": "The name of the LORD is a strong tower: the righteous runneth into it, and is safe."
+  },
+  {
+   "book": "PRO",
+   "name": "Proverbs",
+   "chapter": 27,
+   "first": 17,
+   "last": 17,
+   "text": "Iron sharpeneth iron; so a man sharpeneth the countenance of his friend."
+  },
+  {
+   "book": "ECC",
+   "name": "Ecclesiastes",
+   "chapter": 3,
+   "first": 1,
+   "last": 8,
+   "text": "To every thing there is a season, and a time to every purpose under the heaven: A time to be born, and a time to die; a time to plant, and a time to pluck up that which is planted; A time to kill, and a time to heal; a time to break down, and a time to build up; A time to weep, and a time to laugh; a time to mourn, and a time to dance; A time to cast away stones, and a time to gather stones together; a time to embrace, and a time to refrain from embracing; A time to get, and a time to lose; a time to keep, and a time to cast away; A time to rend, and a time to sew; a time to keep silence, and a time to speak; A time to love, and a time to hate; a time of war, and a time of peace."
+  },
+  {
+   "book": "ECC",
+   "name": "Ecclesiastes",
+   "chapter": 4,
+   "first": 9,
+   "last": 10,
+   "text": "Two are better than one; because they have a good reward for their labour. For if they fall, the one will lift up his fellow: but woe to him that is alone when he falleth; for he hath not another to help him up."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 6,
+   "first": 8,
+   "last": 8,
+   "text": "Also I heard the voice of the Lord, saying, Whom shall I send, and who will go for us? Then said I, Here am I; send me."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 26,
+   "first": 3,
+   "last": 3,
+   "text": "Thou wilt keep him in perfect peace, whose mind is stayed on thee: because he trusteth in thee."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 40,
+   "first": 28,
+   "last": 31,
+   "text": "Hast thou not known? hast thou not heard, that the everlasting God, the LORD, the Creator of the ends of the earth, fainteth not, neither is weary? there is no searching of his understanding. He giveth power to the faint; and to them that have no might he increaseth strength. Even the youths shall faint and be weary, and the young men shall utterly fall: But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 41,
+   "first": 10,
+   "last": 10,
+   "text": "Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 43,
+   "first": 1,
+   "last": 2,
+   "text": "But now thus saith the LORD that created thee, O Jacob, and he that formed thee, O Israel, Fear not: for I have redeemed thee, I have called thee by thy name; thou art mine. When thou passest through the waters, I will be with thee; and through the rivers, they shall not overflow thee: when thou walkest through the fire, thou shalt not be burned; neither shall the flame kindle upon thee."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 55,
+   "first": 8,
+   "last": 9,
+   "text": "For my thoughts are not your thoughts, neither are your ways my ways, saith the LORD. For as the heavens are higher than the earth, so are my ways higher than your ways, and my thoughts than your thoughts."
+  },
+  {
+   "book": "ISA",
+   "name": "Isaiah",
+   "chapter": 53,
+   "first": 5,
+   "last": 5,
+   "text": "But he was wounded for our transgressions, he was bruised for our iniquities: the chastisement of our peace was upon him; and with his stripes we are healed."
+  },
+  {
+   "book": "JER",
+   "name": "Jeremiah",
+   "chapter": 17,
+   "first": 7,
+   "last": 8,
+   "text": "Blessed is the man that trusteth in the LORD, and whose hope the LORD is. For he shall be as a tree planted by the waters, and that spreadeth out her roots by the river, and shall not see when heat cometh, but her leaf shall be green; and shall not be careful in the year of drought, neither shall cease from yielding fruit."
+  },
+  {
+   "book": "JER",
+   "name": "Jeremiah",
+   "chapter": 29,
+   "first": 11,
+   "last": 13,
+   "text": "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end. Then shall ye call upon me, and ye shall go and pray unto me, and I will hearken unto you. And ye shall seek me, and find me, when ye shall search for me with all your heart."
+  },
+  {
+   "book": "LAM",
+   "name": "Lamentations",
+   "chapter": 3,
+   "first": 22,
+   "last": 23,
+   "text": "It is of the LORD's mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness."
+  },
+  {
+   "book": "EZK",
+   "name": "Ezekiel",
+   "chapter": 36,
+   "first": 26,
+   "last": 26,
+   "text": "A new heart also will I give you, and a new spirit will I put within you: and I will take away the stony heart out of your flesh, and I will give you an heart of flesh."
+  },
+  {
+   "book": "MIC",
+   "name": "Micah",
+   "chapter": 6,
+   "first": 8,
+   "last": 8,
+   "text": "He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?"
+  },
+  {
+   "book": "HAB",
+   "name": "Habakkuk",
+   "chapter": 3,
+   "first": 17,
+   "last": 19,
+   "text": "Although the fig tree shall not blossom, neither shall fruit be in the vines; the labour of the olive shall fail, and the fields shall yield no meat; the flock shall be cut off from the fold, and there shall be no herd in the stalls: Yet I will rejoice in the LORD, I will joy in the God of my salvation. The LORD God is my strength, and he will make my feet like hinds’ feet, and he will make me to walk upon mine high places. To the chief singer on my stringed instruments."
+  },
+  {
+   "book": "ZEP",
+   "name": "Zephaniah",
+   "chapter": 3,
+   "first": 17,
+   "last": 17,
+   "text": "The LORD thy God in the midst of thee is mighty; he will save, he will rejoice over thee with joy; he will rest in his love, he will joy over thee with singing."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 5,
+   "first": 3,
+   "last": 10,
+   "text": "Blessed are the poor in spirit: for theirs is the kingdom of heaven. Blessed are they that mourn: for they shall be comforted. Blessed are the meek: for they shall inherit the earth. Blessed are they which do hunger and thirst after righteousness: for they shall be filled. Blessed are the merciful: for they shall obtain mercy. Blessed are the pure in heart: for they shall see God. Blessed are the peacemakers: for they shall be called the children of God. Blessed are they which are persecuted for righteousness' sake: for theirs is the kingdom of heaven."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 5,
+   "first": 14,
+   "last": 16,
+   "text": "Ye are the light of the world. A city that is set on an hill cannot be hid. Neither do men light a candle, and put it under a bushel, but on a candlestick; and it giveth light unto all that are in the house. Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 6,
+   "first": 25,
+   "last": 27,
+   "text": "Therefore I say unto you, Take no thought for your life, what ye shall eat, or what ye shall drink; nor yet for your body, what ye shall put on. Is not the life more than meat, and the body than raiment? Behold the fowls of the air: for they sow not, neither do they reap, nor gather into barns; yet your heavenly Father feedeth them. Are ye not much better than they? Which of you by taking thought can add one cubit unto his stature?"
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 6,
+   "first": 33,
+   "last": 34,
+   "text": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you. Take therefore no thought for the morrow: for the morrow shall take thought for the things of itself. Sufficient unto the day is the evil thereof."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 7,
+   "first": 7,
+   "last": 8,
+   "text": "Ask, and it shall be given you; seek, and ye shall find; knock, and it shall be opened unto you: For every one that asketh receiveth; and he that seeketh findeth; and to him that knocketh it shall be opened."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 11,
+   "first": 28,
+   "last": 30,
+   "text": "Come unto me, all ye that labour and are heavy laden, and I will give you rest. Take my yoke upon you, and learn of me; for I am meek and lowly in heart: and ye shall find rest unto your souls. For my yoke is easy, and my burden is light."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 22,
+   "first": 37,
+   "last": 39,
+   "text": "Jesus said unto him, Thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind. This is the first and great commandment. And the second is like unto it, Thou shalt love thy neighbour as thyself."
+  },
+  {
+   "book": "MAT",
+   "name": "Matthew",
+   "chapter": 28,
+   "first": 19,
+   "last": 20,
+   "text": "Go ye therefore, and teach all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost: Teaching them to observe all things whatsoever I have commanded you: and, lo, I am with you alway, even unto the end of the world. Amen."
+  },
+  {
+   "book": "MRK",
+   "name": "Mark",
+   "chapter": 10,
+   "first": 27,
+   "last": 27,
+   "text": "And Jesus looking upon them saith, With men it is impossible, but not with God: for with God all things are possible."
+  },
+  {
+   "book": "MRK",
+   "name": "Mark",
+   "chapter": 12,
+   "first": 30,
+   "last": 31,
+   "text": "And thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind, and with all thy strength: this is the first commandment. And the second is like, namely this, Thou shalt love thy neighbour as thyself. There is none other commandment greater than these."
+  },
+  {
+   "book": "LUK",
+   "name": "Luke",
+   "chapter": 6,
+   "first": 31,
+   "last": 31,
+   "text": "And as ye would that men should do to you, do ye also to them likewise."
+  },
+  {
+   "book": "LUK",
+   "name": "Luke",
+   "chapter": 6,
+   "first": 36,
+   "last": 37,
+   "text": "Be ye therefore merciful, as your Father also is merciful. Judge not, and ye shall not be judged: condemn not, and ye shall not be condemned: forgive, and ye shall be forgiven:"
+  },
+  {
+   "book": "LUK",
+   "name": "Luke",
+   "chapter": 12,
+   "first": 6,
+   "last": 7,
+   "text": "Are not five sparrows sold for two farthings, and not one of them is forgotten before God? But even the very hairs of your head are all numbered. Fear not therefore: ye are of more value than many sparrows."
+  },
+  {
+   "book": "LUK",
+   "name": "Luke",
+   "chapter": 15,
+   "first": 20,
+   "last": 20,
+   "text": "And he arose, and came to his father. But when he was yet a great way off, his father saw him, and had compassion, and ran, and fell on his neck, and kissed him."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 1,
+   "first": 1,
+   "last": 5,
+   "text": "In the beginning was the Word, and the Word was with God, and the Word was God. The same was in the beginning with God. All things were made by him; and without him was not any thing made that was made. In him was life; and the life was the light of men. And the light shineth in darkness; and the darkness comprehended it not."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 1,
+   "first": 14,
+   "last": 14,
+   "text": "And the Word was made flesh, and dwelt among us, (and we beheld his glory, the glory as of the only begotten of the Father,) full of grace and truth."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 3,
+   "first": 16,
+   "last": 17,
+   "text": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. For God sent not his Son into the world to condemn the world; but that the world through him might be saved."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 8,
+   "first": 12,
+   "last": 12,
+   "text": "Then spake Jesus again unto them, saying, I am the light of the world: he that followeth me shall not walk in darkness, but shall have the light of life."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 10,
+   "first": 10,
+   "last": 11,
+   "text": "The thief cometh not, but for to steal, and to kill, and to destroy: I am come that they might have life, and that they might have it more abundantly. I am the good shepherd: the good shepherd giveth his life for the sheep."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 13,
+   "first": 34,
+   "last": 35,
+   "text": "A new commandment I give unto you, That ye love one another; as I have loved you, that ye also love one another. By this shall all men know that ye are my disciples, if ye have love one to another."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 14,
+   "first": 1,
+   "last": 3,
+   "text": "Let not your heart be troubled: ye believe in God, believe also in me. In my Father's house are many mansions: if it were not so, I would have told you. I go to prepare a place for you. And if I go and prepare a place for you, I will come again, and receive you unto myself; that where I am, there ye may be also."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 14,
+   "first": 6,
+   "last": 6,
+   "text": "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 14,
+   "first": 27,
+   "last": 27,
+   "text": "Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 15,
+   "first": 5,
+   "last": 5,
+   "text": "I am the vine, ye are the branches: He that abideth in me, and I in him, the same bringeth forth much fruit: for without me ye can do nothing."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 15,
+   "first": 12,
+   "last": 13,
+   "text": "This is my commandment, That ye love one another, as I have loved you. Greater love hath no man than this, that a man lay down his life for his friends."
+  },
+  {
+   "book": "JHN",
+   "name": "John",
+   "chapter": 16,
+   "first": 33,
+   "last": 33,
+   "text": "These things I have spoken unto you, that in me ye might have peace. In the world ye shall have tribulation: but be of good cheer; I have overcome the world."
+  },
+  {
+   "book": "ACT",
+   "name": "Acts",
+   "chapter": 1,
+   "first": 8,
+   "last": 8,
+   "text": "But ye shall receive power, after that the Holy Ghost is come upon you: and ye shall be witnesses unto me both in Jerusalem, and in all Judaea, and in Samaria, and unto the uttermost part of the earth."
+  },
+  {
+   "book": "ACT",
+   "name": "Acts",
+   "chapter": 20,
+   "first": 35,
+   "last": 35,
+   "text": "I have shewed you all things, how that so labouring ye ought to support the weak, and to remember the words of the Lord Jesus, how he said, It is more blessed to give than to receive."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 5,
+   "first": 1,
+   "last": 5,
+   "text": "Therefore being justified by faith, we have peace with God through our Lord Jesus Christ: By whom also we have access by faith into this grace wherein we stand, and rejoice in hope of the glory of God. And not only so, but we glory in tribulations also: knowing that tribulation worketh patience; And patience, experience; and experience, hope: And hope maketh not ashamed; because the love of God is shed abroad in our hearts by the Holy Ghost which is given unto us."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 5,
+   "first": 8,
+   "last": 8,
+   "text": "But God commendeth his love toward us, in that, while we were yet sinners, Christ died for us."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 8,
+   "first": 1,
+   "last": 1,
+   "text": "There is therefore now no condemnation to them which are in Christ Jesus, who walk not after the flesh, but after the Spirit."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 8,
+   "first": 28,
+   "last": 28,
+   "text": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 8,
+   "first": 35,
+   "last": 39,
+   "text": "Who shall separate us from the love of Christ? shall tribulation, or distress, or persecution, or famine, or nakedness, or peril, or sword? As it is written, For thy sake we are killed all the day long; we are accounted as sheep for the slaughter. Nay, in all these things we are more than conquerors through him that loved us. For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come, Nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 12,
+   "first": 2,
+   "last": 2,
+   "text": "And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 12,
+   "first": 9,
+   "last": 18,
+   "text": "Let love be without dissimulation. Abhor that which is evil; cleave to that which is good. Be kindly affectioned one to another with brotherly love; in honour preferring one another; Not slothful in business; fervent in spirit; serving the Lord; Rejoicing in hope; patient in tribulation; continuing instant in prayer; Distributing to the necessity of saints; given to hospitality. Bless them which persecute you: bless, and curse not. Rejoice with them that do rejoice, and weep with them that weep. Be of the same mind one toward another. Mind not high things, but condescend to men of low estate. Be not wise in your own conceits. Recompense to no man evil for evil. Provide things honest in the sight of all men. If it be possible, as much as lieth in you, live peaceably with all men."
+  },
+  {
+   "book": "ROM",
+   "name": "Romans",
+   "chapter": 15,
+   "first": 13,
+   "last": 13,
+   "text": "Now the God of hope fill you with all joy and peace in believing, that ye may abound in hope, through the power of the Holy Ghost."
+  },
+  {
+   "book": "1CO",
+   "name": "1 Corinthians",
+   "chapter": 10,
+   "first": 13,
+   "last": 13,
+   "text": "There hath no temptation taken you but such as is common to man: but God is faithful, who will not suffer you to be tempted above that ye are able; but will with the temptation also make a way to escape, that ye may be able to bear it."
+  },
+  {
+   "book": "1CO",
+   "name": "1 Corinthians",
+   "chapter": 13,
+   "first": 1,
+   "last": 13,
+   "text": "Though I speak with the tongues of men and of angels, and have not charity, I am become as sounding brass, or a tinkling cymbal. And though I have the gift of prophecy, and understand all mysteries, and all knowledge; and though I have all faith, so that I could remove mountains, and have not charity, I am nothing. And though I bestow all my goods to feed the poor, and though I give my body to be burned, and have not charity, it profiteth me nothing. Charity suffereth long, and is kind; charity envieth not; charity vaunteth not itself, is not puffed up, Doth not behave itself unseemly, seeketh not her own, is not easily provoked, thinketh no evil; Rejoiceth not in iniquity, but rejoiceth in the truth; Beareth all things, believeth all things, hopeth all things, endureth all things. Charity never faileth: but whether there be prophecies, they shall fail; whether there be tongues, they shall cease; whether there be knowledge, it shall vanish away. For we know in part, and we prophesy in part. But when that which is perfect is come, then that which is in part shall be done away. When I was a child, I spake as a child, I understood as a child, I thought as a child: but when I became a man, I put away childish things. For now we see through a glass, darkly; but then face to face: now I know in part; but then shall I know even as also I am known. And now abideth faith, hope, charity, these three; but the greatest of these is charity."
+  },
+  {
+   "book": "1CO",
+   "name": "1 Corinthians",
+   "chapter": 15,
+   "first": 58,
+   "last": 58,
+   "text": "Therefore, my beloved brethren, be ye stedfast, unmoveable, always abounding in the work of the Lord, forasmuch as ye know that your labour is not in vain in the Lord."
+  },
+  {
+   "book": "1CO",
+   "name": "1 Corinthians",
+   "chapter": 16,
+   "first": 13,
+   "last": 14,
+   "text": "Watch ye, stand fast in the faith, quit you like men, be strong. Let all your things be done with charity."
+  },
+  {
+   "book": "2CO",
+   "name": "2 Corinthians",
+   "chapter": 4,
+   "first": 16,
+   "last": 18,
+   "text": "For which cause we faint not; but though our outward man perish, yet the inward man is renewed day by day. For our light affliction, which is but for a moment, worketh for us a far more exceeding and eternal weight of glory; While we look not at the things which are seen, but at the things which are not seen: for the things which are seen are temporal; but the things which are not seen are eternal."
+  },
+  {
+   "book": "2CO",
+   "name": "2 Corinthians",
+   "chapter": 5,
+   "first": 7,
+   "last": 7,
+   "text": "(For we walk by faith, not by sight:)"
+  },
+  {
+   "book": "2CO",
+   "name": "2 Corinthians",
+   "chapter": 5,
+   "first": 17,
+   "last": 17,
+   "text": "Therefore if any man be in Christ, he is a new creature: old things are passed away; behold, all things are become new."
+  },
+  {
+   "book": "2CO",
+   "name": "2 Corinthians",
+   "chapter": 12,
+   "first": 9,
+   "last": 9,
+   "text": "And he said unto me, My grace is sufficient for thee: for my strength is made perfect in weakness. Most gladly therefore will I rather glory in my infirmities, that the power of Christ may rest upon me."
+  },
+  {
+   "book": "GAL",
+   "name": "Galatians",
+   "chapter": 2,
+   "first": 20,
+   "last": 20,
+   "text": "I am crucified with Christ: nevertheless I live; yet not I, but Christ liveth in me: and the life which I now live in the flesh I live by the faith of the Son of God, who loved me, and gave himself for me."
+  },
+  {
+   "book": "GAL",
+   "name": "Galatians",
+   "chapter": 5,
+   "first": 22,
+   "last": 23,
+   "text": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith, Meekness, temperance: against such there is no law."
+  },
+  {
+   "book": "GAL",
+   "name": "Galatians",
+   "chapter": 6,
+   "first": 9,
+   "last": 9,
+   "text": "And let us not be weary in well doing: for in due season we shall reap, if we faint not."
+  },
+  {
+   "book": "EPH",
+   "name": "Ephesians",
+   "chapter": 2,
+   "first": 8,
+   "last": 10,
+   "text": "For by grace are ye saved through faith; and that not of yourselves: it is the gift of God: Not of works, lest any man should boast. For we are his workmanship, created in Christ Jesus unto good works, which God hath before ordained that we should walk in them."
+  },
+  {
+   "book": "EPH",
+   "name": "Ephesians",
+   "chapter": 3,
+   "first": 17,
+   "last": 19,
+   "text": "That Christ may dwell in your hearts by faith; that ye, being rooted and grounded in love, May be able to comprehend with all saints what is the breadth, and length, and depth, and height; And to know the love of Christ, which passeth knowledge, that ye might be filled with all the fulness of God."
+  },
+  {
+   "book": "EPH",
+   "name": "Ephesians",
+   "chapter": 4,
+   "first": 2,
+   "last": 3,
+   "text": "With all lowliness and meekness, with longsuffering, forbearing one another in love; Endeavouring to keep the unity of the Spirit in the bond of peace."
+  },
+  {
+   "book": "EPH",
+   "name": "Ephesians",
+   "chapter": 4,
+   "first": 32,
+   "last": 32,
+   "text": "And be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ's sake hath forgiven you."
+  },
+  {
+   "book": "EPH",
+   "name": "Ephesians",
+   "chapter": 6,
+   "first": 10,
+   "last": 11,
+   "text": "Finally, my brethren, be strong in the Lord, and in the power of his might. Put on the whole armour of God, that ye may be able to stand against the wiles of the devil."
+  },
+  {
+   "book": "PHP",
+   "name": "Philippians",
+   "chapter": 1,
+   "first": 6,
+   "last": 6,
+   "text": "Being confident of this very thing, that he which hath begun a good work in you will perform it until the day of Jesus Christ:"
+  },
+  {
+   "book": "PHP",
+   "name": "Philippians",
+   "chapter": 2,
+   "first": 3,
+   "last": 4,
+   "text": "Let nothing be done through strife or vainglory; but in lowliness of mind let each esteem other better than themselves. Look not every man on his own things, but every man also on the things of others."
+  },
+  {
+   "book": "PHP",
+   "name": "Philippians",
+   "chapter": 4,
+   "first": 4,
+   "last": 7,
+   "text": "Rejoice in the Lord alway: and again I say, Rejoice. Let your moderation be known unto all men. The Lord is at hand. Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God. And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus."
+  },
+  {
+   "book": "PHP",
+   "name": "Philippians",
+   "chapter": 4,
+   "first": 8,
+   "last": 8,
+   "text": "Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things."
+  },
+  {
+   "book": "PHP",
+   "name": "Philippians",
+   "chapter": 4,
+   "first": 13,
+   "last": 13,
+   "text": "I can do all things through Christ which strengtheneth me."
+  },
+  {
+   "book": "COL",
+   "name": "Colossians",
+   "chapter": 3,
+   "first": 12,
+   "last": 14,
+   "text": "Put on therefore, as the elect of God, holy and beloved, bowels of mercies, kindness, humbleness of mind, meekness, longsuffering; Forbearing one another, and forgiving one another, if any man have a quarrel against any: even as Christ forgave you, so also do ye. And above all these things put on charity, which is the bond of perfectness."
+  },
+  {
+   "book": "COL",
+   "name": "Colossians",
+   "chapter": 3,
+   "first": 23,
+   "last": 24,
+   "text": "And whatsoever ye do, do it heartily, as to the Lord, and not unto men; Knowing that of the Lord ye shall receive the reward of the inheritance: for ye serve the Lord Christ."
+  },
+  {
+   "book": "1TH",
+   "name": "1 Thessalonians",
+   "chapter": 5,
+   "first": 16,
+   "last": 18,
+   "text": "Rejoice evermore. Pray without ceasing. In every thing give thanks: for this is the will of God in Christ Jesus concerning you."
+  },
+  {
+   "book": "2TI",
+   "name": "2 Timothy",
+   "chapter": 1,
+   "first": 7,
+   "last": 7,
+   "text": "For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind."
+  },
+  {
+   "book": "2TI",
+   "name": "2 Timothy",
+   "chapter": 3,
+   "first": 16,
+   "last": 17,
+   "text": "All scripture is given by inspiration of God, and is profitable for doctrine, for reproof, for correction, for instruction in righteousness: That the man of God may be perfect, throughly furnished unto all good works."
+  },
+  {
+   "book": "HEB",
+   "name": "Hebrews",
+   "chapter": 4,
+   "first": 12,
+   "last": 12,
+   "text": "For the word of God is quick, and powerful, and sharper than any twoedged sword, piercing even to the dividing asunder of soul and spirit, and of the joints and marrow, and is a discerner of the thoughts and intents of the heart."
+  },
+  {
+   "book": "HEB",
+   "name": "Hebrews",
+   "chapter": 11,
+   "first": 1,
+   "last": 1,
+   "text": "Now faith is the substance of things hoped for, the evidence of things not seen."
+  },
+  {
+   "book": "HEB",
+   "name": "Hebrews",
+   "chapter": 12,
+   "first": 1,
+   "last": 2,
+   "text": "Wherefore seeing we also are compassed about with so great a cloud of witnesses, let us lay aside every weight, and the sin which doth so easily beset us, and let us run with patience the race that is set before us, Looking unto Jesus the author and finisher of our faith; who for the joy that was set before him endured the cross, despising the shame, and is set down at the right hand of the throne of God."
+  },
+  {
+   "book": "HEB",
+   "name": "Hebrews",
+   "chapter": 13,
+   "first": 5,
+   "last": 6,
+   "text": "Let your conversation be without covetousness; and be content with such things as ye have: for he hath said, I will never leave thee, nor forsake thee. So that we may boldly say, The Lord is my helper, and I will not fear what man shall do unto me."
+  },
+  {
+   "book": "JAS",
+   "name": "James",
+   "chapter": 1,
+   "first": 2,
+   "last": 4,
+   "text": "My brethren, count it all joy when ye fall into divers temptations; Knowing this, that the trying of your faith worketh patience. But let patience have her perfect work, that ye may be perfect and entire, wanting nothing."
+  },
+  {
+   "book": "JAS",
+   "name": "James",
+   "chapter": 1,
+   "first": 5,
+   "last": 5,
+   "text": "If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him."
+  },
+  {
+   "book": "JAS",
+   "name": "James",
+   "chapter": 1,
+   "first": 19,
+   "last": 20,
+   "text": "Wherefore, my beloved brethren, let every man be swift to hear, slow to speak, slow to wrath: For the wrath of man worketh not the righteousness of God."
+  },
+  {
+   "book": "JAS",
+   "name": "James",
+   "chapter": 4,
+   "first": 8,
+   "last": 8,
+   "text": "Draw nigh to God, and he will draw nigh to you. Cleanse your hands, ye sinners; and purify your hearts, ye double minded."
+  },
+  {
+   "book": "1PE",
+   "name": "1 Peter",
+   "chapter": 5,
+   "first": 6,
+   "last": 7,
+   "text": "Humble yourselves therefore under the mighty hand of God, that he may exalt you in due time: Casting all your care upon him; for he careth for you."
+  },
+  {
+   "book": "1JN",
+   "name": "1 John",
+   "chapter": 1,
+   "first": 9,
+   "last": 9,
+   "text": "If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness."
+  },
+  {
+   "book": "1JN",
+   "name": "1 John",
+   "chapter": 3,
+   "first": 18,
+   "last": 18,
+   "text": "My little children, let us not love in word, neither in tongue; but in deed and in truth."
+  },
+  {
+   "book": "1JN",
+   "name": "1 John",
+   "chapter": 4,
+   "first": 7,
+   "last": 8,
+   "text": "Beloved, let us love one another: for love is of God; and every one that loveth is born of God, and knoweth God. He that loveth not knoweth not God; for God is love."
+  },
+  {
+   "book": "1JN",
+   "name": "1 John",
+   "chapter": 4,
+   "first": 18,
+   "last": 19,
+   "text": "There is no fear in love; but perfect love casteth out fear: because fear hath torment. He that feareth is not made perfect in love. We love him, because he first loved us."
+  },
+  {
+   "book": "REV",
+   "name": "Revelation",
+   "chapter": 21,
+   "first": 3,
+   "last": 4,
+   "text": "And I heard a great voice out of heaven saying, Behold, the tabernacle of God is with men, and he will dwell with them, and they shall be his people, and God himself shall be with them, and be their God. And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain: for the former things are passed away."
+  }
+ ]
+}

@@ -51,19 +51,30 @@ public sealed record ClockSlotPlan(IReadOnlyList<ClockTool> Tools, bool Scrollin
     public bool IsClock => !Scrolling && Tools.Count == 1 && Tools[0] == ClockTool.Clock;
 }
 
-public sealed record ClockLayoutPlan(bool Horizontal, IReadOnlyList<ClockSlotPlan> Slots);
+// Margin is the empty strip at each end of the run of slots and Gap the strip between two slots (pixels, along the way the slots
+// run). Margin + slots + gaps + Margin always add up to the room, so the slots sit centered with the same space around and between.
+public sealed record ClockLayoutPlan(bool Horizontal, IReadOnlyList<ClockSlotPlan> Slots, double Margin = 0, double Gap = 0);
 
 public static class ClockSlotLayout
 {
     // The room one slot needs along the widget's long side.
     public const double MinSlotExtent = 160;
 
+    // The empty strip at each end of the slots, and between two slots.
+    public const double OuterMargin = 12;
+    public const double SlotGap = 8;
+
     // Horizontal when the widget is as wide as it is tall or wider, vertical when it is taller.
     public static bool IsHorizontal(double width, double height) => width >= height;
 
-    // How many slots fit: one per MinSlotExtent along the side the slots run along, from one to three.
-    public static int Capacity(double width, double height) =>
-        Math.Clamp((int)Math.Floor((IsHorizontal(width, height) ? width : height) / MinSlotExtent), 1, ClockSlotsConfig.MaxSlots);
+    // How many slots fit along the side they run along, from one to three: n slots need n minimum cells, n - 1 gaps and a margin at
+    // each end.
+    public static int Capacity(double width, double height)
+    {
+        var room = IsHorizontal(width, height) ? width : height;
+        var fit = (int)Math.Floor((room - 2 * OuterMargin + SlotGap) / (MinSlotExtent + SlotGap));
+        return Math.Clamp(fit, 1, ClockSlotsConfig.MaxSlots);
+    }
 
     // The slots that fit. If some do not, the last visible one scrolls through its own tools and those of the hidden slots, so
     // every tool stays reachable. The main (first) slot is given twice the room of each other one.
@@ -84,27 +95,16 @@ public static class ClockSlotLayout
             plans.Add(new ClockSlotPlan(tools, scrolling, 0));
         }
         var horizontal = IsHorizontal(width, height);
-        return new ClockLayoutPlan(horizontal, Allocate(plans, horizontal ? width : height, horizontal ? height : width));
+        return Allocate(plans, horizontal, horizontal ? width : height);
     }
 
-    // Divides the room E along the slots. A clock slot takes a square of the cross size C (the clock is as wide as it is tall, so
-    // anything more would be empty) but never so much that the other slots drop below MinSlotExtent; the other slots share what is
-    // left equally. With no clock slot, or only clock slots, the room is shared equally. Only slots that are on take part.
-    private static IReadOnlyList<ClockSlotPlan> Allocate(List<ClockSlotPlan> plans, double room, double cross)
+    // Every slot gets an equal cell, so one, two or three items are spaced evenly: the same margin at both ends and the same gap
+    // between. A clock fits itself inside its cell (centered, or left or right by the style's alignment), so nothing sits against
+    // the left edge or crowds its neighbour.
+    private static ClockLayoutPlan Allocate(List<ClockSlotPlan> plans, bool horizontal, double room)
     {
-        var clocks = plans.Count(p => p.IsClock);
-        var others = plans.Count - clocks;
-        double clockEach, otherEach;
-        if (clocks == 0 || others == 0)
-        {
-            clockEach = otherEach = room / plans.Count;
-        }
-        else
-        {
-            clockEach = Math.Max(0, Math.Min(cross, (room - others * MinSlotExtent) / clocks));
-            otherEach = (room - clockEach * clocks) / others;
-        }
-        return plans.Select(p => p with { Extent = p.IsClock ? clockEach : otherEach }).ToList();
+        var cell = Math.Max(0, (room - 2 * OuterMargin - (plans.Count - 1) * SlotGap) / plans.Count);
+        return new ClockLayoutPlan(horizontal, plans.Select(p => p with { Extent = cell }).ToList(), OuterMargin, SlotGap);
     }
 
     private static IReadOnlyList<ClockTool> Absorb(IReadOnlyList<ClockTool> own, IEnumerable<ClockTool> hidden)

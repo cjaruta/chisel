@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Chisel.App.ViewModels;
@@ -10,9 +12,19 @@ public partial class MainViewModel : ViewModelBase
     public WeatherViewModel Weather { get; }
     public WeatherSettingsViewModel WeatherSettings { get; }
     public ClockSettingsViewModel ClockSettings { get; }
+    public ClockFacesViewModel ClockFaces { get; }
     public ClockToolsViewModel ClockTools { get; }
     public CalculatorSettingsViewModel CalculatorSettings { get; }
     public CalculatorViewModel Calculator { get; }
+    public CalendarSettingsViewModel CalendarSettings { get; }
+    public CalendarViewModel Calendar { get; }
+    public SystemMonitorSettingsViewModel SystemMonitorSettings { get; }
+    public SystemMonitorViewModel SystemMonitor { get; }
+    public CountdownViewModel Countdown { get; private set; } = null!;
+    public FocusTimerViewModel FocusTimer { get; private set; } = null!;
+    public HabitsViewModel Habits { get; private set; } = null!;
+    public ConverterViewModel Converter { get; }
+    public ClipboardHistoryViewModel ClipboardHistory { get; }
     public AlertsViewModel Alerts { get; }
     public AlarmsViewModel Alarms { get; }
     public ClockSlotsViewModel ClockSlots { get; }
@@ -62,7 +74,18 @@ public partial class MainViewModel : ViewModelBase
         AlarmsViewModel? alarms = null,
         AlertsViewModel? alerts = null,
         CalculatorSettingsViewModel? calculatorSettings = null,
-        ScriptureViewModel? scripture = null)
+        ScriptureViewModel? scripture = null,
+        Chisel.Core.Clock.IClockFaceStore? clockFaces = null,
+        CalendarSettingsViewModel? calendarSettings = null,
+        Action<Action>? dispatch = null,
+        SystemMonitorSettingsViewModel? systemMonitorSettings = null,
+        Chisel.Core.SystemMonitor.ISystemStatsSource? systemStats = null,
+        Chisel.Core.Countdown.ICountdownRepository? countdown = null,
+        Chisel.Core.Focus.IFocusTimerRepository? focusTimer = null,
+        Services.IChime? chime = null,
+        Chisel.Core.Habits.IHabitRepository? habits = null,
+        Chisel.Core.Converter.IConverterSettingsRepository? converter = null,
+        ClipboardHistoryViewModel? clipboardHistory = null)
     {
         Clock = clock;
         AnalogClock = new AnalogClockViewModel(clock);
@@ -70,12 +93,21 @@ public partial class MainViewModel : ViewModelBase
         WeatherSettings = weatherSettings ?? new WeatherSettingsViewModel(new Services.MemoryWeatherStore(), new Services.NoGeocoder(), Weather);
         ClockSettings = clockSettings ?? new ClockSettingsViewModel();
         ClockTools = clockTools ?? new ClockToolsViewModel(null, time ?? TimeProvider.System);
+        ClockFaces = new ClockFacesViewModel(clockFaces, ClockSettings, ClockTools);
         CalculatorSettings = calculatorSettings ?? new CalculatorSettingsViewModel(null);
         Calculator = new CalculatorViewModel(CalculatorSettings);
+        Converter = new ConverterViewModel(converter);
+        ClipboardHistory = clipboardHistory ?? new ClipboardHistoryViewModel(null, null, null, time, dispatch);
+        CalendarSettings = calendarSettings ?? new CalendarSettingsViewModel(null);
+        Calendar = new CalendarViewModel(CalendarSettings, time ?? TimeProvider.System, dispatch: dispatch);
+        SystemMonitorSettings = systemMonitorSettings ?? new SystemMonitorSettingsViewModel(null);
+        SystemMonitor = new SystemMonitorViewModel(SystemMonitorSettings, systemStats ?? new Services.NoSystemStats(), time ?? TimeProvider.System, dispatch);
         Alerts = alerts ?? new AlertsViewModel();
         Scripture = scripture ?? new ScriptureViewModel(time ?? TimeProvider.System);
         Alarms = alarms ?? new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(new Services.MemoryAlarmRepository(), time ?? TimeProvider.System), Alerts);
         ClockTools.TimerFinished += () => Alerts.Show("Timer", "Time's up");
+        Countdown = new CountdownViewModel(countdown, time ?? TimeProvider.System, Alerts, dispatch);
+        Habits = new HabitsViewModel(habits, time ?? TimeProvider.System, dispatch);
         ClockSlots = new ClockSlotsViewModel(ClockTools, Alarms);
         ClockSlotsSettings = new ClockSlotsSettingsViewModel(ClockTools);
         Spectrum = spectrum;
@@ -85,6 +117,12 @@ public partial class MainViewModel : ViewModelBase
         MediaBackground = new MediaBackgroundViewModel(Media, MediaSettings, settings.Theme, artSampler ?? new Services.AvaloniaArtSampler());
         Schedule = schedule;
         Tasks = tasks;
+        // The focus timer reads the task list (never changes it). A change is looked at after it settles, so a task moving from
+        // open to done is not taken for a deleted one.
+        FocusTimer = new FocusTimerViewModel(focusTimer, time ?? TimeProvider.System, chime, dispatch, FocusTasks);
+        var post = dispatch ?? (action => action());
+        Tasks.Open.CollectionChanged += (_, _) => post(FocusTimer.RefreshTask);
+        Tasks.Done.CollectionChanged += (_, _) => post(FocusTimer.RefreshTask);
         Notes = notes;
         QuickLinks = quickLinks;
         Settings = settings;
@@ -111,6 +149,7 @@ public partial class MainViewModel : ViewModelBase
             else if (e.PropertyName == nameof(LayoutViewModel.Layout))
             {
                 UpdateMediaActive();
+                UpdateClipboardActive();
                 // A notepad taken off the dashboard keeps what was just typed.
                 if (!System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Notes))
                 {
@@ -165,6 +204,10 @@ public partial class MainViewModel : ViewModelBase
         UpdateMediaActive();
     }
 
+    // Taking the clipboard history off the dashboard stops its recording at once.
+    private void UpdateClipboardActive() =>
+        ClipboardHistory.IsOnDashboard = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.ClipboardHistory);
+
     // The media widget only listens to the system while it is on the dashboard.
     private void UpdateMediaActive() =>
         Media.IsActive = System.Linq.Enumerable.Contains(Layout.Layout.WidgetIds, WidgetRegistry.Media);
@@ -198,4 +241,7 @@ public partial class MainViewModel : ViewModelBase
         Settings.IsOpen = false;
         Schedule.CloseEditorsCommand.Execute(null);
     }
+
+    private IReadOnlyList<FocusTaskOption> FocusTasks() =>
+        Tasks.Open.Select(r => new FocusTaskOption(r.Id, r.Text, false)).Concat(Tasks.Done.Select(r => new FocusTaskOption(r.Id, r.Text, true))).ToList();
 }

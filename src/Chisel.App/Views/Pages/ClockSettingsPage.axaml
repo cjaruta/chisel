@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Chisel.App.ViewModels"
              xmlns:core="using:Chisel.Core.Clock"
+             xmlns:convA="using:Avalonia.Data.Converters"
              xmlns:w="using:Chisel.App.Views.Widgets"
              x:Class="Chisel.App.Views.Pages.ClockSettingsPage"
              x:DataType="vm:MainViewModel">
@@ -80,6 +81,34 @@
             <StackPanel Spacing="6">
                 <WrapPanel Name="ClockPresetGallery" />
 
+                <!-- Saved faces: the whole current look and layout under a name; built-in faces above never change -->
+                <TextBlock Classes="settingsSection" Text="MY FACES" Margin="0,6,0,0" />
+                <TextBlock Name="ClockNoSavedFaces" Classes="dim" TextWrapping="Wrap" IsVisible="{Binding !ClockFaces.HasCustom}"
+                           Text="Save the current look and layout under a name to use it again." />
+                <WrapPanel Name="ClockCustomGallery" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                    <TextBox Name="ClockFaceName" Text="{Binding ClockFaces.NewName}" PlaceholderText="Face name" MaxLength="40"
+                             AutomationProperties.Name="Face name">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding ClockFaces.SaveAsNewCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <Button Name="ClockFaceSave" Grid.Column="1" Classes="editPrimary" Content="Save as new" Command="{Binding ClockFaces.SaveAsNewCommand}" />
+                </Grid>
+                <WrapPanel Name="ClockFaceActions">
+                    <Button Name="ClockFaceUpdate" Content="Update" Margin="0,0,6,6" Command="{Binding ClockFaces.UpdateSelectedCommand}"
+                            ToolTip.Tip="Replace the selected saved face with the current look and layout" />
+                    <Button Name="ClockFaceRename" Content="Rename" Margin="0,0,6,6" Command="{Binding ClockFaces.RenameSelectedCommand}"
+                            ToolTip.Tip="Give the selected saved face the name typed above" />
+                    <Button Name="ClockFaceDuplicate" Content="Duplicate" Margin="0,0,6,6" Command="{Binding ClockFaces.DuplicateSelectedCommand}" />
+                    <Button Name="ClockFaceDelete" Content="Delete" Margin="0,0,6,6" Command="{Binding ClockFaces.DeleteSelectedCommand}" />
+                    <Button Name="ClockFaceCopy" Content="Copy" Margin="0,0,6,6" ToolTip.Tip="Copy the selected face as text to share it" Click="OnCopyFace" />
+                    <Button Name="ClockFacePaste" Content="Paste" Margin="0,0,6,6" ToolTip.Tip="Add a face from copied text" Click="OnPasteFace" />
+                </WrapPanel>
+                <TextBlock Name="ClockFaceError" Classes="dim" Foreground="{DynamicResource CheckpointBrush}" TextWrapping="Wrap"
+                           Text="{Binding ClockFaces.Error}"
+                           IsVisible="{Binding ClockFaces.Error, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
+
                 <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
                     <TextBlock Classes="settingsSection" Text="CUSTOMIZE" VerticalAlignment="Center" />
                     <Button Name="ClockResetPreset" Grid.Column="1" Content="Reset to preset" FontSize="12" Padding="10,3" Command="{Binding ClockSettings.ResetToPresetCommand}" />
@@ -88,6 +117,11 @@
                     <StackPanel Spacing="6">
                         <TextBlock Text="Shape" Opacity="0.7" />
                         <ComboBox Name="ClockShape" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.ShapeNames}" SelectedIndex="{Binding ClockSettings.ShapeIndex}" />
+                        <TextBlock Text="Dial type" Opacity="0.7" />
+                        <ComboBox Name="ClockKind" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.KindNames}" SelectedIndex="{Binding ClockSettings.KindIndex}"
+                                  AutomationProperties.Name="Dial type" />
+                        <CheckBox Name="ClockMinuteTrack" Content="Minute track" IsChecked="{Binding ClockSettings.MinuteTrack}" />
+                        <CheckBox Name="ClockTachymeter" Content="Tachymeter ring" IsChecked="{Binding ClockSettings.Tachymeter}" />
                         <TextBlock Text="Border width" Opacity="0.7" />
                         <Slider Name="ClockBorder" Minimum="0" Maximum="{Binding ClockSettings.MaxBorder}" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding ClockSettings.BorderWidth}" />
                     </StackPanel>
@@ -175,6 +209,10 @@
             <StackPanel Spacing="8">
                 <TextBlock Classes="settingsSection" Text="SECONDS" />
                 <CheckBox Name="ClockShowSeconds" Content="Show seconds hand" IsChecked="{Binding ClockSettings.ShowSeconds}" />
+                <TextBlock Classes="settingsSection" Text="STOPWATCH" Margin="0,10,0,0" />
+                <ComboBox Name="ClockStopwatchDisplay" MinWidth="200" ItemsSource="{x:Static vm:ClockSettingsViewModel.StopwatchNames}"
+                          SelectedIndex="{Binding ClockSettings.StopwatchIndex}" AutomationProperties.Name="Stopwatch display" />
+                <TextBlock Text="Analog shows a round dial in the clock's look, with a sweeping seconds hand and a minutes sub-dial, above the digital readout. It needs a slot of a reasonable size." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
                 <TextBlock Classes="settingsSection" Text="TIME FORMAT" Margin="0,10,0,0" />
                 <RadioButton Name="ClockFormat24" GroupName="ClockBehaviorFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
                 <RadioButton Name="ClockFormat12" GroupName="ClockBehaviorFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />

@@ -9,13 +9,13 @@ public class LayoutGroupTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int Saves { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout) { Saved = layout; Saves++; }
     }
 
-    private readonly FakeLayoutRepository _repository = new() { Saved = WidgetRegistry.DefaultLayout };
+    private readonly FakeLayoutRepository _repository = new() { Saved = TestLayouts.Classic };
 
     private LayoutViewModel Editing()
     {
@@ -76,7 +76,7 @@ public class LayoutGroupTests
         {
             layout.AddWidgetFromTray(id);
         }
-        foreach (var id in new[] { "notes", "links", "schedule", "clock" })
+        foreach (var id in new[] { "notes", "scripture", "schedule", "clock" })
         {
             Merge(layout, id, "tasks");
         }
@@ -186,7 +186,7 @@ public class LayoutGroupTests
         layout.Unmerge("notes");
 
         Assert.All(layout.Columns.SelectMany(c => c.Widgets), w => Assert.False(w.IsGroup));
-        Assert.Equal("tasks,notes,links", string.Join(",", layout.Columns[1].Widgets.Select(w => w.Id)));
+        Assert.Equal("tasks,notes,scripture", string.Join(",", layout.Columns[1].Widgets.Select(w => w.Id)));
     }
 
     [Fact]
@@ -277,9 +277,9 @@ public class LayoutGroupTests
         Merge(layout, "notes", "tasks");
         layout.BeginWidgetDrag("tasks");
 
-        Assert.True(layout.CanMergeInto("links"));
-        layout.DropOnWidget("links");
+        Assert.True(layout.CanMergeInto("scripture"));
+        layout.DropOnWidget("scripture");
 
-        Assert.Equal(3, Slot(layout, "links").Members.Count);
+        Assert.Equal(3, Slot(layout, "scripture").Members.Count);
     }
 }

@@ -189,4 +189,107 @@ public class ClockToolsViewModelTests
         vm.Tick();
         Assert.Equal(saves, repo.Saves);
     }
+
+    // 0.1 s steps, the same rule for the running time, the stopped time and every lap and split.
+
+    [Fact]
+    public void TheDisplay_StepsByOneTenth_AndNeverRunsAheadOfTheRealTime()
+    {
+        var (vm, time, _) = Make();
+        vm.StopwatchStartPauseCommand.Execute(null);
+
+        var seen = new List<string>();
+        for (var i = 1; i <= 25; i++)
+        {
+            time.Advance(TimeSpan.FromMilliseconds(100));
+            vm.Tick();
+            seen.Add(vm.StopwatchText);
+            var real = i * 100;
+            var shown = int.Parse(vm.StopwatchText[3..5]) * 1000 + int.Parse(vm.StopwatchText[^1..]) * 100;
+            Assert.True(shown <= real && real - shown < 100, $"{vm.StopwatchText} at {real} ms");
+        }
+
+        Assert.Equal(25, seen.Distinct().Count()); // every tenth shows, none is skipped
+        Assert.Equal("00:02.5", seen[^1]);
+    }
+
+    [Fact]
+    public void LapsSplitsAndTheStoppedTime_UseTheSameRule()
+    {
+        var (vm, time, _) = Make();
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromMilliseconds(10_390));
+        vm.StopwatchLapCommand.Execute(null); // 10.39 s: shows 10.3
+        time.Advance(TimeSpan.FromMilliseconds(3_110));
+        vm.StopwatchLapCommand.Execute(null); // total 13.5 s: shows 13.5; the split 3.11 s shows 3.1
+        time.Advance(TimeSpan.FromMilliseconds(750));
+        vm.StopwatchStartPauseCommand.Execute(null); // stops at 14.25 s: shows 14.2
+
+        Assert.Equal(["Lap 2   00:03.1   00:13.5", "Lap 1   00:10.3   00:10.3"], vm.LapTexts);
+        Assert.Equal("00:14.2", vm.StopwatchText);
+    }
+
+    // A clock whose wall time can jump (a time sync, a change of time zone) without the monotonic clock noticing.
+    private sealed class SkewTime : TimeProvider
+    {
+        private long _ticks;
+        public TimeSpan WallJump { get; set; }
+        public override DateTimeOffset GetUtcNow() => T0 + TimeSpan.FromTicks(_ticks) + WallJump;
+        public override long GetTimestamp() => _ticks;
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public void Advance(TimeSpan by) => _ticks += by.Ticks;
+    }
+
+    [Fact]
+    public void TheElapsedTime_FollowsTheMonotonicClock_NotTheWallClock()
+    {
+        var time = new SkewTime();
+        var vm = new ClockToolsViewModel(new MemoryTools(), time);
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromSeconds(10));
+
+        time.WallJump = TimeSpan.FromHours(3); // the wall clock jumps forward
+        vm.Tick();
+        Assert.Equal("00:10.0", vm.StopwatchText);
+        Assert.Equal(10, vm.StopwatchElapsedSeconds(), 3);
+
+        time.WallJump = TimeSpan.FromHours(-2); // and then back past the start
+        time.Advance(TimeSpan.FromSeconds(2.5));
+        vm.StopwatchStartPauseCommand.Execute(null);
+        Assert.Equal("00:12.5", vm.StopwatchText); // 12.5 s
+
+        time.WallJump = TimeSpan.FromHours(1);
+        vm.Tick();
+        Assert.Equal("00:12.5", vm.StopwatchText); // paused: still the same
+    }
+
+    [Fact]
+    public void AfterARestart_TheTimeStillCatchesUpWithTheWallClock()
+    {
+        var (vm, time, repo) = Make();
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromSeconds(30));
+
+        var again = new ClockToolsViewModel(repo, time); // the app was closed, then opened
+        time.Advance(TimeSpan.FromSeconds(5));
+        again.Tick();
+
+        Assert.Equal("00:35.0", again.StopwatchText);
+    }
+
+    [Fact]
+    public void ThePausedTime_ResumesWhereItStopped()
+    {
+        var (vm, time, _) = Make();
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromSeconds(7));
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromMinutes(5)); // paused meanwhile
+
+        vm.StopwatchStartPauseCommand.Execute(null);
+        time.Advance(TimeSpan.FromSeconds(3));
+        vm.Tick();
+
+        Assert.Equal("00:10.0", vm.StopwatchText);
+    }
 }

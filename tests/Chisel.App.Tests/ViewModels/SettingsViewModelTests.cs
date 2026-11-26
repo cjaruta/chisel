@@ -111,4 +111,19 @@ public class SettingsViewModelTests
         settings.CloseCommand.Execute(null);
         Assert.False(settings.IsOpen);
     }
+
+    [Fact]
+    public void WidgetSpacing_IsLoaded_SavedWhenChanged_AndKeptWithinTheLimits()
+    {
+        var repository = new FakeSettingsRepository(Defaults.WithWidgetSpacing(6));
+        var viewModel = new SettingsViewModel(repository, new TimeDisplay());
+        Assert.Equal(6, viewModel.WidgetSpacing);
+
+        viewModel.WidgetSpacing = 24;
+        Assert.Equal(24, repository.Saved!.WidgetSpacing);
+
+        viewModel.WidgetSpacing = 500;
+        Assert.Equal(32, viewModel.WidgetSpacing);
+        Assert.Equal(32, repository.Saved!.WidgetSpacing);
+    }
 }

@@ -9,7 +9,7 @@ public class LayoutSplitViewTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int Saves { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout) { Saved = layout; Saves++; }
@@ -17,7 +17,7 @@ public class LayoutSplitViewTests
 
     private const double Wide = 900;
 
-    private readonly FakeLayoutRepository _repository = new() { Saved = WidgetRegistry.DefaultLayout };
+    private readonly FakeLayoutRepository _repository = new() { Saved = TestLayouts.Classic };
 
     // tasks + notes as a group (and links as a plain card), saved.
     private LayoutViewModel Grouped()
@@ -153,14 +153,14 @@ public class LayoutSplitViewTests
         var layout = Grouped();
         layout.SetViewMode("tasks", GroupViewMode.Split, Wide);
         layout.EnterEditCommand.Execute(null);
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropOnWidget("tasks", Wide);
         Assert.Equal(GroupViewMode.Split, Slot(layout, "tasks").ViewMode);
         Assert.Equal(3, Slot(layout, "tasks").Members.Count);
 
         layout.CancelCommand.Execute(null);
         layout.EnterEditCommand.Execute(null);
-        layout.BeginWidgetDrag("links");
+        layout.BeginWidgetDrag("scripture");
         layout.DropOnWidget("tasks", 400);
         Assert.Equal(GroupViewMode.Tabs, Slot(layout, "tasks").ViewMode);
         Assert.Equal(3, Slot(layout, "tasks").Members.Count);

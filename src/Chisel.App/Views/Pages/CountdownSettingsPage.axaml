@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.CountdownSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="WHEN AN EVENT HAS PASSED" />
+        <RadioButton Name="CountdownShowAgo" GroupName="CountdownPast" Content="Keep it and show how long ago" IsChecked="{Binding Countdown.IsShowAgo}" />
+        <RadioButton Name="CountdownArchive" GroupName="CountdownPast" Content="Archive it the next day" IsChecked="{Binding Countdown.IsArchive}" />
+        <RadioButton Name="CountdownDeletePast" GroupName="CountdownPast" Content="Delete it the next day" IsChecked="{Binding Countdown.IsDelete}" />
+        <TextBlock Text="Yearly events roll over to next year instead." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock VerticalAlignment="Center" Opacity="0.8" Text="{Binding Countdown.ArchivedCount, StringFormat='Archived events: {0}'}" />
+            <Button Name="CountdownDeleteArchived" Content="Delete archived" Click="OnDeleteArchived" />
+        </StackPanel>
+        <TextBlock Classes="settingsSection" Text="ORDER" Margin="0,10,0,0" />
+        <RadioButton Name="CountdownByDate" GroupName="CountdownOrder" Content="By date" IsChecked="{Binding Countdown.SortByDate}" />
+        <RadioButton Name="CountdownMyOrder" GroupName="CountdownOrder" Content="My own order" IsChecked="{Binding Countdown.IsCustomOrder}" />
+        <TextBlock Text="In your own order, open an event to move it up or down. The nearest event is always shown largest." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Classes="settingsSection" Text="EVENT DAY" Margin="0,10,0,0" />
+        <CheckBox Name="CountdownNotify" Content="Show a reminder when an event day arrives" IsChecked="{Binding Countdown.Notify}" />
+    </StackPanel>
+</UserControl>

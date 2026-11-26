@@ -20,13 +20,13 @@ public class ClockWidgetLayoutTests
         var saved = new WidgetLayout(new[]
         {
             new LayoutColumn(1.3, new[] { new WidgetPlacement("schedule", 1) }),
-            new LayoutColumn(1, new[] { new WidgetPlacement("links", 1), new WidgetPlacement("tasks", 2) }),
+            new LayoutColumn(1, new[] { new WidgetPlacement("scripture", 1), new WidgetPlacement("tasks", 2) }),
         }, new[] { "notes" });
 
         var layout = new LayoutViewModel(new Repo(saved)).Layout;
 
-        Assert.Equal(new[] { "schedule", "links", "tasks" }, layout.WidgetIds);
-        Assert.Equal(new[] { "notes", "clock", "weather", "media", "calculator", "scripture" }, layout.HiddenWidgetIds);
+        Assert.Equal(new[] { "schedule", "scripture", "tasks" }, layout.WidgetIds);
+        Assert.Equal(new[] { "notes", "clock", "weather", "media", "calculator", "calendar", "sysmonitor", "countdown", "focus", "habits", "converter", "clipboard" }, layout.HiddenWidgetIds);
         Assert.Equal(saved.Columns.Select(c => c.WidthWeight), layout.Columns.Select(c => c.WidthWeight));
     }
 

@@ -7,7 +7,7 @@ public sealed record StartupResult<T>(T? Value, string? ErrorMessage) where T : 
 
 public static class AppStartup
 {
-    public static StartupResult<T> Run<T>(Func<T> create, string logPath) where T : class
+    public static StartupResult<T> Run<T>(Func<T> create, CrashLog log) where T : class
     {
         try
         {
@@ -15,17 +15,10 @@ public static class AppStartup
         }
         catch (Exception ex)
         {
-            try
-            {
-                ErrorLogger.Log(logPath, ex);
-                return new StartupResult<T>(null,
-                    $"Chisel couldn't open or update its database. Details were written to:\n{logPath}");
-            }
-            catch (Exception)
-            {
-                return new StartupResult<T>(null,
-                    $"Chisel couldn't open or update its database, and the log file couldn't be written either.\n\n{ex.Message}");
-            }
+            return log.Write(ex, "startup") is { } path
+                ? new StartupResult<T>(null, $"Chisel couldn't open or update its database. A short report was written to:\n{path}")
+                : new StartupResult<T>(null,
+                    $"Chisel couldn't open or update its database, and the report couldn't be written either.\n\n{ex.Message}");
         }
     }
 }

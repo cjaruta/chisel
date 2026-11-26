@@ -55,15 +55,25 @@ public class WeatherWidgetHeadlessTests
     }
 
     [AvaloniaFact]
-    public void Small_ShowsTemperatureIconAndCondition_Only()
+    public void Small_ShowsAFewHoursBesideTheTemperature()
     {
         var (window, _) = WindowWithWeather(0.2);
         Assert.Equal(WeatherSizeTier.Small, WeatherLayout.SizeTier(0, ContentHeight(window)));
         Assert.Equal("20°", Named<TextBlock>(window, "WeatherTemp")!.Text);
         Assert.Equal("Partly cloudy", Named<TextBlock>(window, "WeatherCondition")!.Text);
         Assert.NotNull(Named<ConditionIcon>(window, "WeatherIcon"));
-        Assert.Null(Named<StackPanel>(window, "WeatherHourly"));
         Assert.Null(Named<TextBlock>(window, "WeatherFeelsLike"));
+
+        var view = window.GetVisualDescendants().OfType<WeatherWidgetView>().Single();
+        var strip = Named<StackPanel>(window, "WeatherHourly")!;
+        var temp = Named<TextBlock>(window, "WeatherTemp")!;
+        var stripBox = new Avalonia.Rect(strip.Bounds.Size).TransformToAABB(Avalonia.VisualExtensions.TransformToVisual(strip, view)!.Value);
+        var headBox = new Avalonia.Rect(temp.Bounds.Size).TransformToAABB(Avalonia.VisualExtensions.TransformToVisual(temp, view)!.Value);
+        Assert.InRange(strip.Children.Count, 1, WeatherLayout.BesideHourlyMax);
+        Assert.True(stripBox.Left >= headBox.Right, "the hours sit to the right of the temperature");
+        Assert.True(stripBox.Bottom > headBox.Top && stripBox.Top < headBox.Bottom, "on the same line");
+        Assert.True(stripBox.Right <= view.Bounds.Width - view.Padding.Right + 0.5, "not cut off");
+        UiSnapshot.Render(window, "weather-small-hourly");
     }
 
     [AvaloniaFact]

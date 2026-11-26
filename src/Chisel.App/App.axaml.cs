@@ -1,13 +1,17 @@
 using System;
 using System.IO;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform;
 using Avalonia.Markup.Xaml;
 using Chisel.App.Startup;
+using Chisel.Infrastructure.Startup;
 using Chisel.App.ViewModels;
 using Chisel.App.Views;
 using Chisel.App.Services;
 using Chisel.Core.Weather;
+using Chisel.Infrastructure.Repositories;
 using Chisel.Infrastructure.Weather;
 
 namespace Chisel.App;
@@ -18,6 +22,7 @@ public partial class App : Application
     private Chisel.Core.Media.IMediaService? _mediaService;
     private Chisel.Core.Media.ISpectrumSource? _spectrum;
     private Chisel.Core.Media.IVolumeService? _volume;
+    private TrayIcon? _tray;
 
     public override void Initialize()
     {
@@ -28,6 +33,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            Program.Crashes.InstallUiHandler();
             // The weather-motion capture never touches real data: a temp database, a fake weather service and an in-memory store.
             var scenario = Dev.CaptureMode.Scenario(desktop.Args);
             // The media capture plays sample metadata from a fake service; otherwise the real system media session is used.
@@ -39,8 +45,10 @@ public partial class App : Application
             _volume = scenario is null ? new WindowsVolumeService() : new FakeVolumeService();
             var isolated = scenario is "weather-motion" or "media-visualizer" or "media-gradient";
             var databasePath = isolated ? Path.Combine(Path.GetTempPath(), $"chisel-capture-{Guid.NewGuid():N}.db") : AppPaths.GetDatabasePath();
-            var startup = AppStartup.Run(() => new AppServices(databasePath), AppPaths.GetErrorLogPath());
-            _services = startup.Value;
+            var startedUtc = DateTime.UtcNow;
+            // A damaged database is kept as chisel.db.<date-time>.bad and Chisel starts with a fresh one (said once it is up).
+            var startup = AppStartup.Run(() => DatabaseRecovery.Open(databasePath, () => new AppServices(databasePath)), Program.Crashes.Log);
+            _services = startup.Value?.Value;
 
             if (_services is null)
             {
@@ -51,19 +59,63 @@ public partial class App : Application
                 var timeDisplay = new TimeDisplay();
                 var paletteDisplay = new PaletteDisplay();
                 // Settings first: it loads the saved clock format, palette and theme (applying the theme) before anything is shown.
-                var theme = new Theming.ThemeService();
-                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme);
+                var theme = new Theming.ThemeService(new Theming.AvaloniaPlatformTheme(PlatformSettings));
+                // Start with Windows: the Run entry follows Chisel if it was moved (only when it is already on). Captures never touch it.
+                StartWithWindows? startWithWindows = null;
+                if (scenario is null)
+                {
+                    startWithWindows = new StartWithWindows(new WindowsStartupRegistry(), ProgramPath());
+                    startWithWindows.Revalidate();
+                }
+                var system = new SystemSettingsViewModel(_services.SystemSettings, startWithWindows);
+                // Backup: set up before the rest exists, so the steps it needs later (save a pending note, restart) are filled in below.
+                Action? flushBeforeImport = null;
+                Action? restartAfterImport = null;
+                var backup = scenario is null
+                    ? new BackupViewModel(
+                        new Chisel.Infrastructure.Transfer.BackupService(_services.DbContext, new Chisel.Infrastructure.Transfer.FileSystemBackupFiles(),
+                            AppPaths.GetBackupsFolder(), AppPaths.GetPicturesFolder(), AppVersion(), _services.Time),
+                        new BackupDialogs(() => desktop.MainWindow?.StorageProvider),
+                        beforeImport: () => flushBeforeImport?.Invoke(),
+                        afterImport: () => restartAfterImport?.Invoke())
+                    : null;
+                MainWindow? mainWindow = null;
+                // Settings > Help > About: the diagnostic info lists versions, scaling and widget types only.
+                var about = new AboutViewModel(AppVersion(),
+                    () => DiagnosticInfo.Build(AppVersion(), Environment.OSVersion.VersionString, Environment.Version.ToString(),
+                        mainWindow?.RenderScaling ?? 1, mainWindow?.Screens.ScreenCount ?? 1, _services.WidgetLayout.Get()?.WidgetIds ?? []),
+                    url => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }),
+                    () =>
+                    {
+                        Directory.CreateDirectory(AppPaths.GetLogsFolder());
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppPaths.GetLogsFolder()) { UseShellExecute = true });
+                    },
+                    text => mainWindow?.Clipboard is { } clipboard
+                        ? Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(clipboard, text) : System.Threading.Tasks.Task.CompletedTask);
+                var settings = new SettingsViewModel(_services.UserSettings, timeDisplay, paletteDisplay, theme: theme, system: system, backup: backup,
+                    about: about);
                 IWeatherStore weatherStore = isolated ? new MemoryWeatherStore() : _services.Weather;
                 var weather = isolated
                     ? new WeatherViewModel(Dev.CaptureMode.RainWeather(), _services.Time, null, timeDisplay)
                     : new WeatherViewModel(new OpenMeteoWeatherService(_services.Weather), _services.Time, _services.Weather, timeDisplay);
-                MainWindow? mainWindow = null;
-                var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures);
+                var layout = new LayoutViewModel(_services.WidgetLayout, _services.Pictures, _services.LayoutProfiles,
+                    firstRunLayout: WidgetRegistry.FirstRunLayout);
+                if (layout.IsFirstRun && scenario is null)
+                {
+                    system.StartWelcome();
+                }
                 var alerts = new AlertsViewModel(new WindowsAlertSound());
+                if (startup.Value?.KeptAs is { } kept)
+                {
+                    alerts.Show("Chisel started fresh",
+                        $"Chisel's data file was damaged and couldn't be read, so Chisel started with a fresh one. The damaged file was kept as {kept} in the Chisel data folder.",
+                        sound: false);
+                }
+                var clipboardLog = new DebugClipboardLog();
                 var mainViewModel = new MainViewModel(
                     new ClockViewModel(_services.Time, timeDisplay),
                     new ScheduleViewModel(_services.Schedule, _services.Markers, _services.Time, timeDisplay, paletteDisplay),
-                    new TaskListViewModel(_services.Tasks),
+                    new TaskListViewModel(_services.Tasks, _services.Time),
                     new NotesViewModel(_services.Notes, _services.Time, _services.NotepadSettings, new NotepadFileService(() => mainWindow?.StorageProvider)),
                     new QuickLinksViewModel(_services.QuickLinks),
                     settings,
@@ -76,11 +128,24 @@ public partial class App : Application
                     _volume,
                     pictureCatalog: _services.Pictures,
                     clockSettings: new ClockSettingsViewModel(_services.ClockStyles),
+                    clockFaces: _services.ClockFaces,
                     clockTools: new ClockToolsViewModel(_services.ClockTools, _services.Time),
                     alarms: new AlarmsViewModel(new Chisel.Core.Clock.AlarmService(_services.Alarms, _services.Time), alerts, timeDisplay),
                     alerts: alerts,
                     calculatorSettings: new CalculatorSettingsViewModel(_services.CalculatorSettings),
                     scripture: new ScriptureViewModel(_services.Time),
+                    calendarSettings: new CalendarSettingsViewModel(_services.CalendarSettings),
+                    dispatch: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
+                    systemMonitorSettings: new SystemMonitorSettingsViewModel(_services.SystemMonitorSettings),
+                    systemStats: new WindowsSystemStats(),
+                    countdown: _services.Countdown,
+                    focusTimer: _services.FocusTimer,
+                    habits: _services.Habits,
+                    converter: _services.ConverterSettings,
+                    clipboardHistory: new ClipboardHistoryViewModel(
+                        new WindowsClipboardService(() => mainWindow?.Clipboard, clipboardLog),
+                        _services.ClipboardSettings, new ClipboardHistoryFileStore(AppPaths.GetClipboardHistoryPath()), log: clipboardLog),
+                    chime: new SoftChime(),
                     pictureImport: new PictureImportService(_services.PictureImporter, _services.PictureDownloader, _services.UserSettings, _services.PictureDropLog),
                     pictureSettings: new PictureSettingsViewModel(_services.UserSettings, layout, _services.Pictures, AppPaths.GetDropLogPath(),
                         folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true })));
@@ -91,16 +156,83 @@ public partial class App : Application
                 {
                     DataContext = mainViewModel,
                 };
-                desktop.MainWindow = mainWindow;
+
+                // The tray icon, closing to it and the show/hide shortcut. Captures run without them.
+                AppShell? shell = null;
+                _tray = scenario is null ? CreateTray(() => shell, settings) : null;
+                shell = new AppShell(new WindowShell(mainWindow, desktop), () => system.Current, _tray is not null, () => desktop.Shutdown());
+                // The app ends when the main window really closes, not when it hides to the tray (or never showed).
+                desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                mainWindow.Closing += (_, e) =>
+                {
+                    if (shell.HandleClosing(userClose: e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic))
+                    {
+                        e.Cancel = true;
+                    }
+                };
+                mainWindow.Closed += (_, _) =>
+                {
+                    if (!shell.IsQuitting)
+                    {
+                        shell.Quit();
+                    }
+                };
+                mainWindow.Deactivated += (_, _) => shell.NoteDeactivated();
+
+                // After an import or undo Chisel starts again, so every widget reads the new data and nothing still in memory saves
+                // the old data back on top of it.
+                flushBeforeImport = mainViewModel.Notes.Flush;
+                restartAfterImport = () =>
+                {
+                    var start = ProgramPath() is { } exe
+                        ? new System.Diagnostics.ProcessStartInfo(exe)
+                        : new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath ?? "dotnet", $"\"{typeof(App).Assembly.Location}\"");
+                    start.UseShellExecute = false;
+                    System.Diagnostics.Process.Start(start);
+                    shell.Quit();
+                };
+
+                // The show/hide shortcut (RegisterHotKey on the main window; no keyboard hooks).
+                var hotkeys = scenario is null ? new Win32HotkeyService(mainWindow) : null;
+                if (hotkeys is not null)
+                {
+                    hotkeys.Pressed += shell.Toggle;
+                    system.AttachHotkeys(hotkeys, message => alerts.Show("Shortcut not available", message, sound: false));
+                }
+                // An error nothing else caught: save the open note, explain, and never leave a ghost tray icon behind.
+                Program.Crashes.Save = mainViewModel.Notes.Flush;
+                Program.Crashes.ShowMessage = (title, message) => alerts.Show(title, message, sound: false);
+                Program.Crashes.CleanUp = DisposeTray;
+                // Widget data that couldn't be read was kept as a .bad copy while the widgets loaded: say so once.
+                if (DamagedData.KeptSince(databasePath, startedUtc) is { Count: > 0 } damaged)
+                {
+                    alerts.Show("Some data couldn't be read",
+                        $"Saved data for {string.Join(", ", damaged)} was damaged, so it started empty. A copy was kept in the \"damaged\" folder in Chisel's data folder.",
+                        sound: false);
+                }
+
+                // Started with Windows and set to wait in the tray: the window is made but not shown until asked for.
+                if (!shell.ShouldStartHidden(StartupArguments.Parse(desktop.Args).Minimized))
+                {
+                    desktop.MainWindow = mainWindow;
+                }
 
                 if (scenario is not null)
                 {
-                    Dev.CaptureMode.Run((MainWindow)desktop.MainWindow, scenario, () => desktop.Shutdown());
+                    Dev.CaptureMode.Run(mainWindow, scenario, () => desktop.Shutdown());
                 }
 
                 desktop.Exit += (_, _) =>
                 {
+                    DisposeTray();
+                    system.ReleaseHotkey();
+                    hotkeys?.Dispose();
                     mainViewModel.Notes.Flush();
+                    mainViewModel.SystemMonitor.Dispose();
+                    mainViewModel.Countdown.Dispose();
+                    mainViewModel.FocusTimer.Dispose();
+                    mainViewModel.Habits.Dispose();
+                    mainViewModel.ClipboardHistory.Dispose();
                     (_mediaService as IDisposable)?.Dispose();
                     _spectrum?.Dispose();
                     (_volume as IDisposable)?.Dispose();
@@ -115,5 +247,61 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static string AppVersion() => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+
+    // The running Chisel.App.exe, or null when started some other way (through dotnet.exe), which can't be put in the Run key.
+    private static string? ProgramPath()
+    {
+        var path = Environment.ProcessPath;
+        return path is not null && !Path.GetFileName(path).Equals("dotnet.exe", StringComparison.OrdinalIgnoreCase) ? path : null;
+    }
+
+    // The tray icon with the app icon and its menu; null when Windows would not give us one (the window then never hides).
+    private TrayIcon? CreateTray(Func<AppShell?> shell, SettingsViewModel settings)
+    {
+        try
+        {
+            using var iconStream = AssetLoader.Open(new Uri("avares://Chisel.App/Assets/chiselIcon.ico"));
+            var showHide = new NativeMenuItem("Show/Hide");
+            showHide.Click += (_, _) => shell()?.MenuShowHide();
+            var openSettings = new NativeMenuItem("Settings");
+            openSettings.Click += (_, _) =>
+            {
+                shell()?.Show();
+                settings.SelectedTab = SettingsTab.General;
+                settings.IsOpen = true;
+            };
+            var quit = new NativeMenuItem("Quit");
+            quit.Click += (_, _) => shell()?.Quit();
+            var tray = new TrayIcon
+            {
+                Icon = new WindowIcon(iconStream),
+                ToolTipText = "Chisel",
+                Menu = new NativeMenu { showHide, openSettings, new NativeMenuItemSeparator(), quit },
+                IsVisible = true,
+            };
+            tray.Clicked += (_, _) => shell()?.TrayClicked();
+            TrayIcon.SetIcons(this, new TrayIcons { tray });
+            return tray;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    // Removes the tray icon right away so no ghost icon is left behind after exit.
+    private void DisposeTray()
+    {
+        var tray = _tray;
+        _tray = null;
+        if (tray is null)
+        {
+            return;
+        }
+        tray.IsVisible = false;
+        tray.Dispose();
     }
 }

@@ -44,7 +44,23 @@ namespace Chisel.App.Views;
 // never shifts anything) and moves width between the two neighbours; Esc puts the starting widths back.
 public sealed partial class LayoutHost : Decorator
 {
-    public const double Gap = 16;
+    // The space between widgets (and between columns). The user sets it in settings; this is what it has been.
+    public const double DefaultGap = 16;
+
+    public static readonly StyledProperty<double> SpacingProperty =
+        AvaloniaProperty.Register<LayoutHost, double>(nameof(Spacing), DefaultGap);
+
+    public double Spacing
+    {
+        get => GetValue(SpacingProperty);
+        set => SetValue(SpacingProperty, value);
+    }
+
+    private double Gap => Spacing;
+
+    // A resize handle is easy to grab even when the gap it sits in is hairline thin: its hit area stays this tall and overlaps
+    // the cards beside it (see ResizeHandle).
+    private const double HandleHit = 8;
 
     // How far the pointer must move before a press on a title bar becomes a drag.
     public const double DragThreshold = 4;
@@ -64,7 +80,7 @@ public sealed partial class LayoutHost : Decorator
     private static readonly Cursor ColumnResizeCursor = new(StandardCursorType.SizeWestEast);
 
     private readonly Dictionary<string, WidgetFrame> _frames = new();
-    private readonly WeightedStackPanel _columns = new() { Orientation = Orientation.Horizontal, Spacing = Gap };
+    private readonly WeightedStackPanel _columns = new() { Orientation = Orientation.Horizontal, Spacing = DefaultGap };
     private readonly Canvas _overlay = new() { IsHitTestVisible = false };
     private readonly Border _float = new() { Name = "DragFloat", IsVisible = false };
     private readonly List<Panel> _handles = new();
@@ -161,6 +177,13 @@ public sealed partial class LayoutHost : Decorator
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+        if (change.Property == SpacingProperty)
+        {
+            _columns.Spacing = Gap;
+            _columnHandleLayer.Spacing = Gap;
+            Rebuild();
+            return;
+        }
         if (change.Property == LayoutProperty)
         {
             if (change.OldValue is LayoutViewModel old)
@@ -421,6 +444,8 @@ public sealed partial class LayoutHost : Decorator
         hit.Classes.Add("resizeHit");
 
         var handle = new Panel { Name = $"ResizeHandle_{aboveId}", MinHeight = Gap, Children = { line, grip, hit } };
+        // In a gap thinner than the hit area, the hit area reaches over the cards on both sides instead of widening the gap.
+        hit.Margin = new Thickness(0, -Math.Max(0, HandleHit - Gap) / 2);
         handle.Classes.Add("resizeHandle");
         WeightedStackPanel.SetWeight(handle, 0);
         SetHandleEditing(handle, _isEditing);
@@ -1055,6 +1080,8 @@ public sealed partial class LayoutHost : Decorator
     // i-th column. It is arranged after the columns, so their final positions are known.
     private sealed class ColumnHandleLayer(Panel columns) : Panel
     {
+        public double Spacing { get; set; } = DefaultGap;
+
         private readonly List<Rect> _arranged = new();
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -1084,7 +1111,7 @@ public sealed partial class LayoutHost : Decorator
         {
             foreach (var child in Children)
             {
-                child.Measure(new Size(Gap, availableSize.Height));
+                child.Measure(new Size(Math.Max(Spacing, HandleHit), availableSize.Height));
             }
             return default;
         }
@@ -1097,7 +1124,8 @@ public sealed partial class LayoutHost : Decorator
             for (var i = 0; i < Children.Count && i + 1 < scrollers.Count; i++)
             {
                 var column = scrollers[i].Bounds;
-                Children[i].Arrange(new Rect(column.Right, column.Top, Gap, column.Height));
+                var width = Math.Max(Spacing, HandleHit);
+                Children[i].Arrange(new Rect(column.Right + Spacing / 2 - width / 2, column.Top, width, column.Height));
             }
             return finalSize;
         }

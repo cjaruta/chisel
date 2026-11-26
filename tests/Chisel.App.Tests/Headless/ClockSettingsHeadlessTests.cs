@@ -242,12 +242,13 @@ public class ClockSettingsHeadlessTests
         UiSnapshot.Render(window, "clock-settings-behavior");
     }
 
-    // Nothing should need long scrolling at the dialog's normal size: the tabs fit, and the face tab (gallery and collapsed groups) fits.
+    // Nothing should need long scrolling at the dialog's normal size: the layout, tools and behavior tabs fit. (The face tab has the
+    // built-in and saved faces, the name box and the groups: it scrolls inside its own panel, below the preview and the tabs.)
     [AvaloniaFact]
     public void NoTabNeedsScrolling_AtTheNormalDialogSize_WithTheGroupsCollapsed()
     {
         var (window, _) = OpenClockPage();
-        foreach (var (_, button, panel) in Tabs)
+        foreach (var (tab, button, panel) in Tabs.Where(t => t.Tab != ClockSettingsTab.Face))
         {
             Press(window, button);
             var scroll = Named<ScrollViewer>(window, panel);

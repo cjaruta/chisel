@@ -46,9 +46,9 @@ public class BlockPaletteTests
     }
 
     [Fact]
-    public void Palettes_AreMinimalThenSaturatedWithUniqueIds()
+    public void Palettes_AreMinimalThenSaturatedThenTheOthers_WithUniqueIds()
     {
-        Assert.Equal(new[] { "Default Minimal", "Default Saturated" }, BlockPalettes.All.Select(p => p.Name));
+        Assert.Equal(new[] { "Default Minimal", "Default Saturated", "Pastel", "Earth", "Coastal", "Jewel" }, BlockPalettes.All.Select(p => p.Name));
         Assert.Equal(BlockPalettes.All.Count, BlockPalettes.All.Select(p => p.Id).Distinct().Count());
         Assert.Same(BlockPalettes.Minimal, BlockPalettes.All[0]);
         Assert.Same(BlockPalettes.Saturated, BlockPalettes.All[1]);

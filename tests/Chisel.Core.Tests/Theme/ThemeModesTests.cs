@@ -14,8 +14,8 @@ public class ThemeModesTests
     [Fact]
     public void HasDefaultLightUltraDarkAndFourSchemes()
     {
-        Assert.Equal(new[] { "default", "light", "ultra-dark", "ocean", "forest", "plum", "slate" }, ThemeModes.All.Select(m => m.Id));
-        Assert.Equal(new[] { "Default", "Light", "Ultra dark", "Ocean", "Forest", "Plum", "Slate" }, ThemeModes.All.Select(m => m.Name));
+        Assert.Equal(new[] { "default", "light", "mist", "sage", "ultra-dark", "ocean", "forest", "plum", "slate", "midnight", "ember" }, ThemeModes.All.Select(m => m.Id));
+        Assert.Equal(new[] { "Default", "Light", "Mist", "Sage", "Ultra dark", "Ocean", "Forest", "Plum", "Slate", "Midnight", "Ember" }, ThemeModes.All.Select(m => m.Name));
     }
 
     [Fact]
@@ -76,5 +76,19 @@ public class ThemeModesTests
             Assert.True(Rgb.Contrast(t.Fill, surface) >= 3, $"{id} {accent} accent fill {surface.ToHex()}");
         }
         Assert.True(Rgb.Contrast(t.OnAccent, t.Fill) >= 4.5, $"{id} {accent} on-accent");
+    }
+
+    [Theory]
+    [InlineData(true, "light")]
+    [InlineData(false, "default")]
+    public void System_FollowsTheWindowsSetting(bool windowsIsLight, string expected)
+    {
+        Assert.Equal(expected, ThemeModes.Resolve(ThemeModes.SystemId, windowsIsLight).Id);
+    }
+
+    [Fact]
+    public void AChosenMode_IgnoresTheWindowsSetting()
+    {
+        Assert.Equal("plum", ThemeModes.Resolve("plum", systemIsLight: true).Id);
     }
 }

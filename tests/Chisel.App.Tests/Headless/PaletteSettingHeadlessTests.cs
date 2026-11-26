@@ -92,7 +92,7 @@ public class PaletteSettingHeadlessTests
     }
 
     [AvaloniaFact]
-    public void SettingsPanel_GroupsSettingsAndShowsBothPalettesWithEightColorPreviews()
+    public void SettingsPanel_GroupsSettingsAndShowsEveryPaletteWithEightColorPreviews()
     {
         var window = Show(null);
         Named<Button>(window, "SettingsButton").Command!.Execute(null);
@@ -104,7 +104,7 @@ public class PaletteSettingHeadlessTests
         Dispatcher.UIThread.RunJobs();
 
         var items = Named<ListBox>(window, "PaletteList").GetVisualDescendants().OfType<ListBoxItem>().ToList();
-        Assert.Equal(new[] { "Default Minimal", "Default Saturated" }, items.Select(i => ((PaletteOption)i.DataContext!).Name));
+        Assert.Equal(new[] { "Default Minimal", "Default Saturated", "Pastel", "Earth", "Coastal", "Jewel" }, items.Select(i => ((PaletteOption)i.DataContext!).Name));
         Assert.All(items, item => Assert.Equal(8, item.GetVisualDescendants().OfType<Border>().Count(b => b.Classes.Contains("paletteChip"))));
         Assert.True(items[0].IsSelected);
         UiSnapshot.Render(window, "settings-panel");

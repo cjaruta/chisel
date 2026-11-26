@@ -30,8 +30,8 @@ public class LayoutViewModelTests
     [Fact]
     public void Registry_HasTheWidgetsWithStableIdsTitlesAndViews()
     {
-        Assert.Equal(new[] { "schedule", "tasks", "notes", "links", "clock", "weather", "media", "pictureframe", "calculator", "scripture" }, WidgetRegistry.All.Select(w => w.Id));
-        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Daily verse" }, WidgetRegistry.All.Select(w => w.Title));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "clock", "weather", "media", "pictureframe", "calculator", "scripture", "calendar", "sysmonitor", "countdown", "focus", "habits", "converter", "clipboard" }, WidgetRegistry.All.Select(w => w.Id));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Clock", "Weather", "Media", "Picture frame", "Calculator", "Daily verse", "Calendar", "System monitor", "Countdown", "Focus timer", "Habits", "Converter", "Clipboard history" }, WidgetRegistry.All.Select(w => w.Title));
         Assert.All(WidgetRegistry.All, w =>
         {
             Assert.True(w.MinHeight > 0);
@@ -42,15 +42,15 @@ public class LayoutViewModelTests
     }
 
     [Fact]
-    public void Registry_OnlyTheScheduleAndTheNotepadScrollThemselves()
+    public void Registry_OnlyTheScheduleTheTasksAndTheNotepadScrollThemselves()
     {
-        Assert.Equal(new[] { "schedule", "notes", "clock", "weather", "media", "pictureframe", "scripture" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
+        Assert.Equal(new[] { "schedule", "tasks", "notes", "clock", "weather", "media", "pictureframe", "scripture", "sysmonitor", "countdown", "focus", "habits", "converter", "clipboard" }, WidgetRegistry.All.Where(w => !w.ScrollsContent).Select(w => w.Id));
     }
 
     [Fact]
     public void DefaultLayout_IsScheduleOnTheLeftAndTheListsStackedOnTheRight()
     {
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85] (hidden: clock, weather, media, calculator, scripture)", WidgetRegistry.DefaultLayout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", WidgetRegistry.DefaultLayout.Describe());
     }
 
     [Fact]
@@ -74,17 +74,42 @@ public class LayoutViewModelTests
     }
 
     [Fact]
+    public void FirstRun_WithNothingSaved_UsesTheStarterDashboard()
+    {
+        var repository = new FakeLayoutRepository();
+
+        var layout = new LayoutViewModel(repository, firstRunLayout: WidgetRegistry.FirstRunLayout);
+
+        Assert.True(layout.IsFirstRun);
+        Assert.Equal(WidgetRegistry.FirstRunLayout.Describe(), repository.Saved!.Describe());
+        Assert.Equal(["schedule", "clock", "tasks", "notes", "weather", "calendar"], layout.Layout.WidgetIds);
+    }
+
+    [Fact]
+    public void FirstRun_WithASavedLayout_NeverTouchesIt()
+    {
+        var saved = Layout(Col(1, ("tasks", 1)));
+        var repository = new FakeLayoutRepository { Saved = saved };
+
+        var layout = new LayoutViewModel(repository, firstRunLayout: WidgetRegistry.FirstRunLayout);
+
+        Assert.False(layout.IsFirstRun);
+        Assert.Equal(["tasks"], layout.Layout.Columns.SelectMany(c => c.Widgets).Select(w => w.WidgetId).Take(1));
+        Assert.DoesNotContain("clock", layout.Layout.Columns.SelectMany(c => c.Widgets).Select(w => w.WidgetId));
+    }
+
+    [Fact]
     public void WithASavedLayout_LoadsItNormalized_AndSavesOnceToPlaceANewWidget()
     {
         // Notes is neither placed nor hidden here, so it is new: it joins the bottom of the first column.
         var repository = new FakeLayoutRepository
         {
-            Saved = Layout(Col(1, ("tasks", 2), ("forecast", 1)), Col(0), Col(2, ("schedule", 1), ("links", 0.5))),
+            Saved = Layout(Col(1, ("tasks", 2), ("forecast", 1)), Col(0), Col(2, ("schedule", 1), ("scripture", 0.5))),
         };
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, links:0.5] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1[tasks:1.29, notes:0.71] | 2[schedule:1, scripture:0.5] (hidden: clock, weather, media, calculator, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", layout.Layout.Describe());
         Assert.Equal(1, repository.SaveCalls);
         Assert.Equal(layout.Layout.Describe(), repository.Saved!.Describe());
 
@@ -97,12 +122,12 @@ public class LayoutViewModelTests
     {
         var repository = new FakeLayoutRepository
         {
-            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("links", 1)) }, new[] { "notes" }),
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("scripture", 1)) }, new[] { "notes" }),
         };
 
         var layout = new LayoutViewModel(repository);
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1, links:1] (hidden: notes, clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, scripture:1] (hidden: notes, clock, weather, media, calculator, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", layout.Layout.Describe());
         Assert.Equal(0, repository.SaveCalls);
     }
 
@@ -111,7 +136,7 @@ public class LayoutViewModelTests
     {
         var layout = new LayoutViewModel();
 
-        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1, links:0.85]", Describe(layout));
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1]", Describe(layout));
         var tasks = layout.Columns[1].Widgets[0];
         Assert.Equal(("Tasks", WidgetRegistry.Get("tasks")!.MinHeight), (tasks.Title, tasks.MinHeight));
         Assert.Same(WidgetRegistry.Get("tasks"), tasks.Widget);
@@ -124,9 +149,9 @@ public class LayoutViewModelTests
         var changed = new List<string?>();
         layout.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
-        layout.Apply(Layout(Col(1, ("notes", 1), ("links", 1)), Col(2, ("schedule", 1)), Col(1, ("tasks", 3))));
+        layout.Apply(Layout(Col(1, ("notes", 1), ("scripture", 1)), Col(2, ("schedule", 1)), Col(1, ("tasks", 3))));
 
-        Assert.Equal("1[notes:1, links:1] | 2[schedule:1] | 1[tasks:3]", Describe(layout));
+        Assert.Equal("1[notes:1, scripture:1] | 2[schedule:1] | 1[tasks:3]", Describe(layout));
         Assert.Contains(nameof(LayoutViewModel.Layout), changed);
         Assert.Contains(nameof(LayoutViewModel.Columns), changed);
     }
@@ -139,6 +164,82 @@ public class LayoutViewModelTests
         layout.Apply(Layout(Col(1, ("schedule", 0), ("forecast", 1))));
 
         // Forecast is dropped, schedule raised to the minimum, and the widgets never seen join the first column.
-        Assert.Equal("1[schedule:0.129, tasks:1.355, notes:1.419, links:1.097] (hidden: clock, weather, media, calculator, scripture)", layout.Layout.Describe());
+        Assert.Equal("1[schedule:0.133, tasks:1.4, notes:1.467] (hidden: clock, weather, media, calculator, scripture, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", layout.Layout.Describe());
+    }
+
+    // Quick links used to be a dashboard widget; it now lives in the top bar. A saved layout that still has it must load
+    // without it and without a gap.
+
+    [Fact]
+    public void QuickLinks_IsNoLongerAWidget_SoTheLibraryCannotOfferIt()
+    {
+        Assert.DoesNotContain(WidgetRegistry.All, w => w.Id == "links");
+        Assert.Null(WidgetRegistry.Get("links"));
+        Assert.DoesNotContain("links", WidgetRegistry.DefaultLayout.WidgetIds);
+        Assert.DoesNotContain("links", WidgetRegistry.DefaultLayout.HiddenWidgetIds);
+    }
+
+    [Fact]
+    public void ASavedLayoutWithTheOldLinksCard_LoadsWithoutIt_AndTheNeighboursFillTheColumn()
+    {
+        var repository = new FakeLayoutRepository
+        {
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1.05), ("notes", 1.1), ("links", 0.85)) },
+                new[] { "clock", "weather", "media", "calculator", "scripture" }),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1.05, notes:1.1] (hidden: clock, weather, media, calculator, scripture, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", layout.Layout.Describe());
+        Assert.Equal(new[] { 1, 2 }, layout.Columns.Select(c => c.Widgets.Count).ToArray());
+        Assert.DoesNotContain("links", layout.Layout.WidgetIds);
+    }
+
+    [Fact]
+    public void ALinksCardAloneInItsColumn_TakesTheColumnWithIt_WithNoBlankGap()
+    {
+        var repository = new FakeLayoutRepository
+        {
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("notes", 1)), Col(0.7, ("links", 1)) },
+                new[] { "clock", "weather", "media", "calculator", "scripture" }),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.Equal(2, layout.Columns.Count);
+        Assert.Equal("1.3[schedule:1] | 1[tasks:1, notes:1] (hidden: clock, weather, media, calculator, scripture, calendar, sysmonitor, countdown, focus, habits, converter, clipboard)", layout.Layout.Describe());
+    }
+
+    [Fact]
+    public void ALinksTabInsideAGroup_LeavesTheOtherWidgetAsAPlainCard()
+    {
+        var group = new WidgetPlacement("notes", 1.1, null, new[] { new GroupMember("notes", true), new GroupMember("links", false) }, 0, GroupViewMode.Tabs);
+        var repository = new FakeLayoutRepository
+        {
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), new LayoutColumn(1, new[] { new WidgetPlacement("tasks", 1.05), group }) },
+                new[] { "clock", "weather", "media", "calculator", "scripture" }),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        var notes = layout.Layout.Columns[1].Widgets[1];
+        Assert.False(notes.IsGroup);
+        Assert.Equal("notes", notes.WidgetId);
+        Assert.DoesNotContain("links", layout.Layout.WidgetIds);
+    }
+
+    [Fact]
+    public void ALinksIdInTheHiddenList_IsIgnored_AndNeverReturns()
+    {
+        var repository = new FakeLayoutRepository
+        {
+            Saved = new WidgetLayout(new[] { Col(1.3, ("schedule", 1)), Col(1, ("tasks", 1), ("notes", 1)) },
+                new[] { "links", "clock", "weather", "media", "calculator", "scripture" }),
+        };
+
+        var layout = new LayoutViewModel(repository);
+
+        Assert.DoesNotContain("links", layout.Layout.HiddenWidgetIds);
+        Assert.DoesNotContain("links", layout.Layout.WidgetIds);
     }
 }

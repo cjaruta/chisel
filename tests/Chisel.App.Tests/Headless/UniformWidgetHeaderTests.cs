@@ -14,7 +14,7 @@ namespace Chisel.App.Tests.Headless;
 // Every widget card has the same header: one height, background, padding and bottom edge. Hidden, the whole row is gone.
 public class UniformWidgetHeaderTests
 {
-    private static readonly string[] Ids = ["tasks", "notes", "clock", "schedule", "weather", "links", "calculator"];
+    private static readonly string[] Ids = ["tasks", "notes", "clock", "schedule", "weather", "scripture", "calculator"];
 
     private static List<WidgetFrame> Frames(Window window) =>
         window.GetVisualDescendants().OfType<LayoutHost>().Single().Frames.SelectMany(c => c).ToList();

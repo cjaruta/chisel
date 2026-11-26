@@ -64,7 +64,56 @@ public static class BlockPalettes
         new BlockSwatch(BlockColor.Gray, "Warm gray", Color.Parse("#B3AA9C"), Color.Parse("#4E4E4E"), SaturatedText),
     });
 
-    public static IReadOnlyList<BlockPalette> All { get; } = new[] { Minimal, Saturated };
+    // More looks, all on the same eight keys; fills are a tint of the stripe over the dark card.
+    public static BlockPalette Pastel { get; } = new("pastel", "Pastel", Color.Parse("#D4D7DD"), new[]
+    {
+        new BlockSwatch(BlockColor.Slate, "Slate blue", Color.Parse("#9DB4E8"), Color.Parse("#40485B"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Sage, "Sage green", Color.Parse("#A9D8A0"), Color.Parse("#435149"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Teal, "Dusty teal", Color.Parse("#8FDCD6"), Color.Parse("#3C5257"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Amber, "Muted amber", Color.Parse("#F2D48A"), Color.Parse("#565043"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Terracotta, "Terracotta", Color.Parse("#F2A58E"), Color.Parse("#564444"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Rose, "Dusty rose", Color.Parse("#F2A9C4"), Color.Parse("#564552"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Lavender, "Lavender", Color.Parse("#CDB4F0"), Color.Parse("#4C485D"), Color.Parse("#E6E8EC")),
+        new BlockSwatch(BlockColor.Gray, "Warm gray", Color.Parse("#CFCAC2"), Color.Parse("#4D4E52"), Color.Parse("#E6E8EC")),
+    });
+
+    public static BlockPalette Earth { get; } = new("earth", "Earth", Color.Parse("#CFC7BC"), new[]
+    {
+        new BlockSwatch(BlockColor.Slate, "Slate blue", Color.Parse("#8A9BB0"), Color.Parse("#3F4652"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Sage, "Sage green", Color.Parse("#8F9F6B"), Color.Parse("#41483E"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Teal, "Dusty teal", Color.Parse("#5F9E8F"), Color.Parse("#324748"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Amber, "Muted amber", Color.Parse("#C9964A"), Color.Parse("#524534"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Terracotta, "Terracotta", Color.Parse("#C0693F"), Color.Parse("#4F3730"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Rose, "Dusty rose", Color.Parse("#BE7C72"), Color.Parse("#4F3D40"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Lavender, "Lavender", Color.Parse("#9A859F"), Color.Parse("#44404D"), Color.Parse("#ECE6DF")),
+        new BlockSwatch(BlockColor.Gray, "Warm gray", Color.Parse("#A39A8A"), Color.Parse("#474647"), Color.Parse("#ECE6DF")),
+    });
+
+    public static BlockPalette Coastal { get; } = new("coastal", "Coastal", Color.Parse("#C4D0D8"), new[]
+    {
+        new BlockSwatch(BlockColor.Slate, "Slate blue", Color.Parse("#5B8DB8"), Color.Parse("#314255"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Sage, "Sage green", Color.Parse("#6BB59A"), Color.Parse("#364E4C"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Teal, "Dusty teal", Color.Parse("#3FB3C7"), Color.Parse("#294E59"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Amber, "Muted amber", Color.Parse("#E3C46A"), Color.Parse("#5A533D"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Terracotta, "Terracotta", Color.Parse("#E08A6B"), Color.Parse("#59413E"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Rose, "Dusty rose", Color.Parse("#D98AA8"), Color.Parse("#574150"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Lavender, "Lavender", Color.Parse("#7F8FD6"), Color.Parse("#3C435E"), Color.Parse("#EAF0F4")),
+        new BlockSwatch(BlockColor.Gray, "Warm gray", Color.Parse("#8FA3B0"), Color.Parse("#414952"), Color.Parse("#EAF0F4")),
+    });
+
+    public static BlockPalette Jewel { get; } = new("jewel", "Jewel", Color.Parse("#D2D4DC"), new[]
+    {
+        new BlockSwatch(BlockColor.Slate, "Slate blue", Color.Parse("#5B84E6"), Color.Parse("#33436A"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Sage, "Sage green", Color.Parse("#34B37A"), Color.Parse("#265345"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Teal, "Dusty teal", Color.Parse("#1FB5B0"), Color.Parse("#1F5458"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Amber, "Muted amber", Color.Parse("#E6A817"), Color.Parse("#635024"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Terracotta, "Terracotta", Color.Parse("#E0533D"), Color.Parse("#613330"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Rose, "Dusty rose", Color.Parse("#D9468F"), Color.Parse("#5E2E4C"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Lavender, "Lavender", Color.Parse("#9A5BE0"), Color.Parse("#493568"), Color.Parse("#F2F2F6")),
+        new BlockSwatch(BlockColor.Gray, "Warm gray", Color.Parse("#9AA0B0"), Color.Parse("#494D58"), Color.Parse("#F2F2F6")),
+    });
+
+    public static IReadOnlyList<BlockPalette> All { get; } = new[] { Minimal, Saturated, Pastel, Earth, Coastal, Jewel };
 
     // Unknown or missing ids get Default Minimal.
     public static BlockPalette Get(string? id) => All.FirstOrDefault(p => p.Id == id) ?? Minimal;

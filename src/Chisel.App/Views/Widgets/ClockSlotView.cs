@@ -29,6 +29,7 @@ public sealed class ClockSlotView : Grid
     };
     private readonly Dictionary<ClockTool, BuiltTool> _built = [];
     private readonly ContextMenu _menu = new();
+    private Size? _cell;
     private double _wheel;
     private bool _hover;
 
@@ -50,11 +51,27 @@ public sealed class ClockSlotView : Grid
         UpdateDots();
     }
 
-    // Every tool fits itself to the room this slot has.
+    // Every tool fits itself to the room of its cell (the equal share the layout gives this slot), not to its own size: the slot
+    // itself is only as wide as its content, so sizing from it would shrink the content, which would shrink the slot.
+    public void Fit(double cellWidth, double cellHeight)
+    {
+        if (cellWidth <= 0 || cellHeight <= 0)
+        {
+            return;
+        }
+        _cell = new Size(cellWidth, cellHeight);
+        var scale = ClockTypeScale.For(cellWidth, cellHeight);
+        foreach (var built in _built.Values)
+        {
+            built.Rescale(scale);
+        }
+    }
+
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        if (e.NewSize.Width > 0 && e.NewSize.Height > 0)
+        // A slot used on its own (no widget view to give it a cell) fits itself to its size.
+        if (_cell is null && e.NewSize.Width > 0 && e.NewSize.Height > 0)
         {
             var scale = ClockTypeScale.For(e.NewSize.Width, e.NewSize.Height);
             foreach (var built in _built.Values)
@@ -88,7 +105,11 @@ public sealed class ClockSlotView : Grid
         if (!_built.TryGetValue(tool, out var built))
         {
             _built[tool] = built = ClockToolViews.Build(tool, _main, this);
-            if (Bounds.Width > 0 && Bounds.Height > 0)
+            if (_cell is { } cell)
+            {
+                built.Rescale(ClockTypeScale.For(cell.Width, cell.Height));
+            }
+            else if (Bounds.Width > 0 && Bounds.Height > 0)
             {
                 built.Rescale(ClockTypeScale.For(Bounds.Width, Bounds.Height));
             }

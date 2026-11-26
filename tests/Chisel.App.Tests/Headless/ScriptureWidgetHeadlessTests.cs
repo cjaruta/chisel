@@ -43,7 +43,7 @@ public class ScriptureWidgetHeadlessTests
     private static MainWindow Open(ScripturePassage passage, double width = 1200, double height = 760, double weight = 1,
         MemoryLayoutRepository? repository = null, Action<string>? openUrl = null, FakeTimeProvider? clock = null)
     {
-        var window = UiSnapshot.ShowMainWindow(width, height, clock: clock ?? ClockFor(passage), layoutRepository: repository, openUrl: openUrl);
+        var window = UiSnapshot.ShowMainWindow(width, height, clock: clock ?? ClockFor(passage), layoutRepository: repository ?? new MemoryLayoutRepository(), openUrl: openUrl);
         var layout = Main(window).Layout;
         layout.Apply(layout.Layout.AddWidget(WidgetRegistry.Scripture, 0, layout.Layout.Columns[0].Widgets.Count, weight));
         Dispatcher.UIThread.RunJobs();
@@ -69,7 +69,7 @@ public class ScriptureWidgetHeadlessTests
     [AvaloniaFact]
     public void IsInTheTray_NotOnTheDashboardByDefault_AndCanBeAdded()
     {
-        var window = UiSnapshot.ShowMainWindow();
+        var window = UiSnapshot.ShowMainWindow(layoutRepository: new MemoryLayoutRepository());
         var main = Main(window);
         main.CustomizeLayoutCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
@@ -90,7 +90,7 @@ public class ScriptureWidgetHeadlessTests
         var reference = Named<TextBlock>(window, "ScriptureReference")!;
         Assert.Equal(Shortest.Text, text.Text);
         Assert.Equal(Shortest.Reference, reference.Text);
-        Assert.Equal("WEB", Named<TextBlock>(window, "ScriptureTranslation")!.Text);
+        Assert.Equal("KJV", Named<TextBlock>(window, "ScriptureTranslation")!.Text);
         Assert.True(text.TranslatePoint(default, window)!.Value.Y < reference.TranslatePoint(default, window)!.Value.Y);
         Assert.Null(Named<Button>(window, "ScriptureMore"));
         window.Close();

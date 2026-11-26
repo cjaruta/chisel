@@ -44,7 +44,7 @@ public class WidgetGroupContactSheetTests
                 layout = layout.Combine(WidgetRegistry.Media, WidgetRegistry.Weather).Combine(WidgetRegistry.Clock, WidgetRegistry.Weather);
                 break;
             default:
-                var ids = new[] { "tasks", "notes", "links", "schedule", "clock" };
+                var ids = new[] { "tasks", "notes", "scripture", "schedule", "clock" };
                 layout = new WidgetLayout(new[]
                 {
                     new LayoutColumn(1, new[] { new WidgetPlacement("tasks", 1, null, ids.Select(id => new GroupMember(id)).ToList(), 2) }),

@@ -36,6 +36,7 @@ public class MainViewModelTests
         public void Add(TaskItem task) { }
         public void Update(TaskItem task) { }
         public void Remove(Guid id) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private sealed class FakeNoteRepository : INoteRepository
@@ -51,6 +52,8 @@ public class MainViewModelTests
         public IReadOnlyList<QuickLink> GetAll() => Array.Empty<QuickLink>();
         public void Add(QuickLink link) { }
         public void Remove(Guid id) { }
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private static MainViewModel CreateViewModel(

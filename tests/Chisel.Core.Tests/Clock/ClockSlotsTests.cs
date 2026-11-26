@@ -49,23 +49,23 @@ public class ClockSlotsTests
 
     [Theory]
     [InlineData(120, 300, 1)]
-    [InlineData(320, 200, 2)]
+    [InlineData(360, 200, 2)]
     [InlineData(640, 300, 3)]
     [InlineData(1400, 300, 3)]
-    [InlineData(200, 330, 2)] // tall: the height counts
+    [InlineData(200, 360, 2)] // tall: the height counts
     [InlineData(200, 100, 1)]
     public void Capacity_ComesFromTheLongSideOfTheWidget(double width, double height, int expected) =>
         Assert.Equal(expected, ClockSlotLayout.Capacity(width, height));
 
     [Fact]
-    public void WhenEverySlotFits_TheyAreShownAsConfigured_TheClockASquare()
+    public void WhenEverySlotFits_TheyAreShownAsConfigured_InEqualCells()
     {
         var plan = ClockSlotLayout.Plan(ClockSlotsConfig.Default, 640, 300);
         Assert.True(plan.Horizontal);
         Assert.Equal(2, plan.Slots.Count);
         Assert.Equal([ClockTool.Clock], plan.Slots[0].Tools);
         Assert.Equal(ClockSlotsConfig.Default.Slots[1].Tools, plan.Slots[1].Tools);
-        Assert.Equal(300, plan.Slots[0].Extent); // the clock takes a square of the widget height
+        Assert.Equal(plan.Slots[0].Extent, plan.Slots[1].Extent); // equal cells: the same space around every item
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class ClockSlotsTests
             ClockSlotConfig.Pinned(ClockTool.Timer),
             Scroll(ClockTool.Stopwatch, ClockTool.Alarm, ClockTool.Empty)]);
 
-        var plan = ClockSlotLayout.Plan(config, 330, 300); // room for two
+        var plan = ClockSlotLayout.Plan(config, 400, 300); // room for two
         Assert.Equal(2, plan.Slots.Count);
         Assert.Equal([ClockTool.Clock], plan.Slots[0].Tools);
         Assert.True(plan.Slots[1].Scrolling);

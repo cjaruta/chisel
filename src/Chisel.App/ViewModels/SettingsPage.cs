@@ -6,7 +6,11 @@ namespace Chisel.App.ViewModels;
 public enum SettingsTab
 {
     General,
+    Appearance,
     Widgets,
+    QuickLinks,
+    Backup,
+    Help,
 }
 
 // One page in the Widgets tab. ViewType is a control whose bindings read from MainViewModel.
@@ -25,5 +29,9 @@ public static class SettingsPages
         new SettingsPage("media", "Media", typeof(Views.Pages.MediaSettingsPage)),
         new SettingsPage("pictureframe", "Picture frame", typeof(Views.Pages.PictureSettingsPage)),
         new SettingsPage("calculator", "Calculator", typeof(Views.Pages.CalculatorSettingsPage)),
+        new SettingsPage("calendar", "Calendar", typeof(Views.Pages.CalendarSettingsPage)),
+        new SettingsPage("sysmonitor", "System monitor", typeof(Views.Pages.SystemMonitorSettingsPage)),
+        new SettingsPage("countdown", "Countdown", typeof(Views.Pages.CountdownSettingsPage)),
+        new SettingsPage("focus", "Focus timer", typeof(Views.Pages.FocusTimerSettingsPage)),
     };
 }

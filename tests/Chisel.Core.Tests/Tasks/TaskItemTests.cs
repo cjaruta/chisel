@@ -69,4 +69,24 @@ public class TaskItemTests
         Assert.Equal("Buy milk", task.Text);
         Assert.True(task.IsDone);
     }
+
+    [Fact]
+    public void DueDate_StartsEmpty_AndCanBeSetAndCleared()
+    {
+        var task = new TaskItem("Buy milk");
+        Assert.Null(task.DueDate);
+
+        task.SetDueDate(new DateOnly(2000, 1, 2));
+        Assert.Equal(new DateOnly(2000, 1, 2), task.DueDate);
+
+        task.SetDueDate(null);
+        Assert.Null(task.DueDate);
+    }
+
+    [Fact]
+    public void Constructor_WithSavedDueDate_RestoresIt()
+    {
+        var task = new TaskItem(Guid.NewGuid(), "Buy milk", false, new DateOnly(2000, 1, 2));
+        Assert.Equal(new DateOnly(2000, 1, 2), task.DueDate);
+    }
 }

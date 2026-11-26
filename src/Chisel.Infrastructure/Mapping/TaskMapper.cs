@@ -9,9 +9,10 @@ public static class TaskMapper
     {
         Id = task.Id,
         Text = task.Text,
-        IsDone = task.IsDone
+        IsDone = task.IsDone,
+        DueDate = task.DueDate
     };
 
     public static TaskItem ToDomain(this TaskEntity entity) =>
-        new(entity.Id, entity.Text, entity.IsDone);
+        new(entity.Id, entity.Text, entity.IsDone, entity.DueDate);
 }

@@ -29,13 +29,13 @@ public class LayoutHostHeadlessTests
         new(visual.TranslatePoint(new Point(0, 0), window)!.Value, visual.Bounds.Size);
 
     [AvaloniaFact]
-    public void AllFourWidgetsAppearWithTheirHeadingsInTheDefaultColumns()
+    public void TheThreeDefaultWidgetsAppearWithTheirHeadingsInTheDefaultColumns()
     {
-        var window = UiSnapshot.ShowMainWindow();
+        var window = UiSnapshot.ShowMainWindow(layoutRepository: UiSnapshot.FactoryDefaultLayout());
         var host = Host(window);
 
-        Assert.Equal(new[] { new[] { "schedule" }, new[] { "tasks", "notes", "links" } }, Ids(host));
-        Assert.Equal(new[] { "Today", "Tasks", "Notes", "Quick links" }, host.Frames.SelectMany(c => c).Select(Heading));
+        Assert.Equal(new[] { new[] { "schedule" }, new[] { "tasks", "notes" } }, Ids(host));
+        Assert.Equal(new[] { "Today", "Tasks", "Notes" }, host.Frames.SelectMany(c => c).Select(Heading));
 
         var schedule = InWindow(host.Frames[0][0], window);
         var tasks = InWindow(host.Frames[1][0], window);
@@ -92,13 +92,13 @@ public class LayoutHostHeadlessTests
 
         layout.Apply(new WidgetLayout(new[]
         {
-            new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("links") }),
+            new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("scripture") }),
             new LayoutColumn(2, new[] { new WidgetPlacement("schedule") }),
             new LayoutColumn(1, new[] { new WidgetPlacement("notes") }),
         }));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(new[] { new[] { "tasks", "links" }, new[] { "schedule" }, new[] { "notes" } }, Ids(host));
+        Assert.Equal(new[] { new[] { "tasks", "scripture" }, new[] { "schedule" }, new[] { "notes" } }, Ids(host));
         Assert.Same(scheduleView, host.Frames[1][0].View);
         var middle = InWindow(host.Frames[1][0], window);
         Assert.True(middle.Width > InWindow(host.Frames[0][0], window).Width * 1.5, "the 2-weight column is about twice as wide");

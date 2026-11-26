@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Chisel.App.Startup;
 using Chisel.App.ViewModels;
+using Chisel.Core.Clock;
 using Chisel.Core.Media;
 using Chisel.App.Views.Widgets;
 
@@ -19,7 +20,12 @@ public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly string? _windowPlacementPath;
+    private readonly WindowPlacementTracker _placement = new();
+    private readonly DebouncedSaver<WindowPlacement>? _placementSaver;
     private bool _spaceDown;
+
+    // Choosing a link in the "more" menu opens it (its own command) and closes the menu.
+    private void OnMoreLinkClick(object? sender, RoutedEventArgs e) => MoreLinksButton.Flyout?.Hide();
 
     public MainWindow() : this(AppPaths.GetWindowPlacementPath())
     {
@@ -30,11 +36,20 @@ public partial class MainWindow : Window
     {
         _windowPlacementPath = windowPlacementPath;
         InitializeComponent();
+        if (windowPlacementPath is not null)
+        {
+            _placementSaver = new DebouncedSaver<WindowPlacement>(TimeProvider.System, TimeSpan.FromMilliseconds(500), SavePlacement);
+            ApplySavedPlacement();
+            PositionChanged += (_, _) => TrackPlacement();
+        }
 
-        // Keep the layout toolbar centered, but clear of the clock and date on narrow windows.
+        // The top bar follows the window: a smaller clock on narrow windows, and the edit toolbar between the clock and the
+        // buttons when it fits, otherwise on its own line.
         LayoutToolbar.SizeChanged += (_, _) => PlaceLayoutToolbar();
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
-        SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); };
+        TopButtons.SizeChanged += (_, _) => PlaceLayoutToolbar();
+        Header.SizeChanged += (_, _) => PlaceLibrary();
+        SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); TrackPlacement(); };
         DataContextChanged += (_, _) =>
         {
             if (DataContext is MainViewModel main)
@@ -49,6 +64,11 @@ public partial class MainWindow : Window
 
         DataContextChanged += (_, _) => (DataContext as MainViewModel)?.Settings.Theme?.Track(this);
 
+        // The show/hide shortcut box: while focused, the next shortcut pressed becomes the new one.
+        HotkeyBox.GotFocus += (_, _) => (DataContext as MainViewModel)?.Settings.SystemOptions?.BeginHotkeyCapture();
+        HotkeyBox.LostFocus += (_, _) => (DataContext as MainViewModel)?.Settings.SystemOptions?.EndHotkeyCapture();
+        HotkeyBox.AddHandler(KeyDownEvent, OnHotkeyBoxKeyDown, RoutingStrategies.Tunnel);
+
         // Pictures dragged in from Explorer or a browser: accepted in edit mode only.
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, OnPictureDragOver);
@@ -57,25 +77,53 @@ public partial class MainWindow : Window
         PropertyChanged += (_, e) =>
         {
             // Picture frames stop their timers and animations while the window is minimized.
+            if (e.Property == WindowStateProperty)
+            {
+                TrackPlacement();
+            }
             if (e.Property == WindowStateProperty && DataContext is MainViewModel main)
             {
                 main.PictureFrames.WindowMinimized = WindowState == WindowState.Minimized;
             }
+            // Back on screen: tick at the visible rate straight away rather than after the next slow tick.
+            if (e.Property == WindowStateProperty || e.Property == IsVisibleProperty)
+            {
+                UpdateTickInterval();
+            }
         };
 
-        _timer.Tick += (_, _) => (DataContext as MainViewModel)?.Tick();
+        _timer.Tick += (_, _) =>
+        {
+            if (DataContext is not MainViewModel main)
+            {
+                return;
+            }
+            main.Tick();
+            UpdateTickInterval();
+        };
         Loaded += (_, _) =>
         {
             _timer.Start();
-            ApplySavedPlacement();
             // Wait for layout so the grid has its size before scrolling to the current time.
             Dispatcher.UIThread.Post(ScrollToNow, DispatcherPriority.Background);
         };
         Unloaded += (_, _) => _timer.Stop();
+
+        // Minimized or in the tray the dashboard ticks once a second; visible it ticks gently, or fast for a running stopwatch.
+        void UpdateTickInterval()
+        {
+            var interval = MainTick.Interval(windowHidden: !IsVisible || WindowState == WindowState.Minimized,
+                stopwatchRunning: DataContext is MainViewModel { ClockTools.StopwatchRunning: true });
+            if (_timer.Interval != interval)
+            {
+                _timer.Interval = interval;
+            }
+        }
         Closing += (_, _) =>
         {
             (DataContext as MainViewModel)?.Notes.Flush();
-            SavePlacement();
+            TrackPlacement();
+            _placementSaver?.Flush();
         };
     }
 
@@ -139,6 +187,34 @@ public partial class MainWindow : Window
         }
     }
 
+    // Only reads the keys pressed while the shortcut box has focus. Tab still moves on; Esc gives up.
+    private void OnHotkeyBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel { Settings.SystemOptions: { } system } || (e.Key == Key.Tab && e.KeyModifiers == KeyModifiers.None))
+        {
+            return;
+        }
+        e.Handled = true;
+        if (e.Key == Key.Escape)
+        {
+            LeaveHotkeyBox();
+            return;
+        }
+        if (!HotkeyKeys.IsModifier(e.Key) && system.CaptureHotkey(HotkeyKeys.Modifiers(e.KeyModifiers), HotkeyKeys.NameOf(e.Key)))
+        {
+            LeaveHotkeyBox();
+        }
+    }
+
+    // Moves focus on from the shortcut box, which ends the capture.
+    private void LeaveHotkeyBox()
+    {
+        if (!HotkeyOffButton.IsEffectivelyEnabled || !HotkeyOffButton.Focus())
+        {
+            GeneralTab.Focus();
+        }
+    }
+
     private void OnPreviewKeyUp(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Space)
@@ -161,7 +237,8 @@ public partial class MainWindow : Window
         LibraryScrim.IsVisible = narrow && DataContext is MainViewModel { Library.IsOpen: true };
         LibraryPanel.HorizontalAlignment = narrow ? Avalonia.Layout.HorizontalAlignment.Center : Avalonia.Layout.HorizontalAlignment.Right;
         LibraryPanel.Width = narrow ? Math.Clamp(Bounds.Width - 80, 240, 480) : 340;
-        LibraryPanel.Margin = narrow ? new Thickness(0, 56, 0, 20) : new Thickness(0, 56, 0, 0);
+        // Narrow: below the whole top bar, so the edit toolbar on its own line stays clear.
+        LibraryPanel.Margin = narrow ? new Thickness(0, Math.Max(56, Header.Bounds.Bottom + 8), 0, 20) : new Thickness(0, 56, 0, 0);
     }
 
     private void OnLibraryScrimPressed(object? sender, PointerPressedEventArgs e)
@@ -170,16 +247,32 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    // Centered over the window, or just right of the clock and date when centering would cover them.
+    // Gap kept between the toolbar and the clock or the buttons beside it.
+    private const double ToolbarGap = 16;
+
     private void PlaceLayoutToolbar()
     {
-        if (LayoutToolbar.Parent is not Control area || LayoutToolbar.Bounds.Width <= 0)
+        var width = Bounds.Width - 40;
+        if (width <= 0)
         {
             return;
         }
-        var centered = (area.Bounds.Width - LayoutToolbar.Bounds.Width) / 2;
-        var left = Math.Max(centered, ClockPanel.Bounds.Right + 16);
-        LayoutToolbar.Margin = new Thickness(left, LayoutToolbar.Margin.Top, 0, 0);
+        (ClockTime.FontSize, ClockDate.FontSize) = TopBar.ClockFontSizes(width);
+        // Short labels on narrow windows keep the toolbar on one row.
+        var compact = width < TopBar.Narrow;
+        LibraryButton.Content = compact ? "Library" : "Widget Library";
+        LayoutResetButton.Content = compact ? "Reset" : "Reset layout";
+        ToolbarDivider.IsVisible = !compact;
+
+        var items = LayoutToolbarItems.Children.Where(c => c.IsVisible).ToList();
+        var natural = items.Sum(c => c.DesiredSize.Width) + LayoutToolbarItems.ItemSpacing * Math.Max(0, items.Count - 1)
+            + LayoutToolbar.Padding.Left + LayoutToolbar.Padding.Right + LayoutToolbar.BorderThickness.Left + LayoutToolbar.BorderThickness.Right;
+        var placement = TopBar.PlaceToolbar(width, natural, ClockPanel.DesiredSize.Width + ToolbarGap, TopButtons.DesiredSize.Width + ToolbarGap);
+        Grid.SetRow(LayoutToolbar, placement == ToolbarPlacement.OwnLine ? 1 : 0);
+        Grid.SetColumn(LayoutToolbar, placement == ToolbarPlacement.BetweenClockAndButtons ? 1 : 0);
+        Grid.SetColumnSpan(LayoutToolbar, placement == ToolbarPlacement.BetweenClockAndButtons ? 1 : 3);
+        LayoutToolbar.Margin = placement == ToolbarPlacement.OwnLine ? new Thickness(0, 12, 0, 0)
+            : placement == ToolbarPlacement.BetweenClockAndButtons ? new Thickness(ToolbarGap, -14, ToolbarGap, 0) : new Thickness(0, -14, 0, 0);
     }
 
     private ScheduleWidgetView? ScheduleView => this.GetVisualDescendants().OfType<ScheduleWidgetView>().FirstOrDefault();
@@ -193,6 +286,8 @@ public partial class MainWindow : Window
     // One step of schedule auto-scroll while dragging near its top or bottom edge.
     public void AutoScrollTick() => ScheduleView?.AutoScrollTick();
 
+    // Puts the window where it was (same monitor, size and maximized state) if that is still on a connected screen, else a
+    // default window centered on the primary screen. Runs before the window is shown, so it never flashes elsewhere first.
     private void ApplySavedPlacement()
     {
         if (_windowPlacementPath is null)
@@ -200,33 +295,42 @@ public partial class MainWindow : Window
             return;
         }
 
-        var placement = WindowPlacementStore.Load(_windowPlacementPath);
-        if (placement is null)
+        var screens = Screens.All.Select(s => new ScreenArea(s.WorkingArea, s.Scaling, s.IsPrimary)).ToList();
+        if (WindowPlacementPolicy.Restore(WindowPlacementStore.Load(_windowPlacementPath), screens) is not { } plan)
         {
             return;
         }
 
-        Width = placement.Width;
-        Height = placement.Height;
-
-        var workingAreas = Screens.All.Select(s => s.WorkingArea);
-        if (placement.X is { } x && placement.Y is { } y && WindowPlacementPolicy.IsOnScreen(placement, workingAreas))
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Position = plan.Position;
+        Width = plan.Width;
+        Height = plan.Height;
+        _placement.Observe(WindowState.Normal, plan.Width, plan.Height, plan.Position);
+        if (plan.Maximized)
         {
-            Position = new PixelPoint((int)x, (int)y);
+            WindowState = WindowState.Maximized;
         }
     }
 
-    private void SavePlacement()
+    // Moving, resizing or maximizing: saved half a second after it settles, and again when the window closes.
+    private void TrackPlacement()
     {
-        var placement = WindowPlacementPolicy.ForSave(WindowState, ClientSize.Width, ClientSize.Height, Position);
-        if (placement is null || _windowPlacementPath is null)
+        if (_placementSaver is null)
         {
             return;
         }
+        _placement.Observe(WindowState, ClientSize.Width, ClientSize.Height, Position);
+        if (_placement.Current is { } current)
+        {
+            _placementSaver.Note(current);
+        }
+    }
 
+    private void SavePlacement(WindowPlacement placement)
+    {
         try
         {
-            WindowPlacementStore.Save(_windowPlacementPath, placement);
+            WindowPlacementStore.Save(_windowPlacementPath!, placement);
         }
         catch (Exception)
         {

@@ -9,7 +9,7 @@ public class LayoutTrayTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -28,9 +28,9 @@ public class LayoutTrayTests
         + (Hidden(layout).Any() ? $" (hidden: {string.Join(",", Hidden(layout))})" : "");
 
     // The clock waits in the tray from the start; these tests are about the four original widgets.
-    private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture);
+    private static IEnumerable<string> Hidden(WidgetLayout layout) => layout.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits && id != WidgetRegistry.Converter && id != WidgetRegistry.ClipboardHistory);
 
-    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.PictureFrame).ToArray();
+    private static string[] Tray(LayoutViewModel layout) => layout.TrayWidgets.Select(w => w.Id).Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits && id != WidgetRegistry.Converter && id != WidgetRegistry.ClipboardHistory && id != WidgetRegistry.PictureFrame).ToArray();
 
     private LayoutViewModel Editing()
     {
@@ -44,7 +44,7 @@ public class LayoutTrayTests
     {
         Assert.All(WidgetRegistry.All, w => Assert.False(string.IsNullOrWhiteSpace(w.Icon), w.Id));
         var defaults = WidgetRegistry.DefaultLayout.Columns.SelectMany(c => c.Widgets).ToDictionary(p => p.WidgetId, p => p.HeightWeight);
-        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media && w.Id != WidgetRegistry.Calculator && w.Id != WidgetRegistry.Scripture && w.Id != WidgetRegistry.PictureFrame).ToList();
+        var placed = WidgetRegistry.All.Where(w => w.Id != WidgetRegistry.Clock && w.Id != WidgetRegistry.Weather && w.Id != WidgetRegistry.Media && w.Id != WidgetRegistry.Calculator && w.Id != WidgetRegistry.Scripture && w.Id != WidgetRegistry.Calendar && w.Id != WidgetRegistry.SystemMonitor && w.Id != WidgetRegistry.Countdown && w.Id != WidgetRegistry.FocusTimer && w.Id != WidgetRegistry.Habits && w.Id != WidgetRegistry.Converter && w.Id != WidgetRegistry.ClipboardHistory && w.Id != WidgetRegistry.PictureFrame).ToList();
         Assert.All(placed, w => Assert.Equal(w.DefaultHeight, defaults[w.Id]));
         Assert.Equal(placed.Select(w => w.Id).OrderBy(x => x), defaults.Keys.OrderBy(x => x));
     }
@@ -57,7 +57,7 @@ public class LayoutTrayTests
 
         layout.RemoveWidget("notes");
 
-        Assert.Equal("schedule | tasks,links (hidden: notes)", Order(layout.Layout));
+        Assert.Equal("schedule | tasks,scripture (hidden: notes)", Order(layout.Layout));
         Assert.Equal(new[] { "notes" }, Tray(layout));
         Assert.Equal(saves, _repository.SaveCalls);
     }
@@ -79,7 +79,7 @@ public class LayoutTrayTests
 
         layout.RemoveWidget("schedule");
 
-        Assert.Equal("tasks,notes,links (hidden: schedule)", Order(layout.Layout));
+        Assert.Equal("tasks,notes,scripture (hidden: schedule)", Order(layout.Layout));
     }
 
     [Fact]
@@ -92,9 +92,9 @@ public class LayoutTrayTests
         layout.RemoveWidget("notes");
 
         Assert.False(layout.CanRemoveWidgets);
-        layout.RemoveWidget("links");
+        layout.RemoveWidget("scripture");
 
-        Assert.Equal("links (hidden: schedule,tasks,notes)", Order(layout.Layout));
+        Assert.Equal("scripture (hidden: schedule,tasks,notes)", Order(layout.Layout));
     }
 
     [Fact]
@@ -103,11 +103,11 @@ public class LayoutTrayTests
         var layout = Editing();
         Assert.Empty(Tray(layout));
 
-        layout.RemoveWidget("links");
+        layout.RemoveWidget("notes");
         layout.RemoveWidget("schedule");
 
-        Assert.Equal(new[] { "schedule", "links" }, Tray(layout));
-        Assert.Equal(new[] { "Today", "Quick links" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator" && t != "Daily verse"));
+        Assert.Equal(new[] { "schedule", "notes" }, Tray(layout));
+        Assert.Equal(new[] { "Today", "Notes" }, layout.TrayWidgets.Select(w => w.Title).Where(t => t != "Clock" && t != "Weather" && t != "Media" && t != "Picture frame" && t != "Calculator" && t != "Daily verse" && t != "Calendar" && t != "System monitor" && t != "Countdown" && t != "Focus timer" && t != "Habits" && t != "Converter" && t != "Clipboard history"));
         Assert.True(layout.HasHiddenWidgets);
     }
 
@@ -119,7 +119,7 @@ public class LayoutTrayTests
 
         layout.AddWidgetFromTray("notes");
 
-        Assert.Equal("schedule,notes | tasks,links", Order(layout.Layout));
+        Assert.Equal("schedule,notes | tasks,scripture", Order(layout.Layout));
         Assert.Equal(2, layout.Layout.Columns[0].Widgets.Sum(w => w.HeightWeight), 2);
         Assert.Empty(Tray(layout));
     }
@@ -135,7 +135,7 @@ public class LayoutTrayTests
         Assert.True(layout.IsDraggingFromTray);
         Assert.True(layout.DropWidget(1, 0));
 
-        Assert.Equal("schedule | notes,tasks,links", Order(layout.Layout));
+        Assert.Equal("schedule | notes,tasks,scripture", Order(layout.Layout));
         Assert.False(layout.IsDraggingWidget);
         Assert.False(layout.IsDraggingFromTray);
     }
@@ -150,7 +150,7 @@ public class LayoutTrayTests
         Assert.True(layout.CanOfferNewColumn(2000, Gap));
         Assert.True(layout.DropWidgetInNewColumn(2));
 
-        Assert.Equal("schedule | tasks,links | notes", Order(layout.Layout));
+        Assert.Equal("schedule | tasks,scripture | notes", Order(layout.Layout));
     }
 
     [Fact]
@@ -197,9 +197,9 @@ public class LayoutTrayTests
 
         layout.DoneCommand.Execute(null);
 
-        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture));
+        Assert.Equal(new[] { "notes" }, _repository.Saved!.HiddenWidgetIds.Where(id => id != WidgetRegistry.Clock && id != WidgetRegistry.Weather && id != WidgetRegistry.Media && id != WidgetRegistry.Calculator && id != WidgetRegistry.Scripture && id != WidgetRegistry.Calendar && id != WidgetRegistry.SystemMonitor && id != WidgetRegistry.Countdown && id != WidgetRegistry.FocusTimer && id != WidgetRegistry.Habits && id != WidgetRegistry.Converter && id != WidgetRegistry.ClipboardHistory));
         var restarted = new LayoutViewModel(_repository);
-        Assert.Equal("schedule | tasks,links (hidden: notes)", Order(restarted.Layout));
+        Assert.Equal("schedule | tasks,scripture (hidden: notes)", Order(restarted.Layout));
         Assert.Equal(new[] { "notes" }, Tray(restarted));
     }
 
@@ -212,7 +212,7 @@ public class LayoutTrayTests
 
         layout.CancelCommand.Execute(null);
 
-        Assert.Equal(WidgetRegistry.DefaultLayout.Describe(), layout.Layout.Describe());
+        Assert.Equal(TestLayouts.Classic.Describe(), layout.Layout.Describe());
         Assert.Empty(Tray(layout));
     }
 
@@ -221,7 +221,7 @@ public class LayoutTrayTests
     {
         var layout = Editing();
         layout.RemoveWidget("notes");
-        layout.RemoveWidget("links");
+        layout.RemoveWidget("scripture");
 
         layout.ResetCommand.Execute(null);
 

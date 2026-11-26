@@ -11,7 +11,7 @@ public class LayoutPicturesTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout) => Saved = layout;
     }

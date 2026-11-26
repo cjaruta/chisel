@@ -282,4 +282,90 @@ public class MigrationTests
 
         Assert.False(context.Database.HasPendingModelChanges());
     }
-}
+
+    [Fact]
+    public void AddTaskDueDate_KeepsExistingTasksWithTheirOrderAndNoDueDate()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261121002045_AddNotepadSettings");
+            context.Database.ExecuteSqlRaw("INSERT INTO Tasks (Id, Text, IsDone, Position) VALUES ('6f1c2f4e-0000-0000-0000-000000000011', 'Second', 1, 1)");
+            context.Database.ExecuteSqlRaw("INSERT INTO Tasks (Id, Text, IsDone, Position) VALUES ('6f1c2f4e-0000-0000-0000-000000000010', 'First', 0, 0)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var tasks = new Chisel.Infrastructure.Repositories.TaskRepository(readContext).GetAll();
+        Assert.Equal(new[] { "First", "Second" }, tasks.Select(t => t.Text).ToArray());
+        Assert.Equal(new[] { false, true }, tasks.Select(t => t.IsDone).ToArray());
+        Assert.All(tasks, t => Assert.Null(t.DueDate));
+    }
+
+    [Fact]
+    public void AddQuickLinkPosition_KeepsEveryExistingLinkInItsOldOrder()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123192602_AddTaskDueDate");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000022', 'Mail', 'https://mail.example.com')");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000021', 'Docs', 'https://docs.example.com')");
+            context.Database.ExecuteSqlRaw("INSERT INTO QuickLinks (Id, Label, Url) VALUES ('6f1c2f4e-0000-0000-0000-000000000023', 'News', 'https://news.example.com')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var links = new Chisel.Infrastructure.Repositories.QuickLinkRepository(readContext).GetAll();
+        Assert.Equal(new[] { "Mail", "Docs", "News" }, links.Select(l => l.Label).ToArray());
+        Assert.Equal(new[] { "https://mail.example.com", "https://docs.example.com", "https://news.example.com" }, links.Select(l => l.Url).ToArray());
+    }
+
+    [Fact]
+    public void AddClockFaces_LeavesTheSavedClockStyleAloneAndStartsWithNoFaces()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123192602_AddTaskDueDate");
+            context.Database.ExecuteSqlRaw("INSERT INTO ClockStyles (Id, Alignment, Shape, BorderWidth, Markers, EmphasizeQuarters, Numerals, Hands, HourThickness, MinuteThickness, SecondThickness, ShowSeconds) VALUES (1, 2, 0, 3, 1, 1, 4, 1, 5, 4, 2, 0)");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var style = new Chisel.Infrastructure.Repositories.ClockStyleRepository(readContext).Get();
+        Assert.Equal(Chisel.Core.Clock.ClockAlignment.Right, style.Alignment);
+        Assert.Equal(Chisel.Core.Clock.NumeralStyle.Roman, style.Numerals);
+        Assert.Empty(new Chisel.Infrastructure.Repositories.ClockFaceRepository(readContext).Load());
+    }
+
+    [Fact]
+    public void AddClockDialKinds_KeepsTheSavedStyle_AsAPlainDialWithADigitalStopwatch()
+    {
+        var (connection, options) = CreateOptions();
+        using var _ = connection;
+
+        using (var context = new ChiselDbContext(options))
+        {
+            context.GetService<IMigrator>().Migrate("20261123205933_AddClockFaces");
+            context.Database.ExecuteSqlRaw("INSERT INTO ClockStyles (Id, Alignment, Shape, BorderWidth, Markers, EmphasizeQuarters, Numerals, Hands, HourThickness, MinuteThickness, SecondThickness, ShowSeconds, DialColor) VALUES (1, 0, 1, 3, 2, 1, 4, 2, 5, 4, 2, 1, '#112233')");
+            context.Database.Migrate();
+        }
+
+        using var readContext = new ChiselDbContext(options);
+        var style = new Chisel.Infrastructure.Repositories.ClockStyleRepository(readContext).Get();
+        Assert.Equal(Chisel.Core.Clock.DialShape.Square, style.Shape);
+        Assert.Equal(Chisel.Core.Clock.NumeralStyle.Roman, style.Numerals);
+        Assert.Equal("#112233", style.Colors.Dial);
+        Assert.Equal(Chisel.Core.Clock.DialKind.Standard, style.Kind);
+        Assert.Null(style.DialFill);
+        Assert.False(style.Tachymeter || style.MinuteTrack);
+        Assert.Equal(Chisel.Core.Clock.StopwatchDisplay.Digital, style.Stopwatch);
+    }
+}

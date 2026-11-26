@@ -6,11 +6,16 @@ public class UserSettings
     public const string DefaultSchedulePalette = "minimal";
     // Id of the theme mode (see Theme.ThemeModes); the app falls back to Default for unknown ids.
     public const string DefaultThemeMode = "default";
+    // The space between widgets, in pixels: from nearly none to roomy.
+    public const int MinimumWidgetSpacing = 2;
+    public const int MaximumWidgetSpacing = 32;
+    public const int DefaultWidgetSpacing = 16;
 
     public UserSettings(string name, TimeOnly wakeTime, TimeOnly bedTime, ClockFormat clockFormat = ClockFormat.TwentyFourHour,
         string? schedulePalette = null, TemperatureUnit temperatureUnit = TemperatureUnit.Celsius, bool mediaVisualizer = true, bool mediaVolume = true, bool mediaScrollVolume = false,
         string? themeMode = null, string? accentColor = null, bool mediaAlbumGradient = true, bool mediaAnimateGradient = true,
-        bool pictureKeepOriginals = true, Pictures.MultiDropMode pictureMultiDrop = Pictures.MultiDropMode.OneSlideshow)
+        bool pictureKeepOriginals = true, Pictures.MultiDropMode pictureMultiDrop = Pictures.MultiDropMode.OneSlideshow,
+        int widgetSpacing = DefaultWidgetSpacing)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -34,6 +39,7 @@ public class UserSettings
         MediaAnimateGradient = mediaAnimateGradient;
         PictureKeepOriginals = pictureKeepOriginals;
         PictureMultiDrop = pictureMultiDrop;
+        WidgetSpacing = Math.Clamp(widgetSpacing, MinimumWidgetSpacing, MaximumWidgetSpacing);
         ThemeMode = string.IsNullOrWhiteSpace(themeMode) ? DefaultThemeMode : themeMode.Trim();
         // Only a valid hex color is kept; null means the default accent.
         AccentColor = Theme.Rgb.TryParse(accentColor, out var accent) ? accent.ToHex() : null;
@@ -57,31 +63,34 @@ public class UserSettings
     // Picture frames: whether dropped files are stored as they came (off: a display-size copy), and what dropping several makes.
     public bool PictureKeepOriginals { get; }
     public Pictures.MultiDropMode PictureMultiDrop { get; }
+    public int WidgetSpacing { get; }
     public string ThemeMode { get; }
     // The chosen accent as #RRGGBB, or null for the default orange.
     public string? AccentColor { get; }
 
-    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithClockFormat(ClockFormat clockFormat) => new(Name, WakeTime, BedTime, clockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithSchedulePalette(string schedulePalette) => new(Name, WakeTime, BedTime, ClockFormat, schedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithTemperatureUnit(TemperatureUnit unit) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, unit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithMediaVisualizer(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, on, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithMediaVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, on, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithMediaScrollVolume(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, on, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithMediaAlbumGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, on, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithMediaAlbumGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, on, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithMediaAnimateGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, on, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithMediaAnimateGradient(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, on, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithThemeMode(string themeMode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, themeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithThemeMode(string themeMode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, themeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithAccentColor(string? accentColor) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, accentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop);
+    public UserSettings WithAccentColor(string? accentColor) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, accentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithPictureKeepOriginals(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, on, PictureMultiDrop);
+    public UserSettings WithPictureKeepOriginals(bool on) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, on, PictureMultiDrop, WidgetSpacing);
 
-    public UserSettings WithPictureMultiDrop(Pictures.MultiDropMode mode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, mode);
+    public UserSettings WithPictureMultiDrop(Pictures.MultiDropMode mode) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, mode, WidgetSpacing);
+
+    public UserSettings WithWidgetSpacing(int spacing) => new(Name, WakeTime, BedTime, ClockFormat, SchedulePalette, TemperatureUnit, MediaVisualizer, MediaVolume, MediaScrollVolume, ThemeMode, AccentColor, MediaAlbumGradient, MediaAnimateGradient, PictureKeepOriginals, PictureMultiDrop, spacing);
 }

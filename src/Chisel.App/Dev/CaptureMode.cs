@@ -225,7 +225,7 @@ internal static class CaptureMode
                 script.Add((13500, () => Stop("B motion off")));
                 break;
             case "drag":
-                script.Add((1500, () => { host.ScriptPickUp("links"); Mark("pick up links"); }));
+                script.Add((1500, () => { host.ScriptPickUp("notes"); Mark("pick up notes"); }));
                 script.Add((2600, () => { host.ScriptMove(host.CenterOf("tasks", 0.7)); Mark("move"); }));
                 script.Add((3700, () => { host.ScriptDrop(host.CenterOf("tasks", 0.7)); Mark("drop"); }));
                 break;
@@ -254,7 +254,7 @@ internal static class CaptureMode
                 if (size.Width > 0)
                 {
                     face ??= window.GetVisualDescendants().OfType<ClockFace>().FirstOrDefault();
-                    log.Add(scenario == "clock" ? $"{frameNo} {ms} {face?.SecondAngle}" : $"{frameNo} {ms} {host.DebugBorder("links")}");
+                    log.Add(scenario == "clock" ? $"{frameNo} {ms} {face?.SecondAngle}" : $"{frameNo} {ms} {host.DebugBorder("notes")}");
                     var bmp = new RenderTargetBitmap(size);
                     bmp.Render(window);
                     var path = Path.Combine(dir, $"{frameNo:D4}_{ms:D5}ms.png");

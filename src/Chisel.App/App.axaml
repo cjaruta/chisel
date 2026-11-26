@@ -329,6 +329,53 @@
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
         </Style>
 
+        <!-- Clock tool buttons: three quiet kinds, all pills with hairline outlines. Chips set the time, ghost buttons act,
+             the primary button (Start) is the one filled in the accent. -->
+        <Style Selector="Button.clockChip /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+        </Style>
+        <Style Selector="Button.clockChip /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.clockGhost /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource EditHairlineHoverBrush}" />
+        </Style>
+        <Style Selector="Button.clockChip:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.clockGhost:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+        <Style Selector="Button.clockPrimary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.clockPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.clockPrimary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentPressedBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentPressedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+
         <!-- The one header bar shared by every widget card -->
         <Style Selector="Border.widgetHeader">
             <Setter Property="Background" Value="{StaticResource HeaderBackgroundBrush}" />
@@ -600,9 +647,268 @@
             <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
         </Style>
 
+        <!-- Calendar: sizes come from the widget (CalendarLayout); these set only the colors and the shape -->
+        <Style Selector="Button.calDay, Button.calNav, Button.calTitle">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.calDay">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Button.calNav">
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.calTitle">
+            <Setter Property="Padding" Value="6,0" />
+        </Style>
+        <Style Selector="Button.calDay /template/ ContentPresenter#PART_ContentPresenter, Button.calNav /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.calDay:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.calNav:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+        </Style>
+        <Style Selector="Button.calNav:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.calTitle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverLineBrush}" />
+        </Style>
+        <Style Selector="Button.calNav Path">
+            <Setter Property="Stroke" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.calNav:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.muted /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.today /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.calDay.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Button.calDay.today.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.calDay Ellipse.calDot">
+            <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.calDay.today.selected Ellipse.calDot">
+            <Setter Property="Fill" Value="{StaticResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="TextBlock.calWeekday">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.calWeekNumber">
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+        </Style>
+
+        <!-- Countdown: sizes come from the widget (CountdownLayout); these set only colors and shape -->
+        <Style Selector="Button.cdRow">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.cdRow /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.cdRow:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.cdRow:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.cdRow.today /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+        </Style>
+        <Style Selector="TextBlock.cdWhen">
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.cdRow TextBlock.cdName, Button.cdRow TextBlock.cdLead, Button.cdRow TextBlock.cdWhen">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.cdRow.past TextBlock.cdWhen">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.cdRow.today TextBlock.cdWhen, Button.cdRow.today TextBlock.cdLead">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.cdDim">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.cdError">
+            <Setter Property="Foreground" Value="{StaticResource ReminderBrush}" />
+        </Style>
+        <Style Selector="Button.cdSwatch">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Button.cdSwatch /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.cdSwatch.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <!-- Habits: sizes come from the widget (HabitLayout); rows and swatches reuse the countdown styles -->
+        <Style Selector="CheckBox.habitCheck">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ToggleButton.habitDay">
+            <Setter Property="MinWidth" Value="34" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Converter: sizes come from the widget (ConverterLayout); these keep the theme's minimums from overriding them -->
+        <Style Selector="TextBox.convField">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="8,0,4,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ComboBox.convField">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="8,0,4,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox.convError">
+            <Setter Property="Foreground" Value="{StaticResource ReminderBrush}" />
+        </Style>
+        <Style Selector="Button.convButton, ToggleButton.convTab">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Clipboard history: sizes come from the widget (ClipboardLayout); a row's buttons show on hover or selection -->
+        <Style Selector="TextBox.clipField">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="8,0,4,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.clipTool">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.clipAction">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Button.clipAction, ListBoxItem:selected Button.clipAction">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="ListBox.clipList">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBox.clipList ListBoxItem">
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="Button.clipLatest">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.clipRec">
+            <Setter Property="Foreground" Value="{StaticResource ReminderBrush}" />
+        </Style>
+        <Style Selector="TextBlock.clipCopied">
+            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Path.clipPinned">
+            <Setter Property="Stroke" Value="{StaticResource AccentTextBrush}" />
+        </Style>
+
+        <!-- Focus timer: sizes come from the widget (FocusLayout); these set only colors and shape -->
+        <Style Selector="Button.focusButton">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.focusDim">
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.focusTask">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.focusTask /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+        </Style>
+        <Style Selector="Button.focusTask:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverWashBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
         <Style Selector="Button.gearButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6" />
+        </Style>
+
+        <Style Selector="Button.moreLink">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
         </Style>
 
         <Style Selector="Button.gearButton Path">
@@ -697,10 +1003,21 @@
             <Setter Property="HorizontalAlignment" Value="Left" />
         </Style>
 
+        <!-- Appearance > Mode: compact tiles, several to a row -->
+        <Style Selector="ListBox.modeTiles ListBoxItem">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="8,5" />
+        </Style>
+
         <Style Selector="Border.paletteChip">
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="10" />
             <Setter Property="CornerRadius" Value="3" />
+        </Style>
+
+        <Style Selector="ListBox.modeTiles Border.paletteChip">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="8" />
         </Style>
 
         <Style Selector="Button.link">
@@ -821,7 +1138,7 @@
         </Style>
 
         <Style Selector="Border.gridBlock.past">
-            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="Opacity" Value="0.6" />
         </Style>
 
         <Style Selector="TextBlock.blockTitle">
@@ -875,7 +1192,7 @@
         </Style>
 
         <Style Selector="Grid.markerRow.past">
-            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Opacity" Value="0.6" />
         </Style>
 
         <!-- A marker not saved yet: same look, a little softer -->

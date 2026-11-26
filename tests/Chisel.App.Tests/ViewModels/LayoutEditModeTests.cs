@@ -15,7 +15,7 @@ public class LayoutEditModeTests
 {
     private sealed class FakeLayoutRepository : IWidgetLayoutRepository
     {
-        public WidgetLayout? Saved { get; set; }
+        public WidgetLayout? Saved { get; set; } = TestLayouts.Classic;
         public int SaveCalls { get; private set; }
         public WidgetLayout? Get() => Saved;
         public void Save(WidgetLayout layout)
@@ -49,6 +49,7 @@ public class LayoutEditModeTests
         public void Add(TaskItem task) { }
         public void Update(TaskItem task) { }
         public void Remove(Guid id) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     private sealed class FakeNoteRepository : INoteRepository
@@ -64,20 +65,22 @@ public class LayoutEditModeTests
         public IReadOnlyList<QuickLink> GetAll() => Array.Empty<QuickLink>();
         public void Add(QuickLink link) { }
         public void Remove(Guid id) { }
+        public void Update(QuickLink link) { }
+        public void Reorder(IReadOnlyList<Guid> orderedIds) { }
     }
 
     // A saved layout that differs from the default: three columns.
     private static readonly WidgetLayout Custom = new(new[]
     {
-        new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("links") }),
+        new LayoutColumn(1, new[] { new WidgetPlacement("tasks"), new WidgetPlacement("scripture") }),
         new LayoutColumn(2, new[] { new WidgetPlacement("schedule") }),
         new LayoutColumn(1, new[] { new WidgetPlacement("notes") }),
-    }, new[] { "clock", "weather", "media", "calculator", "scripture" });
+    }, new[] { "clock", "weather", "media", "calculator", "calendar", "sysmonitor", "countdown", "focus", "habits", "converter", "clipboard" });
 
     private static readonly WidgetLayout Changed = new(new[]
     {
-        new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"), new WidgetPlacement("links") }),
-    }, new[] { "clock", "weather", "media", "calculator", "scripture" });
+        new LayoutColumn(1, new[] { new WidgetPlacement("schedule"), new WidgetPlacement("tasks"), new WidgetPlacement("notes"), new WidgetPlacement("scripture") }),
+    }, new[] { "clock", "weather", "media", "calculator", "calendar", "sysmonitor", "countdown", "focus", "habits", "converter", "clipboard" });
 
     private readonly FakeLayoutRepository _repository = new() { Saved = Custom };
 

@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chisel.App.ViewModels"
+             x:Class="Chisel.App.Views.Pages.SystemMonitorSettingsPage"
+             x:DataType="vm:MainViewModel">
+    <StackPanel Spacing="10">
+        <TextBlock Classes="settingsSection" Text="SHOW" />
+        <CheckBox Name="SystemMonitorCpu" Content="CPU" IsChecked="{Binding SystemMonitorSettings.ShowCpu}" />
+        <CheckBox Name="SystemMonitorRam" Content="Memory (RAM)" IsChecked="{Binding SystemMonitorSettings.ShowRam}" />
+        <CheckBox Name="SystemMonitorDisk" Content="System drive" IsChecked="{Binding SystemMonitorSettings.ShowDisk}" />
+        <CheckBox Name="SystemMonitorNetwork" Content="Network" IsChecked="{Binding SystemMonitorSettings.ShowNetwork}" />
+        <CheckBox Name="SystemMonitorBattery" Content="Battery" IsChecked="{Binding SystemMonitorSettings.ShowBattery}" />
+        <TextBlock Text="The smallest size shows only CPU and memory. A stat this PC cannot report, like a battery on a desktop, stays hidden." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Classes="settingsSection" Text="REFRESH" Margin="0,10,0,0" />
+        <RadioButton Name="SystemMonitorRefresh1" GroupName="SystemMonitorRefresh" Content="Every second" IsChecked="{Binding SystemMonitorSettings.IsRefresh1}" />
+        <RadioButton Name="SystemMonitorRefresh2" GroupName="SystemMonitorRefresh" Content="Every 2 seconds" IsChecked="{Binding SystemMonitorSettings.IsRefresh2}" />
+        <RadioButton Name="SystemMonitorRefresh5" GroupName="SystemMonitorRefresh" Content="Every 5 seconds" IsChecked="{Binding SystemMonitorSettings.IsRefresh5}" />
+    </StackPanel>
+</UserControl>
