@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Chisel isn't working the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this!
+        **Please don't paste personal data**: no real names, emails, note or task text, clipboard contents, file paths
+        with your user name, or photos. Use made-up examples instead. Don't attach log files without reading them first.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add the Clock widget
+        2. Switch it to the stopwatch
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Chisel version
+      description: Shown in Settings > Help > About.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"
+    validations:
+      required: true
+  - type: dropdown
+    id: scaling
+    attributes:
+      label: Display scaling
+      description: Settings > System > Display > Scale in Windows.
+      options: ["100%", "125%", "150%", "175%", "200% or more", "Not sure"]
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic info (optional)
+      description: Settings > Help > About > Copy diagnostic info, then paste here. It contains no personal data.
+      render: text
