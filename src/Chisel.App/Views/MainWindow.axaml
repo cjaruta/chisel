@@ -22,113 +22,124 @@
     <!-- The page: tinted while the layout is being edited -->
     <Panel Name="Page" Classes="page" Classes.editing="{Binding Layout.IsEditing}">
     <Grid RowDefinitions="Auto,*" Margin="20" ColumnDefinitions="*">
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" ZIndex="1"
-                    HorizontalAlignment="Right" VerticalAlignment="Top">
-        <!-- Quick links: small icon buttons (the first few; the rest in the menu), then a divider. Nothing at all when there are none. -->
-        <ItemsControl Name="QuickLinkBar" ItemsSource="{Binding QuickLinks.Visible}" IsVisible="{Binding QuickLinks.HasLinks}"
-                      VerticalAlignment="Center" AutomationProperties.Name="Quick links">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="4" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:QuickLinkItem">
-                    <Button Classes="gearButton" Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Tooltip}"
-                            AutomationProperties.Name="{Binding AutomationName}">
-                        <ctl:QuickLinkGlyph />
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <Button Name="MoreLinksButton" Classes="gearButton" IsVisible="{Binding QuickLinks.HasOverflow}"
-                ToolTip.Tip="More quick links" AutomationProperties.Name="More quick links">
-            <Path Width="20" Height="20" Stretch="Uniform" Fill="Transparent" StrokeThickness="3.2" StrokeLineCap="Round"
-                  Stroke="{DynamicResource DimTextBrush}" Data="M4,12 h0.1 M12,12 h0.1 M20,12 h0.1" />
-            <Button.Flyout>
-                <Flyout Placement="BottomEdgeAlignedRight">
-                    <ItemsControl Name="MoreLinksList" ItemsSource="{Binding QuickLinks.Overflow}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:QuickLinkItem">
-                                <Button Classes="moreLink" Command="{Binding OpenCommand}" Click="OnMoreLinkClick"
-                                        ToolTip.Tip="{Binding Target}" AutomationProperties.Name="{Binding AutomationName}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <ctl:QuickLinkGlyph />
-                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Flyout>
-            </Button.Flyout>
-        </Button>
-        <Border Name="QuickLinksDivider" Width="1" Height="18" Margin="4,0" VerticalAlignment="Center"
-                Background="{DynamicResource GridLineBrush}" IsVisible="{Binding QuickLinks.HasLinks}" />
-
-        <!-- Customize layout: a 2x2 grid of tiles; highlighted while editing -->
-        <Button Name="CustomizeLayoutButton" Classes="gearButton" Classes.active="{Binding Layout.IsEditing}"
-                ToolTip.Tip="Customize layout" Command="{Binding CustomizeLayoutCommand}">
-            <Path Width="18" Height="18" Stretch="Uniform"
-                  Data="M3,3 h7 v7 h-7 Z M14,3 h7 v7 h-7 Z M3,14 h7 v7 h-7 Z M14,14 h7 v7 h-7 Z" />
-        </Button>
-        <Button Name="SettingsButton" Classes="gearButton" IsEnabled="{Binding CanOpenSettings}"
-                ToolTip.Tip="Settings" Command="{Binding Settings.ToggleCommand}">
-            <Path Width="20" Height="20" Stretch="Uniform" Fill="{StaticResource DimTextBrush}"
-                  Data="M10.13,4.22 L10.52,1.60 L13.48,1.60 L13.87,4.22 L16.18,5.18 L18.30,3.60 L20.40,5.70 L18.82,7.82 L19.78,10.13 L22.40,10.52 L22.40,13.48 L19.78,13.87 L18.82,16.18 L20.40,18.30 L18.30,20.40 L16.18,18.82 L13.87,19.78 L13.48,22.40 L10.52,22.40 L10.13,19.78 L7.82,18.82 L5.70,20.40 L3.60,18.30 L5.18,16.18 L4.22,13.87 L1.60,13.48 L1.60,10.52 L4.22,10.13 L5.18,7.82 L3.60,5.70 L5.70,3.60 L7.82,5.18 Z M15.20,12 A3.2,3.2 0 1 0 8.80,12 A3.2,3.2 0 1 0 15.20,12 Z" />
-        </Button>
-        </StackPanel>
-
-        <StackPanel Grid.Row="0" Name="ClockPanel" Spacing="2" Margin="0,0,0,16" HorizontalAlignment="Left">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock Text="{Binding Clock.TimeText}" FontSize="36" FontWeight="Bold" />
-                <TextBlock Text="{Binding Clock.Now, StringFormat='{}{0:dddd, MMMM d}'}" FontSize="20" VerticalAlignment="Center" />
-            </StackPanel>
-            <TextBlock Classes="dim" Text="{Binding Schedule.CurrentBlockTitle, StringFormat='Now: {0}'}" />
-        </StackPanel>
-
         <!-- Widgets in columns, built from the saved layout -->
         <views:LayoutHost Grid.Row="1" Name="LayoutHost" Layout="{Binding Layout}" Spacing="{Binding Settings.WidgetSpacing}" />
 
-        <!-- Layout edit mode toolbar: floats at the top center; Esc is the same as Cancel -->
-        <Border Grid.Row="0" Grid.RowSpan="2" Name="LayoutToolbar" Classes="layoutToolbar" ZIndex="20"
-                HorizontalAlignment="Left" VerticalAlignment="Top"
-                IsVisible="{Binding Layout.IsEditing}">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <Button Name="LibraryButton" Classes="libraryToggle" Classes.active="{Binding Library.IsOpen}"
-                        Content="Widget Library" Command="{Binding Library.ToggleCommand}"
-                        ToolTip.Tip="Browse and add widgets" />
-                <Border Classes="toolbarDivider" />
-                <Button Name="ProfilesButton" Content="Profiles" ToolTip.Tip="Save this layout as a profile, or switch to one you saved">
-                    <Button.Flyout>
-                        <Flyout Placement="BottomEdgeAlignedLeft">
-                            <StackPanel Spacing="8" MinWidth="300">
-                                <TextBlock Classes="settingsSection" Text="LAYOUT PROFILES" />
-                                <ItemsControl Name="ProfileList" ItemsSource="{Binding Layout.Profiles}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ProfileSlot">
-                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,3">
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Title}" />
-                                                    <TextBlock Classes="dim" Text="{Binding Status}" />
-                                                </StackPanel>
-                                                <Button Name="ProfileSave" Grid.Column="1" Content="Save Profile" Command="{Binding SaveCommand}"
-                                                        ToolTip.Tip="Save the current layout here" />
-                                                <Button Name="ProfileLoad" Grid.Column="2" Content="Load" Command="{Binding LoadCommand}" />
-                                                <Button Name="ProfileDelete" Grid.Column="3" Content="Delete" Command="{Binding DeleteCommand}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-                <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
-                <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
-                <Button Name="LayoutDoneButton" Classes="editPrimary" Content="Done" Command="{Binding Layout.DoneCommand}" />
+        <!-- The top bar: clock and date, the edit toolbar while editing, then quick links and the buttons. It scales with the
+             window: the clock gets smaller and the toolbar moves to its own line when it would not fit. -->
+        <Grid Grid.Row="0" Name="Header" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" Margin="0,0,0,16"
+              Classes.editing="{Binding Layout.IsEditing}">
+            <Grid.Styles>
+                <!-- Above the library's dim layer while editing; below the Settings dialog otherwise -->
+                <Style Selector="Grid#Header"><Setter Property="ZIndex" Value="1" /></Style>
+                <Style Selector="Grid#Header.editing"><Setter Property="ZIndex" Value="16" /></Style>
+            </Grid.Styles>
+            <StackPanel Grid.Column="0" Name="ClockPanel" Spacing="2" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Name="ClockTime" Text="{Binding Clock.TimeText}" FontSize="36" FontWeight="Bold" />
+                    <TextBlock Name="ClockDate" Text="{Binding Clock.Now, StringFormat='{}{0:dddd, MMMM d}'}" FontSize="20" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Classes="dim" Text="{Binding Schedule.CurrentBlockTitle, StringFormat='Now: {0}'}" />
             </StackPanel>
-        </Border>
+
+            <!-- Layout edit mode toolbar: between the clock and the buttons when it fits, otherwise on its own line below them
+                 (wrapping on very narrow windows); Esc is the same as Cancel -->
+            <Border Grid.Column="1" Name="LayoutToolbar" Classes="layoutToolbar"
+                    HorizontalAlignment="Center" VerticalAlignment="Top"
+                    IsVisible="{Binding Layout.IsEditing}">
+                <WrapPanel Name="LayoutToolbarItems" ItemSpacing="6" LineSpacing="6" HorizontalAlignment="Center">
+                    <Button Name="LibraryButton" Classes="libraryToggle" Classes.active="{Binding Library.IsOpen}"
+                            Content="Widget Library" Command="{Binding Library.ToggleCommand}"
+                            ToolTip.Tip="Browse and add widgets" />
+                    <Border Name="ToolbarDivider" Classes="toolbarDivider" />
+                    <Button Name="ProfilesButton" Content="Profiles" ToolTip.Tip="Save this layout as a profile, or switch to one you saved">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <StackPanel Spacing="8" MinWidth="300">
+                                    <TextBlock Classes="settingsSection" Text="LAYOUT PROFILES" />
+                                    <ItemsControl Name="ProfileList" ItemsSource="{Binding Layout.Profiles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ProfileSlot">
+                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,3">
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Title}" />
+                                                        <TextBlock Classes="dim" Text="{Binding Status}" />
+                                                    </StackPanel>
+                                                    <Button Name="ProfileSave" Grid.Column="1" Content="Save Profile" Command="{Binding SaveCommand}"
+                                                            ToolTip.Tip="Save the current layout here" />
+                                                    <Button Name="ProfileLoad" Grid.Column="2" Content="Load" Command="{Binding LoadCommand}" />
+                                                    <Button Name="ProfileDelete" Grid.Column="3" Content="Delete" Command="{Binding DeleteCommand}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button Name="LayoutResetButton" Content="Reset layout" Command="{Binding Layout.ResetCommand}" />
+                    <Button Name="LayoutCancelButton" Content="Cancel" Command="{Binding Layout.CancelCommand}" />
+                    <Button Name="LayoutDoneButton" Classes="editPrimary" Content="Done" Command="{Binding Layout.DoneCommand}" />
+                </WrapPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2" Name="TopButtons" Orientation="Horizontal" Spacing="4"
+                        HorizontalAlignment="Right" VerticalAlignment="Top">
+            <!-- Quick links: small icon buttons (the first few; the rest in the menu), then a divider. Nothing at all when there are none. -->
+            <ItemsControl Name="QuickLinkBar" ItemsSource="{Binding QuickLinks.Visible}" IsVisible="{Binding QuickLinks.HasLinks}"
+                          VerticalAlignment="Center" AutomationProperties.Name="Quick links">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:QuickLinkItem">
+                        <Button Classes="gearButton" Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Tooltip}"
+                                AutomationProperties.Name="{Binding AutomationName}">
+                            <ctl:QuickLinkGlyph />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Name="MoreLinksButton" Classes="gearButton" IsVisible="{Binding QuickLinks.HasOverflow}"
+                    ToolTip.Tip="More quick links" AutomationProperties.Name="More quick links">
+                <Path Width="20" Height="20" Stretch="Uniform" Fill="Transparent" StrokeThickness="3.2" StrokeLineCap="Round"
+                      Stroke="{DynamicResource DimTextBrush}" Data="M4,12 h0.1 M12,12 h0.1 M20,12 h0.1" />
+                <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                        <ItemsControl Name="MoreLinksList" ItemsSource="{Binding QuickLinks.Overflow}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:QuickLinkItem">
+                                    <Button Classes="moreLink" Command="{Binding OpenCommand}" Click="OnMoreLinkClick"
+                                            ToolTip.Tip="{Binding Target}" AutomationProperties.Name="{Binding AutomationName}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <ctl:QuickLinkGlyph />
+                                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+            <Border Name="QuickLinksDivider" Width="1" Height="18" Margin="4,0" VerticalAlignment="Center"
+                    Background="{DynamicResource GridLineBrush}" IsVisible="{Binding QuickLinks.HasLinks}" />
+
+            <!-- Customize layout: a 2x2 grid of tiles; highlighted while editing -->
+            <Button Name="CustomizeLayoutButton" Classes="gearButton" Classes.active="{Binding Layout.IsEditing}"
+                    ToolTip.Tip="Customize layout" Command="{Binding CustomizeLayoutCommand}">
+                <Path Width="18" Height="18" Stretch="Uniform"
+                      Data="M3,3 h7 v7 h-7 Z M14,3 h7 v7 h-7 Z M3,14 h7 v7 h-7 Z M14,14 h7 v7 h-7 Z" />
+            </Button>
+            <Button Name="SettingsButton" Classes="gearButton" IsEnabled="{Binding CanOpenSettings}"
+                    ToolTip.Tip="Settings" Command="{Binding Settings.ToggleCommand}">
+                <Path Width="20" Height="20" Stretch="Uniform" Fill="{StaticResource DimTextBrush}"
+                      Data="M10.13,4.22 L10.52,1.60 L13.48,1.60 L13.87,4.22 L16.18,5.18 L18.30,3.60 L20.40,5.70 L18.82,7.82 L19.78,10.13 L22.40,10.52 L22.40,13.48 L19.78,13.87 L18.82,16.18 L20.40,18.30 L18.30,20.40 L16.18,18.82 L13.87,19.78 L13.48,22.40 L10.52,22.40 L10.13,19.78 L7.82,18.82 L5.70,20.40 L3.60,18.30 L5.18,16.18 L4.22,13.87 L1.60,13.48 L1.60,10.52 L4.22,10.13 L5.18,7.82 L3.60,5.70 L5.70,3.60 L7.82,5.18 Z M15.20,12 A3.2,3.2 0 1 0 8.80,12 A3.2,3.2 0 1 0 15.20,12 Z" />
+            </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- Narrow windows: a dim layer behind the library; a click on it closes the library -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="LibraryScrim" Classes="settingsScrim" ZIndex="14" Margin="-20"
@@ -233,11 +244,10 @@
             </StackPanel>
         </Border>
 
-        <!-- Settings dialog: a centered 720x520 card over a dimmed page; Esc or Close dismisses it -->
+        <!-- Settings dialog: a card over a dimmed page that grows with the window up to 960x680; Esc or Close dismisses it -->
         <Border Grid.Row="0" Grid.RowSpan="2" Name="SettingsPanel" Classes="settingsScrim"
                 IsVisible="{Binding Settings.IsOpen}" ZIndex="10" Margin="-20">
-            <Border Classes="settingsDialog" Width="720" Height="520"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Name="SettingsDialog" Classes="settingsDialog" Margin="40" MaxWidth="960" MaxHeight="680">
                 <Grid ColumnDefinitions="180,*">
                     <Border Classes="settingsSidebar">
                         <StackPanel Spacing="4">
@@ -245,6 +255,9 @@
                             <Button Name="GeneralTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsGeneralTab}"
                                     Content="General" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.General}" />
+                            <Button Name="AppearanceTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsAppearanceTab}"
+                                    Content="Appearance" Command="{Binding Settings.SelectTabCommand}"
+                                    CommandParameter="{x:Static vm:SettingsTab.Appearance}" />
                             <Button Name="WidgetsTab" Classes="settingsTab" Classes.selected="{Binding Settings.IsWidgetsTab}"
                                     Content="Widgets" Command="{Binding Settings.SelectTabCommand}"
                                     CommandParameter="{x:Static vm:SettingsTab.Widgets}" />
@@ -269,70 +282,6 @@
                             <RadioButton GroupName="ClockFormat" Content="24-hour (13:05)" IsChecked="{Binding Settings.UseTwentyFourHour}" />
                             <RadioButton GroupName="ClockFormat" Content="12-hour (1:05 PM)" IsChecked="{Binding Settings.UseTwelveHour}" />
 
-                            <TextBlock Classes="settingsSection" Text="WIDGET SPACING" />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <Slider Name="WidgetSpacingSlider" Minimum="{Binding Settings.MinimumWidgetSpacing}" Maximum="{Binding Settings.MaximumWidgetSpacing}"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Settings.WidgetSpacing}" />
-                                <TextBlock Name="WidgetSpacingValue" Grid.Column="1" Classes="dim" VerticalAlignment="Center" MinWidth="36" TextAlignment="Right"
-                                           Text="{Binding Settings.WidgetSpacing, StringFormat='{}{0:0} px'}" />
-                            </Grid>
-
-                            <TextBlock Classes="settingsSection" Text="MODE" />
-                            <!-- Each mode shows its window, card, raised, secondary text and text colors; choosing one restyles the app right away -->
-                            <ListBox Name="ThemeModeList" Classes="paletteList" ItemsSource="{Binding Settings.ThemeModeOptions}"
-                                     SelectedItem="{Binding Settings.SelectedThemeMode}">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ThemeModeOption">
-                                        <StackPanel Spacing="5" MinWidth="86">
-                                            <TextBlock Text="{Binding Name}" />
-                                            <ItemsControl ItemsSource="{Binding Preview}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="IBrush">
-                                                        <Border Classes="paletteChip" Background="{Binding}" />
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <TextBlock Classes="settingsSection" Text="ACCENT COLOR" />
-                            <ItemsControl Name="AccentSwatches" ItemsSource="{Binding Settings.AccentSwatches}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ColorSwatchOption">
-                                        <Button Classes="swatch" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Name}"
-                                                Command="{Binding #AccentSwatches.((vm:MainViewModel)DataContext).Settings.SelectAccentCommand}"
-                                                CommandParameter="{Binding Key}">
-                                            <Ellipse Classes="swatchDot" Fill="{Binding Brush}" />
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <ColorPicker Name="AccentPicker" Color="{Binding Settings.AccentValue, Mode=TwoWay}" />
-                                <TextBox Name="AccentHexBox" Width="104" MaxLength="7" PlaceholderText="#RRGGBB" Text="{Binding Settings.AccentHex, Mode=TwoWay}" />
-                                <Button Name="AccentResetButton" Content="Reset to default" Command="{Binding Settings.ResetAccentCommand}" />
-                            </StackPanel>
-                            <!-- Live preview: real controls in the current mode and accent -->
-                            <Border Classes="accentPreview">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Button Name="AccentPreviewButton" Classes="editPrimary" Content="Button" />
-                                    <TextBlock Name="AccentPreviewText" VerticalAlignment="Center" Foreground="{DynamicResource AccentTextBrush}" Text="Accent text" />
-                                    <ProgressBar Name="AccentPreviewBar" Width="120" Value="60" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Border>
-                            <TextBlock Name="AccentAdjustedNote" Classes="dim" IsVisible="{Binding Settings.AccentAdjusted}"
-                                       Text="Adjusted slightly so it stays readable in this mode." />
 
                             <!-- System: what closing does, starting with Windows, and the show/hide shortcut -->
                             <StackPanel Name="SystemSection" Spacing="10" IsVisible="{Binding Settings.SystemOptions, Converter={x:Static convA:ObjectConverters.IsNotNull}}">
@@ -366,6 +315,77 @@
                                            Text="{Binding Settings.SystemOptions.HotkeyError}"
                                            IsVisible="{Binding Settings.SystemOptions.HotkeyError, Converter={x:Static convA:ObjectConverters.IsNotNull}}" />
                             </StackPanel>
+                        </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Appearance: mode, accent color and the gap between widgets -->
+                        <ScrollViewer Name="AppearancePage" IsVisible="{Binding Settings.IsAppearanceTab}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="cardHeading" Text="Appearance" />
+                            <TextBlock Classes="settingsSection" Text="MODE" />
+                            <!-- Each mode shows its window, card, raised, secondary text and text colors; choosing one restyles the app right away -->
+                            <ListBox Name="ThemeModeList" Classes="paletteList modeTiles" ItemsSource="{Binding Settings.ThemeModeOptions}"
+                                     SelectedItem="{Binding Settings.SelectedThemeMode}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ThemeModeOption">
+                                        <StackPanel Spacing="4" Width="104">
+                                            <TextBlock Text="{Binding Name}" />
+                                            <ItemsControl ItemsSource="{Binding Preview}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="IBrush">
+                                                        <Border Classes="paletteChip" Background="{Binding}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Classes="settingsSection" Text="ACCENT COLOR" />
+                            <ItemsControl Name="AccentSwatches" ItemsSource="{Binding Settings.AccentSwatches}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel ItemSpacing="4" LineSpacing="4" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ColorSwatchOption">
+                                        <Button Classes="swatch" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Name}"
+                                                Command="{Binding #AccentSwatches.((vm:MainViewModel)DataContext).Settings.SelectAccentCommand}"
+                                                CommandParameter="{Binding Key}">
+                                            <Ellipse Classes="swatchDot" Fill="{Binding Brush}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <!-- A custom color, and a live preview with real controls in the current mode and accent -->
+                            <WrapPanel ItemSpacing="8" LineSpacing="8">
+                                <ColorPicker Name="AccentPicker" Color="{Binding Settings.AccentValue, Mode=TwoWay}" VerticalAlignment="Center" />
+                                <TextBox Name="AccentHexBox" Width="104" MaxLength="7" PlaceholderText="#RRGGBB" Text="{Binding Settings.AccentHex, Mode=TwoWay}" VerticalAlignment="Center" />
+                                <Button Name="AccentResetButton" Content="Reset to default" Command="{Binding Settings.ResetAccentCommand}" VerticalAlignment="Center" />
+                                <Border Classes="accentPreview" Padding="10,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Button Name="AccentPreviewButton" Classes="editPrimary" Content="Button" />
+                                        <TextBlock Name="AccentPreviewText" VerticalAlignment="Center" Foreground="{DynamicResource AccentTextBrush}" Text="Accent text" />
+                                        <ProgressBar Name="AccentPreviewBar" Width="90" Value="60" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
+                            <TextBlock Name="AccentAdjustedNote" Classes="dim" IsVisible="{Binding Settings.AccentAdjusted}"
+                                       Text="Adjusted slightly so it stays readable in this mode." />
+
+                            <TextBlock Classes="settingsSection" Text="WIDGET SPACING" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Slider Name="WidgetSpacingSlider" Minimum="{Binding Settings.MinimumWidgetSpacing}" Maximum="{Binding Settings.MaximumWidgetSpacing}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Settings.WidgetSpacing}" />
+                                <TextBlock Name="WidgetSpacingValue" Grid.Column="1" Classes="dim" VerticalAlignment="Center" MinWidth="36" TextAlignment="Right"
+                                           Text="{Binding Settings.WidgetSpacing, StringFormat='{}{0:0} px'}" />
+                            </Grid>
                         </StackPanel>
                         </ScrollViewer>
 

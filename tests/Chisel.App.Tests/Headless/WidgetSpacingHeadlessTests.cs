@@ -29,7 +29,7 @@ public class WidgetSpacingHeadlessTests
     {
         var window = Show();
         var main = (MainViewModel)window.DataContext!;
-        main.Settings.SelectedTab = SettingsTab.General;
+        main.Settings.SelectedTab = SettingsTab.Appearance;
         main.Settings.IsOpen = true;
         Dispatcher.UIThread.RunJobs();
         var slider = window.GetVisualDescendants().OfType<Slider>().Single(s => s.Name == "WidgetSpacingSlider");

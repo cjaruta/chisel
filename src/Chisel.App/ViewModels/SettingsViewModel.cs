@@ -65,10 +65,11 @@ public partial class SettingsViewModel : ViewModelBase
     public partial bool AccentAdjusted { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsBackupTab), nameof(IsHelpTab))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralTab), nameof(IsAppearanceTab), nameof(IsWidgetsTab), nameof(IsQuickLinksTab), nameof(IsBackupTab), nameof(IsHelpTab))]
     public partial SettingsTab SelectedTab { get; set; }
 
     public bool IsGeneralTab => SelectedTab == SettingsTab.General;
+    public bool IsAppearanceTab => SelectedTab == SettingsTab.Appearance;
     public bool IsWidgetsTab => SelectedTab == SettingsTab.Widgets;
     public bool IsQuickLinksTab => SelectedTab == SettingsTab.QuickLinks;
     public bool IsBackupTab => SelectedTab == SettingsTab.Backup;

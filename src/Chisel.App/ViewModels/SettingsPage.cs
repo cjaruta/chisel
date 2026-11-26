@@ -6,6 +6,7 @@ namespace Chisel.App.ViewModels;
 public enum SettingsTab
 {
     General,
+    Appearance,
     Widgets,
     QuickLinks,
     Backup,

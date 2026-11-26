@@ -1003,10 +1003,21 @@
             <Setter Property="HorizontalAlignment" Value="Left" />
         </Style>
 
+        <!-- Appearance > Mode: compact tiles, several to a row -->
+        <Style Selector="ListBox.modeTiles ListBoxItem">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="8,5" />
+        </Style>
+
         <Style Selector="Border.paletteChip">
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="10" />
             <Setter Property="CornerRadius" Value="3" />
+        </Style>
+
+        <Style Selector="ListBox.modeTiles Border.paletteChip">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="8" />
         </Style>
 
         <Style Selector="Button.link">

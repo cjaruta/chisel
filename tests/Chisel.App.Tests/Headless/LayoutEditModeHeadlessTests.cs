@@ -182,7 +182,7 @@ public class LayoutEditModeHeadlessTests
         var toolbar = InWindow(Named<Border>(window, "LayoutToolbar"), window);
         var clock = InWindow(Named<StackPanel>(window, "ClockPanel"), window);
 
-        Assert.True(toolbar.Left >= clock.Right, $"toolbar starts at {toolbar.Left}, the clock and date end at {clock.Right}");
+        Assert.False(toolbar.Intersects(clock), $"toolbar {toolbar} covers the clock and date {clock}");
         window.Close();
     }
 

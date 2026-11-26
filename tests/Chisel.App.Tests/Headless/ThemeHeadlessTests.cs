@@ -87,6 +87,7 @@ public class ThemeHeadlessTests
     {
         var window = UiSnapshot.ShowMainWindow();
         Settings(window).IsOpen = true;
+        Settings(window).SelectedTab = SettingsTab.Appearance;
         Dispatcher.UIThread.RunJobs();
         var progress = Named<ProgressBar>(window, "AccentPreviewBar");
         var forest = ThemeModes.ById("forest");
@@ -112,14 +113,17 @@ public class ThemeHeadlessTests
         Dispatcher.UIThread.RunJobs();
         var slider = window.GetVisualDescendants().OfType<VolumeSlider>().Single();
         var area = new Rect(slider.TranslatePoint(default, window) ?? default, slider.Bounds.Size);
+        Assert.True(HasHue(window, area, warm: true), "the slider starts in the default (orange) accent");
         Settings(window).IsOpen = true;
+        Settings(window).SelectedTab = SettingsTab.Appearance;
         Dispatcher.UIThread.RunJobs();
         var progress = Named<ProgressBar>(window, "AccentPreviewBar");
 
-        Assert.True(HasHue(window, area, warm: true), "the slider starts in the default (orange) accent");
-
         Settings(window).SelectAccentCommand.Execute("#4C9AF0");
         var fill = Brush("AccentBrush");
+        // The Settings dialog covers the slider; look at it with the dialog closed.
+        Settings(window).IsOpen = false;
+        Dispatcher.UIThread.RunJobs();
 
         Assert.NotEqual(Of(Rgb.Parse(ThemeModes.DefaultAccent)), fill);
         Assert.True(HasHue(window, area, warm: false), "the slider repaints in the new (blue) accent");

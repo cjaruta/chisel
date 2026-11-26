@@ -43,9 +43,12 @@ public partial class MainWindow : Window
             PositionChanged += (_, _) => TrackPlacement();
         }
 
-        // Keep the layout toolbar centered, but clear of the clock and date on narrow windows.
+        // The top bar follows the window: a smaller clock on narrow windows, and the edit toolbar between the clock and the
+        // buttons when it fits, otherwise on its own line.
         LayoutToolbar.SizeChanged += (_, _) => PlaceLayoutToolbar();
         ClockPanel.SizeChanged += (_, _) => PlaceLayoutToolbar();
+        TopButtons.SizeChanged += (_, _) => PlaceLayoutToolbar();
+        Header.SizeChanged += (_, _) => PlaceLibrary();
         SizeChanged += (_, _) => { PlaceLayoutToolbar(); PlaceLibrary(); TrackPlacement(); };
         DataContextChanged += (_, _) =>
         {
@@ -234,7 +237,8 @@ public partial class MainWindow : Window
         LibraryScrim.IsVisible = narrow && DataContext is MainViewModel { Library.IsOpen: true };
         LibraryPanel.HorizontalAlignment = narrow ? Avalonia.Layout.HorizontalAlignment.Center : Avalonia.Layout.HorizontalAlignment.Right;
         LibraryPanel.Width = narrow ? Math.Clamp(Bounds.Width - 80, 240, 480) : 340;
-        LibraryPanel.Margin = narrow ? new Thickness(0, 56, 0, 20) : new Thickness(0, 56, 0, 0);
+        // Narrow: below the whole top bar, so the edit toolbar on its own line stays clear.
+        LibraryPanel.Margin = narrow ? new Thickness(0, Math.Max(56, Header.Bounds.Bottom + 8), 0, 20) : new Thickness(0, 56, 0, 0);
     }
 
     private void OnLibraryScrimPressed(object? sender, PointerPressedEventArgs e)
@@ -243,16 +247,32 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    // Centered over the window, or just right of the clock and date when centering would cover them.
+    // Gap kept between the toolbar and the clock or the buttons beside it.
+    private const double ToolbarGap = 16;
+
     private void PlaceLayoutToolbar()
     {
-        if (LayoutToolbar.Parent is not Control area || LayoutToolbar.Bounds.Width <= 0)
+        var width = Bounds.Width - 40;
+        if (width <= 0)
         {
             return;
         }
-        var centered = (area.Bounds.Width - LayoutToolbar.Bounds.Width) / 2;
-        var left = Math.Max(centered, ClockPanel.Bounds.Right + 16);
-        LayoutToolbar.Margin = new Thickness(left, LayoutToolbar.Margin.Top, 0, 0);
+        (ClockTime.FontSize, ClockDate.FontSize) = TopBar.ClockFontSizes(width);
+        // Short labels on narrow windows keep the toolbar on one row.
+        var compact = width < TopBar.Narrow;
+        LibraryButton.Content = compact ? "Library" : "Widget Library";
+        LayoutResetButton.Content = compact ? "Reset" : "Reset layout";
+        ToolbarDivider.IsVisible = !compact;
+
+        var items = LayoutToolbarItems.Children.Where(c => c.IsVisible).ToList();
+        var natural = items.Sum(c => c.DesiredSize.Width) + LayoutToolbarItems.ItemSpacing * Math.Max(0, items.Count - 1)
+            + LayoutToolbar.Padding.Left + LayoutToolbar.Padding.Right + LayoutToolbar.BorderThickness.Left + LayoutToolbar.BorderThickness.Right;
+        var placement = TopBar.PlaceToolbar(width, natural, ClockPanel.DesiredSize.Width + ToolbarGap, TopButtons.DesiredSize.Width + ToolbarGap);
+        Grid.SetRow(LayoutToolbar, placement == ToolbarPlacement.OwnLine ? 1 : 0);
+        Grid.SetColumn(LayoutToolbar, placement == ToolbarPlacement.BetweenClockAndButtons ? 1 : 0);
+        Grid.SetColumnSpan(LayoutToolbar, placement == ToolbarPlacement.BetweenClockAndButtons ? 1 : 3);
+        LayoutToolbar.Margin = placement == ToolbarPlacement.OwnLine ? new Thickness(0, 12, 0, 0)
+            : placement == ToolbarPlacement.BetweenClockAndButtons ? new Thickness(ToolbarGap, -14, ToolbarGap, 0) : new Thickness(0, -14, 0, 0);
     }
 
     private ScheduleWidgetView? ScheduleView => this.GetVisualDescendants().OfType<ScheduleWidgetView>().FirstOrDefault();
