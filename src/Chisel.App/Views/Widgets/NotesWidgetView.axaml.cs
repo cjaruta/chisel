@@ -14,10 +14,30 @@ public partial class NotesWidgetView : WidgetView
 {
     private NotesViewModel? _notes;
 
+    // A very short card still shows a whole line to type in: the editor's padding tightens when a line would not fit with the
+    // usual padding, and only when even that is too little does the pad bar step aside (it comes back on a taller card).
+    private const double LineRoom = 22;
+    private const double UsualPadding = 10 * 2;
+    private const double ShortPadding = 6 * 2;
+    private double _barRoom = 42;
+
     public NotesWidgetView()
     {
         InitializeComponent();
         DataContextChanged += (_, _) => Attach();
+        NotepadRoot.SizeChanged += (_, e) => FitEditor(e.NewSize.Height);
+    }
+
+    private void FitEditor(double height)
+    {
+        if (PadBar.IsVisible && PadBar.DesiredSize.Height > 0)
+        {
+            _barRoom = PadBar.DesiredSize.Height;
+        }
+        var showBar = height - _barRoom >= LineRoom + ShortPadding;
+        PadBar.IsVisible = showBar;
+        var editor = height - (showBar ? _barRoom : 0);
+        PadEditor.Classes.Set("short", editor < LineRoom + UsualPadding);
     }
 
     // Like the other widgets: side margins always, and with no title bar extra room at the top for the edit-mode badges,

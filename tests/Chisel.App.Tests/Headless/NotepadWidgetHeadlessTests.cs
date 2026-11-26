@@ -280,7 +280,7 @@ public class NotepadWidgetHeadlessTests
     [InlineData(false)]
     public void TheEditor_HasRoomAroundItsText_AndTheSwitcherClearsTheTopEdge(bool headerShown)
     {
-        var window = Show(640, 560);
+        var window = Show(640, 640); // a card with a few lines of room (a very short one is checked below)
         SetHeader(window, headerShown);
         Dispatcher.UIThread.RunJobs();
 
@@ -290,6 +290,34 @@ public class NotepadWidgetHeadlessTests
         var editor = Named<TextBox>(window, "PadEditor");
         Assert.True(editor.Padding.Left >= 12 && editor.Padding.Right >= 12 && editor.Padding.Top >= 10 && editor.Padding.Bottom >= 10, editor.Padding.ToString());
         Assert.Equal("Start typing…", editor.PlaceholderText);
+        window.Close();
+    }
+
+    // On a very short card a whole line of text still shows: the padding tightens, and only when even that is not enough
+    // does the pad bar step aside (it comes back on a taller card).
+    [AvaloniaTheory]
+    [InlineData(560, true)]   // short: the bar stays, the padding tightens
+    [InlineData(-1, false)]   // the shortest card: the bar steps aside
+    public void AShortCard_StillShowsAWholeLineToTypeIn(double windowHeight, bool barShown)
+    {
+        var window = Show(640, windowHeight > 0 ? windowHeight : 760);
+        if (windowHeight < 0)
+        {
+            var main = Main(window);
+            main.Layout.Apply(new Chisel.Core.Layout.WidgetLayout(new[]
+            {
+                new Chisel.Core.Layout.LayoutColumn(1, new[]
+                {
+                    new Chisel.Core.Layout.WidgetPlacement("notes", 110), new Chisel.Core.Layout.WidgetPlacement("tasks", 510),
+                }),
+            }, WidgetRegistry.All.Select(w => w.Id).Where(id => id is not ("notes" or "tasks"))));
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        var editor = Named<TextBox>(window, "PadEditor");
+        Assert.Equal(barShown, Named<Grid>(window, "PadBar").IsVisible);
+        Assert.True(editor.Bounds.Height - editor.Padding.Top - editor.Padding.Bottom >= editor.LineHeight,
+            $"editor {editor.Bounds.Height:0} with padding {editor.Padding} cuts the line");
         window.Close();
     }
 }
