@@ -484,5 +484,20 @@ $RECYCLE.BIN/
 # Local project notes and tooling config not intended for the public repo
 CLAUDE.md
 CLAUDE.local.md
-docs/ROADMAP.md
+docs/
 .claude/
+
+# App data that could be copied into the repo by mistake (databases, damaged-data copies, backups, crash logs)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.bad
+chisel-backup*.json
+clipboard-history.json
+
+# Release output from scripts/package.ps1 and any installer build
+*.zip
+*.sha256
+*.exe
+Output/
