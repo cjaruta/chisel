@@ -124,10 +124,10 @@ dotnet test
 dotnet run --project src/Chisel.App
 ```
 
-To build the release zip and its checksum (the version comes from `Directory.Build.props`):
+To build a self-contained release folder (the version comes from `Directory.Build.props`):
 
 ```
-powershell -ExecutionPolicy Bypass -File scripts/package.ps1
+dotnet publish src/Chisel.App -c Release -r win-x64 --self-contained -p:DebugType=none -o artifacts/release/Chisel-win-x64
 ```
 
 The project layout, test approach and how to report bugs are in [CONTRIBUTING.md](CONTRIBUTING.md).
