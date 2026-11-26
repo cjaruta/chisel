@@ -50,6 +50,18 @@ public readonly record struct MediaLayoutPlan(double ArtSize, bool ShowAlbum, bo
 // What fits in the card body (width and height in pixels, padding already removed).
 public static class MediaLayout
 {
-    public static MediaLayoutPlan For(double width, double height) =>
-        new(width < 200 ? 0 : Math.Min(height, 96), height >= 130, height >= 150, height < 110);
+    // The width the buttons need when the volume sits beside them on one row (short cards).
+    public const double ControlsWithVolumeWidth = 180;
+
+    public static MediaLayoutPlan For(double width, double height)
+    {
+        var volumeBeside = height < 110;
+        var art = width < 200 ? 0 : Math.Min(height, 96);
+        // The cover gives way when it would leave the buttons and the volume too little room to fit beside it.
+        if (volumeBeside && width - art < ControlsWithVolumeWidth)
+        {
+            art = 0;
+        }
+        return new(art, height >= 130, height >= 150, volumeBeside);
+    }
 }

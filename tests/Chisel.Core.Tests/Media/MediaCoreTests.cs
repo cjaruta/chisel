@@ -45,6 +45,8 @@ public class MediaCoreTests
     [InlineData(300, 86, 86, false, false)]
     [InlineData(300, 150, 96, true, true)]
     [InlineData(150, 86, 0, false, false)]
+    // Short and narrow: the buttons and the volume share a row, so the cover gives way rather than push them off the card.
+    [InlineData(215, 96, 0, false, false)]
     public void Layout_ScalesWithTheCard(double width, double height, double art, bool album, bool source)
     {
         var layout = MediaLayout.For(width, height);
