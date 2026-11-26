@@ -53,7 +53,8 @@ public sealed class HabitsWidgetView : WidgetView
     private readonly ScrollViewer _form = new() { Name = "HabitForm", IsVisible = false };
     private readonly TextBox _name = new() { Name = "HabitName", PlaceholderText = "Habit name", MaxLength = HabitValidation.MaxNameLength };
     private readonly TextBox _emoji = new() { Name = "HabitEmoji", PlaceholderText = "Emoji (optional)", Width = 130 };
-    private readonly StackPanel _swatches = new() { Name = "HabitColors", Orientation = Orientation.Horizontal, Spacing = 4 };
+    // Wraps on a narrow card so every color stays on screen.
+    private readonly WrapPanel _swatches = new() { Name = "HabitColors", ItemSpacing = 4, LineSpacing = 4 };
     private readonly StackPanel _weekdays = new() { Name = "HabitDays", Orientation = Orientation.Horizontal, Spacing = 4 };
     private readonly TextBlock _error = new() { Name = "HabitError", TextWrapping = TextWrapping.Wrap };
     private readonly Button _delete;

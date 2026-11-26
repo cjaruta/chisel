@@ -42,7 +42,8 @@ public sealed class CountdownWidgetView : WidgetView
     private readonly CalendarDatePicker _date = new() { Name = "CountdownDate", HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Date" };
     private readonly TextBox _time = new() { Name = "CountdownTime", PlaceholderText = "Time (optional), e.g. 14:30" };
     private readonly TextBox _emoji = new() { Name = "CountdownEmoji", PlaceholderText = "Emoji (optional)" };
-    private readonly StackPanel _swatches = new() { Name = "CountdownColors", Orientation = Orientation.Horizontal, Spacing = 4 };
+    // Wraps on a narrow card so every color stays on screen.
+    private readonly WrapPanel _swatches = new() { Name = "CountdownColors", ItemSpacing = 4, LineSpacing = 4 };
     private readonly CheckBox _yearly = new() { Name = "CountdownYearly", Content = "Repeats every year" };
     private readonly TextBlock _error = new() { Name = "CountdownError", TextWrapping = TextWrapping.Wrap };
     private readonly Button _delete;
@@ -129,7 +130,7 @@ public sealed class CountdownWidgetView : WidgetView
             b.Margin = new Thickness(0, 0, 6, 6);
             buttons.Children.Add(b);
         }
-        var emojiAndColor = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        var emojiAndColor = new WrapPanel { ItemSpacing = 10, LineSpacing = 6 };
         _emoji.Width = 130;
         emojiAndColor.Children.Add(_emoji);
         emojiAndColor.Children.Add(_swatches);
