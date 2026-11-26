@@ -28,6 +28,8 @@ public static class WeatherLayout
     public const double LargeMinHeight = 280;
     public const double HourlyEntryWidth = 48;
     public const int MaxHourlyEntries = 8;
+    // On a short card a few hours sit beside the temperature instead of in a strip below it.
+    public const int BesideHourlyMax = 4;
 
     public static WeatherSizeTier SizeTier(double contentWidth, double contentHeight) =>
         contentHeight >= LargeMinHeight ? WeatherSizeTier.Large

@@ -116,7 +116,7 @@ public sealed class WeatherWidgetView : WidgetView
         headText.Children.Add(Text(_weather.Format(snapshot.TemperatureC), 40, name: "WeatherTemp", weight: FontWeight.Light));
         headText.Children.Add(Text(ConditionName(snapshot.Condition), 14, dim: true, name: "WeatherCondition"));
         head.Children.Add(headText);
-        panel.Children.Add(head);
+        panel.Children.Add(tier == WeatherSizeTier.Small ? WithHoursBeside(head, snapshot, width) : head);
 
         if (tier >= WeatherSizeTier.Large)
         {
@@ -145,6 +145,34 @@ public sealed class WeatherWidgetView : WidgetView
             panel.Children.Add(Text(WeatherLayout.Credit, 11, dim: true, name: "WeatherFooter"));
         }
         Content = WithLocation(panel);
+    }
+
+    // On a short card there is no room for the strip below, so the next few hours (time over temperature, no icons) sit
+    // quietly at the right of the temperature, as many as fit beside it.
+    private Control WithHoursBeside(StackPanel head, WeatherSnapshot snapshot, double width)
+    {
+        const double gap = 20;
+        head.Measure(Size.Infinity);
+        var room = width - head.DesiredSize.Width - gap;
+        var count = Math.Clamp((int)(room / WeatherLayout.HourlyEntryWidth), 0, WeatherLayout.BesideHourlyMax);
+        if (count == 0)
+        {
+            return head;
+        }
+        var hours = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, Name = "WeatherHourly",
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
+        };
+        foreach (var hour in snapshot.Hourly.Take(count))
+        {
+            var cell = new StackPanel { Width = WeatherLayout.HourlyEntryWidth, Spacing = 2 };
+            cell.Children.Add(Text(_weather!.HourLabel(hour.Time), 11, dim: true));
+            cell.Children.Add(Text(_weather.Format(hour.TemperatureC), 13));
+            hours.Children.Add(cell);
+        }
+        Grid.SetColumn(hours, 1);
+        return new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Children = { head, hours } };
     }
 
     // The place name sits small at the top left of the body, so the card always says where it is.
